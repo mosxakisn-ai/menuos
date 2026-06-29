@@ -1,0 +1,27 @@
+---
+description: MenuOS product vision, constraints, and stack — always read before any work
+alwaysApply: true
+---
+
+# MenuOS — Core Context
+
+**Product:** Premium SaaS QR menu platform for restaurants, hotels, beach bars, pool bars, room service, spa menus.
+
+**Customers:** B2B = business owner (signup, subscription, dashboard). B2C = guest scans QR (no app, mobile web only).
+
+**Domain:** `menuos.gr` (production). Staging: `staging.menuos.gr` (future).
+
+**Three surfaces:** (1) Marketing/SaaS site, (2) Owner/Staff dashboard, (3) Public QR menu (`menuos.gr/m/{venue}`).
+
+**Multi-tenant:** Every query scoped by `organizationId`. Each business has venues → menus → categories → items.
+
+**Hard rules:**
+- No AI anywhere. OCR = Tesseract + rule-based parsing only (Phase 3).
+- Call waiter = WebSocket + Web Push (PWA). No native iOS/Android app.
+- Premium UI: Blue/cyan gradient (#2563EB / #06B6D4), Manrope, QR+M logo. Tagline: Scan. Browse. Enjoy.
+- **Never touch MatchWork or other servers** without explicit user approval. MenuOS deploys to `/opt/menuos` only.
+- Local development first; production deploy only when user approves.
+
+**Stack:** Next.js 15 (App Router) + TypeScript + Tailwind + shadcn/ui · PostgreSQL 16 + Prisma · NextAuth v5 · Socket.io · Cloudflare R2 · Stripe (Phase 2) · Python FastAPI OCR service (Phase 3).
+
+**Full docs:** `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `docs/SEO-STRATEGY.md`, `docs/DESIGN-SYSTEM.md`, `docs/DOMAIN.md`

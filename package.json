@@ -1,0 +1,23 @@
+{
+  "name": "menuos",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @menuos/web",
+    "build": "npm run db:generate && npm run build -w @menuos/web",
+    "lint": "npm run lint -w @menuos/web",
+    "db:generate": "npm run generate -w @menuos/db",
+    "db:migrate": "npm run migrate -w @menuos/db",
+    "db:push": "npm run push -w @menuos/db",
+    "db:studio": "npm run studio -w @menuos/db"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

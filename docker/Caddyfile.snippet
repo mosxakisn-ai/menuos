@@ -1,0 +1,17 @@
+# Append to /opt/matchwork/docker/Caddyfile — MenuOS (menuos.gr)
+menuos.gr, www.menuos.gr {
+	@www host www.menuos.gr
+	redir @www https://menuos.gr{uri} permanent
+
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy menuos-web:3000
+}

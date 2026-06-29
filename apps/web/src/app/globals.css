@@ -1,0 +1,30 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer base {
+  :root {
+    --brand-blue: #2563eb;
+    --brand-cyan: #06b6d4;
+    --brand-navy: #0f172a;
+    --brand-surface: #f5f7fa;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-brand-navy antialiased;
+  }
+}
+
+@layer utilities {
+  .text-gradient-brand {
+    @apply bg-gradient-to-r from-brand-blue to-brand-cyan bg-clip-text text-transparent;
+  }
+
+  .btn-gradient {
+    @apply bg-brand-gradient text-white shadow-soft transition hover:brightness-105 active:scale-[0.98];
+  }
+}

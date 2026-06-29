@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum MenuType {
+  BREAKFAST
+  RESTAURANT
+  POOL_BAR
+  BEACH_BAR
+  ROOM_SERVICE
+  SPA
+  ACTIVITIES
+  OTHER
+}
+
+enum WaiterCallStatus {
+  PENDING
+  ACKNOWLEDGED
+  COMPLETED
+}
+
+enum SubscriptionPlan {
+  TRIAL
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+}
+
+enum SupportedLanguage {
+  GR
+  EN
+  DE
+  FR
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  venues       Venue[]
+  subscription Subscription?
+}
+
+model User {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  email          String   @unique
+  passwordHash   String
+  role           UserRole @default(STAFF)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  organizationId   String             @unique
+  plan             SubscriptionPlan   @default(TRIAL)
+  status           SubscriptionStatus @default(TRIALING)
+  stripeCustomerId String?
+  stripeSubId      String?
+  trialEndsAt      DateTime?
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Venue {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String?
+  logoUrl        String?
+  primaryColor   String   @default("#2563EB")
+  secondaryColor String   @default("#06B6D4")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  menus        Menu[]
+  waiterCalls  WaiterCall[]
+  settings     VenueSetting?
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([slug])
+}
+
+model VenueSetting {
+  id           String   @id @default(cuid())
+  venueId      String   @unique
+  brandName    String?
+  openingHours Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+}
+
+model Menu {
+  id        String   @id @default(cuid())
+  venueId   String
+  name      String
+  type      MenuType @default(RESTAURANT)
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  venue      Venue      @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  categories Category[]
+
+  @@index([venueId])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  menuId    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  menu         Menu                  @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  items        Item[]
+  translations CategoryTranslation[]
+
+  @@index([menuId])
+}
+
+model CategoryTranslation {
+  id         String            @id @default(cuid())
+  categoryId String
+  language   SupportedLanguage
+  name       String
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, language])
+}
+
+model Item {
+  id        String   @id @default(cuid())
+  categoryId String
+  price     Decimal  @db.Decimal(10, 2)
+  photoUrl  String?
+  available Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category     Category          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  translations ItemTranslation[]
+  photos       Photo[]
+
+  @@index([categoryId])
+}
+
+model ItemTranslation {
+  id          String            @id @default(cuid())
+  itemId      String
+  language    SupportedLanguage
+  name        String
+  description String?
+  ingredients String?
+  allergens   String?
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, language])
+}
+
+model Photo {
+  id            String   @id @default(cuid())
+  itemId        String
+  url           String
+  optimizedUrl  String?
+  createdAt     DateTime @default(now())
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+}
+
+model WaiterCall {
+  id          String           @id @default(cuid())
+  venueId     String
+  tableNumber String?
+  roomNumber  String?
+  status      WaiterCallStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId, status])
+}

@@ -1,0 +1,34 @@
+import bcrypt from "bcryptjs";
+import { NextResponse } from "next/server";
+import { prisma } from "@menuos/db";
+import { loginSchema } from "@menuos/shared";
+import { createSessionToken, setSessionCookie } from "@/lib/auth";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const parsed = loginSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+
+  const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+  if (!user) {
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  }
+
+  const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+  if (!valid) {
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  }
+
+  const token = await createSessionToken({
+    userId: user.id,
+    organizationId: user.organizationId,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+  });
+  await setSessionCookie(token);
+
+  return NextResponse.json({ ok: true });
+}
