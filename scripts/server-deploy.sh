@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="${APP_DIR:-/opt/menuos}"
 CADDY_FILE="/opt/matchwork/docker/Caddyfile"
-MARKER="# MenuOS — menuos.gr"
+MARKER="# Append to /opt/matchwork/docker/Caddyfile — MenuOS (menuos.gr)"
 RUN_DB_PUSH="${RUN_DB_PUSH:-1}"
 
 cd "$ROOT"
