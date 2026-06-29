@@ -26,9 +26,29 @@ Premium SaaS QR menu platform for restaurants, hotels, and hospitality venues.
 - **Never touch MatchWork server** without explicit approval
 - **Premium UI** — Deep Blue `#1A2A6C` + Silver `#C0C0C0`
 
+## Git branches
+
+| Branch | Purpose |
+|--------|---------|
+| `dev` | Daily development — push/PR here |
+| `main` | Production — auto-deploys to menuos.gr |
+
+Flow: work on `dev` → merge to `main` when ready → GitHub Actions deploys to Hetzner.
+
+### First-time server setup
+
+On the server (as root), after the GitHub repo exists:
+
+```bash
+# Add deploy key (once): /root/.ssh/github_menuos → GitHub repo Deploy keys
+GITHUB_REPO=git@github.com:mosxakisn-ai/menuos.git bash scripts/server-git-init.sh
+```
+
+GitHub Actions secrets (org or repo): `SERVER_HOST`, `SERVER_USER`, `SSH_PRIVATE_KEY` (same as MatchWork).
+
 ## Status
 
-Phase 1 scaffold complete — local dev ready.
+Phase 1 scaffold complete — live at menuos.gr.
 
 ```bash
 # Start PostgreSQL
