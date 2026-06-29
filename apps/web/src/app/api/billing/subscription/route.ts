@@ -1,0 +1,22 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireSession } from "@/lib/api-auth";
+import { getOrganizationSubscription } from "@/lib/billing";
+
+export async function GET(req: NextRequest) {
+  const auth = await requireSession();
+  if (auth.response) return auth.response;
+
+  const organizationId = req.nextUrl.searchParams.get("organizationId");
+  if (!organizationId) {
+    return NextResponse.json({ error: "organizationId required" }, { status: 400 });
+  }
+  if (auth.session!.organizationId !== organizationId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const subscription = await getOrganizationSubscription(organizationId);
+  if (!subscription) {
+    return NextResponse.json({ error: "Subscription not found" }, { status: 404 });
+  }
+  return NextResponse.json(subscription);
+}

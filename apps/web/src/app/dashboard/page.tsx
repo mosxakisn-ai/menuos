@@ -48,6 +48,9 @@ export default async function DashboardPage() {
           <Link href="/dashboard/menus" className={buttonClass("secondary")}>
             Manage menus
           </Link>
+          <Link href="/dashboard/billing" className={buttonClass("secondary")}>
+            Upgrade plan
+          </Link>
         </div>
       </Card>
     </div>

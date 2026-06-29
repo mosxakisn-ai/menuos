@@ -2,11 +2,19 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { prisma, UserRole } from "@menuos/db";
 import { registerSchema } from "@menuos/shared";
+import { fireAdminNotify, notifyAdminOrganizationRegistered } from "@/lib/admin-notify";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
+import { sendWelcomeEmail } from "@/lib/mail";
 import { slugify } from "@/lib/utils";
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
@@ -19,12 +27,16 @@ export async function POST(request: Request) {
   }
 
   let orgSlug = slugify(businessName);
+  if (!orgSlug) {
+    orgSlug = `org-${Date.now().toString(36)}`;
+  }
   const slugTaken = await prisma.organization.findUnique({ where: { slug: orgSlug } });
   if (slugTaken) {
     orgSlug = `${orgSlug}-${Date.now().toString(36).slice(-4)}`;
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+  const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
   const organization = await prisma.organization.create({
     data: {
@@ -34,7 +46,7 @@ export async function POST(request: Request) {
         create: {
           plan: "TRIAL",
           status: "TRIALING",
-          trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          trialEndsAt,
         },
       },
       users: {
@@ -58,6 +70,24 @@ export async function POST(request: Request) {
     role: user.role,
   });
   await setSessionCookie(token);
+
+  fireAdminNotify(() =>
+    notifyAdminOrganizationRegistered({
+      organizationId: organization.id,
+      businessName,
+      ownerName: name,
+      email,
+      orgSlug,
+    }),
+  );
+  fireAdminNotify(() =>
+    sendWelcomeEmail({
+      to: email,
+      name,
+      businessName,
+      trialEndsAt,
+    }),
+  );
 
   return NextResponse.json({ ok: true });
 }

@@ -13,6 +13,8 @@ Premium SaaS QR menu platform for restaurants, hotels, and hospitality venues.
 | [docs/SEO-STRATEGY.md](docs/SEO-STRATEGY.md) | SEO landings, JSON-LD, sitemap (MatchWork pattern) |
 | [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) | Colors, typography, components, premium UI bar |
 | [docs/DOMAIN.md](docs/DOMAIN.md) | menuos.gr URLs, DNS, env vars, QR links |
+| [docs/STRIPE-MENUOS.md](docs/STRIPE-MENUOS.md) | Stripe setup, `app=menuos` metadata, billing |
+| [docs/EMAIL-MENUOS.md](docs/EMAIL-MENUOS.md) | SMTP (admin@s1cloud.b-os.gr), admin alerts |
 
 ## Cursor Rules
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   Bell,
+  CreditCard,
   LayoutGrid,
   QrCode,
   Settings,
@@ -16,6 +17,7 @@ const nav = [
   { href: "/dashboard/menus", label: "Menus", icon: UtensilsCrossed },
   { href: "/dashboard/qr", label: "QR Codes", icon: QrCode },
   { href: "/dashboard/waiter", label: "Waiter Calls", icon: Bell },
+  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

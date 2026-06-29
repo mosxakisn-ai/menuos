@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { venueSchema } from "@menuos/shared";
 import { getSession } from "@/lib/auth";
+import { canOrganizationAddVenue } from "@/lib/billing";
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -9,10 +10,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const parsed = venueSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+
+  const venueCheck = await canOrganizationAddVenue(session.organizationId);
+  if (!venueCheck.ok) {
+    return NextResponse.json({ error: venueCheck.error, code: venueCheck.code }, { status: 403 });
   }
 
   const existing = await prisma.venue.findUnique({

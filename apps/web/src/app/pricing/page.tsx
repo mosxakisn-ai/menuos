@@ -68,10 +68,10 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 <Link
-                  href="/register"
+                  href={plan.name === "Trial" ? "/register" : "/dashboard/billing"}
                   className={`mt-8 block w-full text-center ${buttonClass(plan.highlighted ? "primary" : "secondary")}`}
                 >
-                  Get started
+                  {plan.name === "Trial" ? "Get started" : "Upgrade"}
                 </Link>
               </Card>
             ))}
