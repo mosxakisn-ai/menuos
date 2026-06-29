@@ -41,4 +41,4 @@ docker exec matchwork-caddy-1 caddy reload --config /etc/caddy/Caddyfile
 
 echo "==> Done."
 docker compose -f docker-compose.prod.yml ps
-curl -s -o /dev/null -w "menuos local: %{http_code}\n" http://127.0.0.1:3000/ 2>/dev/null || true
+docker compose -f docker-compose.prod.yml exec -T menuos-web wget -q -O /dev/null -S http://127.0.0.1:3000/ 2>&1 | head -1 || true

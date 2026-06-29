@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { SiteHeader } from "@/components/marketing/site-chrome";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { slugify } from "@/lib/utils";
+import { slugifyOrFallback } from "@/lib/utils";
 
 export default function NewVenuePage() {
   const router = useRouter();
@@ -24,7 +23,7 @@ export default function NewVenuePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
-        slug: slugify(name),
+        slug: slugifyOrFallback(name, "venue"),
         description: form.get("description") || undefined,
       }),
     });

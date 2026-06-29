@@ -22,10 +22,11 @@ export function isStripeEnabled(): boolean {
   return !!getStripeSecretKey();
 }
 
-/** Mock billing — local dev/tests only. */
+/** Mock billing — local dev/tests only. Never in production. */
 export function isBillingMockAllowed(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
   if (process.env.BILLING_MOCK === "true") return true;
-  if (process.env.NODE_ENV !== "production" && !getStripeSecretKey()) return true;
+  if (!getStripeSecretKey()) return true;
   return false;
 }
 

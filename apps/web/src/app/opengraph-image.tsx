@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
-import { APP_NAME, APP_TAGLINE } from "@/lib/config";
+import { APP_NAME } from "@/lib/config";
 
-export const alt = APP_NAME;
+export const alt = `${APP_NAME} — Ψηφιακό menu με QR`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -21,12 +21,12 @@ export default function OpenGraphImage() {
           fontFamily: "system-ui, sans-serif",
         }}
       >
-        <p style={{ fontSize: 28, fontWeight: 600, opacity: 0.95 }}>{APP_TAGLINE}</p>
+        <p style={{ fontSize: 28, fontWeight: 600, opacity: 0.95 }}>Scan. Browse. Enjoy.</p>
         <p style={{ fontSize: 80, fontWeight: 800, marginTop: 16, lineHeight: 1.05 }}>
           Menu<span style={{ opacity: 0.95 }}>Os</span>
         </p>
-        <p style={{ fontSize: 28, marginTop: 24, opacity: 0.92, maxWidth: 720 }}>
-          Digital menus for restaurants, hotels & hospitality
+        <p style={{ fontSize: 32, marginTop: 24, opacity: 0.92, maxWidth: 820, lineHeight: 1.3 }}>
+          Ψηφιακό menu με QR για εστιατόρια & ξενοδοχεία
         </p>
       </div>
     ),

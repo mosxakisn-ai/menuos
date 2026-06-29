@@ -19,7 +19,7 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
   const sp = await searchParams;
   const lang = parseLang(sp.lang);
 
-  const venue = await prisma.venue.findFirst({
+  const venue = await prisma.venue.findUnique({
     where: { slug: venueSlug },
     include: {
       menus: {

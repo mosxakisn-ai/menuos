@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { venueSchema } from "@menuos/shared";
-import { getSession } from "@/lib/auth";
+import { requireActiveSubscription } from "@/lib/api-auth";
 import { canOrganizationAddVenue } from "@/lib/billing";
+import { allocateGlobalVenueSlug, baseVenueSlug } from "@/lib/venue-slug";
 
 export async function POST(request: Request) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireActiveSubscription();
+  if (auth.response) return auth.response;
 
   let body: unknown;
   try {
@@ -17,43 +16,54 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = venueSchema.safeParse(body);
+  let parsed = venueSchema.safeParse(body);
+  if (!parsed.success && typeof body === "object" && body && "name" in body) {
+    parsed = venueSchema.safeParse({
+      ...(body as Record<string, unknown>),
+      slug: baseVenueSlug(String((body as { name: string }).name)),
+    });
+  }
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const venueCheck = await canOrganizationAddVenue(session.organizationId);
+  return createVenue(auth.session!.organizationId, parsed.data);
+}
+
+async function createVenue(
+  organizationId: string,
+  data: { name: string; slug: string; description?: string },
+) {
+  const venueCheck = await canOrganizationAddVenue(organizationId);
   if (!venueCheck.ok) {
     return NextResponse.json({ error: venueCheck.error, code: venueCheck.code }, { status: 403 });
   }
 
-  const existing = await prisma.venue.findUnique({
-    where: {
-      organizationId_slug: {
-        organizationId: session.organizationId,
-        slug: parsed.data.slug,
-      },
-    },
-  });
-  if (existing) {
-    return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
-  }
+  const slug = await allocateGlobalVenueSlug(data.name, data.slug);
 
-  const venue = await prisma.venue.create({
-    data: {
-      organizationId: session.organizationId,
-      name: parsed.data.name,
-      slug: parsed.data.slug,
-      description: parsed.data.description,
-      settings: { create: { brandName: parsed.data.name } },
-      menus: {
-        create: {
-          name: "Main Menu",
-          type: "RESTAURANT",
+  try {
+    const venue = await prisma.venue.create({
+      data: {
+        organizationId,
+        name: data.name,
+        slug,
+        description: data.description,
+        settings: { create: { brandName: data.name } },
+        menus: {
+          create: {
+            name: "Main Menu",
+            type: "RESTAURANT",
+          },
         },
       },
-    },
-  });
+    });
 
-  return NextResponse.json({ venue });
+    return NextResponse.json({ venue });
+  } catch (err) {
+    const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
+    if (code === "P2002") {
+      return NextResponse.json({ error: "Slug already taken. Try a different name." }, { status: 409 });
+    }
+    throw err;
+  }
 }

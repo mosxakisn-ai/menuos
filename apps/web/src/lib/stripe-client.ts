@@ -155,6 +155,7 @@ export async function activateSubscriptionFromCheckoutSession(input: {
   planId: string;
   stripeCustomerId?: string | null;
   stripeSubId?: string | null;
+  currentPeriodEnd?: Date | null;
 }) {
   const { activateSubscriptionFromCheckout, isCheckoutPlan } = await import("@/lib/billing");
   if (!isCheckoutPlan(input.planId)) return;
@@ -163,5 +164,6 @@ export async function activateSubscriptionFromCheckoutSession(input: {
     planId: input.planId,
     stripeCustomerId: input.stripeCustomerId,
     stripeSubId: input.stripeSubId,
+    currentPeriodEnd: input.currentPeriodEnd,
   });
 }

@@ -14,3 +14,9 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
 }
+
+export function slugifyOrFallback(input: string, prefix = "item"): string {
+  const slug = slugify(input);
+  if (slug.length >= 2) return slug;
+  return `${prefix}-${Date.now().toString(36)}`;
+}

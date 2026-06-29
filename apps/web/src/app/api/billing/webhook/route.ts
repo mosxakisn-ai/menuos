@@ -4,7 +4,11 @@ import {
   isStripeEnabled,
   verifyStripeWebhookSignature,
 } from "@/lib/stripe-client";
-import { isCheckoutPlan } from "@/lib/billing";
+import {
+  isCheckoutPlan,
+  mapStripeSubscriptionStatus,
+  syncSubscriptionFromStripe,
+} from "@/lib/billing";
 import { fireAdminNotify, notifyAdminStripePayment } from "@/lib/admin-notify";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -12,6 +16,18 @@ function sessionAmountEur(session: Record<string, unknown>): number {
   const total = session.amount_total;
   if (typeof total === "number") return Math.round(total) / 100;
   return 0;
+}
+
+function stripePeriodEnd(obj: Record<string, unknown>): Date | undefined {
+  const ts = obj.current_period_end ?? obj.period_end;
+  if (typeof ts === "number") return new Date(ts * 1000);
+  return undefined;
+}
+
+function stripeSubscriptionId(obj: Record<string, unknown>): string | null {
+  if (typeof obj.subscription === "string") return obj.subscription;
+  if (typeof obj.id === "string" && obj.object === "subscription") return obj.id;
+  return null;
 }
 
 export async function POST(req: NextRequest) {
@@ -25,63 +41,99 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  const event = JSON.parse(payload) as {
-    type: string;
-    data: { object: Record<string, unknown> };
-  };
+  let event: { type: string; data: { object: Record<string, unknown> } };
+  try {
+    event = JSON.parse(payload) as typeof event;
+  } catch {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
 
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       const metadata = (session.metadata ?? {}) as Record<string, string>;
 
-      if (!isMenuOsStripeMetadata(metadata)) {
-        return NextResponse.json({ received: true, skipped: "not_menuos" });
-      }
+      if (isMenuOsStripeMetadata(metadata)) {
+        const mode = session.mode as string;
+        const paymentStatus = session.payment_status as string;
 
-      const mode = session.mode as string;
-      const paymentStatus = session.payment_status as string;
-
-      if (
-        mode === "subscription" &&
-        metadata.organizationId &&
-        metadata.planId &&
-        isCheckoutPlan(metadata.planId) &&
-        (paymentStatus === "paid" || paymentStatus === "no_payment_required")
-      ) {
-        await activateSubscriptionFromCheckoutSession({
-          organizationId: metadata.organizationId,
-          planId: metadata.planId,
-          stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
-          stripeSubId: typeof session.subscription === "string" ? session.subscription : null,
-        });
-
-        fireAdminNotify(() =>
-          notifyAdminStripePayment({
-            paymentType: "subscription",
-            amountEur: sessionAmountEur(session),
+        if (
+          mode === "subscription" &&
+          metadata.organizationId &&
+          metadata.planId &&
+          isCheckoutPlan(metadata.planId) &&
+          (paymentStatus === "paid" || paymentStatus === "no_payment_required")
+        ) {
+          await activateSubscriptionFromCheckoutSession({
             organizationId: metadata.organizationId,
-            customerEmail:
-              typeof session.customer_email === "string" ? session.customer_email : undefined,
-            sessionId: typeof session.id === "string" ? session.id : undefined,
             planId: metadata.planId,
-          }),
-        );
+            stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
+            stripeSubId: typeof session.subscription === "string" ? session.subscription : null,
+          });
+
+          fireAdminNotify(() =>
+            notifyAdminStripePayment({
+              paymentType: "subscription",
+              amountEur: sessionAmountEur(session),
+              organizationId: metadata.organizationId,
+              customerEmail:
+                typeof session.customer_email === "string" ? session.customer_email : undefined,
+              sessionId: typeof session.id === "string" ? session.id : undefined,
+              planId: metadata.planId,
+            }),
+          );
+        }
+      }
+    }
+
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object;
+      const metadata = (subscription.metadata ?? {}) as Record<string, string>;
+      const stripeSubId = typeof subscription.id === "string" ? subscription.id : null;
+
+      if (isMenuOsStripeMetadata(metadata) || stripeSubId) {
+        await syncSubscriptionFromStripe({
+          organizationId: metadata.organizationId,
+          stripeSubId,
+          stripeCustomerId: typeof subscription.customer === "string" ? subscription.customer : null,
+          status: mapStripeSubscriptionStatus(String(subscription.status ?? "canceled")),
+          currentPeriodEnd: stripePeriodEnd(subscription),
+          planId:
+            metadata.planId && isCheckoutPlan(metadata.planId) ? metadata.planId : undefined,
+        });
       }
     }
 
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object;
       const metadata = (subscription.metadata ?? {}) as Record<string, string>;
-      if (!isMenuOsStripeMetadata(metadata)) {
-        return NextResponse.json({ received: true, skipped: "not_menuos" });
-      }
 
-      const { prisma } = await import("@menuos/db");
-      if (metadata.organizationId) {
-        await prisma.subscription.updateMany({
-          where: { organizationId: metadata.organizationId },
-          data: { status: "CANCELED" },
+      await syncSubscriptionFromStripe({
+        organizationId: metadata.organizationId,
+        stripeSubId: typeof subscription.id === "string" ? subscription.id : null,
+        status: "CANCELED",
+      });
+    }
+
+    if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object;
+      const subId = stripeSubscriptionId(invoice);
+      if (subId) {
+        await syncSubscriptionFromStripe({
+          stripeSubId: subId,
+          status: "PAST_DUE",
+        });
+      }
+    }
+
+    if (event.type === "invoice.paid") {
+      const invoice = event.data.object;
+      const subId = stripeSubscriptionId(invoice);
+      if (subId) {
+        await syncSubscriptionFromStripe({
+          stripeSubId: subId,
+          status: "ACTIVE",
+          currentPeriodEnd: stripePeriodEnd(invoice),
         });
       }
     }

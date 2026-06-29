@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export function BillingConfirmHandler({ organizationId }: { organizationId: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
+  const confirmStarted = useRef(false);
 
   useEffect(() => {
     const billing = searchParams.get("billing");
@@ -25,6 +26,9 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
     }
 
     if (billing === "confirm" && sessionId) {
+      if (confirmStarted.current) return;
+      confirmStarted.current = true;
+
       setMessage("Confirming payment…");
       fetch("/api/billing/confirm", {
         method: "POST",

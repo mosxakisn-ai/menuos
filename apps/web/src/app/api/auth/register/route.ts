@@ -5,7 +5,7 @@ import { registerSchema } from "@menuos/shared";
 import { fireAdminNotify, notifyAdminOrganizationRegistered } from "@/lib/admin-notify";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { sendWelcomeEmail } from "@/lib/mail";
-import { slugify } from "@/lib/utils";
+import { slugifyOrFallback } from "@/lib/utils";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -26,10 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email already registered" }, { status: 409 });
   }
 
-  let orgSlug = slugify(businessName);
-  if (!orgSlug) {
-    orgSlug = `org-${Date.now().toString(36)}`;
-  }
+  let orgSlug = slugifyOrFallback(businessName, "org");
   const slugTaken = await prisma.organization.findUnique({ where: { slug: orgSlug } });
   if (slugTaken) {
     orgSlug = `${orgSlug}-${Date.now().toString(36).slice(-4)}`;
@@ -38,56 +35,64 @@ export async function POST(request: Request) {
   const passwordHash = await bcrypt.hash(password, 12);
   const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
-  const organization = await prisma.organization.create({
-    data: {
-      name: businessName,
-      slug: orgSlug,
-      subscription: {
-        create: {
-          plan: "TRIAL",
-          status: "TRIALING",
-          trialEndsAt,
+  try {
+    const organization = await prisma.organization.create({
+      data: {
+        name: businessName,
+        slug: orgSlug,
+        subscription: {
+          create: {
+            plan: "TRIAL",
+            status: "TRIALING",
+            trialEndsAt,
+          },
+        },
+        users: {
+          create: {
+            name,
+            email,
+            passwordHash,
+            role: UserRole.ADMIN,
+          },
         },
       },
-      users: {
-        create: {
-          name,
-          email,
-          passwordHash,
-          role: UserRole.ADMIN,
-        },
-      },
-    },
-    include: { users: true },
-  });
+      include: { users: true },
+    });
 
-  const user = organization.users[0]!;
-  const token = await createSessionToken({
-    userId: user.id,
-    organizationId: organization.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-  });
-  await setSessionCookie(token);
-
-  fireAdminNotify(() =>
-    notifyAdminOrganizationRegistered({
+    const user = organization.users[0]!;
+    const token = await createSessionToken({
+      userId: user.id,
       organizationId: organization.id,
-      businessName,
-      ownerName: name,
-      email,
-      orgSlug,
-    }),
-  );
-  fireAdminNotify(() =>
-    sendWelcomeEmail({
-      to: email,
-      name,
-      businessName,
-      trialEndsAt,
-    }),
-  );
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    });
+    await setSessionCookie(token);
 
-  return NextResponse.json({ ok: true });
+    fireAdminNotify(() =>
+      notifyAdminOrganizationRegistered({
+        organizationId: organization.id,
+        businessName,
+        ownerName: name,
+        email,
+        orgSlug,
+      }),
+    );
+    fireAdminNotify(() =>
+      sendWelcomeEmail({
+        to: email,
+        name,
+        businessName,
+        trialEndsAt,
+      }),
+    );
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
+    if (code === "P2002") {
+      return NextResponse.json({ error: "Email or organization already exists" }, { status: 409 });
+    }
+    throw err;
+  }
 }

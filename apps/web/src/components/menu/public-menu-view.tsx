@@ -69,18 +69,23 @@ export function PublicMenuView({
 
   async function callWaiter() {
     setCalling(true);
-    await fetch("/api/waiter-call", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        venueSlug: venue.slug,
-        tableNumber,
-        roomNumber,
-      }),
-    });
-    setCalling(false);
-    setCalled(true);
-    setTimeout(() => setCalled(false), 3000);
+    setCalled(false);
+    try {
+      const res = await fetch("/api/waiter-call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venueSlug: venue.slug,
+          tableNumber,
+          roomNumber,
+        }),
+      });
+      if (!res.ok) return;
+      setCalled(true);
+      setTimeout(() => setCalled(false), 3000);
+    } finally {
+      setCalling(false);
+    }
   }
 
   function tName(translations: { language: SupportedLanguage; name: string }[]) {

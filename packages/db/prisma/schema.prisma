@@ -97,7 +97,7 @@ model Venue {
   id             String   @id @default(cuid())
   organizationId String
   name           String
-  slug           String
+  slug           String   @unique
   description    String?
   logoUrl        String?
   primaryColor   String   @default("#2563EB")
@@ -112,7 +112,6 @@ model Venue {
 
   @@unique([organizationId, slug])
   @@index([organizationId])
-  @@index([slug])
 }
 
 model VenueSetting {

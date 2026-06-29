@@ -1,53 +1,26 @@
 import Link from "next/link";
 import {
   Bell,
-  Cloud,
+  Building2,
+  Check,
   Globe,
-  LayoutDashboard,
-  Shield,
+  QrCode,
   Smartphone,
-  Zap,
+  UtensilsCrossed,
 } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { MARKETING } from "@/content/marketing-el";
 
-const features = [
-  {
-    icon: Cloud,
-    title: "Cloud based",
-    description: "SaaS platform — no servers to manage. Always up to date.",
-  },
-  {
-    icon: Smartphone,
-    title: "Every device",
-    description: "Web, mobile, tablet. Guests scan QR — no app install.",
-  },
-  {
-    icon: Zap,
-    title: "Fast & easy",
-    description: "Live in minutes. Update prices and items in seconds.",
-  },
-  {
-    icon: Globe,
-    title: "4 languages",
-    description: "Greek, English, German, French for international guests.",
-  },
-  {
-    icon: Bell,
-    title: "Call waiter",
-    description: "One tap from the menu. Real-time staff notifications.",
-  },
-  {
-    icon: Shield,
-    title: "Safe & reliable",
-    description: "Secure multi-tenant platform. Your data protected.",
-  },
-];
+const h = MARKETING.home;
+
+const serviceIcons = [QrCode, Globe, Bell, UtensilsCrossed, Building2, Smartphone];
 
 export function MarketingHome() {
   return (
     <>
+      {/* Hero */}
       <section className="relative overflow-hidden bg-hero-gradient pb-20 pt-16 sm:pb-28 sm:pt-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center">
@@ -55,19 +28,18 @@ export function MarketingHome() {
               <Logo href={false} showTagline markSize={56} />
             </div>
             <h1 className="animate-fade-up mt-6 text-4xl font-extrabold leading-tight text-brand-navy sm:text-5xl lg:text-6xl">
-              Digital menus for
-              <span className="block text-gradient-brand">modern hospitality</span>
+              {h.hero.title}
+              <span className="block text-gradient-brand">{h.hero.titleAccent}</span>
             </h1>
-            <p className="animate-fade-up mx-auto mt-6 max-w-2xl text-lg text-slate-600">
-              Transform your printed menu into a stunning mobile experience.
-              Multi-language, call waiter, real-time updates — live in minutes.
+            <p className="animate-fade-up mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600">
+              {h.hero.subtitle}
             </p>
             <div className="animate-fade-up mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/register" className={buttonClass("primary", "lg")}>
-                Start 14-day free trial
+                {h.hero.ctaTrial}
               </Link>
               <Link href="/pricing" className={buttonClass("secondary", "lg")}>
-                View pricing
+                {h.hero.ctaPricing}
               </Link>
             </div>
           </div>
@@ -90,48 +62,145 @@ export function MarketingHome() {
                 ))}
               </div>
               <div className="mt-4 rounded-button bg-brand-gradient py-2.5 text-center text-xs font-bold text-white">
-                Call Waiter · Table 12
+                Call Waiter · Τραπέζι 12
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-20 sm:py-24">
+      {/* What we do */}
+      <section className="border-b border-slate-100 bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
+          <h2 className="text-3xl font-extrabold text-brand-navy sm:text-4xl">{h.whatWeDo.title}</h2>
+          <p className="mt-6 text-lg leading-relaxed text-slate-600">{h.whatWeDo.body}</p>
+          <p className="mt-4 text-lg leading-relaxed text-slate-600">{h.whatWeDo.body2}</p>
+          <Link href="/ypiresies" className="mt-8 inline-flex text-sm font-semibold text-brand-blue hover:underline">
+            Δες όλες τις υπηρεσίες →
+          </Link>
+        </div>
+      </section>
+
+      {/* Audiences */}
+      <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-brand-navy sm:text-4xl">
-              Everything you need
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-slate-600">
-              Built for restaurants, hotels, beach bars, and room service teams.
-            </p>
-          </div>
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map(({ icon: Icon, title, description }) => (
-              <Card key={title} className="transition hover:shadow-cardHover">
-                <div className="mb-4 inline-flex rounded-button bg-brand-blue/10 p-3 text-brand-blue">
-                  <Icon className="h-5 w-5" />
-                </div>
+          <h2 className="text-center text-3xl font-extrabold text-brand-navy sm:text-4xl">
+            {h.audiences.title}
+          </h2>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2">
+            {h.audiences.items.map(({ title, text }) => (
+              <Card key={title}>
                 <h3 className="font-bold text-brand-navy">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{description}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Steps */}
+      <section id="pos-leitourgei" className="border-y border-slate-100 bg-brand-surface py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <h2 className="text-center text-3xl font-extrabold text-brand-navy sm:text-4xl">
+            {h.steps.title}
+          </h2>
+          <div className="mt-12 grid gap-8 md:grid-cols-3">
+            {h.steps.items.map(({ step, title, text }) => (
+              <div key={step} className="text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-gradient text-lg font-bold text-white">
+                  {step}
+                </div>
+                <h3 className="mt-4 font-bold text-brand-navy">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-10 text-center">
+            <Link href="/pos-leitourgei" className="text-sm font-semibold text-brand-blue hover:underline">
+              Λεπτομέρειες για τη ροή εργασίας →
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      {/* Services grid */}
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <h2 className="text-center text-3xl font-extrabold text-brand-navy sm:text-4xl">
+            {h.services.title}
+          </h2>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {h.services.items.map(({ title, text }, i) => {
+              const Icon = serviceIcons[i] ?? QrCode;
+              return (
+                <Card key={title} className="transition hover:shadow-cardHover">
+                  <div className="mb-4 inline-flex rounded-button bg-brand-blue/10 p-3 text-brand-blue">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-brand-navy">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Why */}
+      <section className="border-t border-slate-100 bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div>
+              <h2 className="text-3xl font-extrabold text-brand-navy sm:text-4xl">{h.why.title}</h2>
+              <ul className="mt-8 space-y-4">
+                {h.why.points.map((point) => (
+                  <li key={point} className="flex gap-3 text-slate-600">
+                    <Check className="mt-0.5 h-5 w-5 shrink-0 text-brand-cyan" />
+                    <span className="leading-relaxed">{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Card className="bg-brand-surface">
+              <p className="text-sm font-semibold uppercase tracking-wide text-brand-blue">Δοκιμή 14 ημερών</p>
+              <p className="mt-3 text-2xl font-extrabold text-brand-navy">Ξεκίνα χωρίς ρίσκο</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                Δημιούργησε το πρώτο σου venue, βάλε μερικά πιάτα και δοκίμασε το QR menu με δικούς σου
+                ανθρώπους πριν επιλέξεις πλάνο.
+              </p>
+              <Link href="/register" className={`mt-6 inline-flex ${buttonClass("primary")}`}>
+                Δωρεάν εγγραφή
+              </Link>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="border-t border-slate-100 bg-brand-surface py-16 sm:py-20">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <h2 className="text-center text-3xl font-extrabold text-brand-navy">{h.faq.title}</h2>
+          <div className="mt-10 space-y-8">
+            {h.faq.items.map(({ q, a }) => (
+              <div key={q}>
+                <h3 className="font-bold text-brand-navy">{q}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
       <section className="bg-brand-gradient py-16 text-white sm:py-20">
         <div className="mx-auto max-w-6xl px-4 text-center sm:px-6">
-          <h2 className="text-3xl font-extrabold sm:text-4xl">Ready in 10 minutes</h2>
-          <p className="mx-auto mt-4 max-w-xl text-white/90">
-            Sign up, add your venue, create your first menu, download your QR code.
-          </p>
+          <h2 className="text-3xl font-extrabold sm:text-4xl">{h.cta.title}</h2>
+          <p className="mx-auto mt-4 max-w-xl text-white/90">{h.cta.text}</p>
           <Link
             href="/register"
             className="mt-8 inline-flex rounded-button bg-white px-6 py-3 text-sm font-bold text-brand-blue hover:bg-brand-surface"
           >
-            Get started free
+            {h.cta.button}
           </Link>
         </div>
       </section>

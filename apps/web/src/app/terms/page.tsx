@@ -1,21 +1,77 @@
 import type { Metadata } from "next";
-import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome";
-import { buildPageMetadata } from "@/lib/seo";
+import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
+import { MarketingLayout, MarketingProse } from "@/components/marketing/marketing-layout";
+import { SEO_PAGES } from "@/content/seo-el";
+import { seoPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = buildPageMetadata({
-  title: "Terms of Service",
-  path: "/terms",
-});
+export const metadata: Metadata = seoPageMetadata(SEO_PAGES.terms);
 
 export default function TermsPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="mx-auto max-w-3xl flex-1 px-4 py-16 prose prose-slate">
-        <h1>Terms of Service</h1>
-        <p>Placeholder — legal content to be added.</p>
-      </main>
-      <SiteFooter />
-    </div>
+    <MarketingLayout>
+      <MarketingPageJsonLd page={SEO_PAGES.terms} />
+      <MarketingProse>
+        <h1>Όροι χρήσης</h1>
+        <p className="lead text-slate-600">Τελευταία ενημέρωση: Ιούνιος 2026</p>
+
+        <h2>1. Αποδοχή όρων</h2>
+        <p>
+          Χρησιμοποιώντας το menuos.gr και δημιουργώντας λογαριασμό, αποδέχεστε τους παρόντες όρους. Αν δεν
+          συμφωνείτε, μην χρησιμοποιείτε την υπηρεσία.
+        </p>
+
+        <h2>2. Η υπηρεσία</h2>
+        <p>
+          Το MenuOS παρέχει online πλατφόρμα για δημιουργία και διαχείριση ψηφιακών menus με QR, call waiter και
+          σχετικά εργαλεία. Η υπηρεσία παρέχεται «ως έχει». Προσπαθούμε για υψηλή διαθεσιμότητα αλλά δεν
+          εγγυόμαστε αδιάλειπτη λειτουργία.
+        </p>
+
+        <h2>3. Λογαριασμός & ευθύνη</h2>
+        <ul>
+          <li>Ο λογαριασμός είναι προσωπικός/επιχειρηματικός — κρατάτε τον κωδικό ασφαλή</li>
+          <li>Είστε υπεύθυνοι για το περιεχόμενο που ανεβάζετε (πιάτα, τιμές, φωτογραφίες, allergens)</li>
+          <li>Δεν επιτρέπεται παράνομο, προσβλητικό ή παραπλανητικό περιεχόμενο</li>
+        </ul>
+
+        <h2>4. Συνδρομές & πληρωμές</h2>
+        <p>
+          Η δοκιμή 14 ημερών είναι δωρεάν σύμφωνα με το ενεργό πλάνο. Μετά, ισχύουν τα πλάνα Basic / Pro όπως
+          αναγράφονται στη σελίδα τιμών. Οι πληρωμές γίνονται μέσω Stripe. Η ακύρωση γίνεται από το billing panel
+          ή επικοινωνώντας μαζί μας — δεν υπάρχουν «κρυφές» χρεώσεις εγκατάστασης.
+        </p>
+
+        <h2>5. Πνευματική ιδιοκτησία</h2>
+        <p>
+          Το MenuOS, το logo και η πλατφόρμα ανήκουν στην ομάδα MenuOS. Το περιεχόμενο που ανεβάζετε (φωτο,
+          κείμενα) παραμένει δικό σας — μας δίνετε άδεια να το φιλοξενήσουμε για να παρέχουμε την υπηρεσία.
+        </p>
+
+        <h2>6. Περιορισμός ευθύνης</h2>
+        <p>
+          Δεν ευθυνόμαστε για έμμεσες ζημίες, απώλεια εσόδων ή λάθη που προκύπτουν από λανθαμένες πληροφορίες στο
+          menu που εισάγετε εσείς (π.χ. λάθος allergens). Σας συνιστούμε να ελέγχετε το περιεχόμενο πριν το
+          δημοσιεύσετε.
+        </p>
+
+        <h2>7. Διακοπή</h2>
+        <p>
+          Μπορούμε να αναστείλουμε λογαριασμό που παραβιάζει τους όρους. Μπορείτε να διακόψετε τη συνδρομή σας
+          οποτεδήποτε — τα δεδομένα διαχειρίζονται σύμφωνα με την πολιτική απορρήτου.
+        </p>
+
+        <h2>8. Αλλαγές</h2>
+        <p>
+          Μπορούμε να ενημερώνουμε τους όρους. Σημαντικές αλλαγές θα ανακοινώνονται στο site ή με email. Η
+          συνέχιση χρήσης μετά την αλλαγή σημαίνει αποδοχή.
+        </p>
+
+        <h2>9. Εφαρμοστέο δίκαιο & επικοινωνία</h2>
+        <p>
+          Οι όροι διέπονται από το ελληνικό δίκαιο. Για ερωτήσεις:{" "}
+          <a href="mailto:info@b-os.gr">info@b-os.gr</a>.
+        </p>
+      </MarketingProse>
+    </MarketingLayout>
   );
 }

@@ -63,8 +63,9 @@ export function isPaidPlan(planId: string): planId is PaidSubscriptionPlanId {
   return (PAID_SUBSCRIPTION_PLANS as readonly string[]).includes(planId);
 }
 
+/** Statuses that still allow product access (PAST_DUE = grace while fixing payment). */
 export function isActivePaidStatus(status: string): boolean {
-  return status === "ACTIVE" || status === "TRIALING";
+  return status === "ACTIVE" || status === "TRIALING" || status === "PAST_DUE";
 }
 
 export function organizationHasPaidPlan(input: {
@@ -73,9 +74,11 @@ export function organizationHasPaidPlan(input: {
   trialEndsAt?: Date | null;
 }): boolean {
   if (input.plan === "TRIAL") {
-    if (!input.trialEndsAt) return true;
+    if (!input.trialEndsAt) return false;
     return input.trialEndsAt.getTime() > Date.now();
   }
-  if (input.plan === "ENTERPRISE") return true;
+  if (input.plan === "ENTERPRISE") {
+    return isActivePaidStatus(input.status);
+  }
   return isPaidPlan(input.plan) && isActivePaidStatus(input.status);
 }

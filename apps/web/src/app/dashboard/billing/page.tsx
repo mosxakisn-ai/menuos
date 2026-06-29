@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { prisma } from "@menuos/db";
 import { BillingConfirmHandler } from "@/components/dashboard/billing-confirm-handler";
 import { BillingPlans } from "@/components/dashboard/billing-plans";
+import { TrialExpiredBanner } from "@/components/dashboard/trial-expired-banner";
 import { getSession } from "@/lib/auth";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
@@ -28,6 +29,7 @@ export default async function BillingPage() {
 
       <Suspense fallback={null}>
         <BillingConfirmHandler organizationId={session.organizationId} />
+        <TrialExpiredBanner />
       </Suspense>
 
       <BillingPlans

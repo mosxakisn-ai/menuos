@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import {
   Bell,
   CreditCard,
@@ -11,6 +12,7 @@ import {
 import { Logo } from "@/components/brand/logo";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { getSession } from "@/lib/auth";
+import { organizationHasActiveSubscription } from "@/lib/billing";
 
 const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutGrid },
@@ -24,6 +26,14 @@ const nav = [
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login");
+
+  const headersList = await headers();
+  if (headersList.get("x-menuos-check-subscription") === "1") {
+    const active = await organizationHasActiveSubscription(session.organizationId);
+    if (!active) {
+      redirect("/dashboard/billing?trial=expired");
+    }
+  }
 
   return (
     <div className="flex min-h-screen bg-brand-surface">
