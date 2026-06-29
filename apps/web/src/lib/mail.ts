@@ -1,4 +1,6 @@
 import {
+  buildRegistrationOtpEmailHtml,
+  buildRegistrationOtpEmailText,
   buildSubscriptionActivatedEmailHtml,
   buildSubscriptionActivatedEmailText,
   buildWelcomeEmailHtml,
@@ -7,6 +9,26 @@ import {
 import { createMailTransporter, isMailConfigured, mailFromAddress } from "@/lib/mail-transport";
 
 export { isMailConfigured };
+
+export async function sendRegistrationOtpEmail(input: { to: string; code: string }): Promise<void> {
+  const subject = "MenuOS — κωδικός επιβεβαίωσης εγγραφής";
+  const text = buildRegistrationOtpEmailText({ code: input.code });
+  const html = buildRegistrationOtpEmailHtml({ code: input.code });
+
+  if (!isMailConfigured()) {
+    console.log(`[menuos-mail] register OTP → ${input.to} code=${input.code}`);
+    return;
+  }
+
+  const transporter = createMailTransporter();
+  await transporter.sendMail({
+    from: mailFromAddress(),
+    to: input.to,
+    subject,
+    text,
+    html,
+  });
+}
 
 export async function sendWelcomeEmail(input: {
   to: string;

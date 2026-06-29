@@ -5,7 +5,9 @@ import { registerSchema } from "@menuos/shared";
 import { fireAdminNotify, notifyAdminOrganizationRegistered } from "@/lib/admin-notify";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { sendWelcomeEmail } from "@/lib/mail";
+import { normalizeRegistrationEmail, verifyRegistrationOtp } from "@/lib/registration-otp";
 import { slugifyOrFallback } from "@/lib/utils";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -20,10 +22,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const { name, email, password, businessName } = parsed.data;
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const { name, email, password, businessName, otp } = parsed.data;
+  const normalizedEmail = normalizeRegistrationEmail(email);
+
+  const ip = clientIp(request);
+  if (!checkRateLimit(`register:ip:${ip}`, 20, 60 * 60 * 1000)) {
+    return NextResponse.json(
+      { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
+      { status: 429 },
+    );
+  }
+
+  const otpCheck = await verifyRegistrationOtp(normalizedEmail, otp);
+  if (!otpCheck.ok) {
+    return NextResponse.json({ error: otpCheck.error, code: otpCheck.code }, { status: 400 });
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
   if (existing) {
-    return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+    return NextResponse.json({ error: "Αυτό το email είναι ήδη εγγεγραμμένο.", code: "email_taken" }, { status: 409 });
   }
 
   let orgSlug = slugifyOrFallback(businessName, "org");
@@ -50,7 +67,7 @@ export async function POST(request: Request) {
         users: {
           create: {
             name,
-            email,
+            email: normalizedEmail,
             passwordHash,
             role: UserRole.ADMIN,
           },
@@ -74,13 +91,13 @@ export async function POST(request: Request) {
         organizationId: organization.id,
         businessName,
         ownerName: name,
-        email,
+        email: normalizedEmail,
         orgSlug,
       }),
     );
     fireAdminNotify(() =>
       sendWelcomeEmail({
-        to: email,
+        to: normalizedEmail,
         name,
         businessName,
         trialEndsAt,
