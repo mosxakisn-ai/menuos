@@ -10,6 +10,7 @@ import {
   syncSubscriptionFromStripe,
 } from "@/lib/billing";
 import { fireAdminNotify, notifyAdminStripePayment } from "@/lib/admin-notify";
+import { prisma } from "@menuos/db";
 import { NextRequest, NextResponse } from "next/server";
 
 function sessionAmountEur(session: Record<string, unknown>): number {
@@ -107,10 +108,21 @@ export async function POST(req: NextRequest) {
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object;
       const metadata = (subscription.metadata ?? {}) as Record<string, string>;
+      const stripeSubId = typeof subscription.id === "string" ? subscription.id : null;
+
+      if (!isMenuOsStripeMetadata(metadata)) {
+        if (!stripeSubId) {
+          return NextResponse.json({ received: true });
+        }
+        const row = await prisma.subscription.findFirst({ where: { stripeSubId } });
+        if (!row) {
+          return NextResponse.json({ received: true });
+        }
+      }
 
       await syncSubscriptionFromStripe({
         organizationId: metadata.organizationId,
-        stripeSubId: typeof subscription.id === "string" ? subscription.id : null,
+        stripeSubId,
         status: "CANCELED",
       });
     }

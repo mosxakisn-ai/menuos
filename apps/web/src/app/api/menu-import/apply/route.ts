@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { menuImportApplySchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
-import { canOrganizationAddItem } from "@/lib/billing";
+import { canOrganizationAddItems } from "@/lib/billing";
 import { getMenuForOrganization } from "@/lib/venue-access";
 
 export const runtime = "nodejs";
@@ -40,7 +40,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Επίλεξε τουλάχιστον ένα πιάτο με τιμή." }, { status: 400 });
   }
 
-  const itemCheck = await canOrganizationAddItem(auth.session!.organizationId);
+  const itemCheck = await canOrganizationAddItems(
+    auth.session!.organizationId,
+    selectedItems.length,
+  );
   if (!itemCheck.ok) {
     return NextResponse.json({ error: itemCheck.error, code: itemCheck.code }, { status: 403 });
   }

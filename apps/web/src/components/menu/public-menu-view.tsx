@@ -63,6 +63,7 @@ export function PublicMenuView({
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [calling, setCalling] = useState(false);
   const [called, setCalled] = useState(false);
+  const [callError, setCallError] = useState(false);
 
   const ui = QR_MENU_UI[lang];
   const activeMenu = venue.menus.find((m) => m.id === activeMenuId) ?? venue.menus[0];
@@ -76,6 +77,7 @@ export function PublicMenuView({
   async function callWaiter() {
     setCalling(true);
     setCalled(false);
+    setCallError(false);
     try {
       const res = await fetch("/api/waiter-call", {
         method: "POST",
@@ -86,7 +88,12 @@ export function PublicMenuView({
           roomNumber,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { code?: string };
+        setCallError(true);
+        setTimeout(() => setCallError(false), 4000);
+        return;
+      }
       setCalled(true);
       setTimeout(() => setCalled(false), 3000);
     } finally {
@@ -197,7 +204,7 @@ export function PublicMenuView({
           className="mx-auto flex w-full max-w-lg items-center justify-center gap-2 rounded-button bg-primary py-3.5 text-sm font-semibold text-white shadow-glow"
         >
           <Bell className="h-4 w-4" aria-hidden />
-          {called ? ui.called : calling ? ui.calling : ui.callWaiter}
+          {called ? ui.called : callError ? ui.callFailed : calling ? ui.calling : ui.callWaiter}
         </button>
       </div>
 

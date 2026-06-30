@@ -177,13 +177,13 @@ export async function canOrganizationAddVenue(organizationId: string): Promise<
     where: { id: organizationId },
     include: { subscription: true, venues: true },
   });
-  if (!org) return { ok: false, error: "Organization not found", code: "not_found" };
+  if (!org) return { ok: false, error: "Ο οργανισμός δεν βρέθηκε.", code: "not_found" };
 
   const ctx = await getOrganizationPlanContext(organizationId);
   if (!ctx?.active) {
     return {
       ok: false,
-      error: "Your trial has expired. Upgrade to add venues.",
+      error: "Η δοκιμαστική περίοδος έληξε. Αναβάθμισε για να προσθέσεις μαγαζιά.",
       code: "trial_expired",
     };
   }
@@ -192,7 +192,7 @@ export async function canOrganizationAddVenue(organizationId: string): Promise<
   if (org.venues.length >= maxVenues) {
     return {
       ok: false,
-      error: `Your ${ctx.plan.name} plan allows up to ${maxVenues} venue(s). Upgrade to add more.`,
+      error: `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxVenues} μαγαζιά.`,
       code: "venue_limit",
     };
   }
@@ -206,7 +206,7 @@ export async function canOrganizationAddMenu(
 ): Promise<{ ok: true } | { ok: false; error: string; code: string }> {
   const ctx = await getOrganizationPlanContext(organizationId);
   if (!ctx?.active) {
-    return { ok: false, error: "Subscription inactive.", code: "subscription_inactive" };
+    return { ok: false, error: "Η συνδρομή δεν είναι ενεργή.", code: "subscription_inactive" };
   }
 
   const maxMenus = ctx.plan.maxMenusPerVenue;
@@ -216,8 +216,40 @@ export async function canOrganizationAddMenu(
   if (count >= maxMenus) {
     return {
       ok: false,
-      error: `Your ${ctx.plan.name} plan allows up to ${maxMenus} menu(s) per venue.`,
+      error: `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxMenus} menu ανά μαγαζί.`,
       code: "menu_limit",
+    };
+  }
+
+  return { ok: true };
+}
+
+export async function canOrganizationAddItems(
+  organizationId: string,
+  countToAdd: number,
+): Promise<{ ok: true } | { ok: false; error: string; code: string }> {
+  if (countToAdd < 1) return { ok: true };
+
+  const ctx = await getOrganizationPlanContext(organizationId);
+  if (!ctx?.active) {
+    return { ok: false, error: "Η συνδρομή δεν είναι ενεργή.", code: "subscription_inactive" };
+  }
+
+  const maxItems = ctx.plan.maxItems;
+  if (maxItems === null) return { ok: true };
+
+  const count = await prisma.item.count({
+    where: { category: { menu: { venue: { organizationId } } } },
+  });
+  if (count + countToAdd > maxItems) {
+    const remaining = Math.max(0, maxItems - count);
+    return {
+      ok: false,
+      error:
+        remaining > 0
+          ? `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxItems} πιάτα. Μπορείς να προσθέσεις ακόμα ${remaining}.`
+          : `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxItems} πιάτα.`,
+      code: "item_limit",
     };
   }
 
@@ -227,26 +259,7 @@ export async function canOrganizationAddMenu(
 export async function canOrganizationAddItem(
   organizationId: string,
 ): Promise<{ ok: true } | { ok: false; error: string; code: string }> {
-  const ctx = await getOrganizationPlanContext(organizationId);
-  if (!ctx?.active) {
-    return { ok: false, error: "Subscription inactive.", code: "subscription_inactive" };
-  }
-
-  const maxItems = ctx.plan.maxItems;
-  if (maxItems === null) return { ok: true };
-
-  const count = await prisma.item.count({
-    where: { category: { menu: { venue: { organizationId } } } },
-  });
-  if (count >= maxItems) {
-    return {
-      ok: false,
-      error: `Your ${ctx.plan.name} plan allows up to ${maxItems} items.`,
-      code: "item_limit",
-    };
-  }
-
-  return { ok: true };
+  return canOrganizationAddItems(organizationId, 1);
 }
 
 export function isCheckoutPlan(planId: string): planId is PaidSubscriptionPlanId {

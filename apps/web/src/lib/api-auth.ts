@@ -14,13 +14,19 @@ export async function requireSession(options?: {
   if (!session) {
     return {
       session: null,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      response: NextResponse.json(
+        { error: "Μη εξουσιοδοτημένη πρόσβαση.", code: "unauthorized" },
+        { status: 401 },
+      ),
     };
   }
   if (options?.roles && !options.roles.includes(session.role)) {
     return {
       session: null,
-      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+      response: NextResponse.json(
+        { error: "Δεν έχεις δικαίωμα.", code: "forbidden" },
+        { status: 403 },
+      ),
     };
   }
   return { session, response: null };
@@ -38,7 +44,7 @@ export async function requireActiveSubscription(options?: {
       session: null,
       response: NextResponse.json(
         {
-          error: "Your subscription is inactive. Please upgrade to continue.",
+          error: "Η συνδρομή σου δεν είναι ενεργή. Αναβάθμισε για να συνεχίσεις.",
           code: "subscription_inactive",
         },
         { status: 403 },

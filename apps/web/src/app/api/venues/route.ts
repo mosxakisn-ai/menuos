@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireActiveSubscription();
+  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
   return createVenueHandler(request, auth.session!.organizationId);
 }

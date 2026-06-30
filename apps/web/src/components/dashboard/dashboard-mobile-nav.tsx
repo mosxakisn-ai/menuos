@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, LayoutGrid, QrCode, Settings, UtensilsCrossed } from "lucide-react";
+import { Bell, CreditCard, LayoutGrid, QrCode, Settings, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -10,6 +10,7 @@ const links = [
   { href: "/dashboard/menus", label: "Menu", icon: UtensilsCrossed },
   { href: "/dashboard/qr", label: "QR", icon: QrCode },
   { href: "/dashboard/waiter", label: "Κλήσεις", icon: Bell },
+  { href: "/dashboard/billing", label: "Συνδρομή", icon: CreditCard },
   { href: "/dashboard/settings", label: "Ρυθμίσεις", icon: Settings },
 ];
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
+import { itemPatchSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { getItemForOrganization } from "@/lib/venue-access";
 
@@ -15,25 +16,31 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
 
-  let body: { available?: boolean; price?: number };
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  const parsed = itemPatchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Μη έγκυρη τιμή ή διαθεσιμότητα." }, { status: 400 });
+  }
+
   const item = await prisma.item.update({
     where: { id: itemId },
     data: {
-      ...(typeof body.available === "boolean" ? { available: body.available } : {}),
-      ...(typeof body.price === "number" ? { price: body.price } : {}),
+      ...(parsed.data.available !== undefined ? { available: parsed.data.available } : {}),
+      ...(parsed.data.price !== undefined ? { price: parsed.data.price } : {}),
     },
     include: { translations: true },
   });
 
   return NextResponse.json({
     item,
-    message: body.available === false ? "Το πιάτο απενεργοποιήθηκε." : "Το πιάτο ενημερώθηκε.",
+    message:
+      parsed.data.available === false ? "Το πιάτο απενεργοποιήθηκε." : "Το πιάτο ενημερώθηκε.",
   });
 }
 

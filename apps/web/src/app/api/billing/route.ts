@@ -13,12 +13,11 @@ import { createPlanCheckoutSession, isStripeEnabled } from "@/lib/stripe-client"
 import type { PaidSubscriptionPlanId } from "@menuos/shared";
 
 export async function GET() {
+  const auth = await requireSession({ roles: ["ADMIN"] });
+  if (auth.response) return auth.response;
+
   return NextResponse.json({
     stripeEnabled: isStripeEnabled(),
-    app: "menuos",
-    platform: "menuos.gr",
-    webhookPath: "/api/billing/webhook",
-    stripeFilter: "metadata.app = menuos",
   });
 }
 

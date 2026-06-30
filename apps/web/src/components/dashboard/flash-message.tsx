@@ -4,6 +4,24 @@ import { CheckCircle2, Info, AlertTriangle, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
+const API_ERROR_MESSAGES: Record<string, string> = {
+  subscription_inactive: "Η συνδρομή σου δεν είναι ενεργή. Αναβάθμισε για να συνεχίσεις.",
+  trial_expired: "Η δοκιμαστική περίοδος έληξε.",
+  unauthorized: "Συνδέσου ξανά.",
+  forbidden: "Δεν έχεις δικαίωμα.",
+  venue_limit: "Έφτασες το όριο μαγαζιών του πλάνου σου.",
+  menu_limit: "Έφτασες το όριο menu του πλάνου σου.",
+  item_limit: "Έφτασες το όριο πιάτων του πλάνου σου.",
+  not_found: "Δεν βρέθηκε.",
+  enterprise_contact: "Επικοινώνησε μαζί μας για Enterprise τιμολόγηση.",
+  stripe_not_configured: "Το σύστημα πληρωμών δεν είναι διαθέσιμο.",
+};
+
+export function resolveApiError(data: { error?: string; code?: string }): string {
+  if (data.code && API_ERROR_MESSAGES[data.code]) return API_ERROR_MESSAGES[data.code];
+  return data.error ?? "Κάτι πήγε στραβά.";
+}
+
 export type FlashMessage = {
   type: "success" | "info" | "error";
   text: string;
@@ -71,11 +89,14 @@ export function useFlashMessage() {
     setFlash({ type, text });
   }, []);
 
-  const showFromResponse = useCallback((data: { message?: string; error?: string }, ok: boolean) => {
-    if (data.message) setFlash({ type: "success", text: data.message });
-    else if (data.error) setFlash({ type: "error", text: data.error });
-    else if (ok) setFlash({ type: "success", text: "Επιτυχία!" });
-  }, []);
+  const showFromResponse = useCallback(
+    (data: { message?: string; error?: string; code?: string }, ok: boolean) => {
+      if (data.message) setFlash({ type: "success", text: data.message });
+      else if (data.error || data.code) setFlash({ type: "error", text: resolveApiError(data) });
+      else if (ok) setFlash({ type: "success", text: "Επιτυχία!" });
+    },
+    [],
+  );
 
   return { flash, setFlash, show, showFromResponse };
 }

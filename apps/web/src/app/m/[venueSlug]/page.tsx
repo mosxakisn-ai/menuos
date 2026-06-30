@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@menuos/db";
 import { parseQrMenuLanguage } from "@menuos/shared";
 import { buildPrivatePageMetadata } from "@/lib/seo";
+import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { PublicMenuView } from "@/components/menu/public-menu-view";
+import { PublicMenuUnavailable } from "@/components/menu/public-menu-unavailable";
 
 type Props = {
   params: Promise<{ venueSlug: string }>;
@@ -23,6 +25,7 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
   const venue = await prisma.venue.findUnique({
     where: { slug: venueSlug },
     include: {
+      organization: { include: { subscription: true } },
       menus: {
         where: { isActive: true },
         orderBy: { sortOrder: "asc" },
@@ -44,6 +47,10 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
   });
 
   if (!venue) notFound();
+
+  if (!organizationIsPubliclyActive(venue.organization.subscription)) {
+    return <PublicMenuUnavailable venueName={venue.name} />;
+  }
 
   return (
     <PublicMenuView

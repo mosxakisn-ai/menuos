@@ -103,6 +103,16 @@ export const menuImportApplySchema = z.object({
   categories: z.array(menuImportCategorySchema).min(1),
 });
 
+export const itemPatchSchema = z
+  .object({
+    available: z.boolean().optional(),
+    price: z.number().finite().min(0).max(99999).optional(),
+  })
+  .refine((d) => d.available !== undefined || d.price !== undefined, {
+    message: "Nothing to update",
+  });
+
+export type ItemPatchInput = z.infer<typeof itemPatchSchema>;
 export type MenuImportApplyInput = z.infer<typeof menuImportApplySchema>;
 export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
 export type ItemCreateInput = z.infer<typeof itemCreateSchema>;
