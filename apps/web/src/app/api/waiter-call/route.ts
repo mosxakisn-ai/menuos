@@ -14,6 +14,17 @@ type TxResult = {
   notify: StaffWaiterNotifyReason | null;
 };
 
+type VenueWithOrg = NonNullable<
+  Awaited<
+    ReturnType<
+      typeof prisma.venue.findUnique<{
+        where: { slug: string };
+        include: { organization: { include: { subscription: true } } };
+      }>
+    >
+  >
+>;
+
 async function lockActiveCall(
   tx: Prisma.TransactionClient,
   venueId: string,
@@ -34,6 +45,49 @@ async function lockActiveCall(
   `;
   if (!rows[0]) return null;
   return tx.waiterCall.findUnique({ where: { id: rows[0].id } });
+}
+
+async function runWaiterCallTransaction(
+  venue: VenueWithOrg,
+  callType: WaiterCallType,
+  tableNumber: string | undefined,
+  roomNumber: string | undefined,
+  validatedOrder: OrderPayload | null,
+): Promise<TxResult> {
+  return prisma.$transaction(async (tx): Promise<TxResult> => {
+    const existing = await lockActiveCall(tx, venue.id, tableNumber, roomNumber, callType);
+
+    if (existing) {
+      if (callType === "ORDER" && validatedOrder) {
+        const merged = mergeOrderPayload(existing.orderItems, validatedOrder);
+        const wasAcknowledged = existing.status === "ACKNOWLEDGED";
+        const updated = await tx.waiterCall.update({
+          where: { id: existing.id },
+          data: {
+            orderItems: merged,
+            ...(wasAcknowledged ? { status: WaiterCallStatus.PENDING } : {}),
+          },
+        });
+        return {
+          call: updated,
+          notify: wasAcknowledged ? "reopened" : "order_updated",
+        };
+      }
+      return { call: existing, notify: null };
+    }
+
+    const created = await tx.waiterCall.create({
+      data: {
+        venueId: venue.id,
+        type: callType,
+        tableNumber,
+        roomNumber,
+        status: WaiterCallStatus.PENDING,
+        orderItems: callType === "ORDER" && validatedOrder ? validatedOrder : undefined,
+      },
+    });
+    return { call: created, notify: "new" };
+  });
 }
 
 export async function GET(request: Request) {
@@ -128,46 +182,28 @@ export async function POST(request: Request) {
       }
     }
 
-    const result = await prisma.$transaction(async (tx): Promise<TxResult> => {
-      const existing = await lockActiveCall(
-        tx,
-        venue.id,
+    let result: TxResult;
+    try {
+      result = await runWaiterCallTransaction(
+        venue,
+        callType,
         parsed.data.tableNumber,
         parsed.data.roomNumber,
-        callType,
+        validatedOrder,
       );
-
-      if (existing) {
-        if (callType === "ORDER" && validatedOrder) {
-          const merged = mergeOrderPayload(existing.orderItems, validatedOrder);
-          const wasAcknowledged = existing.status === "ACKNOWLEDGED";
-          const updated = await tx.waiterCall.update({
-            where: { id: existing.id },
-            data: {
-              orderItems: merged,
-              ...(wasAcknowledged ? { status: WaiterCallStatus.PENDING } : {}),
-            },
-          });
-          return {
-            call: updated,
-            notify: wasAcknowledged ? "reopened" : "order_updated",
-          };
-        }
-        return { call: existing, notify: null };
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        result = await runWaiterCallTransaction(
+          venue,
+          callType,
+          parsed.data.tableNumber,
+          parsed.data.roomNumber,
+          validatedOrder,
+        );
+      } else {
+        throw err;
       }
-
-      const created = await tx.waiterCall.create({
-        data: {
-          venueId: venue.id,
-          type: callType,
-          tableNumber: parsed.data.tableNumber,
-          roomNumber: parsed.data.roomNumber,
-          status: WaiterCallStatus.PENDING,
-          orderItems: callType === "ORDER" && validatedOrder ? validatedOrder : undefined,
-        },
-      });
-      return { call: created, notify: "new" };
-    });
+    }
 
     if (result.notify) {
       pushStaffWaiterCall(venue, result.call, result.notify);
@@ -180,29 +216,6 @@ export async function POST(request: Request) {
       cancellable: result.call.status === "PENDING",
     });
   } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      const venue = await prisma.venue.findUnique({ where: { slug: parsed.data.venueSlug } });
-      if (venue) {
-        const existing = await prisma.waiterCall.findFirst({
-          where: {
-            venueId: venue.id,
-            tableNumber: parsed.data.tableNumber ?? null,
-            roomNumber: parsed.data.roomNumber ?? null,
-            type: parsed.data.type as WaiterCallType,
-            status: { in: ["PENDING", "ACKNOWLEDGED"] },
-          },
-          orderBy: { createdAt: "desc" },
-        });
-        if (existing) {
-          return NextResponse.json({
-            id: existing.id,
-            type: existing.type,
-            status: existing.status,
-            cancellable: existing.status === "PENDING",
-          });
-        }
-      }
-    }
     console.error("[menuos] waiter-call POST failed", err);
     return NextResponse.json(
       { error: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο.", code: "server_error" },

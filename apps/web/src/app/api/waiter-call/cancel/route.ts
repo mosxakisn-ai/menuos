@@ -56,6 +56,17 @@ export async function POST(request: Request) {
     );
   }
 
+  const reqTable = parsed.data.tableNumber ?? null;
+  const reqRoom = parsed.data.roomNumber ?? null;
+  const callTable = call.tableNumber ?? null;
+  const callRoom = call.roomNumber ?? null;
+  if (callTable !== reqTable || callRoom !== reqRoom) {
+    return NextResponse.json(
+      { error: "Η κλήση δεν ανήκει σε αυτό το τραπέζι/δωμάτιο.", code: "wrong_location" },
+      { status: 403 },
+    );
+  }
+
   const updated = await prisma.waiterCall.updateMany({
     where: { id: call.id, status: "PENDING" },
     data: { status: "CANCELED" },

@@ -26,6 +26,14 @@ export async function POST(request: Request) {
 
   const userAgent = request.headers.get("user-agent")?.slice(0, 512) ?? null;
 
+  const owned = await prisma.pushSubscription.findUnique({
+    where: { endpoint: parsed.data.endpoint },
+    select: { organizationId: true },
+  });
+  if (owned && owned.organizationId !== auth.session!.organizationId) {
+    return NextResponse.json({ error: "Το endpoint ανήκει σε άλλο λογαριασμό." }, { status: 403 });
+  }
+
   await prisma.pushSubscription.upsert({
     where: { endpoint: parsed.data.endpoint },
     create: {

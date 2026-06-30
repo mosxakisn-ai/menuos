@@ -1,5 +1,10 @@
 import { prisma } from "@menuos/db";
-import { buildOrderPayload, type OrderPayload } from "@menuos/shared";
+import {
+  buildOrderPayload,
+  mergeCartLine,
+  type OrderLine,
+  type OrderPayload,
+} from "@menuos/shared";
 
 function formatMenuPrice(price: { toString(): string }): string {
   const n = Number(price.toString());
@@ -27,19 +32,21 @@ export async function validateOrderItemsForVenue(
   if (items.length !== ids.length) return null;
 
   const byId = new Map(items.map((item) => [item.id, item]));
-  const lines = incoming.lines.map((line) => {
-    const item = byId.get(line.itemId)!;
+  let merged: OrderLine[] = [];
+  for (const line of incoming.lines) {
+    const item = byId.get(line.itemId);
+    if (!item) return null;
     const name =
       item.translations.find((t) => t.language === "GR")?.name ??
       item.translations[0]?.name ??
       line.name;
-    return {
+    merged = mergeCartLine(merged, {
       itemId: line.itemId,
       name,
       quantity: line.quantity,
       unitPrice: formatMenuPrice(item.price),
-    };
-  });
+    });
+  }
 
-  return buildOrderPayload(lines, incoming.lang);
+  return buildOrderPayload(merged, incoming.lang);
 }

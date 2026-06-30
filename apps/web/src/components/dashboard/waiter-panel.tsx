@@ -48,6 +48,7 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
   const [venueId, setVenueId] = useState(resolvedInitial);
   const [calls, setCalls] = useState<WaiterCall[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
+  const [updatingCallId, setUpdatingCallId] = useState<string | null>(null);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   const load = useCallback(async () => {
@@ -75,14 +76,20 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
   }, [load]);
 
   async function updateStatus(callId: string, status: "ACKNOWLEDGED" | "COMPLETED") {
-    const res = await fetch(`/api/waiter-call/${callId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    const data = await res.json();
-    showFromResponse(data, res.ok);
-    if (res.ok) await load();
+    if (updatingCallId) return;
+    setUpdatingCallId(callId);
+    try {
+      const res = await fetch(`/api/waiter-call/${callId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      showFromResponse(data, res.ok);
+      if (res.ok) await load();
+    } finally {
+      setUpdatingCallId(null);
+    }
   }
 
   if (venues.length === 0) {
@@ -183,7 +190,8 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
                     {call.status === "PENDING" ? (
                       <button
                         type="button"
-                        onClick={() => updateStatus(call.id, "ACKNOWLEDGED")}
+                        disabled={updatingCallId !== null}
+                        onClick={() => void updateStatus(call.id, "ACKNOWLEDGED")}
                         className={buttonClass("primary", "sm")}
                       >
                         Πήγαινε
@@ -192,7 +200,8 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
                     {call.status !== "COMPLETED" ? (
                       <button
                         type="button"
-                        onClick={() => updateStatus(call.id, "COMPLETED")}
+                        disabled={updatingCallId !== null}
+                        onClick={() => void updateStatus(call.id, "COMPLETED")}
                         className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
                       >
                         <Check className="h-3.5 w-3.5" />

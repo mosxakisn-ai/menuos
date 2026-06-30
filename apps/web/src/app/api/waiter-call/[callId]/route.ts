@@ -33,6 +33,20 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Μη έγκυρη κατάσταση." }, { status: 400 });
   }
 
+  const allowed: Record<string, string[]> = {
+    PENDING: ["ACKNOWLEDGED", "COMPLETED"],
+    ACKNOWLEDGED: ["COMPLETED"],
+    COMPLETED: [],
+    CANCELED: [],
+  };
+  const next = parsed.data.status;
+  if (!allowed[existing.status]?.includes(next)) {
+    return NextResponse.json(
+      { error: "Μη έγκυρη αλλαγή κατάστασης.", code: "invalid_transition" },
+      { status: 409 },
+    );
+  }
+
   const call = await prisma.waiterCall.update({
     where: { id: callId },
     data: { status: parsed.data.status },
@@ -41,7 +55,6 @@ export async function PATCH(request: Request, { params }: Params) {
   const messages: Record<string, string> = {
     ACKNOWLEDGED: "Η κλήση σημειώθηκε — πήγαινε στο τραπέζι.",
     COMPLETED: "Η κλήση ολοκληρώθηκε.",
-    PENDING: "Η κλήση επανήλθε σε αναμονή.",
   };
 
   return NextResponse.json({ call, message: messages[parsed.data.status] });

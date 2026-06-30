@@ -51,6 +51,8 @@ export function PushNotificationsPrompt() {
 
   async function enablePush() {
     setBusy(true);
+    let createdNewSub = false;
+    let sub: PushSubscription | null = null;
     try {
       const keyRes = await fetch("/api/push/vapid-public-key");
       const keyData = (await keyRes.json()) as { enabled?: boolean; publicKey?: string };
@@ -68,12 +70,13 @@ export function PushNotificationsPrompt() {
       const reg = await navigator.serviceWorker.register("/sw.js");
       await navigator.serviceWorker.ready;
 
-      let sub = await reg.pushManager.getSubscription();
+      sub = await reg.pushManager.getSubscription();
       if (!sub) {
         sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(keyData.publicKey) as BufferSource,
         });
+        createdNewSub = true;
       }
 
       const json = sub.toJSON();
@@ -93,12 +96,12 @@ export function PushNotificationsPrompt() {
 
       setState("subscribed");
     } catch {
-      try {
-        const reg = await navigator.serviceWorker.getRegistration("/sw.js");
-        const sub = await reg?.pushManager.getSubscription();
-        await sub?.unsubscribe();
-      } catch {
-        /* ignore rollback errors */
+      if (createdNewSub) {
+        try {
+          await sub?.unsubscribe();
+        } catch {
+          /* ignore rollback errors */
+        }
       }
       setState("prompt");
     } finally {

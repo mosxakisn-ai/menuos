@@ -70,6 +70,8 @@ export const waiterCallSchema = z
 export const waiterCallCancelSchema = z.object({
   venueSlug: z.string().min(1),
   callId: z.string().min(1),
+  tableNumber: z.string().max(20).optional(),
+  roomNumber: z.string().max(20).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
@@ -114,7 +116,7 @@ export const venueUpdateSchema = z.object({
 });
 
 export const waiterCallUpdateSchema = z.object({
-  status: z.enum(["PENDING", "ACKNOWLEDGED", "COMPLETED"]),
+  status: z.enum(["ACKNOWLEDGED", "COMPLETED"]),
 });
 
 export const pushSubscriptionSchema = z.object({

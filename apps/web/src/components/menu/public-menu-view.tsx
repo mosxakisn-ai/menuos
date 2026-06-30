@@ -105,6 +105,7 @@ export function PublicMenuView({
   });
   const [cancellingCallId, setCancellingCallId] = useState<string | null>(null);
   const [callErrorCode, setCallErrorCode] = useState<CallErrorCode | null>(null);
+  const [orderErrorCode, setOrderErrorCode] = useState<CallErrorCode | null>(null);
   const [callCancellable, setCallCancellable] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const actionResetTimersRef = useRef<Partial<Record<ActionKind, ReturnType<typeof setTimeout>>>>({});
@@ -352,6 +353,7 @@ export function PublicMenuView({
 
   async function sendOrder() {
     if (!canUseCallActions || cartLines.length === 0) return;
+    setOrderErrorCode(null);
     setOrderState("loading");
     setCartOpen(false);
     try {
@@ -372,11 +374,13 @@ export function PublicMenuView({
         code?: string;
       };
       if (!res.ok) {
+        setOrderErrorCode(data.code === "rate_limited" ? "rate_limited" : "generic");
         setOrderState("error");
         setTimeout(() => setOrderState("idle"), 4000);
         return;
       }
       if (data.type && data.type !== "ORDER") {
+        setOrderErrorCode("generic");
         setOrderState("error");
         setTimeout(() => setOrderState("idle"), 4000);
         return;
@@ -386,6 +390,7 @@ export function PublicMenuView({
       setTimeout(() => setOrderState("idle"), 3000);
       void syncTableStatus();
     } catch {
+      setOrderErrorCode("generic");
       setOrderState("error");
       setTimeout(() => setOrderState("idle"), 4000);
     }
@@ -403,6 +408,8 @@ export function PublicMenuView({
         body: JSON.stringify({
           venueSlug: venue.slug,
           callId: target.id,
+          tableNumber,
+          roomNumber,
         }),
       });
       if (!res.ok) {
@@ -790,7 +797,9 @@ export function PublicMenuView({
                 : orderState === "success"
                   ? ui.orderSent
                   : orderState === "error"
-                    ? ui.orderFailed
+                    ? orderErrorCode === "rate_limited"
+                      ? ui.rateLimited
+                      : ui.orderFailed
                     : ui.sendOrder}
             </button>
           </div>
@@ -1103,7 +1112,15 @@ export function PublicMenuView({
                       "bg-brand-blue",
                     )}
                   >
-                    {orderState === "loading" ? ui.orderSending : ui.sendOrder}
+                    {orderState === "loading"
+                      ? ui.orderSending
+                      : orderState === "success"
+                        ? ui.orderSent
+                        : orderState === "error"
+                          ? orderErrorCode === "rate_limited"
+                            ? ui.rateLimited
+                            : ui.orderFailed
+                          : ui.sendOrder}
                   </button>
                   {hasActiveOrder ? (
                     <p className="mt-2 text-center text-xs text-slate-500">{ui.orderInProgress}</p>
