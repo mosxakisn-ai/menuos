@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
@@ -23,6 +24,7 @@ type Venue = {
 };
 
 export function SettingsForm({ venues }: { venues: Venue[] }) {
+  const router = useRouter();
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
   const venue = venues.find((v) => v.id === venueId);
   const [name, setName] = useState(venue?.name ?? "");
@@ -63,6 +65,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
       });
       const data = await res.json();
       showFromResponse(data, res.ok);
+      if (res.ok) router.refresh();
     } finally {
       setSaving(false);
     }
@@ -130,6 +133,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
             label={DASHBOARD_EL.photos.logoLabel}
             hint={DASHBOARD_EL.photos.logoHint}
           />
+          <p className="lg:col-span-2 text-xs text-slate-500">{DASHBOARD_EL.photos.logoSaveHint}</p>
           <label className="block">
             <span className={dashboardLabelClass}>Κύριο χρώμα</span>
             <input

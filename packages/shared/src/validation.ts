@@ -113,6 +113,18 @@ export const venueSpotLabelSchema = z
     message: "Μόνο γράμματα, αριθμοί, παύλα και κάτω παύλα.",
   });
 
+const venueSpotLabelPattern = /^[a-zA-Z0-9\u0370-\u03FF\u1F00-\u1FFF_-]+$/;
+
+export const venueSpotPrefixSchema = z
+  .string()
+  .max(15)
+  .trim()
+  .optional()
+  .default("")
+  .refine((prefix) => !prefix || venueSpotLabelPattern.test(prefix), {
+    message: "Άκυρο πρόθεμα — μόνο γράμματα, αριθμοί, παύλα και κάτω παύλα.",
+  });
+
 export const venueSpotCreateSchema = z.object({
   type: venueSpotTypeSchema,
   label: venueSpotLabelSchema,
@@ -127,7 +139,7 @@ export const venueSpotBulkCreateSchema = z
     type: venueSpotTypeSchema,
     from: z.number().int().min(1).max(999),
     to: z.number().int().min(1).max(999),
-    prefix: z.string().max(15).trim().optional().default(""),
+    prefix: venueSpotPrefixSchema,
   })
   .refine((d) => d.to >= d.from, { message: "Το 'έως' πρέπει να είναι ≥ 'από'." })
   .refine((d) => d.to - d.from < 200, { message: "Μέγιστο 200 θέσεις ανά φορά." })
@@ -140,6 +152,16 @@ export const venueSpotBulkCreateSchema = z
       return true;
     },
     { message: "Το πρόθεμα + αριθμός ξεπερνά 20 χαρακτήρες." },
+  )
+  .refine(
+    (d) => {
+      const prefix = d.prefix ?? "";
+      for (let n = d.from; n <= d.to; n++) {
+        if (!venueSpotLabelSchema.safeParse(`${prefix}${n}`).success) return false;
+      }
+      return true;
+    },
+    { message: "Άκυρο πρόθεμα ή όνομα θέσης." },
   );
 
 export type RegisterInput = z.infer<typeof registerSchema>;

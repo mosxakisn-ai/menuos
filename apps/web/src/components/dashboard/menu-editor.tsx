@@ -27,6 +27,10 @@ type Category = {
 type Menu = { id: string; name: string; categories: Category[] };
 type Venue = { id: string; name: string; slug: string };
 
+function parseMenuPrice(raw: string): number {
+  return parseFloat(raw.trim().replace(",", "."));
+}
+
 export function MenuEditor({
   venues,
   initialVenueId,
@@ -141,6 +145,11 @@ export function MenuEditor({
   async function addItem(e: React.FormEvent) {
     e.preventDefault();
     if (!itemCategoryId || !itemForm.nameGr.trim() || !itemForm.price) return;
+    const price = parseMenuPrice(itemForm.price);
+    if (!Number.isFinite(price) || price < 0) {
+      setFlash({ type: "error", text: "Βάλε έγκυρη τιμή (π.χ. 4.50)." });
+      return;
+    }
     setAddingItem(true);
     try {
       const res = await fetch("/api/items", {
@@ -152,7 +161,7 @@ export function MenuEditor({
           nameEn: itemForm.nameEn.trim() || undefined,
           nameDe: itemForm.nameDe.trim() || undefined,
           nameFr: itemForm.nameFr.trim() || undefined,
-          price: parseFloat(itemForm.price),
+          price,
           descriptionGr: itemForm.descriptionGr.trim() || undefined,
           label: itemForm.label || undefined,
           photoUrl: itemForm.photoUrl.trim() || undefined,
@@ -205,7 +214,7 @@ export function MenuEditor({
 
   async function saveItemEdit(itemId: string) {
     if (!editNameGr.trim()) return;
-    const price = parseFloat(editPrice);
+    const price = parseMenuPrice(editPrice);
     if (!Number.isFinite(price) || price < 0) {
       setFlash({ type: "error", text: "Βάλε έγκυρη τιμή (π.χ. 4.50)." });
       return;

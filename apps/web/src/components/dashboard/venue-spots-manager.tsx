@@ -89,8 +89,8 @@ export function VenueSpotsManager({
     if (!venueId) return;
     const from = Number(bulkFrom);
     const to = Number(bulkTo);
-    if (!Number.isFinite(from) || !Number.isFinite(to) || to < from) {
-      setFlash({ type: "error", text: "Βάλε έγκυρο εύρος (π.χ. από 1 έως 120)." });
+    if (!Number.isFinite(from) || !Number.isFinite(to) || to < from || from < 1 || to > 999) {
+      setFlash({ type: "error", text: "Βάλε έγκυρο εύρος από 1 έως 999 (π.χ. από 1 έως 120)." });
       return;
     }
     if (to - from >= 200) {
@@ -254,7 +254,10 @@ export function VenueSpotsManager({
           <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
           <select
             value={venueId}
-            onChange={(e) => setVenueId(e.target.value)}
+            onChange={(e) => {
+              setVenueId(e.target.value);
+              cancelEditing();
+            }}
             className={dashboardFieldClass}
           >
             {venues.map((v) => (
@@ -305,7 +308,7 @@ export function VenueSpotsManager({
               <input
                 type="number"
                 min={1}
-                max={9999}
+                max={999}
                 value={bulkFrom}
                 onChange={(e) => setBulkFrom(e.target.value)}
                 className={`${dashboardFieldClass} w-24`}
@@ -316,7 +319,7 @@ export function VenueSpotsManager({
               <input
                 type="number"
                 min={1}
-                max={9999}
+                max={999}
                 placeholder="120"
                 value={bulkTo}
                 onChange={(e) => setBulkTo(e.target.value)}
