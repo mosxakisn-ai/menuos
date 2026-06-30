@@ -14,8 +14,7 @@ echo "==> Post-sync health check..."
 sleep 4
 
 HEALTH_JSON=""
-if HEALTH_JSON="$(docker compose -f "$ROOT/docker-compose.prod.yml" exec -T menuos-web \
-  wget -qO- http://127.0.0.1:3000/api/health 2>/dev/null)"; then
+if HEALTH_JSON="$(bash "$ROOT/scripts/health-check.sh" 2>/dev/null)"; then
   echo "$HEALTH_JSON"
   if echo "$HEALTH_JSON" | grep -q '"database":"ok"'; then
     echo "==> Sync OK — database connected."

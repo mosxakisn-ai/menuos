@@ -57,8 +57,7 @@ docker compose -f docker-compose.prod.yml up -d --force-recreate menuos-web
 
 echo "==> In-container health check..."
 sleep 4
-if HEALTH="$(docker compose -f docker-compose.prod.yml exec -T menuos-web \
-  wget -qO- http://127.0.0.1:3000/api/health 2>/dev/null)"; then
+if HEALTH="$(bash "$ROOT/scripts/health-check.sh" 2>/dev/null)"; then
   echo "$HEALTH"
   if ! echo "$HEALTH" | grep -q '"database":"ok"'; then
     echo "WARN: Web is up but database check failed — verify POSTGRES_PASSWORD / DATABASE_URL in .env"
@@ -78,7 +77,8 @@ docker exec matchwork-caddy-1 caddy reload --config /etc/caddy/Caddyfile
 
 echo "==> Done."
 docker compose -f docker-compose.prod.yml ps
-docker compose -f docker-compose.prod.yml exec -T menuos-web wget -q -O /dev/null -S http://127.0.0.1:3000/ 2>&1 | head -1 || true
+docker compose -f docker-compose.prod.yml exec -T menuos-web node -e \
+  "fetch('http://127.0.0.1:3000/').then(r=>console.log('home',r.status)).catch(()=>process.exit(1))" 2>/dev/null || true
 
 if [ "${RUN_INDEXNOW:-0}" = "1" ] && [ -f "$ROOT/scripts/submit-indexnow.mjs" ]; then
   echo "==> IndexNow ping..."

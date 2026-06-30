@@ -68,9 +68,8 @@ export STRICT=0
 bash "$ROOT/scripts/sync-all.sh" || bash "$ROOT/scripts/server-deploy.sh"
 
 echo ""
-echo "==> Public checks (from server)"
-curl -sf "http://127.0.0.1:3000/api/health" 2>/dev/null \
-  || docker compose -f docker-compose.prod.yml exec -T menuos-web wget -qO- http://127.0.0.1:3000/api/health 2>/dev/null \
+echo "==> Health (in container)"
+bash "$ROOT/scripts/health-check.sh" 2>/dev/null \
   || echo "  /api/health not ready — see: docker compose -f docker-compose.prod.yml logs menuos-web --tail 50"
 
 echo ""

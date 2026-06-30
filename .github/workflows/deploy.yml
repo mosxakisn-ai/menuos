@@ -13,29 +13,75 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Verify deploy secrets
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          if [ -z "${SERVER_HOST:-}" ]; then
+            echo "::error::Missing GitHub secret SERVER_HOST (same Hetzner IP as MatchWork)"
+            missing=1
+          fi
+          if [ -z "${SERVER_USER:-}" ]; then
+            echo "::error::Missing GitHub secret SERVER_USER (usually root)"
+            missing=1
+          fi
+          if [ -z "${SSH_PRIVATE_KEY:-}" ]; then
+            echo "::error::Missing GitHub secret SSH_PRIVATE_KEY"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo "Add secrets: https://github.com/mosxakisn-ai/menuos/settings/secrets/actions"
+            exit 1
+          fi
+          echo "Deploy secrets configured (host + user + key present)."
+
       - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script_stop: true
+          debug: true
           timeout: 30m
           command_timeout: 25m
           script: |
             set -euo pipefail
             APP_DIR="/opt/menuos"
+            REPO="https://github.com/mosxakisn-ai/menuos.git"
+
+            if [ ! -d "$APP_DIR" ]; then
+              echo "==> Bootstrap $APP_DIR (first deploy)..."
+              mkdir -p "$APP_DIR"
+              apt-get update -qq
+              apt-get install -y -qq git
+              git clone "$REPO" "$APP_DIR"
+            fi
+
             cd "$APP_DIR"
             chmod +x scripts/*.sh 2>/dev/null || true
             git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
+
             if [ ! -d .git ]; then
-              echo "No git repo — adopting in place (HTTPS)..."
+              echo "No git repo — adopting in place..."
               APP_DIR="$APP_DIR" bash scripts/server-git-adopt.sh
             else
-              git remote set-url origin https://github.com/mosxakisn-ai/menuos.git
+              git remote set-url origin "$REPO"
             fi
+
             git fetch origin main
             git reset --hard origin/main
             echo "Deployed commit: $(git rev-parse --short HEAD)"
-            chmod +x scripts/sync-all.sh scripts/server-deploy.sh scripts/fix-production.sh
-            APP_DIR="$APP_DIR" RUN_DB_PUSH=1 bash scripts/sync-all.sh
+
+            chmod +x scripts/sync-all.sh scripts/server-deploy.sh scripts/fix-production.sh scripts/health-check.sh
+
+            if [ ! -f .env ]; then
+              echo "::error::Missing $APP_DIR/.env — create it on the server before deploy."
+              exit 1
+            fi
+
+            APP_DIR="$APP_DIR" RUN_DB_PUSH=1 STRICT=0 bash scripts/fix-production.sh
