@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { useDemoMenuUrl } from "@/lib/demo-menu-url";
 import { SEO_FOOTER_HUB } from "@/lib/seo-landing";
 import { Logo } from "@/components/brand/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -24,7 +23,6 @@ const NAV_LINKS = [
 export function SiteHeader() {
   const { m } = useI18n();
   const marketing = m.marketing;
-  const demoUrl = useDemoMenuUrl();
   const [mobileOpen, setMobileOpen] = useState(false);
   const a11y = marketing.a11y;
 
@@ -38,9 +36,6 @@ export function SiteHeader() {
               {marketing.nav[key]}
             </Link>
           ))}
-          <Link href={demoUrl} className={navLinkClass}>
-            {marketing.nav.demo}
-          </Link>
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           <button
@@ -76,15 +71,6 @@ export function SiteHeader() {
                 </Link>
               </li>
             ))}
-            <li>
-              <Link
-                href={demoUrl}
-                onClick={() => setMobileOpen(false)}
-                className="block rounded-button px-3 py-2.5 text-sm font-medium text-brand-blue hover:bg-brand-surface"
-              >
-                {marketing.nav.demo}
-              </Link>
-            </li>
             <li className="border-t border-slate-100 pt-3">
               <LanguageSwitcher mini compact className="px-3" />
             </li>
@@ -117,7 +103,6 @@ export function SiteFooter() {
   const { m, locale } = useI18n();
   const marketing = m.marketing;
   const f = marketing.footer;
-  const demoUrl = useDemoMenuUrl();
   const isEn = locale === "en";
   const taglineSuffix =
     "taglineSuffix" in f ? (f as { taglineSuffix: string }).taglineSuffix : null;
@@ -136,7 +121,6 @@ export function SiteFooter() {
             <p className="text-sm font-semibold text-white">{f.columns.product}</p>
             <ul className="mt-4 space-y-2.5 text-sm text-slate-300">
               <li><Link href="/qr-menu" className="hover:text-brand-cyan">{f.links.qrMenu}</Link></li>
-              <li><Link href={demoUrl} className="hover:text-brand-cyan">{f.links.demo}</Link></li>
               <li><Link href="/ypiresies" className="hover:text-brand-cyan">{f.links.services}</Link></li>
               <li><Link href="/pos-leitourgei" className="hover:text-brand-cyan">{f.links.howItWorks}</Link></li>
               <li><Link href="/pricing" className="hover:text-brand-cyan">{f.links.pricing}</Link></li>
