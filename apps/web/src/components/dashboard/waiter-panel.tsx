@@ -41,7 +41,11 @@ function isOrderUpdated(call: WaiterCall): boolean {
 }
 
 export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initialVenueId?: string }) {
-  const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
+  const resolvedInitial =
+    initialVenueId && venues.some((v) => v.id === initialVenueId)
+      ? initialVenueId
+      : (venues[0]?.id ?? "");
+  const [venueId, setVenueId] = useState(resolvedInitial);
   const [calls, setCalls] = useState<WaiterCall[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -53,7 +57,15 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
     if (res.ok) {
       setCalls(data.calls ?? []);
       setPendingCount(data.pendingCount ?? 0);
+    } else {
+      setCalls([]);
+      setPendingCount(0);
     }
+  }, [venueId]);
+
+  useEffect(() => {
+    setCalls([]);
+    setPendingCount(0);
   }, [venueId]);
 
   useEffect(() => {

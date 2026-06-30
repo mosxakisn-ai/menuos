@@ -97,7 +97,6 @@ export function PublicMenuView({
   const [cartOpen, setCartOpen] = useState(false);
   const [orderState, setOrderState] = useState<ActionState>("idle");
   const [addedFlash, setAddedFlash] = useState(false);
-  const [activeCallId, setActiveCallId] = useState<string | null>(null);
   const [activeCalls, setActiveCalls] = useState<TableCall[]>([]);
   const [actionState, setActionState] = useState<Record<ActionKind, ActionState>>({
     WAITER: "idle",
@@ -108,7 +107,8 @@ export function PublicMenuView({
   const [callErrorCode, setCallErrorCode] = useState<CallErrorCode | null>(null);
   const [callCancellable, setCallCancellable] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
-  const resetTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const actionResetTimersRef = useRef<Partial<Record<ActionKind, ReturnType<typeof setTimeout>>>>({});
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [isInIframe, setIsInIframe] = useState(false);
   const isEmbedded = embedMode || isInIframe;
@@ -135,7 +135,6 @@ export function PublicMenuView({
 
   const clearActiveCall = useCallback(() => {
     sessionStorage.removeItem(storageKey);
-    setActiveCallId(null);
     setActiveCalls([]);
     setCallCancellable(false);
   }, [storageKey]);
@@ -145,11 +144,9 @@ export function PublicMenuView({
     const cancellable = calls.find((c) => c.cancellable);
     const primary = cancellable ?? calls[0];
     if (primary) {
-      setActiveCallId(primary.id);
       setCallCancellable(primary.cancellable);
       sessionStorage.setItem(storageKey, primary.id);
     } else {
-      setActiveCallId(null);
       setCallCancellable(false);
       sessionStorage.removeItem(storageKey);
     }
@@ -233,10 +230,11 @@ export function PublicMenuView({
   }, [roomNumber, syncTableStatus, tableNumber]);
 
   useEffect(() => {
-    const timers = resetTimersRef.current;
     return () => {
-      timers.forEach(clearTimeout);
-      timers.length = 0;
+      for (const timer of Object.values(actionResetTimersRef.current)) {
+        if (timer) clearTimeout(timer);
+      }
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
     };
   }, []);
 
@@ -283,15 +281,17 @@ export function PublicMenuView({
   }
 
   function resetActionState(kind: ActionKind, delayMs = 3000) {
-    const timer = setTimeout(() => {
+    const prev = actionResetTimersRef.current[kind];
+    if (prev) clearTimeout(prev);
+    actionResetTimersRef.current[kind] = setTimeout(() => {
+      delete actionResetTimersRef.current[kind];
       setActionState((s) => ({ ...s, [kind]: "idle" }));
       if (kind === "WAITER" || kind === "BILL") setCallErrorCode(null);
     }, delayMs);
-    resetTimersRef.current.push(timer);
   }
 
   async function sendCall(type: "WAITER" | "BILL") {
-    if (hasPendingType(type)) return;
+    if (hasBlockingCall(type)) return;
     setCallErrorCode(null);
     setActionState((s) => ({ ...s, [type]: "loading", CANCEL: "idle" }));
     try {
@@ -342,11 +342,12 @@ export function PublicMenuView({
     };
     persistCart(mergeCartLine(cartLines, line));
     setAddedFlash(true);
-    const timer = setTimeout(() => {
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    flashTimerRef.current = setTimeout(() => {
+      flashTimerRef.current = null;
       setAddedFlash(false);
       setSelectedItem(null);
     }, 500);
-    resetTimersRef.current.push(timer);
   }
 
   async function sendOrder() {
@@ -448,8 +449,10 @@ export function PublicMenuView({
     return pickQrMenuTranslation(translations, lang)?.name ?? "—";
   }
 
-  const hasPendingType = (type: ActiveCallType) =>
-    activeCalls.some((c) => c.type === type && c.status === "PENDING");
+  const hasBlockingCall = (type: "WAITER" | "BILL") =>
+    activeCalls.some(
+      (c) => c.type === type && (c.status === "PENDING" || c.status === "ACKNOWLEDGED"),
+    );
   const hasActiveOrder = activeCalls.some((c) => c.type === "ORDER");
   const cancellableCalls = activeCalls.filter((c) => c.cancellable);
   const cancelTarget = cancellableCalls[0] ?? null;
@@ -837,11 +840,11 @@ export function PublicMenuView({
           <button
             type="button"
             onClick={() => void sendCall("WAITER")}
-            disabled={actionState.WAITER === "loading" || hasPendingType("WAITER")}
+            disabled={actionState.WAITER === "loading" || hasBlockingCall("WAITER")}
             className={cn(
               "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
-              hasPendingType("WAITER")
+              hasBlockingCall("WAITER")
                 ? "bg-slate-100 text-slate-400"
                 : "bg-primary text-white shadow-glow",
               actionState.WAITER === "success" && "bg-emerald-600 text-white",
@@ -856,11 +859,11 @@ export function PublicMenuView({
           <button
             type="button"
             onClick={() => void sendCall("BILL")}
-            disabled={actionState.BILL === "loading" || hasPendingType("BILL")}
+            disabled={actionState.BILL === "loading" || hasBlockingCall("BILL")}
             className={cn(
               "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
-              hasPendingType("BILL")
+              hasBlockingCall("BILL")
                 ? "bg-slate-100 text-slate-400"
                 : "bg-brand-blue text-white",
               actionState.BILL === "success" && "bg-emerald-600 text-white",

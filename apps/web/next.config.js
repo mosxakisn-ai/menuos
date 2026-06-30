@@ -5,7 +5,7 @@ const nextConfig = {
   transpilePackages: ["@menuos/db", "@menuos/shared"],
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
-  serverExternalPackages: ["sharp", "@aws-sdk/client-s3"],
+  serverExternalPackages: ["sharp"],
   images: {
     remotePatterns: [
       {

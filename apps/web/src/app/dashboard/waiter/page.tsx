@@ -27,7 +27,12 @@ export default async function WaiterPage({ searchParams }: Props) {
         </p>
       </div>
       <PushNotificationsPrompt />
-      <WaiterPanel venues={venues} initialVenueId={sp.venue} />
+      <WaiterPanel
+        venues={venues}
+        initialVenueId={
+          sp.venue && venues.some((v) => v.id === sp.venue) ? sp.venue : undefined
+        }
+      />
     </div>
   );
 }

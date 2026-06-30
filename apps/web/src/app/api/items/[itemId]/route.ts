@@ -50,7 +50,11 @@ export async function PATCH(request: Request, { params }: Params) {
   const { nameGr, nameEn, nameDe, nameFr, available, price, label, photoUrl } = parsed.data;
 
   const normalizedPhoto =
-    photoUrl === undefined ? undefined : photoUrl === "" || photoUrl === null ? null : photoUrl;
+    photoUrl === undefined
+      ? undefined
+      : photoUrl === "" || photoUrl === null
+        ? null
+        : photoUrl.trim();
 
   await prisma.item.update({
     where: { id: itemId },

@@ -93,6 +93,13 @@ export function PushNotificationsPrompt() {
 
       setState("subscribed");
     } catch {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration("/sw.js");
+        const sub = await reg?.pushManager.getSubscription();
+        await sub?.unsubscribe();
+      } catch {
+        /* ignore rollback errors */
+      }
       setState("prompt");
     } finally {
       setBusy(false);
@@ -106,11 +113,12 @@ export function PushNotificationsPrompt() {
       const sub = await reg?.pushManager.getSubscription();
       if (sub) {
         const endpoint = sub.endpoint;
-        await fetch("/api/push/unsubscribe", {
+        const res = await fetch("/api/push/unsubscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ endpoint }),
         });
+        if (!res.ok) throw new Error("unsubscribe failed");
         await sub.unsubscribe();
       }
       setState("prompt");

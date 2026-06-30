@@ -1,12 +1,40 @@
 import { NextResponse } from "next/server";
-import { prisma, WaiterCallStatus, WaiterCallType } from "@menuos/db";
-import { mergeOrderPayload, waiterCallSchema } from "@menuos/shared";
+import { Prisma, prisma, WaiterCallStatus, WaiterCallType, type WaiterCall } from "@menuos/db";
+import { mergeOrderPayload, type OrderPayload, waiterCallSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
+import { validateOrderItemsForVenue } from "@/lib/validate-order-items";
 import { getVenueForOrganization } from "@/lib/venue-access";
 import { pushStaffWaiterCall } from "@/lib/waiter-call-push";
 import type { StaffWaiterNotifyReason } from "@/lib/staff-push-notify";
+
+type TxResult = {
+  call: WaiterCall;
+  notify: StaffWaiterNotifyReason | null;
+};
+
+async function lockActiveCall(
+  tx: Prisma.TransactionClient,
+  venueId: string,
+  tableNumber: string | null | undefined,
+  roomNumber: string | null | undefined,
+  type: WaiterCallType,
+): Promise<WaiterCall | null> {
+  const rows = await tx.$queryRaw<{ id: string }[]>`
+    SELECT id FROM "WaiterCall"
+    WHERE "venueId" = ${venueId}
+      AND "tableNumber" IS NOT DISTINCT FROM ${tableNumber ?? null}
+      AND "roomNumber" IS NOT DISTINCT FROM ${roomNumber ?? null}
+      AND type = ${type}::"WaiterCallType"
+      AND status IN ('PENDING', 'ACKNOWLEDGED')
+    ORDER BY "createdAt" DESC
+    LIMIT 1
+    FOR UPDATE
+  `;
+  if (!rows[0]) return null;
+  return tx.waiterCall.findUnique({ where: { id: rows[0].id } });
+}
 
 export async function GET(request: Request) {
   const auth = await requireActiveSubscription();
@@ -63,144 +91,122 @@ export async function POST(request: Request) {
   }
 
   try {
-  const venue = await prisma.venue.findUnique({
-    where: { slug: parsed.data.venueSlug },
-    include: { organization: { include: { subscription: true } } },
-  });
-  if (!venue) {
-    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
-  }
+    const venue = await prisma.venue.findUnique({
+      where: { slug: parsed.data.venueSlug },
+      include: { organization: { include: { subscription: true } } },
+    });
+    if (!venue) {
+      return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
+    }
 
-  if (!organizationIsPubliclyActive(venue.organization.subscription)) {
-    return NextResponse.json(
-      { error: "Η υπηρεσία δεν είναι διαθέσιμη.", code: "subscription_inactive" },
-      { status: 403 },
-    );
-  }
+    if (!organizationIsPubliclyActive(venue.organization.subscription)) {
+      return NextResponse.json(
+        { error: "Η υπηρεσία δεν είναι διαθέσιμη.", code: "subscription_inactive" },
+        { status: 403 },
+      );
+    }
 
-  if (!parsed.data.tableNumber && !parsed.data.roomNumber) {
-    return NextResponse.json(
-      { error: "Απαιτείται αριθμός τραπεζιού ή δωματίου.", code: "location_required" },
-      { status: 400 },
-    );
-  }
+    if (!parsed.data.tableNumber && !parsed.data.roomNumber) {
+      return NextResponse.json(
+        { error: "Απαιτείται αριθμός τραπεζιού ή δωματίου.", code: "location_required" },
+        { status: 400 },
+      );
+    }
 
-  const existing = await prisma.waiterCall.findFirst({
-    where: {
-      venueId: venue.id,
-      tableNumber: parsed.data.tableNumber ?? null,
-      roomNumber: parsed.data.roomNumber ?? null,
-      type: parsed.data.type as WaiterCallType,
-      status: { in: ["PENDING", "ACKNOWLEDGED"] },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-  if (existing) {
-    if (
-      parsed.data.type === "ORDER" &&
-      parsed.data.orderItems &&
-      parsed.data.orderItems.lines.length > 0
-    ) {
-      const merged = mergeOrderPayload(existing.orderItems, parsed.data.orderItems);
-      const wasAcknowledged = existing.status === "ACKNOWLEDGED";
-      const updated = await prisma.waiterCall.update({
-        where: { id: existing.id },
-        data: {
-          orderItems: merged,
-          ...(wasAcknowledged ? { status: WaiterCallStatus.PENDING } : {}),
-        },
-      });
-      if (updated.status === "PENDING") {
-        pushStaffWaiterCall(
-          venue,
-          updated,
-          wasAcknowledged ? "reopened" : "order_updated",
+    const callType = parsed.data.type as WaiterCallType;
+    let validatedOrder: OrderPayload | null = null;
+    if (callType === "ORDER") {
+      if (!parsed.data.orderItems?.lines.length) {
+        return NextResponse.json({ error: "Η παραγγελία είναι κενή.", code: "empty_order" }, { status: 400 });
+      }
+      validatedOrder = await validateOrderItemsForVenue(venue.id, parsed.data.orderItems);
+      if (!validatedOrder) {
+        return NextResponse.json(
+          { error: "Μη έγκυρα πιάτα στην παραγγελία.", code: "invalid_order" },
+          { status: 400 },
         );
       }
-      return NextResponse.json({
-        id: updated.id,
-        type: updated.type,
-        status: updated.status,
-        cancellable: updated.status === "PENDING",
-      });
     }
-    return NextResponse.json({
-      id: existing.id,
-      type: existing.type,
-      status: existing.status,
-      cancellable: existing.status === "PENDING",
-    });
-  }
 
-  const result = await prisma.$transaction(async (tx): Promise<{
-    call: Awaited<ReturnType<typeof tx.waiterCall.create>>;
-    notify: StaffWaiterNotifyReason | null;
-  }> => {
-    const pending = await tx.waiterCall.findFirst({
-      where: {
-        venueId: venue.id,
-        tableNumber: parsed.data.tableNumber ?? null,
-        roomNumber: parsed.data.roomNumber ?? null,
-        type: parsed.data.type as WaiterCallType,
-        status: { in: ["PENDING", "ACKNOWLEDGED"] },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    if (pending) {
-      if (
-        pending.type === "ORDER" &&
-        parsed.data.type === "ORDER" &&
-        parsed.data.orderItems &&
-        parsed.data.orderItems.lines.length > 0
-      ) {
-        const merged = mergeOrderPayload(pending.orderItems, parsed.data.orderItems);
-        const wasAcknowledged = pending.status === "ACKNOWLEDGED";
-        const updated = await tx.waiterCall.update({
-          where: { id: pending.id },
-          data: {
-            orderItems: merged,
-            ...(wasAcknowledged ? { status: WaiterCallStatus.PENDING } : {}),
-          },
-        });
-        const notifyReason: StaffWaiterNotifyReason = wasAcknowledged ? "reopened" : "order_updated";
-        return {
-          call: updated,
-          notify: notifyReason,
-        };
+    const result = await prisma.$transaction(async (tx): Promise<TxResult> => {
+      const existing = await lockActiveCall(
+        tx,
+        venue.id,
+        parsed.data.tableNumber,
+        parsed.data.roomNumber,
+        callType,
+      );
+
+      if (existing) {
+        if (callType === "ORDER" && validatedOrder) {
+          const merged = mergeOrderPayload(existing.orderItems, validatedOrder);
+          const wasAcknowledged = existing.status === "ACKNOWLEDGED";
+          const updated = await tx.waiterCall.update({
+            where: { id: existing.id },
+            data: {
+              orderItems: merged,
+              ...(wasAcknowledged ? { status: WaiterCallStatus.PENDING } : {}),
+            },
+          });
+          return {
+            call: updated,
+            notify: wasAcknowledged ? "reopened" : "order_updated",
+          };
+        }
+        return { call: existing, notify: null };
       }
-      return { call: pending, notify: null };
+
+      const created = await tx.waiterCall.create({
+        data: {
+          venueId: venue.id,
+          type: callType,
+          tableNumber: parsed.data.tableNumber,
+          roomNumber: parsed.data.roomNumber,
+          status: WaiterCallStatus.PENDING,
+          orderItems: callType === "ORDER" && validatedOrder ? validatedOrder : undefined,
+        },
+      });
+      return { call: created, notify: "new" };
+    });
+
+    if (result.notify) {
+      pushStaffWaiterCall(venue, result.call, result.notify);
     }
 
-    const created = await tx.waiterCall.create({
-      data: {
-        venueId: venue.id,
-        type: parsed.data.type as WaiterCallType,
-        tableNumber: parsed.data.tableNumber,
-        roomNumber: parsed.data.roomNumber,
-        status: WaiterCallStatus.PENDING,
-        orderItems:
-          parsed.data.type === "ORDER" && parsed.data.orderItems
-            ? parsed.data.orderItems
-            : undefined,
-      },
+    return NextResponse.json({
+      id: result.call.id,
+      type: result.call.type,
+      status: result.call.status,
+      cancellable: result.call.status === "PENDING",
     });
-    return { call: created, notify: "new" };
-  });
-
-  if (result.notify) {
-    pushStaffWaiterCall(venue, result.call, result.notify);
-  }
-
-  const call = result.call;
-
-  return NextResponse.json({
-    id: call.id,
-    type: call.type,
-    status: call.status,
-    cancellable: call.status === "PENDING",
-  });
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      const venue = await prisma.venue.findUnique({ where: { slug: parsed.data.venueSlug } });
+      if (venue) {
+        const existing = await prisma.waiterCall.findFirst({
+          where: {
+            venueId: venue.id,
+            tableNumber: parsed.data.tableNumber ?? null,
+            roomNumber: parsed.data.roomNumber ?? null,
+            type: parsed.data.type as WaiterCallType,
+            status: { in: ["PENDING", "ACKNOWLEDGED"] },
+          },
+          orderBy: { createdAt: "desc" },
+        });
+        if (existing) {
+          return NextResponse.json({
+            id: existing.id,
+            type: existing.type,
+            status: existing.status,
+            cancellable: existing.status === "PENDING",
+          });
+        }
+      }
+    }
     console.error("[menuos] waiter-call POST failed", err);
-    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 500 });
+    return NextResponse.json(
+      { error: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο.", code: "server_error" },
+      { status: 500 },
+    );
   }
 }

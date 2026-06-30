@@ -27,6 +27,7 @@ export function usePendingWaiterCount(initialCount: number) {
       }
     }
 
+    void refresh();
     const timer = setInterval(() => void refresh(), POLL_MS);
     return () => {
       cancelled = true;
