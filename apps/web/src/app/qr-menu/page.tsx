@@ -6,7 +6,7 @@ import {
   MarketingCtaBand,
   SectionHeader,
 } from "@/components/marketing/marketing-blocks";
-import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
+import { MarketingLayout, MarketingPageHero, MarketingSeoIntro, MarketingSection } from "@/components/marketing/marketing-layout";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { buttonClass } from "@/components/ui/button";
 import { getMessages } from "@/i18n/get-messages";
@@ -29,6 +29,7 @@ export default async function QrMenuLandingPage() {
     <MarketingLayout>
       <MarketingPageJsonLd pageKey="qrMenu" faqKey="qrMenu" />
       <MarketingPageHero title={ui.heroTitle} subtitle={p.hero} badge={p.badge} />
+      {"introParagraphs" in p ? <MarketingSeoIntro paragraphs={p.introParagraphs} /> : null}
       <MarketingSection>
         <SectionHeader title={ui.sectionTitle} description={ui.sectionDesc} />
         <div className="mt-12 grid gap-6 sm:grid-cols-2">

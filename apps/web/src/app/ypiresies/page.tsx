@@ -13,7 +13,7 @@ import {
   SectionHeader,
   StatStrip,
 } from "@/components/marketing/marketing-blocks";
-import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
+import { MarketingLayout, MarketingPageHero, MarketingSeoIntro, MarketingSection } from "@/components/marketing/marketing-layout";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { getMessages } from "@/i18n/get-messages";
 import { getServerLocale } from "@/i18n/server";
@@ -35,11 +35,14 @@ export default async function ServicesPage() {
     <MarketingLayout>
       <MarketingPageJsonLd pageKey="services" />
       <MarketingPageHero title={ui.heroTitle} subtitle={p.hero} badge={p.badge} />
+      {"introParagraphs" in p ? (
+        <MarketingSeoIntro lead={p.intro} paragraphs={p.introParagraphs} />
+      ) : null}
       <MarketingSection variant="muted">
         <StatStrip items={[...marketing.stats]} />
       </MarketingSection>
       <MarketingSection>
-        <SectionHeader title={ui.sectionTitle} description={p.intro} />
+        <SectionHeader title={ui.sectionTitle} />
         <div className="mt-12 grid gap-6 md:grid-cols-2">
           {ui.items.map((s, i) => {
             const Icon = serviceIcons[i] ?? QrCode;

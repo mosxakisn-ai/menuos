@@ -197,6 +197,32 @@ export const MARKETING_EN = {
   footer: {
     about:
       "Digital QR menus for restaurants, hotels, beach bars and room service. Guests scan on their phone — you update dishes and prices from the dashboard, no reprints.",
+    highlights: [
+      {
+        title: "Call waiter & table orders",
+        text: "Push alerts on staff phones — with table or room number.",
+      },
+      {
+        title: "Multilingual QR menu",
+        text: "GR, EN, DE, FR — ideal for tourists across Greece.",
+      },
+      {
+        title: "Setup in ~60 minutes",
+        text: "No guest app, no IT team — browser only.",
+      },
+    ],
+    cta: {
+      title: "Start free for 7 days",
+      text: "Build your first menu today. No card, no lock-in.",
+      button: "Create account",
+    },
+    hub: {
+      title: "Guides & solutions",
+      localTitle: "QR menu by city",
+      verticalTitle: "By hospitality type",
+      description:
+        "Dedicated guides for restaurants, hotels and beach bars across Greece.",
+    },
     columns: {
       product: "Product",
       company: "Company",
@@ -235,18 +261,34 @@ export const MARKETING_EN = {
         "From table QR to dashboard — every tool for a modern digital menu, without complexity.",
       intro:
         "MenuOS is not just «PDF with QR». It's a live menu with photos, multiple languages, call waiter and instant price updates — built for the Greek hospitality market.",
+      introParagraphs: [
+        "MenuOS combines a digital catalog, QR codes per table or room, waiter calls with push notifications, and online management from any device. Ideal for restaurants, tavernas, hotels, beach bars, pool bars and room service — with no app install for guests.",
+        "Instead of reprinting every season, you change prices and dishes in seconds. Tourists see the menu in their language, with photos and descriptions. Staff get notified when someone calls the waiter or orders — with the exact table or room number from the QR link.",
+      ],
     },
     howItWorks: {
       badge: "Step by step",
       hero: "From sign-up to QR on the table — clear flow, no IT team.",
+      introParagraphs: [
+        "Setting up MenuOS does not require an IT team or special hardware. After free sign-up, you create a venue, add categories and dishes, and download print-ready QR codes — in under an hour for a full menu.",
+        "Each QR can include a table (?table=12), room (?room=101) or sunbed number — so waiter calls and orders reach the right spot. Guests open the menu on their phone, no app required; you update prices and availability live from the dashboard.",
+      ],
     },
     qrMenu: {
       badge: "QR Menu",
       hero: "The practical choice for up-to-date menus, tourists and a premium image.",
+      introParagraphs: [
+        "A QR menu replaces printed catalogs with a live page that opens right after scanning. Guests see dish photos, prices, descriptions and allergens — in a clean, mobile-first layout that fits premium restaurants and hotels.",
+        "For tourism-heavy businesses, multilingual menus matter: the guest picks a language in one tap. With MenuOS you add GR, EN, DE and FR, enable call waiter and bill requests from the same QR — no POS integration and no app download.",
+      ],
     },
     about: {
       badge: "Our team",
       hero: "We build digital tools that respect your time and improve the guest experience.",
+      introParagraphs: [
+        "MenuOS was born from Greek hospitality needs: a digital menu that works for restaurants, hotels and beach bars — with tourism, multilingual menus and seasonality at the core, not as a generic foreign template.",
+        "We believe technology should be invisible to guests and simple for you. That's why we don't require a guest app, we don't hide fees, and we offer support in Greek — from your first QR to daily operations through the season.",
+      ],
       values: [
         { title: "Simplicity", text: "What the guest sees must be easy. What you see in the dashboard too." },
         { title: "Greek market", text: "Seasonality, tourism, multilingual needs — not a generic foreign template." },
@@ -256,6 +298,10 @@ export const MARKETING_EN = {
     pricing: {
       badge: "Pricing",
       hero: "Start free for 7 days. Upgrade as you grow — no multi-year lock-in.",
+      introParagraphs: [
+        "MenuOS plans are simple and transparent: a free 7-day trial with no credit card, then Basic or Pro with monthly billing you can cancel anytime. No hidden fees, setup charges or annual lock-in — you only pay while you use the service.",
+        "Basic fits one venue with up to 3 menus. Pro adds multiple venues, unlimited menus, PDF menu import and priority support. For chains and hotel groups with custom domain or white-label, contact us for Enterprise.",
+      ],
       faq: [
         { q: "Need a credit card for the trial?", a: "No. The 7-day trial starts with email and OTP verification." },
         { q: "Can I change plan later?", a: "Yes. Upgrade Basic or Pro from billing. Enterprise — contact us." },

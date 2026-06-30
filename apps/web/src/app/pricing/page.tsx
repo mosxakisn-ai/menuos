@@ -7,7 +7,7 @@ import {
   SectionHeader,
   StatStrip,
 } from "@/components/marketing/marketing-blocks";
-import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
+import { MarketingLayout, MarketingPageHero, MarketingSeoIntro, MarketingSection } from "@/components/marketing/marketing-layout";
 import { PricingTrustStrip } from "@/components/marketing/pricing-trust-strip";
 import { MarketingPageJsonLd, PricingOffersJsonLd } from "@/components/seo/marketing-json-ld";
 import { buttonClass } from "@/components/ui/button";
@@ -30,6 +30,7 @@ export default async function PricingPage() {
       <MarketingPageJsonLd pageKey="pricing" faqKey="pricing" />
       <PricingOffersJsonLd />
       <MarketingPageHero title={ui.heroTitle} subtitle={p.hero} badge={p.badge} />
+      {"introParagraphs" in p ? <MarketingSeoIntro paragraphs={p.introParagraphs} /> : null}
       <MarketingSection variant="muted">
         <StatStrip items={[...marketing.stats]} />
       </MarketingSection>

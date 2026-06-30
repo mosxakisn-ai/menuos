@@ -3,6 +3,42 @@ import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome";
 import { ValuePill } from "@/components/marketing/marketing-blocks";
 import { cn } from "@/lib/utils";
 
+export function MarketingSeoIntro({
+  lead,
+  paragraphs,
+}: {
+  lead?: string;
+  paragraphs?: readonly string[];
+}) {
+  const items = paragraphs ?? [];
+  if (!lead && items.length === 0) return null;
+
+  return (
+    <section className="relative overflow-hidden border-b border-slate-200/80 bg-gradient-to-b from-white via-slate-50/90 to-white">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(37,99,235,0.06),transparent_60%)]"
+        aria-hidden
+      />
+      <div className="relative mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+        {lead ? (
+          <p className="text-balance text-xl font-semibold leading-relaxed tracking-tight text-brand-navy sm:text-2xl">
+            {lead}
+          </p>
+        ) : null}
+        {items.length > 0 ? (
+          <div className={cn("space-y-5", lead && "mt-8 border-t border-slate-200/80 pt-8")}>
+            {items.map((para) => (
+              <p key={para.slice(0, 48)} className="text-base leading-[1.75] text-slate-600 sm:text-lg">
+                {para}
+              </p>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 export function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-white">

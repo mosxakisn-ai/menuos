@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Heart, MapPin, Sparkles } from "lucide-react";
 import { MarketingCtaBand, SectionHeader, StatStrip } from "@/components/marketing/marketing-blocks";
-import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
+import { MarketingLayout, MarketingPageHero, MarketingSeoIntro, MarketingSection } from "@/components/marketing/marketing-layout";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { buttonClass } from "@/components/ui/button";
 import { getMessages } from "@/i18n/get-messages";
@@ -24,6 +24,7 @@ export default async function AboutPage() {
     <MarketingLayout>
       <MarketingPageJsonLd pageKey="about" />
       <MarketingPageHero title={ui.heroTitle} subtitle={p.hero} badge={p.badge} />
+      {"introParagraphs" in p ? <MarketingSeoIntro paragraphs={p.introParagraphs} /> : null}
       <MarketingSection variant="muted">
         <StatStrip items={[...marketing.stats]} />
       </MarketingSection>

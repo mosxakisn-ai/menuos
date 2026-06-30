@@ -129,6 +129,7 @@ export function PublicMenuView({
   const [orderErrorCode, setOrderErrorCode] = useState<CallErrorCode | null>(null);
   const [callCancellable, setCallCancellable] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [scrolledFromTop, setScrolledFromTop] = useState(false);
   const actionResetTimersRef = useRef<Partial<Record<ActionKind, ReturnType<typeof setTimeout>>>>({});
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -265,6 +266,21 @@ export function PublicMenuView({
   }, [isEmbedded]);
 
   useEffect(() => {
+    if (isEmbedded) return;
+    const syncScroll = () => setScrolledFromTop(window.scrollY > 80);
+    syncScroll();
+    window.addEventListener("scroll", syncScroll, { passive: true });
+    return () => window.removeEventListener("scroll", syncScroll);
+  }, [isEmbedded]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.location.hash) return;
+    const url = new URL(window.location.href);
+    url.hash = "";
+    window.history.replaceState({}, "", url);
+  }, []);
+
+  useEffect(() => {
     return () => {
       for (const timer of Object.values(actionResetTimersRef.current)) {
         if (timer) clearTimeout(timer);
@@ -298,20 +314,63 @@ export function PublicMenuView({
     return null;
   }, [tableNumber, roomNumber, sunbedNumber, ui]);
 
-  function handleBack() {
-    if (selectedItem) {
-      setSelectedItem(null);
-      return;
-    }
-    if (!isEmbedded && canGoBack) {
-      window.history.back();
-      return;
+  function isMenuHome() {
+    if (typeof window === "undefined") return true;
+    return !selectedItem && !cartOpen && !scrolledFromTop && !window.location.hash;
+  }
+
+  function resetToMenuHome() {
+    setCartOpen(false);
+    setSelectedItem(null);
+    if (typeof window !== "undefined" && window.location.hash) {
+      const url = new URL(window.location.href);
+      url.hash = "";
+      window.history.replaceState({}, "", url);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function leaveMenu() {
+    if (typeof window === "undefined") return;
+    try {
+      const ref = document.referrer;
+      if (ref) {
+        const refUrl = new URL(ref);
+        const here = new URL(window.location.href);
+        if (refUrl.origin === here.origin && refUrl.pathname !== here.pathname) {
+          window.location.assign(ref);
+          return;
+        }
+      }
+    } catch {
+      // fall through
+    }
+    window.location.assign("/");
+  }
+
+  function handleBack() {
+    if (cartOpen) {
+      setCartOpen(false);
+      return;
+    }
+    if (selectedItem) {
+      setSelectedItem(null);
+      return;
+    }
+    if (!isMenuHome()) {
+      resetToMenuHome();
+      return;
+    }
+    if (!isEmbedded && canGoBack) {
+      leaveMenu();
+      return;
+    }
+    resetToMenuHome();
+  }
+
   function backLabel(): string {
-    if (selectedItem) return ui.backToMenu;
+    if (selectedItem || cartOpen) return ui.backToMenu;
+    if (!isMenuHome()) return ui.footerHome;
     if (canGoBack) return ui.back;
     return ui.menuTop;
   }
@@ -587,7 +646,7 @@ export function PublicMenuView({
           </p>
           <button
             type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onClick={resetToMenuHome}
             className="shrink-0 rounded-button px-2 py-1.5 text-xs font-semibold text-brand-blue hover:bg-brand-blue/5"
           >
             {ui.footerHome}
@@ -733,13 +792,16 @@ export function PublicMenuView({
             {categoryNav.map((category) => {
               const id = `cat-${category.id}`;
               return (
-                <a
+                <button
                   key={category.id}
-                  href={`#${id}`}
+                  type="button"
+                  onClick={() => {
+                    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
                   className="shrink-0 rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-primary hover:bg-brand-blue/10"
                 >
                   {tName(category.translations)}
-                </a>
+                </button>
               );
             })}
           </div>
@@ -830,7 +892,7 @@ export function PublicMenuView({
           </a>
           <button
             type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onClick={resetToMenuHome}
             className="text-xs font-semibold text-brand-blue hover:underline"
           >
             ↑ {ui.footerHome}
