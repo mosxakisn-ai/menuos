@@ -147,6 +147,7 @@ export const venueUpdateSchema = z.object({
 
 export const waiterCallUpdateSchema = z.object({
   status: z.enum(["ACKNOWLEDGED", "COMPLETED"]),
+  staffKey: z.string().min(8).max(128).optional(),
 });
 
 export const pushSubscriptionSchema = z.object({
@@ -155,10 +156,14 @@ export const pushSubscriptionSchema = z.object({
     p256dh: z.string().min(1).max(512),
     auth: z.string().min(1).max(256),
   }),
+  staffKey: z.string().min(8).max(128).optional(),
+  venueId: z.string().min(1).max(64).optional(),
 });
 
 export const pushUnsubscribeSchema = z.object({
   endpoint: z.string().url().max(2048),
+  staffKey: z.string().min(8).max(128).optional(),
+  venueId: z.string().min(1).max(64).optional(),
 });
 
 export const menuImportItemSchema = z.object({

@@ -5,7 +5,13 @@ import {
   type StaffWaiterNotifyReason,
 } from "@/lib/staff-push-notify";
 
-type VenueForPush = { id: string; name: string; organizationId: string };
+type VenueForPush = {
+  id: string;
+  name: string;
+  organizationId: string;
+  slug: string;
+  staffToken: string;
+};
 
 export function pushStaffWaiterCall(
   venue: VenueForPush,
@@ -15,7 +21,7 @@ export function pushStaffWaiterCall(
   fireStaffPushNotify(() =>
     notifyStaffWaiterCall({
       organizationId: venue.organizationId,
-      venue: { id: venue.id, name: venue.name },
+      venue: { id: venue.id, name: venue.name, slug: venue.slug, staffToken: venue.staffToken },
       call,
       reason,
     }),

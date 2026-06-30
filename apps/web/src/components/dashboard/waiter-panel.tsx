@@ -21,7 +21,7 @@ const TYPE_LABELS: Record<string, string> = {
   BILL: "Λογαριασμός",
   ORDER: "Παραγγελία",
 };
-type Venue = { id: string; name: string };
+type Venue = { id: string; name: string; slug?: string; staffToken?: string };
 type OrderPayload = {
   lines: OrderLine[];
   total: string;
@@ -43,7 +43,17 @@ function isOrderUpdated(call: WaiterCall): boolean {
   return new Date(call.updatedAt).getTime() - new Date(call.createdAt).getTime() > 1500;
 }
 
-export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initialVenueId?: string }) {
+export function WaiterPanel({
+  venues,
+  initialVenueId,
+  staffKey,
+  showShareLink = true,
+}: {
+  venues: Venue[];
+  initialVenueId?: string;
+  staffKey?: string;
+  showShareLink?: boolean;
+}) {
   const resolvedInitial =
     initialVenueId && venues.some((v) => v.id === initialVenueId)
       ? initialVenueId
@@ -56,7 +66,9 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
 
   const load = useCallback(async () => {
     if (!venueId) return;
-    const res = await fetch(`/api/waiter-call?venueId=${venueId}`);
+    const params = new URLSearchParams({ venueId });
+    if (staffKey) params.set("staffKey", staffKey);
+    const res = await fetch(`/api/waiter-call?${params}`);
     const data = await res.json();
     if (res.ok) {
       setCalls(data.calls ?? []);
@@ -65,7 +77,7 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
       setCalls([]);
       setPendingCount(0);
     }
-  }, [venueId]);
+  }, [venueId, staffKey]);
 
   useEffect(() => {
     setCalls([]);
@@ -85,7 +97,10 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
       const res = await fetch(`/api/waiter-call/${callId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({
+          status,
+          ...(staffKey ? { staffKey } : {}),
+        }),
       });
       const data = await res.json();
       showFromResponse(data, res.ok);
@@ -103,27 +118,38 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
     );
   }
 
+  const activeVenue = venues.find((v) => v.id === venueId);
+
   return (
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
-      <WaiterShareLink venueId={venueId} />
+      {showShareLink && activeVenue?.slug && activeVenue?.staffToken ? (
+        <WaiterShareLink venueSlug={activeVenue.slug} staffToken={activeVenue.staffToken} />
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-4">
-        <label className="block text-sm">
-          <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}</span>
-          <select
-            value={venueId}
-            onChange={(e) => setVenueId(e.target.value)}
-            className="mt-1 block min-w-[200px] rounded-button border border-slate-200 px-3 py-2.5"
-          >
-            {venues.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        {staffKey || venues.length === 1 ? (
+          <p className="text-sm">
+            <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}: </span>
+            <span className="text-slate-700">{activeVenue?.name ?? "—"}</span>
+          </p>
+        ) : (
+          <label className="block text-sm">
+            <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}</span>
+            <select
+              value={venueId}
+              onChange={(e) => setVenueId(e.target.value)}
+              className="mt-1 block min-w-[200px] rounded-button border border-slate-200 px-3 py-2.5"
+            >
+              {venues.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {pendingCount > 0 ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">
             <Bell className="h-4 w-4" />

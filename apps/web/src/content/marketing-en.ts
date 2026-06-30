@@ -60,7 +60,7 @@ export const MARKETING_EN = {
       body2:
         "You sign in to the dashboard, add categories and dishes, and download QR codes for tables or rooms. When you change a price or item, guests see it immediately.",
       body3:
-        "When a guest calls the waiter, asks for the bill or orders from the menu, staff get a push notification on their phone — with table or room number. Open the waiter page on mobile, enable notifications once — and you never miss a call.",
+        "When a guest calls the waiter, asks for the bill or orders from the menu, staff get a push notification on their phone — with table or room number. Send the staff link to their mobile, tap Enable once — no login required.",
     },
     audiences: {
       title: "Who is it for?",

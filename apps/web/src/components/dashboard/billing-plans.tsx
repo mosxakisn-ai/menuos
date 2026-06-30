@@ -25,6 +25,15 @@ function formatPlanPrice(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(2);
 }
 
+function planChangeButtonLabel(currentPlanId: string, targetPlanId: (typeof PAID_SUBSCRIPTION_PLANS)[number]): string {
+  const target = PLAN_DEFINITIONS[targetPlanId];
+  const currentPrice =
+    PLAN_DEFINITIONS[currentPlanId as keyof typeof PLAN_DEFINITIONS]?.priceMonthly ?? 0;
+  if (target.priceMonthly > currentPrice) return `Αναβάθμιση σε ${target.name}`;
+  if (target.priceMonthly < currentPrice) return `Υποβάθμιση σε ${target.name}`;
+  return `Επιλογή ${target.name}`;
+}
+
 export function BillingPlans({
   organizationId,
   subscription,
@@ -130,7 +139,7 @@ export function BillingPlans({
                   ? "Μετάβαση..."
                   : isCurrent
                     ? "Τρέχον πλάνο"
-                    : `Αναβάθμιση σε ${plan.name}`}
+                    : planChangeButtonLabel(currentPlan, planId)}
               </button>
             </Card>
           );

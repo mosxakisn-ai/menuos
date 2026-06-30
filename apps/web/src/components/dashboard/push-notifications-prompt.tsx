@@ -17,7 +17,11 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   return out;
 }
 
-export function PushNotificationsPrompt() {
+export function PushNotificationsPrompt({
+  staffAuth,
+}: {
+  staffAuth?: { staffKey: string; venueId: string };
+} = {}) {
   const [state, setState] = useState<PushState>("loading");
   const [busy, setBusy] = useState(false);
 
@@ -90,6 +94,9 @@ export function PushNotificationsPrompt() {
         body: JSON.stringify({
           endpoint: json.endpoint,
           keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+          ...(staffAuth
+            ? { staffKey: staffAuth.staffKey, venueId: staffAuth.venueId }
+            : {}),
         }),
       });
       if (!saveRes.ok) throw new Error("subscribe failed");
@@ -119,7 +126,12 @@ export function PushNotificationsPrompt() {
         const res = await fetch("/api/push/unsubscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint }),
+          body: JSON.stringify({
+            endpoint,
+            ...(staffAuth
+              ? { staffKey: staffAuth.staffKey, venueId: staffAuth.venueId }
+              : {}),
+          }),
         });
         if (!res.ok) throw new Error("unsubscribe failed");
         await sub.unsubscribe();

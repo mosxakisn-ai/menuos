@@ -2,8 +2,8 @@ import type { WaiterCall, WaiterCallType } from "@menuos/db";
 import { prisma } from "@menuos/db";
 import webpush from "web-push";
 import { formatWaiterCallLocation } from "@menuos/shared";
-import { APP_URL } from "@/lib/config";
 import { configureWebPush, isPushEnabled } from "@/lib/push-config";
+import { buildStaffWaiterUrl } from "@/lib/staff-auth";
 
 export type StaffWaiterNotifyReason = "new" | "reopened" | "order_updated";
 
@@ -27,7 +27,7 @@ function typeTitle(type: WaiterCallType, reason: StaffWaiterNotifyReason): strin
 
 export async function notifyStaffWaiterCall(input: {
   organizationId: string;
-  venue: { id: string; name: string };
+  venue: { id: string; name: string; slug: string; staffToken: string };
   call: Pick<WaiterCall, "id" | "type" | "tableNumber" | "roomNumber" | "sunbedNumber">;
   reason: StaffWaiterNotifyReason;
 }) {
@@ -41,7 +41,7 @@ export async function notifyStaffWaiterCall(input: {
   const loc = formatWaiterCallLocation(input.call);
   const title = typeTitle(input.call.type, input.reason);
   const body = `${input.venue.name} · ${loc}`;
-  const url = `${APP_URL.replace(/\/$/, "")}/dashboard/waiter?venue=${input.venue.id}`;
+  const url = buildStaffWaiterUrl(input.venue.slug, input.venue.staffToken);
   const payload = JSON.stringify({
     title,
     body,

@@ -6,17 +6,23 @@ import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
 
-export function WaiterShareLink({ venueId }: { venueId: string }) {
+export function WaiterShareLink({
+  venueSlug,
+  staffToken,
+}: {
+  venueSlug: string;
+  staffToken: string;
+}) {
   const [url, setUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const w = DASHBOARD_EL.waiter;
 
   useEffect(() => {
-    if (!venueId) return;
-    const u = new URL("/dashboard/waiter", window.location.origin);
-    u.searchParams.set("venue", venueId);
+    if (!venueSlug || !staffToken) return;
+    const u = new URL(`/s/${venueSlug}`, window.location.origin);
+    u.searchParams.set("key", staffToken);
     setUrl(u.toString());
-  }, [venueId]);
+  }, [venueSlug, staffToken]);
 
   async function copy() {
     if (!url) return;

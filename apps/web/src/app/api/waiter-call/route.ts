@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { Prisma, prisma, WaiterCallStatus, WaiterCallType, type WaiterCall } from "@menuos/db";
 import { mergeOrderPayload, type OrderPayload, waiterCallSchema, normalizeWaiterCallLocation } from "@menuos/shared";
-import { requireActiveSubscription } from "@/lib/api-auth";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { validateOrderItemsForVenue } from "@/lib/validate-order-items";
-import { getVenueForOrganization } from "@/lib/venue-access";
 import { pushStaffWaiterCall } from "@/lib/waiter-call-push";
+import { requireWaiterVenueAccess } from "@/lib/staff-auth";
 import type { StaffWaiterNotifyReason } from "@/lib/staff-push-notify";
 
 type TxResult = {
@@ -102,18 +101,13 @@ async function runWaiterCallTransaction(
 }
 
 export async function GET(request: Request) {
-  const auth = await requireActiveSubscription();
-  if (auth.response) return auth.response;
-
   const venueId = new URL(request.url).searchParams.get("venueId");
   if (!venueId) {
     return NextResponse.json({ error: "Απαιτείται venueId." }, { status: 400 });
   }
 
-  const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
-  if (!venue) {
-    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
-  }
+  const auth = await requireWaiterVenueAccess(request, venueId);
+  if (auth.response) return auth.response;
 
   const calls = await prisma.waiterCall.findMany({
     where: {

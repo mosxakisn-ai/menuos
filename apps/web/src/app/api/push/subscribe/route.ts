@@ -3,14 +3,12 @@ import { prisma } from "@menuos/db";
 import { pushSubscriptionSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { isPushEnabled } from "@/lib/push-config";
+import { resolveVenueByStaffKey } from "@/lib/staff-auth";
 
 export async function POST(request: Request) {
   if (!isPushEnabled()) {
     return NextResponse.json({ error: "Οι ειδοποιήσεις δεν είναι ενεργές." }, { status: 503 });
   }
-
-  const auth = await requireActiveSubscription();
-  if (auth.response) return auth.response;
 
   let body: unknown;
   try {
@@ -26,27 +24,47 @@ export async function POST(request: Request) {
 
   const userAgent = request.headers.get("user-agent")?.slice(0, 512) ?? null;
 
+  let organizationId: string;
+  let userId: string | null = null;
+  let venueId: string | null = null;
+
+  if (parsed.data.staffKey && parsed.data.venueId) {
+    const venue = await resolveVenueByStaffKey(parsed.data.venueId, parsed.data.staffKey);
+    if (!venue) {
+      return NextResponse.json({ error: "Μη έγκυρο link σερβιτόρου." }, { status: 401 });
+    }
+    organizationId = venue.organizationId;
+    venueId = venue.id;
+  } else {
+    const auth = await requireActiveSubscription();
+    if (auth.response) return auth.response;
+    organizationId = auth.session!.organizationId;
+    userId = auth.session!.userId;
+  }
+
   const owned = await prisma.pushSubscription.findUnique({
     where: { endpoint: parsed.data.endpoint },
     select: { organizationId: true },
   });
-  if (owned && owned.organizationId !== auth.session!.organizationId) {
+  if (owned && owned.organizationId !== organizationId) {
     return NextResponse.json({ error: "Το endpoint ανήκει σε άλλο λογαριασμό." }, { status: 403 });
   }
 
   await prisma.pushSubscription.upsert({
     where: { endpoint: parsed.data.endpoint },
     create: {
-      userId: auth.session!.userId,
-      organizationId: auth.session!.organizationId,
+      userId,
+      organizationId,
+      venueId,
       endpoint: parsed.data.endpoint,
       p256dh: parsed.data.keys.p256dh,
       auth: parsed.data.keys.auth,
       userAgent,
     },
     update: {
-      userId: auth.session!.userId,
-      organizationId: auth.session!.organizationId,
+      userId,
+      organizationId,
+      venueId,
       p256dh: parsed.data.keys.p256dh,
       auth: parsed.data.keys.auth,
       userAgent,
