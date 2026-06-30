@@ -8,6 +8,7 @@ import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashb
 import { SubscriptionInactiveBanner } from "@/components/dashboard/subscription-inactive-banner";
 import { UpgradeReasonBanner } from "@/components/dashboard/upgrade-reason-banner";
 import { getSession } from "@/lib/auth";
+import { organizationHasActiveSubscription } from "@/lib/billing";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPrivatePageMetadata("Συνδρομή", "/dashboard/billing");
@@ -19,11 +20,12 @@ export default async function BillingPage({ searchParams }: Props) {
   if (!session) redirect("/login");
 
   const sp = await searchParams;
-  const showInactive = sp.inactive === "1" || sp.trial === "expired";
-
   const subscription = await prisma.subscription.findUnique({
     where: { organizationId: session.organizationId },
   });
+  const hasActiveSubscription = await organizationHasActiveSubscription(session.organizationId);
+  const showInactive =
+    !hasActiveSubscription || sp.inactive === "1" || sp.trial === "expired";
 
   return (
     <DashboardPage>

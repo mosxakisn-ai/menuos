@@ -26,7 +26,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (headersList.get("x-menuos-check-subscription") === "1") {
     const active = await organizationHasActiveSubscription(session.organizationId);
     if (!active) {
-      redirect("/dashboard/billing?inactive=1");
+      const pathname = headersList.get("x-menuos-pathname") ?? "";
+      const billingParams = new URLSearchParams({ inactive: "1" });
+      const search = headersList.get("x-menuos-search") ?? "";
+      const upgrade = new URLSearchParams(search).get("upgrade");
+      if (upgrade) {
+        billingParams.set("upgrade", upgrade);
+      } else if (pathname.startsWith("/dashboard/menus/import")) {
+        billingParams.set("upgrade", "pdf-import");
+      }
+      redirect(`/dashboard/billing?${billingParams.toString()}`);
     }
   }
 

@@ -46,6 +46,9 @@ export async function middleware(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-menuos-pathname", pathname);
+  if (request.nextUrl.search) {
+    requestHeaders.set("x-menuos-search", request.nextUrl.search);
+  }
 
   const langParam = request.nextUrl.searchParams.get("lang");
   if (langParam && !isPublicMenuPath(pathname)) {
