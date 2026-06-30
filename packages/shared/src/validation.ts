@@ -44,8 +44,14 @@ export const itemSchema = z.object({
 
 export const waiterCallSchema = z.object({
   venueSlug: z.string().min(1),
+  type: z.enum(["WAITER", "BILL"]).default("WAITER"),
   tableNumber: z.string().max(20).optional(),
   roomNumber: z.string().max(20).optional(),
+});
+
+export const waiterCallCancelSchema = z.object({
+  venueSlug: z.string().min(1),
+  callId: z.string().min(1),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

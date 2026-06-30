@@ -125,9 +125,17 @@ export function HeroShowcase() {
                 ))}
               </div>
 
-              <div className="mx-2 mb-2 flex items-center justify-center gap-1 rounded-lg bg-brand-gradient py-2 text-[8px] font-bold text-white">
-                <Bell className="h-3 w-3" />
-                {lang === "gr" ? "Κλήση σερβιτόρου" : "Call waiter"}
+              <div className="mx-2 mb-2 grid grid-cols-3 gap-1 text-[7px] font-bold text-white">
+                <div className="flex items-center justify-center gap-0.5 rounded-lg bg-brand-gradient py-2">
+                  <Bell className="h-2.5 w-2.5" />
+                  {lang === "gr" ? "Σερβιτόρος" : "Waiter"}
+                </div>
+                <div className="flex items-center justify-center gap-0.5 rounded-lg bg-brand-blue py-2">
+                  {lang === "gr" ? "Λογαρ." : "Bill"}
+                </div>
+                <div className="flex items-center justify-center rounded-lg border border-slate-300 bg-white py-2 text-slate-600">
+                  {lang === "gr" ? "Ακύρωση" : "Cancel"}
+                </div>
               </div>
             </div>
           </div>

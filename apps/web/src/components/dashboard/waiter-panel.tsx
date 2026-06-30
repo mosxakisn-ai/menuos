@@ -10,10 +10,17 @@ const STATUS_LABELS: Record<string, string> = {
   PENDING: "Σε αναμονή",
   ACKNOWLEDGED: "Σε εξέλιξη",
   COMPLETED: "Ολοκληρώθηκε",
+  CANCELED: "Ακυρώθηκε",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  WAITER: "Κλήση σερβιτόρου",
+  BILL: "Λογαριασμός",
 };
 type Venue = { id: string; name: string };
 type WaiterCall = {
   id: string;
+  type: string;
   tableNumber: string | null;
   roomNumber: string | null;
   status: string;
@@ -95,7 +102,7 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 font-medium text-brand-navy">Καμία ενεργή κλήση</p>
           <p className="mt-1 text-sm text-slate-500">
-            Όταν πελάτης πατήσει «Κλήση σερβιτόρου» στο QR menu, θα εμφανιστεί εδώ.
+            Όταν πελάτης πατήσει «Κλήση σερβιτόρου», «Λογαριασμός» ή «Ακύρωση» στο QR menu, θα εμφανιστεί εδώ.
           </p>
         </Card>
       ) : (
@@ -110,9 +117,11 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-bold text-brand-navy">
+                      {TYPE_LABELS[call.type] ?? call.type}
+                      {" · "}
                       {call.tableNumber ? `Τραπέζι ${call.tableNumber}` : null}
                       {call.roomNumber ? `Δωμάτιο ${call.roomNumber}` : null}
-                      {!call.tableNumber && !call.roomNumber ? "Κλήση (χωρίς τραπέζι)" : null}
+                      {!call.tableNumber && !call.roomNumber ? "Χωρίς τραπέζι" : null}
                     </p>
                     <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                       <Clock className="h-3 w-3" />

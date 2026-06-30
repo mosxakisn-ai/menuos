@@ -28,6 +28,12 @@ enum WaiterCallStatus {
   PENDING
   ACKNOWLEDGED
   COMPLETED
+  CANCELED
+}
+
+enum WaiterCallType {
+  WAITER
+  BILL
 }
 
 enum SubscriptionPlan {
@@ -212,6 +218,7 @@ model Photo {
 model WaiterCall {
   id          String           @id @default(cuid())
   venueId     String
+  type        WaiterCallType   @default(WAITER)
   tableNumber String?
   roomNumber  String?
   status      WaiterCallStatus @default(PENDING)

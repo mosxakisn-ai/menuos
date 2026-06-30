@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma, WaiterCallStatus } from "@menuos/db";
-import { waiterCallSchema, waiterCallUpdateSchema } from "@menuos/shared";
+import { prisma, WaiterCallStatus, WaiterCallType } from "@menuos/db";
+import { waiterCallSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
@@ -74,11 +74,12 @@ export async function POST(request: Request) {
   const call = await prisma.waiterCall.create({
     data: {
       venueId: venue.id,
+      type: parsed.data.type as WaiterCallType,
       tableNumber: parsed.data.tableNumber,
       roomNumber: parsed.data.roomNumber,
       status: WaiterCallStatus.PENDING,
     },
   });
 
-  return NextResponse.json({ id: call.id });
+  return NextResponse.json({ id: call.id, type: call.type });
 }

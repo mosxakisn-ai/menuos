@@ -1,7 +1,7 @@
 "use client";
 
-import { Bell, Globe } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Bell, Globe, Receipt, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { SupportedLanguage } from "@menuos/db";
 import {
   QR_MENU_LANGUAGE_LABELS,
@@ -47,6 +47,13 @@ type Venue = {
   menus: Menu[];
 };
 
+type ActionKind = "WAITER" | "BILL" | "CANCEL";
+type ActionState = "idle" | "loading" | "success" | "error";
+
+function callStorageKey(venueSlug: string, tableNumber?: string, roomNumber?: string) {
+  return `menuos-call:${venueSlug}:${tableNumber ?? ""}:${roomNumber ?? ""}`;
+}
+
 export function PublicMenuView({
   venue,
   language,
@@ -61,12 +68,42 @@ export function PublicMenuView({
   const [lang, setLang] = useState<QrMenuLanguage>(language);
   const [activeMenuId, setActiveMenuId] = useState(venue.menus[0]?.id);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const [calling, setCalling] = useState(false);
-  const [called, setCalled] = useState(false);
-  const [callError, setCallError] = useState(false);
+  const [activeCallId, setActiveCallId] = useState<string | null>(null);
+  const [actionState, setActionState] = useState<Record<ActionKind, ActionState>>({
+    WAITER: "idle",
+    BILL: "idle",
+    CANCEL: "idle",
+  });
 
   const ui = QR_MENU_UI[lang];
   const activeMenu = venue.menus.find((m) => m.id === activeMenuId) ?? venue.menus[0];
+  const storageKey = useMemo(
+    () => callStorageKey(venue.slug, tableNumber, roomNumber),
+    [venue.slug, tableNumber, roomNumber],
+  );
+
+  const restoreActiveCall = useCallback(async () => {
+    const stored = sessionStorage.getItem(storageKey);
+    if (!stored) return;
+    try {
+      const res = await fetch(
+        `/api/waiter-call/status?callId=${encodeURIComponent(stored)}&venueSlug=${encodeURIComponent(venue.slug)}`,
+      );
+      if (!res.ok) {
+        sessionStorage.removeItem(storageKey);
+        return;
+      }
+      const data = (await res.json()) as { cancellable?: boolean };
+      if (data.cancellable) setActiveCallId(stored);
+      else sessionStorage.removeItem(storageKey);
+    } catch {
+      sessionStorage.removeItem(storageKey);
+    }
+  }, [storageKey, venue.slug]);
+
+  useEffect(() => {
+    void restoreActiveCall();
+  }, [restoreActiveCall]);
 
   const locationLabel = useMemo(() => {
     if (tableNumber) return ui.table(tableNumber);
@@ -74,39 +111,103 @@ export function PublicMenuView({
     return null;
   }, [tableNumber, roomNumber, ui]);
 
-  async function callWaiter() {
-    setCalling(true);
-    setCalled(false);
-    setCallError(false);
+  function resetActionState(kind: ActionKind, delayMs = 3000) {
+    setTimeout(() => {
+      setActionState((s) => ({ ...s, [kind]: "idle" }));
+    }, delayMs);
+  }
+
+  async function sendCall(type: "WAITER" | "BILL") {
+    if (activeCallId) return;
+    setActionState((s) => ({ ...s, [type]: "loading", CANCEL: "idle" }));
     try {
       const res = await fetch("/api/waiter-call", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           venueSlug: venue.slug,
+          type,
           tableNumber,
           roomNumber,
         }),
       });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { code?: string };
-        setCallError(true);
-        setTimeout(() => setCallError(false), 4000);
+        setActionState((s) => ({ ...s, [type]: "error" }));
+        resetActionState(type, 4000);
         return;
       }
-      setCalled(true);
-      setTimeout(() => setCalled(false), 3000);
-    } finally {
-      setCalling(false);
+      const data = (await res.json()) as { id?: string };
+      if (data.id) {
+        setActiveCallId(data.id);
+        sessionStorage.setItem(storageKey, data.id);
+      }
+      setActionState((s) => ({ ...s, [type]: "success" }));
+      resetActionState(type);
+    } catch {
+      setActionState((s) => ({ ...s, [type]: "error" }));
+      resetActionState(type, 4000);
     }
+  }
+
+  async function cancelCall() {
+    if (!activeCallId) return;
+    setActionState((s) => ({ ...s, CANCEL: "loading" }));
+    try {
+      const res = await fetch("/api/waiter-call/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venueSlug: venue.slug,
+          callId: activeCallId,
+        }),
+      });
+      if (!res.ok) {
+        setActionState((s) => ({ ...s, CANCEL: "error" }));
+        resetActionState("CANCEL", 4000);
+        if (res.status === 404 || res.status === 409) {
+          setActiveCallId(null);
+          sessionStorage.removeItem(storageKey);
+        }
+        return;
+      }
+      setActiveCallId(null);
+      sessionStorage.removeItem(storageKey);
+      setActionState((s) => ({ ...s, CANCEL: "success", WAITER: "idle", BILL: "idle" }));
+      resetActionState("CANCEL");
+    } catch {
+      setActionState((s) => ({ ...s, CANCEL: "error" }));
+      resetActionState("CANCEL", 4000);
+    }
+  }
+
+  function buttonLabel(kind: ActionKind): string {
+    const state = actionState[kind];
+    if (kind === "WAITER") {
+      if (state === "success") return ui.called;
+      if (state === "error") return ui.callFailed;
+      if (state === "loading") return ui.calling;
+      return ui.callWaiter;
+    }
+    if (kind === "BILL") {
+      if (state === "success") return ui.billSent;
+      if (state === "error") return ui.callFailed;
+      if (state === "loading") return ui.calling;
+      return ui.requestBill;
+    }
+    if (state === "success") return ui.cancelled;
+    if (state === "error") return ui.cancelFailed;
+    if (state === "loading") return ui.cancelling;
+    return ui.cancelCall;
   }
 
   function tName(translations: { language: SupportedLanguage; name: string }[]) {
     return pickQrMenuTranslation(translations, lang)?.name ?? "—";
   }
 
+  const hasPendingCall = Boolean(activeCallId);
+
   return (
-    <div className="min-h-screen bg-surface pb-24">
+    <div className="min-h-screen bg-surface pb-32">
       <header
         className="px-4 py-6 text-white"
         style={{ background: `linear-gradient(135deg, ${venue.primaryColor}, #121d4a)` }}
@@ -196,16 +297,57 @@ export function PublicMenuView({
         )}
       </main>
 
-      <div className="fixed bottom-4 left-0 right-0 px-4">
-        <button
-          type="button"
-          onClick={callWaiter}
-          disabled={calling}
-          className="mx-auto flex w-full max-w-lg items-center justify-center gap-2 rounded-button bg-primary py-3.5 text-sm font-semibold text-white shadow-glow"
-        >
-          <Bell className="h-4 w-4" aria-hidden />
-          {called ? ui.called : callError ? ui.callFailed : calling ? ui.calling : ui.callWaiter}
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200/80 bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+        <div className="mx-auto grid max-w-lg grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={() => sendCall("WAITER")}
+            disabled={actionState.WAITER === "loading" || hasPendingCall}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 rounded-button py-3 text-[11px] font-semibold leading-tight",
+              hasPendingCall
+                ? "bg-slate-100 text-slate-400"
+                : "bg-primary text-white shadow-glow",
+              actionState.WAITER === "success" && "bg-emerald-600 text-white",
+              actionState.WAITER === "error" && "bg-red-600 text-white",
+            )}
+          >
+            <Bell className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="text-center">{buttonLabel("WAITER")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => sendCall("BILL")}
+            disabled={actionState.BILL === "loading" || hasPendingCall}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 rounded-button py-3 text-[11px] font-semibold leading-tight",
+              hasPendingCall
+                ? "bg-slate-100 text-slate-400"
+                : "bg-brand-blue text-white",
+              actionState.BILL === "success" && "bg-emerald-600 text-white",
+              actionState.BILL === "error" && "bg-red-600 text-white",
+            )}
+          >
+            <Receipt className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="text-center">{buttonLabel("BILL")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={cancelCall}
+            disabled={!hasPendingCall || actionState.CANCEL === "loading"}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 rounded-button border py-3 text-[11px] font-semibold leading-tight",
+              hasPendingCall
+                ? "border-slate-300 bg-white text-slate-700"
+                : "border-slate-200 bg-slate-50 text-slate-400",
+              actionState.CANCEL === "success" && "border-emerald-300 bg-emerald-50 text-emerald-800",
+              actionState.CANCEL === "error" && "border-red-300 bg-red-50 text-red-800",
+            )}
+          >
+            <X className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="text-center">{buttonLabel("CANCEL")}</span>
+          </button>
+        </div>
       </div>
 
       {selectedItem ? (
