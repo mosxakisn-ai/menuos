@@ -1,5 +1,5 @@
 import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/db";
-import { DEMO_VENUE_SLUG, PLAN_DEFINITIONS, organizationHasPaidPlan } from "@menuos/shared";
+import { DEMO_VENUE_SLUG, PLAN_DEFINITIONS, isPaidPlan, organizationHasPaidPlan } from "@menuos/shared";
 import type { SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
 
 export type SupervisorOrganizationRow = {
@@ -136,8 +136,10 @@ export async function getSupervisorOverview(): Promise<SupervisorOverview> {
     prisma.subscription.findMany({
       select: { organizationId: true, plan: true, status: true, trialEndsAt: true },
     }),
-    prisma.venue.count(),
-    prisma.item.count(),
+    prisma.venue.count({ where: { organizationId: { notIn: [...demoIds] } } }),
+    prisma.item.count({
+      where: { category: { menu: { venue: { organizationId: { notIn: [...demoIds] } } } } },
+    }),
   ]);
 
   const realOrgs = orgs.filter((o) => !demoIds.has(o.id));
@@ -272,11 +274,21 @@ export async function updateOrganizationForSupervisor(
     if (input.status) data.status = input.status as SubscriptionStatus;
     if (input.extendTrialDays) {
       const sub = await prisma.subscription.findUnique({ where: { organizationId: id } });
+      if (sub && sub.plan !== "TRIAL" && isPaidPlan(sub.plan)) {
+        throw new Error("extend_trial_not_allowed");
+      }
       const base = sub?.trialEndsAt && sub.trialEndsAt > now ? sub.trialEndsAt : now;
       const extended = new Date(base.getTime() + input.extendTrialDays * 24 * 60 * 60 * 1000);
       data.plan = "TRIAL";
       data.status = "TRIALING";
       data.trialEndsAt = extended;
+    } else if (data.plan === "TRIAL") {
+      const sub = await prisma.subscription.findUnique({ where: { organizationId: id } });
+      const trialValid = sub?.trialEndsAt && sub.trialEndsAt > now;
+      if (!trialValid) {
+        data.trialEndsAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      }
+      if (!data.status) data.status = "TRIALING";
     }
   }
 

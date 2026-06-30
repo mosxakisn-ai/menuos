@@ -3,7 +3,8 @@ import type { NextRequest } from "next/server";
 import { LOCALE_COOKIE, LOCALE_REQUEST_HEADER, resolveLocale } from "@/i18n/types";
 import { SESSION_COOKIE } from "@/lib/config";
 import { verifySessionToken } from "@/lib/auth";
-import { SUPERVISOR_COOKIE, verifySupervisorToken } from "@/lib/supervisor-auth";
+import { SUPERVISOR_COOKIE } from "@/lib/supervisor-auth-constants";
+import { verifySupervisorTokenEdge } from "@/lib/supervisor-auth-edge";
 
 const TRIAL_EXEMPT_PREFIXES = ["/dashboard/billing"];
 
@@ -61,7 +62,7 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/supervisor")) {
     if (pathname === "/supervisor/login") {
       const token = request.cookies.get(SUPERVISOR_COOKIE)?.value;
-      if (token && verifySupervisorToken(token)) {
+      if (token && (await verifySupervisorTokenEdge(token))) {
         const next = request.nextUrl.searchParams.get("next");
         const target =
           next && next.startsWith("/supervisor") ? next : "/supervisor";
@@ -73,7 +74,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const token = request.cookies.get(SUPERVISOR_COOKIE)?.value;
-    if (!token || !verifySupervisorToken(token)) {
+    if (!token || !(await verifySupervisorTokenEdge(token))) {
       const login = new URL("/supervisor/login", request.url);
       login.searchParams.set("next", pathname + request.nextUrl.search);
       response = NextResponse.redirect(login);

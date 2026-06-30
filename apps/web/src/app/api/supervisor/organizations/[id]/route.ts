@@ -44,6 +44,12 @@ export async function PATCH(request: Request, { params }: Params) {
     if (err instanceof Error && err.message === "not_found") {
       return NextResponse.json({ error: "Δεν βρέθηκε." }, { status: 404 });
     }
+    if (err instanceof Error && err.message === "extend_trial_not_allowed") {
+      return NextResponse.json(
+        { error: "Δεν μπορείς να επεκτείνεις trial σε πληρωμένο πακέτο." },
+        { status: 400 },
+      );
+    }
     console.error("[menuos-supervisor] organization update", err);
     return NextResponse.json({ error: "Αποτυχία ενημέρωσης." }, { status: 500 });
   }

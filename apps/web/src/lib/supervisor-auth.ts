@@ -1,7 +1,8 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
+import { SUPERVISOR_COOKIE } from "@/lib/supervisor-auth-constants";
 
-export const SUPERVISOR_COOKIE = "menuos_supervisor";
+export { SUPERVISOR_COOKIE } from "@/lib/supervisor-auth-constants";
 const TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 function readEnvSecret(name: string): string | undefined {
