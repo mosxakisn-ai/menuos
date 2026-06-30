@@ -1,13 +1,21 @@
 "use client";
 
-import { Bell, ChevronLeft, Globe, Receipt, UtensilsCrossed, X } from "lucide-react";
+import { Bell, ChevronLeft, Globe, Minus, Plus, Receipt, ShoppingBag, UtensilsCrossed, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SupportedLanguage } from "@menuos/db";
 import {
   QR_MENU_LANGUAGE_LABELS,
   QR_MENU_LANGUAGES,
   QR_MENU_UI,
+  buildOrderPayload,
+  cartItemCount,
+  cartStorageKey,
+  cartTotal,
+  mergeCartLine,
+  parseCartJson,
   pickQrMenuTranslation,
+  updateCartLineQty,
+  type OrderLine,
   type QrMenuLanguage,
 } from "@menuos/shared";
 import { LogoMark } from "@/components/brand/logo-mark";
@@ -73,6 +81,11 @@ export function PublicMenuView({
   const [lang, setLang] = useState<QrMenuLanguage>(language);
   const [activeMenuId, setActiveMenuId] = useState(venue.menus[0]?.id);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [itemQty, setItemQty] = useState(1);
+  const [cartLines, setCartLines] = useState<OrderLine[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [orderState, setOrderState] = useState<ActionState>("idle");
+  const [addedFlash, setAddedFlash] = useState(false);
   const [activeCallId, setActiveCallId] = useState<string | null>(null);
   const [actionState, setActionState] = useState<Record<ActionKind, ActionState>>({
     WAITER: "idle",
@@ -91,6 +104,19 @@ export function PublicMenuView({
   const storageKey = useMemo(
     () => callStorageKey(venue.slug, tableNumber, roomNumber),
     [venue.slug, tableNumber, roomNumber],
+  );
+  const cartKey = useMemo(
+    () => cartStorageKey(venue.slug, tableNumber, roomNumber),
+    [venue.slug, tableNumber, roomNumber],
+  );
+
+  const persistCart = useCallback(
+    (lines: OrderLine[]) => {
+      if (lines.length === 0) sessionStorage.removeItem(cartKey);
+      else sessionStorage.setItem(cartKey, JSON.stringify(lines));
+      setCartLines(lines);
+    },
+    [cartKey],
   );
 
   const clearActiveCall = useCallback(() => {
@@ -142,6 +168,14 @@ export function PublicMenuView({
   useEffect(() => {
     setLang(language);
   }, [language]);
+
+  useEffect(() => {
+    setCartLines(parseCartJson(sessionStorage.getItem(cartKey)));
+  }, [cartKey]);
+
+  useEffect(() => {
+    setItemQty(1);
+  }, [selectedItem?.id]);
 
   useEffect(() => {
     void restoreActiveCall();
@@ -241,9 +275,11 @@ export function PublicMenuView({
         setCallErrorCode(
           data.code === "rate_limited"
             ? "rate_limited"
-            : data.code === "location_required"
+            : data.code === "call_type_mismatch"
               ? "generic"
-              : "generic",
+              : data.code === "location_required"
+                ? "generic"
+                : "generic",
         );
         setActionState((s) => ({ ...s, [type]: "error" }));
         resetActionState(type, 4000);
@@ -265,6 +301,69 @@ export function PublicMenuView({
     } catch {
       setActionState((s) => ({ ...s, [type]: "error" }));
       resetActionState(type, 4000);
+    }
+  }
+
+  function addToCart() {
+    if (!selectedItem || !canUseCallActions) return;
+    const tr = pickQrMenuTranslation(selectedItem.translations, lang);
+    const line: OrderLine = {
+      itemId: selectedItem.id,
+      name: tr?.name ?? "—",
+      quantity: itemQty,
+      unitPrice: selectedItem.price.toString(),
+    };
+    persistCart(mergeCartLine(cartLines, line));
+    setAddedFlash(true);
+    const timer = setTimeout(() => {
+      setAddedFlash(false);
+      setSelectedItem(null);
+    }, 500);
+    resetTimersRef.current.push(timer);
+  }
+
+  async function sendOrder() {
+    if (!canUseCallActions || cartLines.length === 0 || activeCallId) return;
+    setOrderState("loading");
+    setCartOpen(false);
+    try {
+      const res = await fetch("/api/waiter-call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venueSlug: venue.slug,
+          type: "ORDER",
+          tableNumber,
+          roomNumber,
+          orderItems: buildOrderPayload(cartLines, lang),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        id?: string;
+        type?: string;
+        code?: string;
+      };
+      if (!res.ok) {
+        setOrderState("error");
+        setTimeout(() => setOrderState("idle"), 4000);
+        return;
+      }
+      if (data.type && data.type !== "ORDER") {
+        setOrderState("error");
+        setTimeout(() => setOrderState("idle"), 4000);
+        return;
+      }
+      persistCart([]);
+      if (data.id) {
+        setActiveCallId(data.id);
+        setCallCancellable(true);
+        sessionStorage.setItem(storageKey, data.id);
+      }
+      setOrderState("success");
+      setTimeout(() => setOrderState("idle"), 3000);
+    } catch {
+      setOrderState("error");
+      setTimeout(() => setOrderState("idle"), 4000);
     }
   }
 
@@ -327,11 +426,19 @@ export function PublicMenuView({
 
   const hasPendingCall = Boolean(activeCallId);
   const canUseCallActions = Boolean(tableNumber || roomNumber);
+  const cartCount = cartItemCount(cartLines);
+  const cartTotalStr = cartTotal(cartLines);
+  const hasCart = cartLines.length > 0;
 
   const categoryNav = activeMenu?.categories ?? [];
 
   return (
-    <div className={cn("min-h-screen bg-surface", canUseCallActions ? "pb-36" : "pb-8")}>
+    <div
+      className={cn(
+        "min-h-screen bg-surface",
+        canUseCallActions ? (hasCart ? "pb-52" : "pb-36") : "pb-8",
+      )}
+    >
       {/* Sticky top nav — πίσω / πάνω */}
       <div className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-lg items-center gap-2 px-3 py-2.5">
@@ -522,6 +629,46 @@ export function PublicMenuView({
         </div>
       </footer>
 
+      {canUseCallActions && hasCart ? (
+        <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-slate-200/80 bg-white/95 px-3 py-2.5 backdrop-blur">
+          <div className="mx-auto flex max-w-lg items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className="flex min-w-0 flex-1 items-center gap-2 rounded-button bg-surface px-3 py-2.5 text-left"
+            >
+              <ShoppingBag className="h-5 w-5 shrink-0 text-brand-blue" aria-hidden />
+              <span className="truncate text-sm font-semibold text-primary">
+                {ui.cartSummary(cartCount, cartTotalStr)}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void sendOrder()}
+              disabled={orderState === "loading" || hasPendingCall}
+              className={cn(
+                "shrink-0 rounded-button px-4 py-2.5 text-sm font-bold text-white",
+                orderState === "success"
+                  ? "bg-emerald-600"
+                  : orderState === "error"
+                    ? "bg-red-600"
+                    : hasPendingCall
+                      ? "bg-slate-300"
+                      : "bg-brand-blue",
+              )}
+            >
+              {orderState === "loading"
+                ? ui.orderSending
+                : orderState === "success"
+                  ? ui.orderSent
+                  : orderState === "error"
+                    ? ui.orderFailed
+                    : ui.sendOrder}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {canUseCallActions ? (
       <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200/80 bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div className="mx-auto grid max-w-lg grid-cols-3 gap-2">
@@ -641,16 +788,149 @@ export function PublicMenuView({
                       <span className="font-semibold">{ui.allergens}:</span> {tr.allergens}
                     </p>
                   ) : null}
+                  {canUseCallActions ? (
+                    <>
+                      <div className="mt-6 flex items-center justify-between">
+                        <span className="text-sm font-semibold text-slate-700">{ui.quantity}</span>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setItemQty((q) => Math.max(1, q - 1))}
+                            disabled={itemQty <= 1}
+                            aria-label={ui.decreaseQty}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-primary disabled:opacity-40"
+                          >
+                            <Minus className="h-4 w-4" aria-hidden />
+                          </button>
+                          <span className="min-w-[2rem] text-center text-lg font-bold text-primary">{itemQty}</span>
+                          <button
+                            type="button"
+                            onClick={() => setItemQty((q) => Math.min(99, q + 1))}
+                            disabled={itemQty >= 99}
+                            aria-label={ui.increaseQty}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-primary disabled:opacity-40"
+                          >
+                            <Plus className="h-4 w-4" aria-hidden />
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addToCart}
+                        className={cn(
+                          "mt-4 w-full rounded-button py-3 text-sm font-bold text-white",
+                          addedFlash ? "bg-emerald-600" : "bg-brand-blue",
+                        )}
+                      >
+                        {addedFlash ? ui.addedToCart : ui.addToCart}
+                      </button>
+                    </>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => setSelectedItem(null)}
-                    className="mt-6 w-full rounded-button bg-surface py-2.5 text-sm font-semibold text-primary"
+                    className="mt-3 w-full rounded-button bg-surface py-2.5 text-sm font-semibold text-primary"
                   >
                     {ui.close}
                   </button>
                 </>
               );
             })()}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {cartOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50 sm:items-center sm:justify-center"
+          onClick={() => setCartOpen(false)}
+          role="presentation"
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="menu-cart-title"
+            className="max-h-[85vh] w-full overflow-y-auto rounded-t-card bg-white sm:max-w-md sm:rounded-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3">
+              <h2 id="menu-cart-title" className="font-serif text-lg font-bold text-primary">
+                {ui.cart}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setCartOpen(false)}
+                className="rounded-button p-2 text-slate-500 hover:bg-surface"
+                aria-label={ui.close}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              {cartLines.length === 0 ? (
+                <p className="py-8 text-center text-sm text-slate-500">{ui.cartEmpty}</p>
+              ) : (
+                <ul className="space-y-3">
+                  {cartLines.map((line) => (
+                    <li
+                      key={line.itemId}
+                      className="flex items-center justify-between gap-3 rounded-card border border-slate-100 bg-surface px-3 py-2.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-primary">{line.name}</p>
+                        <p className="text-xs text-slate-500">€{line.unitPrice}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => persistCart(updateCartLineQty(cartLines, line.itemId, line.quantity - 1))}
+                          aria-label={ui.decreaseQty}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="min-w-[1.25rem] text-center text-sm font-bold">{line.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => persistCart(updateCartLineQty(cartLines, line.itemId, line.quantity + 1))}
+                          disabled={line.quantity >= 99}
+                          aria-label={ui.increaseQty}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white disabled:opacity-40"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <p className="w-14 text-right text-sm font-bold text-primary">
+                        €{(Number(line.unitPrice) * line.quantity).toFixed(
+                          Number(line.unitPrice) * line.quantity % 1 === 0 ? 0 : 2,
+                        )}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {cartLines.length > 0 ? (
+                <div className="mt-4 border-t border-slate-100 pt-4">
+                  <p className="flex justify-between text-sm font-semibold text-primary">
+                    <span>{ui.cartSummary(cartCount, cartTotalStr)}</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void sendOrder()}
+                    disabled={orderState === "loading" || hasPendingCall}
+                    className={cn(
+                      "mt-4 w-full rounded-button py-3 text-sm font-bold text-white",
+                      hasPendingCall ? "bg-slate-300" : "bg-brand-blue",
+                    )}
+                  >
+                    {orderState === "loading" ? ui.orderSending : ui.sendOrder}
+                  </button>
+                  {hasPendingCall ? (
+                    <p className="mt-2 text-center text-xs text-slate-500">{ui.orderTypeMismatch}</p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

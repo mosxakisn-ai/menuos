@@ -17,8 +17,13 @@ const STATUS_LABELS: Record<string, string> = {
 const TYPE_LABELS: Record<string, string> = {
   WAITER: "Κλήση σερβιτόρου",
   BILL: "Λογαριασμός",
+  ORDER: "Παραγγελία",
 };
 type Venue = { id: string; name: string };
+type OrderPayload = {
+  lines: Array<{ name: string; quantity: number; unitPrice: string }>;
+  total: string;
+};
 type WaiterCall = {
   id: string;
   type: string;
@@ -26,6 +31,7 @@ type WaiterCall = {
   roomNumber: string | null;
   status: string;
   createdAt: string;
+  orderItems?: OrderPayload | null;
 };
 
 export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initialVenueId?: string }) {
@@ -103,7 +109,7 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 font-medium text-brand-navy">Καμία ενεργή κλήση</p>
           <p className="mt-1 text-sm text-slate-500">
-            Όταν πελάτης πατήσει «Κλήση σερβιτόρου» ή «Λογαριασμός» στο κινητό, θα εμφανιστεί εδώ με τον αριθμό τραπεζιού.
+            Όταν πελάτης στείλει παραγγελία, καλέσει σερβιτόρο ή ζητήσει λογαριασμό από το QR menu, θα εμφανιστεί εδώ.
           </p>
         </Card>
       ) : (
@@ -131,6 +137,24 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
                     <p className="mt-1 text-xs font-medium text-slate-500">
                       {STATUS_LABELS[call.status] ?? call.status}
                     </p>
+                    {call.type === "ORDER" && call.orderItems?.lines?.length ? (
+                      <ul className="mt-3 space-y-1 rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm text-slate-700">
+                        {call.orderItems.lines.map((line, i) => (
+                          <li key={`${line.name}-${i}`} className="flex justify-between gap-2">
+                            <span>
+                              {line.quantity}× {line.name}
+                            </span>
+                            <span className="font-medium">
+                              €{(Number(line.unitPrice) * line.quantity).toFixed(2)}
+                            </span>
+                          </li>
+                        ))}
+                        <li className="flex justify-between border-t border-slate-100 pt-1 font-bold text-brand-navy">
+                          <span>Σύνολο</span>
+                          <span>€{call.orderItems.total}</span>
+                        </li>
+                      </ul>
+                    ) : null}
                   </div>
                   <div className="flex gap-2">
                     {call.status === "PENDING" ? (

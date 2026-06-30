@@ -121,6 +121,10 @@ export async function POST(request: Request) {
         tableNumber: parsed.data.tableNumber,
         roomNumber: parsed.data.roomNumber,
         status: WaiterCallStatus.PENDING,
+        orderItems:
+          parsed.data.type === "ORDER" && parsed.data.orderItems
+            ? parsed.data.orderItems
+            : undefined,
       },
     });
   });

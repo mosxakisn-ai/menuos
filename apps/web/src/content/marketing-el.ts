@@ -193,7 +193,7 @@ export const MARKETING = {
 
   footer: {
     about:
-      "Ψηφιακά menus με QR για εστιατόρια, ξενοδοχεία και hospitality στην Ελλάδα. Premium εμφάνιση, απλή διαχείριση, άνεση για τον πελάτη.",
+      "Ψηφιακό menu με QR για εστιατόριο, ξενοδοχείο, beach bar και room service. Ο πελάτης σκανάρει από το κινητό — εσείς ενημερώνετε τιμές και πιάτα από το panel, χωρίς επανεκτύπωση.",
     columns: {
       product: "Προϊόν",
       company: "Εταιρεία",
@@ -201,20 +201,21 @@ export const MARKETING = {
       contact: "Επικοινωνία",
     },
     links: {
-      qrMenu: "QR Menu",
+      qrMenu: "QR menu",
       demo: "Δες demo",
       services: "Υπηρεσίες",
       howItWorks: "Πώς λειτουργεί",
       pricing: "Τιμές",
+      register: "Εγγραφή",
       about: "Σχετικά με εμάς",
+      blog: "Άρθρα & οδηγοί",
       contact: "Επικοινωνία",
       terms: "Όροι χρήσης",
       privacy: "Πολιτική απορρήτου",
-      register: "Εγγραφή",
       facebook: "Facebook",
     },
     rights: "Με επιφύλαξη παντός δικαιώματος.",
-    taglineSuffix: "Premium QR menus για την ελληνική αγορά φιλοξενίας",
+    taglineSuffix: "Premium QR menus για εστιατόρια, ξενοδοχεία & bars στην Ελλάδα",
   },
 
   stats: [

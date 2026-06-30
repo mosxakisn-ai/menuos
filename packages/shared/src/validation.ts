@@ -42,12 +42,30 @@ export const itemSchema = z.object({
   available: z.boolean().optional(),
 });
 
-export const waiterCallSchema = z.object({
-  venueSlug: z.string().min(1),
-  type: z.enum(["WAITER", "BILL"]).default("WAITER"),
-  tableNumber: z.string().max(20).optional(),
-  roomNumber: z.string().max(20).optional(),
-});
+export const waiterCallSchema = z
+  .object({
+    venueSlug: z.string().min(1),
+    type: z.enum(["WAITER", "BILL", "ORDER"]).default("WAITER"),
+    tableNumber: z.string().max(20).optional(),
+    roomNumber: z.string().max(20).optional(),
+    orderItems: z
+      .object({
+        lines: z.array(
+          z.object({
+            itemId: z.string().min(1).max(50),
+            name: z.string().min(1).max(120),
+            quantity: z.number().int().min(1).max(99),
+            unitPrice: z.string().regex(/^\d+(\.\d{1,2})?$/),
+          }),
+        ),
+        total: z.string(),
+        lang: z.string().max(5).optional(),
+      })
+      .optional(),
+  })
+  .refine((d) => d.type !== "ORDER" || (d.orderItems?.lines?.length ?? 0) > 0, {
+    message: "ORDER requires orderItems",
+  });
 
 export const waiterCallCancelSchema = z.object({
   venueSlug: z.string().min(1),

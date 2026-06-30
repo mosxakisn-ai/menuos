@@ -193,7 +193,7 @@ export const MARKETING_EN = {
 
   footer: {
     about:
-      "Digital QR menus for restaurants, hotels and hospitality in Greece. Premium look, simple management, better guest experience.",
+      "Digital QR menus for restaurants, hotels, beach bars and room service. Guests scan on their phone — you update dishes and prices from the dashboard, no reprints.",
     columns: {
       product: "Product",
       company: "Company",
@@ -201,20 +201,21 @@ export const MARKETING_EN = {
       contact: "Contact",
     },
     links: {
-      qrMenu: "QR Menu",
+      qrMenu: "QR menu",
       demo: "Live demo",
       services: "Services",
       howItWorks: "How it works",
       pricing: "Pricing",
+      register: "Sign up",
       about: "About us",
+      blog: "Blog & guides",
       contact: "Contact",
       terms: "Terms of use",
       privacy: "Privacy policy",
-      register: "Sign up",
       facebook: "Facebook",
     },
     rights: "All rights reserved.",
-    taglineSuffix: "Premium QR menus for the Greek hospitality market",
+    taglineSuffix: "Premium QR menus for restaurants, hotels & bars in Greece",
   },
 
   stats: [

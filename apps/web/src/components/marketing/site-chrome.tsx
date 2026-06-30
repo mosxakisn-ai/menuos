@@ -135,7 +135,6 @@ export function SiteFooter() {
           <div>
             <p className="text-sm font-semibold text-white">{f.columns.product}</p>
             <ul className="mt-4 space-y-2.5 text-sm text-slate-300">
-              <li><Link href="/blog" className="hover:text-brand-cyan">Blog</Link></li>
               <li><Link href="/qr-menu" className="hover:text-brand-cyan">{f.links.qrMenu}</Link></li>
               <li><Link href={demoUrl} className="hover:text-brand-cyan">{f.links.demo}</Link></li>
               <li><Link href="/ypiresies" className="hover:text-brand-cyan">{f.links.services}</Link></li>
@@ -149,6 +148,7 @@ export function SiteFooter() {
             <p className="text-sm font-semibold text-white">{f.columns.company}</p>
             <ul className="mt-4 space-y-2.5 text-sm text-slate-300">
               <li><Link href="/sxetika" className="hover:text-brand-cyan">{f.links.about}</Link></li>
+              <li><Link href="/blog" className="hover:text-brand-cyan">{f.links.blog}</Link></li>
               <li><Link href="/epikoinonia" className="hover:text-brand-cyan">{f.links.contact}</Link></li>
             </ul>
           </div>
@@ -183,41 +183,21 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-12 grid gap-8 border-t border-white/10 pt-10 sm:grid-cols-2">
-          <div>
-            <p className="text-sm font-semibold text-white">
-              {isEn ? "Local guides" : "Τοπικοί οδηγοί"}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {isEn
-                ? "Area + business type — e.g. beach bar with sunbed QR, not generic city pages."
-                : "Περιοχή + κλάδος — π.χ. beach bar με QR σε ξαπλώστρα, όχι γενικό «QR menu Ρόδος»."}
-            </p>
-            <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400">
-              {SEO_FOOTER_HUB.local.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="hover:text-brand-cyan">
-                    {isEn ? link.labelEn : link.labelEl}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-white">
-              {isEn ? "Guides by business type" : "Οδηγοί ανά τύπο επιχείρησης"}
-            </p>
-            <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400">
-              {SEO_FOOTER_HUB.verticals.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="hover:text-brand-cyan">
-                    {isEn ? link.labelEn : link.labelEl}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+        {/* SEO hub links — crawlable, not shown to visitors */}
+        <nav className="sr-only" aria-label={isEn ? "Site guides" : "Οδηγοί ιστοτόπου"}>
+          <ul>
+            {SEO_FOOTER_HUB.local.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href}>{isEn ? link.labelEn : link.labelEl}</Link>
+              </li>
+            ))}
+            {SEO_FOOTER_HUB.verticals.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href}>{isEn ? link.labelEn : link.labelEl}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
           <p className="text-xs text-slate-400">
