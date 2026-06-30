@@ -1,15 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ExternalLink, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import type { SupervisorOrganizationRow, SupervisorUserRow } from "@/lib/supervisor-service";
-import {
-  stripeCustomerDashboardUrl,
-  stripeSubscriptionDashboardUrl,
-} from "@/lib/stripe-dashboard-urls";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -20,6 +16,10 @@ const ROLE_LABELS: Record<string, string> = {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("el-GR");
+}
+
+function planStatusForSave(plan: string): string {
+  return plan === "TRIAL" ? "TRIALING" : "ACTIVE";
 }
 
 export function SupervisorOrganizationEditor({
@@ -33,9 +33,6 @@ export function SupervisorOrganizationEditor({
 }) {
   const [tab, setTab] = useState<"subscription" | "users">("subscription");
   const [plan, setPlan] = useState(organization.plan);
-  const [status, setStatus] = useState(organization.status);
-  const [extendTrialDays, setExtendTrialDays] = useState("7");
-  const [grantProMonths, setGrantProMonths] = useState("12");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,10 +82,9 @@ export function SupervisorOrganizationEditor({
         setError(data.error ?? "Αποτυχία.");
         return;
       }
-      setMessage(data.message ?? "OK");
+      setMessage(data.message ?? "Αποθήκευση πακέτου.");
       if (data.organization) {
         setPlan(data.organization.plan);
-        setStatus(data.organization.status);
         onSaved(data.organization);
       } else {
         onSaved();
@@ -142,7 +138,6 @@ export function SupervisorOrganizationEditor({
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">Επεξεργασία πελάτη</p>
             <h2 className="font-serif text-xl font-bold text-brand-navy">{organization.name}</h2>
-            <p className="mt-1 text-sm text-slate-600">{organization.adminEmail}</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
             <X className="h-5 w-5" />
@@ -159,7 +154,11 @@ export function SupervisorOrganizationEditor({
             <button
               key={key}
               type="button"
-              onClick={() => setTab(key)}
+              onClick={() => {
+                setTab(key);
+                setMessage(null);
+                setError(null);
+              }}
               className={cn(
                 "border-b-2 px-3 py-2 text-sm font-medium transition",
                 tab === key
@@ -173,118 +172,31 @@ export function SupervisorOrganizationEditor({
         </div>
 
         {tab === "subscription" ? (
-          <>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm">
-                <span className={dashboardLabelClass}>Πακέτο</span>
-                <select className={dashboardFieldClass} value={plan} onChange={(e) => setPlan(e.target.value)}>
-                  <option value="TRIAL">TRIAL</option>
-                  <option value="BASIC">BASIC</option>
-                  <option value="PRO">PRO</option>
-                  <option value="ENTERPRISE">ENTERPRISE</option>
-                </select>
-              </label>
-              <label className="block text-sm">
-                <span className={dashboardLabelClass}>Κατάσταση</span>
-                <select className={dashboardFieldClass} value={status} onChange={(e) => setStatus(e.target.value)}>
-                  <option value="TRIALING">TRIALING</option>
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="PAST_DUE">PAST_DUE</option>
-                  <option value="CANCELED">CANCELED</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={saving}
-                className={buttonClass("primary", "sm")}
-                onClick={() => void save({ plan, status })}
-              >
-                Αποθήκευση plan/status
-              </button>
-            </div>
-
-            <div className="mt-6 border-t border-slate-100 pt-4">
-              <p className="text-sm font-semibold text-brand-navy">Γρήγορες ενέργειες</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="block text-sm">
-                  <span className={dashboardLabelClass}>Επέκταση trial (μέρες)</span>
-                  <input
-                    className={dashboardFieldClass}
-                    type="number"
-                    min={1}
-                    max={90}
-                    value={extendTrialDays}
-                    onChange={(e) => setExtendTrialDays(e.target.value)}
-                  />
-                </label>
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    disabled={saving}
-                    className={`w-full ${buttonClass("secondary", "sm")}`}
-                    onClick={() =>
-                      void save({ extendTrialDays: Number.parseInt(extendTrialDays, 10) || 7 })
-                    }
-                  >
-                    + Trial days
-                  </button>
-                </div>
-                <label className="block text-sm">
-                  <span className={dashboardLabelClass}>Grant Pro (μήνες)</span>
-                  <input
-                    className={dashboardFieldClass}
-                    type="number"
-                    min={1}
-                    max={60}
-                    value={grantProMonths}
-                    onChange={(e) => setGrantProMonths(e.target.value)}
-                  />
-                </label>
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    disabled={saving}
-                    className={`w-full ${buttonClass("primary", "sm")}`}
-                    onClick={() =>
-                      void save({ grantProMonths: Number.parseInt(grantProMonths, 10) || 12 })
-                    }
-                  >
-                    Grant Pro
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {(organization.stripeCustomerId || organization.stripeSubId) ? (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {organization.stripeCustomerId ? (
-                  <a
-                    href={stripeCustomerDashboardUrl(organization.stripeCustomerId)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
-                  >
-                    Stripe customer
-                    <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                  </a>
-                ) : null}
-                {organization.stripeSubId ? (
-                  <a
-                    href={stripeSubscriptionDashboardUrl(organization.stripeSubId)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
-                  >
-                    Stripe subscription
-                    <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                  </a>
-                ) : null}
-              </div>
+          <div className="mt-6 space-y-4">
+            <label className="block text-sm">
+              <span className={dashboardLabelClass}>Πακέτο</span>
+              <select className={dashboardFieldClass} value={plan} onChange={(e) => setPlan(e.target.value)}>
+                <option value="TRIAL">TRIAL</option>
+                <option value="BASIC">BASIC</option>
+                <option value="PRO">PRO</option>
+                <option value="ENTERPRISE">ENTERPRISE</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              disabled={saving || plan === organization.plan}
+              className={buttonClass("primary", "sm")}
+              onClick={() => void save({ plan, status: planStatusForSave(plan) })}
+            >
+              {saving ? "Αποθήκευση…" : "Αποθήκευση"}
+            </button>
+            {message && tab === "subscription" ? (
+              <p className="text-sm text-emerald-700">{message}</p>
             ) : null}
-          </>
+            {error && tab === "subscription" ? (
+              <p className="text-sm text-red-600">{error}</p>
+            ) : null}
+          </div>
         ) : (
           <div className="mt-6 space-y-6">
             {usersLoading ? (
@@ -368,11 +280,14 @@ export function SupervisorOrganizationEditor({
                 {addingUser ? "Προσθήκη…" : "Προσθήκη χρήστη"}
               </button>
             </form>
+            {message && tab === "users" ? (
+              <p className="text-sm text-emerald-700">{message}</p>
+            ) : null}
+            {error && tab === "users" ? (
+              <p className="text-sm text-red-600">{error}</p>
+            ) : null}
           </div>
         )}
-
-        {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
-        {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
       </Card>
     </div>
   );
