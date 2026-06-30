@@ -79,6 +79,17 @@ export function HeroShowcase() {
       <div className="pointer-events-none absolute -left-8 top-1/4 h-48 w-48 rounded-full bg-brand-cyan/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-4 bottom-8 h-56 w-56 rounded-full bg-brand-blue/15 blur-3xl" />
 
+      <div className="mb-4 flex flex-wrap justify-center gap-1.5 lg:justify-end">
+        {hs.venueTypes.map((vt) => (
+          <span
+            key={vt}
+            className="rounded-full border border-slate-200/80 bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-slate-600 shadow-soft backdrop-blur-sm"
+          >
+            {vt}
+          </span>
+        ))}
+      </div>
+
       <div className="relative flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:justify-end lg:gap-10 xl:gap-14">
         {/* Lifestyle scene — real photos + table tent */}
         <div className="relative w-full max-w-[440px] lg:max-w-[460px] lg:flex-1">
@@ -181,9 +192,14 @@ export function HeroShowcase() {
           </div>
         </div>
 
-        {/* Phone mockup — live demo iframe */}
+        {/* Phone mockup — live demo iframe (restaurant example) */}
         <div className="relative w-full max-w-[320px] shrink-0 sm:max-w-[340px]">
-          <p className="mb-4 text-center text-xs font-semibold text-slate-500">{hs.liveDemoHint}</p>
+          <p className="mb-2 text-center text-xs font-semibold text-slate-500">{hs.liveDemoHint}</p>
+          <p className="mb-4 text-center">
+            <span className="inline-flex rounded-full border border-brand-blue/20 bg-brand-blue/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-blue">
+              {hs.demoExampleLabel}
+            </span>
+          </p>
 
           <div className="animate-float relative mx-auto w-[280px] sm:w-[300px]">
             <div className="relative rounded-[2.75rem] border-[5px] border-slate-900 bg-slate-900 p-2 shadow-[0_32px_80px_-20px_rgba(15,23,42,0.55)] ring-1 ring-white/10">
@@ -213,7 +229,7 @@ export function HeroShowcase() {
 
             {/* Venue label under phone */}
             <div className="mt-4 flex flex-col items-center gap-2">
-              <DemoTavernaLogo showName size={36} tagline={hs.venueTagline} />
+              <DemoTavernaLogo showName size={36} tagline={`${hs.demoExampleLabel} · ${hs.venueTagline}`} />
               <p className="text-center text-xs text-slate-500">
                 {hs.noAppPrefix}{" "}
                 <span className="font-extrabold text-brand-navy">Menu</span>

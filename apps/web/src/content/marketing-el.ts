@@ -24,24 +24,26 @@ export const MARKETING = {
 
   home: {
     hero: {
-      badge: "Premium QR menus για hospitality",
+      badge: "Premium QR menus — εστιατόριο, ξενοδοχείο & bars",
       title: "Το menu σας,",
       titleAccent: "στο κινητό του πελάτη",
       subtitle:
-        "Σαρώνει QR → βλέπει πιάτα, τιμές και φωτογραφίες. Εσείς ενημερώνετε τιμές από το panel σας — χωρίς επανεκτύπωση, χωρίς app.",
+        "Για εστιατόριο, ξενοδοχείο, beach bar ή room service. Ο πελάτης σκανάρει QR → βλέπει πιάτα, τιμές και φωτογραφίες. Εσείς ενημερώνετε από το panel — χωρίς επανεκτύπωση, χωρίς λήψη app.",
       ctaTrial: "Ξεκίνα δωρεάν 7 ημέρες",
       ctaPricing: "Δες τις τιμές",
       ctaDemo: "Δες πώς φαίνεται",
       trust: ["Χωρίς app για πελάτη", "Πολλαπλές γλώσσες QR", "Setup ~60′", "Hosting ΕΕ"],
     },
     heroShowcase: {
-      photoAlt: "Μεσογειακή ταβέρνα — τραπέζια με θέα",
+      venueTypes: ["Εστιατόριο", "Ξενοδοχείο", "Beach bar", "Pool bar", "Room service"],
+      photoAlt: "Χώρος εστίασης — παράδειγμα τραπεζιού με QR menu",
       foodAlt: "Πιάτο μεσογειακής κουζίνας",
       guestAlt: "Πελάτης που σκανάρει QR menu στο κινητό",
       qrAlt: "QR code για το ψηφιακό menu της Demo Taverna",
       scanBadge: "Σάρωση · Τραπέζι 12",
       liveDemo: "Ζωντανό demo",
-      liveDemoHint: "Δοκιμάστε το menu — κάντε scroll μέσα στο κινητό",
+      demoExampleLabel: "Παράδειγμα εστιατόριου",
+      liveDemoHint: "Ίδια εμπειρία σε τραπέζι, ξαπλώστρα ή δωμάτιο — δοκιμάστε scroll στο κινητό",
       noAppPrefix: "Χωρίς app — ανοίγει στο browser με",
       venueName: "Demo Taverna",
       venueTagline: "Μεσογειακή κουζίνα",

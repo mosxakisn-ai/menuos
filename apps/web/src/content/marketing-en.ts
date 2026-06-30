@@ -24,24 +24,26 @@ export const MARKETING_EN = {
 
   home: {
     hero: {
-      badge: "Premium QR menus for hospitality",
+      badge: "Premium QR menus — restaurant, hotel & bars",
       title: "Your menu,",
       titleAccent: "on your guest's phone",
       subtitle:
-        "They scan a QR → see dishes, prices and photos. You update live from the dashboard — no reprints, no app.",
+        "For restaurants, hotels, beach bars and room service. Guests scan a QR → see dishes, prices and photos. You update from the dashboard — no reprints, no app download.",
       ctaTrial: "Start free 7-day trial",
       ctaPricing: "View pricing",
       ctaDemo: "See how it looks",
       trust: ["No app for guests", "Multiple QR languages", "Setup ~60 min", "EU hosting"],
     },
     heroShowcase: {
-      photoAlt: "Mediterranean taverna — tables with a view",
+      venueTypes: ["Restaurant", "Hotel", "Beach bar", "Pool bar", "Room service"],
+      photoAlt: "Dining venue — example table with a QR menu",
       foodAlt: "Mediterranean dish close-up",
       guestAlt: "Guest scanning a QR menu on their phone",
       qrAlt: "QR code for Demo Taverna digital menu",
       scanBadge: "Scan · Table 12",
       liveDemo: "Live demo",
-      liveDemoHint: "Try the menu — scroll inside the phone",
+      demoExampleLabel: "Restaurant example",
+      liveDemoHint: "Same experience at table, sunbed or room — scroll inside the phone",
       noAppPrefix: "No app — opens in the browser with",
       venueName: "Demo Taverna",
       venueTagline: "Mediterranean cuisine",
