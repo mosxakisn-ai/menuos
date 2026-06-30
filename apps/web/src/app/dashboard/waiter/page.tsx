@@ -1,10 +1,31 @@
-import { Card } from "@/components/ui/card";
+import type { Metadata } from "next";
+import { prisma } from "@menuos/db";
+import { WaiterPanel } from "@/components/dashboard/waiter-panel";
+import { getSession } from "@/lib/auth";
+import { buildPrivatePageMetadata } from "@/lib/seo";
 
-export default function WaiterPage() {
+export const metadata: Metadata = buildPrivatePageMetadata("Waiter Calls", "/dashboard/waiter");
+
+type Props = { searchParams: Promise<{ venue?: string }> };
+
+export default async function WaiterPage({ searchParams }: Props) {
+  const session = await getSession();
+  const sp = await searchParams;
+  const venues = await prisma.venue.findMany({
+    where: { organizationId: session!.organizationId },
+    select: { id: true, name: true },
+    orderBy: { createdAt: "asc" },
+  });
+
   return (
-    <Card>
-      <h1 className="font-serif text-xl font-bold text-primary">Waiter Calls</h1>
-      <p className="mt-2 text-sm text-slate-600">Real-time notifications — Phase 2.</p>
-    </Card>
+    <div className="space-y-4">
+      <div>
+        <h1 className="font-serif text-2xl font-bold text-primary">Κλήσεις σερβιτόρου</h1>
+        <p className="text-sm text-slate-600">
+          Οι πελάτες καλούν από το QR menu. Ενημερώνεται αυτόματα κάθε 8 δευτερόλεπτα.
+        </p>
+      </div>
+      <WaiterPanel venues={venues} initialVenueId={sp.venue} />
+    </div>
   );
 }

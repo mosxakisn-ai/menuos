@@ -11,16 +11,17 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { LogoutButton } from "@/components/dashboard/logout-button";
+import { DashboardMobileNav } from "@/components/dashboard/dashboard-mobile-nav";
 import { getSession } from "@/lib/auth";
 import { organizationHasActiveSubscription } from "@/lib/billing";
 
 const nav = [
-  { href: "/dashboard", label: "Overview", icon: LayoutGrid },
-  { href: "/dashboard/menus", label: "Menus", icon: UtensilsCrossed },
+  { href: "/dashboard", label: "Επισκόπηση", icon: LayoutGrid },
+  { href: "/dashboard/menus", label: "Menu", icon: UtensilsCrossed },
   { href: "/dashboard/qr", label: "QR Codes", icon: QrCode },
-  { href: "/dashboard/waiter", label: "Waiter Calls", icon: Bell },
-  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/waiter", label: "Σερβιτόρος", icon: Bell },
+  { href: "/dashboard/billing", label: "Συνδρομή", icon: CreditCard },
+  { href: "/dashboard/settings", label: "Ρυθμίσεις", icon: Settings },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -59,15 +60,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
           <div>
-            <p className="text-sm text-slate-500">Welcome back</p>
+            <p className="text-sm text-slate-500">Καλώς ήρθες</p>
             <p className="font-semibold text-primary">{session.name}</p>
           </div>
           <span className="rounded-full bg-brand-blue/10 px-3 py-1 text-xs font-semibold text-brand-blue">
             {session.role}
           </span>
         </header>
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
+        <main className="flex-1 p-4 pb-24 sm:p-6 md:pb-6">{children}</main>
       </div>
+      <DashboardMobileNav />
     </div>
   );
 }

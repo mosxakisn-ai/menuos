@@ -6,27 +6,33 @@ import { MARKETING } from "@/content/marketing-el";
 const m = MARKETING;
 const f = m.footer;
 
+const navLinkClass =
+  "text-sm font-medium text-slate-600 transition hover:text-brand-blue";
+
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/85 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:h-[4.25rem]">
         <Logo showTagline={false} markSize={36} />
-        <nav className="hidden items-center gap-6 md:flex">
-          <Link href="/ypiresies" className="text-sm font-medium text-slate-600 hover:text-brand-blue">
+        <nav className="hidden items-center gap-7 md:flex">
+          <Link href="/ypiresies" className={navLinkClass}>
             {m.nav.services}
           </Link>
-          <Link href="/pos-leitourgei" className="text-sm font-medium text-slate-600 hover:text-brand-blue">
+          <Link href="/pos-leitourgei" className={navLinkClass}>
             {m.nav.howItWorks}
           </Link>
-          <Link href="/pricing" className="text-sm font-medium text-slate-600 hover:text-brand-blue">
+          <Link href="/pricing" className={navLinkClass}>
             {m.nav.pricing}
           </Link>
-          <Link href="/sxetika" className="text-sm font-medium text-slate-600 hover:text-brand-blue">
+          <Link href="/sxetika" className={navLinkClass}>
             {m.nav.about}
+          </Link>
+          <Link href="/epikoinonia" className={navLinkClass}>
+            {m.nav.contact}
           </Link>
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-brand-blue">
+          <Link href="/login" className={`hidden sm:inline-flex ${navLinkClass}`}>
             {m.nav.login}
           </Link>
           <Link href="/register" className={buttonClass("primary", "sm")}>

@@ -54,4 +54,35 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type VenueInput = z.infer<typeof venueSchema>;
 export type CategoryInput = z.infer<typeof categorySchema>;
 export type ItemInput = z.infer<typeof itemSchema>;
-export type WaiterCallInput = z.infer<typeof waiterCallSchema>;
+export const categoryCreateSchema = z.object({
+  menuId: z.string().min(1),
+  nameGr: z.string().min(1).max(120),
+  nameEn: z.string().max(120).optional(),
+});
+
+export const itemCreateSchema = z.object({
+  categoryId: z.string().min(1),
+  price: z.number().min(0).max(99999),
+  nameGr: z.string().min(1).max(120),
+  nameEn: z.string().max(120).optional(),
+  descriptionGr: z.string().max(1000).optional(),
+  descriptionEn: z.string().max(1000).optional(),
+  ingredientsGr: z.string().max(500).optional(),
+  allergensGr: z.string().max(500).optional(),
+  available: z.boolean().optional(),
+});
+
+export const venueUpdateSchema = z.object({
+  name: z.string().min(2).max(120).optional(),
+  description: z.string().max(500).optional(),
+  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+});
+
+export const waiterCallUpdateSchema = z.object({
+  status: z.enum(["PENDING", "ACKNOWLEDGED", "COMPLETED"]),
+});
+
+export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
+export type ItemCreateInput = z.infer<typeof itemCreateSchema>;
+export type VenueUpdateInput = z.infer<typeof venueUpdateSchema>;

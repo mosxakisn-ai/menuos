@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { prisma, SupportedLanguage } from "@menuos/db";
+import { prisma } from "@menuos/db";
+import { parseQrMenuLanguage } from "@menuos/shared";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 import { PublicMenuView } from "@/components/menu/public-menu-view";
 
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PublicMenuPage({ params, searchParams }: Props) {
   const { venueSlug } = await params;
   const sp = await searchParams;
-  const lang = parseLang(sp.lang);
+  const lang = parseQrMenuLanguage(sp.lang);
 
   const venue = await prisma.venue.findUnique({
     where: { slug: venueSlug },
@@ -52,15 +53,4 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
       roomNumber={sp.room}
     />
   );
-}
-
-function parseLang(raw?: string): SupportedLanguage {
-  const map: Record<string, SupportedLanguage> = {
-    gr: "GR",
-    el: "GR",
-    en: "EN",
-    de: "DE",
-    fr: "FR",
-  };
-  return map[raw?.toLowerCase() ?? ""] ?? "GR";
 }

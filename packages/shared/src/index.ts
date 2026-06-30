@@ -20,3 +20,4 @@ export const BRAND = {
 
 export * from "./validation";
 export * from "./plans";
+export * from "./menu-languages";

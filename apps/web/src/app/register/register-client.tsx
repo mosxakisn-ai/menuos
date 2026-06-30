@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { SiteHeader } from "@/components/marketing/site-chrome";
+import { AuthFooterLink, AuthShell } from "@/components/marketing/marketing-layout";
 import { buttonClass } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { PasswordField } from "@/components/ui/password-field";
 
 export default function RegisterPageClient() {
   const router = useRouter();
@@ -89,101 +88,91 @@ export default function RegisterPageClient() {
   }
 
   return (
-    <div className="min-h-screen bg-surface">
-      <SiteHeader />
-      <main className="mx-auto flex max-w-md flex-col px-4 py-16">
-        <Card>
-          <h1 className="font-serif text-2xl font-bold text-primary">Δημιουργία λογαριασμού</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Δωρεάν δοκιμή 14 ημερών. Θα σου στείλουμε κωδικό επιβεβαίωσης στο email.
-          </p>
-          <form onSubmit={onSubmit} className="mt-6 space-y-4">
-            <Field label="Το όνομά σου" name="name" required />
-            <Field label="Επωνυμία επιχείρησης" name="businessName" required />
+    <AuthShell
+      title="Δημιουργία λογαριασμού"
+      subtitle="Δωρεάν δοκιμή 7 ημερών. Θα σου στείλουμε κωδικό επιβεβαίωσης στο email."
+      footer={
+        <AuthFooterLink text="Έχεις ήδη λογαριασμό;" linkText="Σύνδεση" href="/login" />
+      }
+    >
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <Field label="Το όνομά σου" name="name" required autoComplete="name" />
+        <Field label="Επωνυμία επιχείρησης" name="businessName" required autoComplete="organization" />
 
-            <label className="block text-sm">
-              <span className="font-medium text-primary">Email</span>
-              <input
-                name="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setOtpSent(false);
-                }}
-                className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5 outline-none focus:border-primary"
-              />
-            </label>
+        <label className="block text-sm">
+          <span className="font-medium text-brand-navy">Email</span>
+          <input
+            name="email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setOtpSent(false);
+            }}
+            autoComplete="email"
+            className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5 outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+          />
+        </label>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                disabled={sendingOtp || resendIn > 0}
-                onClick={sendOtp}
-                className={buttonClass("secondary", "sm")}
-              >
-                {sendingOtp
-                  ? "Αποστολή..."
-                  : resendIn > 0
-                    ? `Ξανά σε ${resendIn}s`
-                    : otpSent
-                      ? "Ξαναστείλε κωδικό"
-                      : "Στείλε κωδικό"}
-              </button>
-              {otpSent ? (
-                <span className="text-xs text-emerald-700">Κωδικός στάλθηκε — έλεγξε και spam.</span>
-              ) : null}
-            </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={sendingOtp || resendIn > 0}
+            onClick={sendOtp}
+            className={buttonClass("secondary", "sm")}
+          >
+            {sendingOtp
+              ? "Αποστολή..."
+              : resendIn > 0
+                ? `Ξανά σε ${resendIn}s`
+                : otpSent
+                  ? "Ξαναστείλε κωδικό"
+                  : "Στείλε κωδικό"}
+          </button>
+          {otpSent ? (
+            <span className="text-xs text-emerald-700">Κωδικός στάλθηκε — έλεγξε και spam.</span>
+          ) : null}
+        </div>
 
-            {otpSent ? (
-              <Field
-                label="Κωδικός από email (6 ψηφία)"
-                name="otp"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                required
-                placeholder="123456"
-              />
-            ) : null}
+        {otpSent ? (
+          <Field
+            label="Κωδικός από email (6 ψηφία)"
+            name="otp"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            required
+            placeholder="123456"
+          />
+        ) : null}
 
-            <Field label="Κωδικός πρόσβασης" name="password" type="password" required minLength={8} />
+        <PasswordField label="Κωδικός πρόσβασης" name="password" required minLength={8} autoComplete="new-password" />
 
-            {info ? <p className="text-sm text-emerald-700">{info}</p> : null}
-            {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {info ? <p className="text-sm text-emerald-700">{info}</p> : null}
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-            <button
-              type="submit"
-              disabled={loading || !otpSent}
-              className={`w-full ${buttonClass("primary")}`}
-            >
-              {loading ? "Δημιουργία..." : "Δημιουργία λογαριασμού"}
-            </button>
-          </form>
-          <p className="mt-4 text-center text-sm text-slate-600">
-            Έχεις ήδη λογαριασμό;{" "}
-            <Link href="/login" className="font-medium text-primary hover:underline">
-              Σύνδεση
-            </Link>
-          </p>
-        </Card>
-      </main>
-    </div>
+        <button
+          type="submit"
+          disabled={loading || !otpSent}
+          className={`w-full ${buttonClass("primary")}`}
+        >
+          {loading ? "Δημιουργία..." : "Δημιουργία λογαριασμού"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }
 
-function Field(
-  props: React.InputHTMLAttributes<HTMLInputElement> & { label: string },
-) {
+function Field(props: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   const { label, ...inputProps } = props;
   return (
     <label className="block text-sm">
-      <span className="font-medium text-primary">{label}</span>
+      <span className="font-medium text-brand-navy">{label}</span>
       <input
         {...inputProps}
-        className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5 outline-none focus:border-primary"
+        className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5 outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
       />
     </label>
   );

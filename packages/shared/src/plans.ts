@@ -1,6 +1,13 @@
 export const SUBSCRIPTION_PLANS = ["TRIAL", "BASIC", "PRO", "ENTERPRISE"] as const;
 export type SubscriptionPlanId = (typeof SUBSCRIPTION_PLANS)[number];
 
+/** Free trial length for new organizations. */
+export const TRIAL_DAYS = 7;
+
+export function computeTrialEndsAt(from = new Date()): Date {
+  return new Date(from.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+}
+
 export type PlanDefinition = {
   id: SubscriptionPlanId;
   name: string;

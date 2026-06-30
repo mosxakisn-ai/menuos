@@ -27,4 +27,8 @@
   .btn-gradient {
     @apply bg-brand-gradient text-white shadow-soft transition hover:brightness-105 active:scale-[0.98];
   }
+
+  .premium-card {
+    @apply rounded-card border border-slate-200/80 bg-white shadow-card transition duration-300 hover:-translate-y-0.5 hover:shadow-cardHover;
+  }
 }

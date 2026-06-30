@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@menuos/db";
+import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
@@ -13,43 +14,95 @@ export default async function DashboardPage() {
   const org = await prisma.organization.findUnique({
     where: { id: session!.organizationId },
     include: {
-      venues: { include: { menus: { include: { categories: true } } } },
+      venues: {
+        include: {
+          menus: {
+            include: {
+              categories: { include: { items: true } },
+            },
+          },
+        },
+      },
       subscription: true,
     },
   });
 
-  const venueCount = org?.venues.length ?? 0;
-  const menuCount = org?.venues.reduce((n, v) => n + v.menus.length, 0) ?? 0;
+  const venues = org?.venues ?? [];
+  const venueCount = venues.length;
+  const menuCount = venues.reduce((n, v) => n + v.menus.length, 0);
+  const itemCount = venues.reduce(
+    (n, v) => n + v.menus.reduce((m, menu) => m + menu.categories.reduce((c, cat) => c + cat.items.length, 0), 0),
+    0,
+  );
+  const firstVenue = venues[0];
+  const hasCategory = venues.some((v) => v.menus.some((m) => m.categories.length > 0));
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-2xl font-bold text-primary">{org?.name}</h1>
         <p className="text-sm text-slate-600">
-          Plan: {org?.subscription?.plan ?? "TRIAL"} · {venueCount} venue(s) · {menuCount} menu(s)
+          Πλάνο: {org?.subscription?.plan ?? "TRIAL"} · {venueCount} venue · {menuCount} menu · {itemCount} πιάτα
         </p>
       </div>
 
+      <OnboardingWizard
+        state={{
+          hasVenue: venueCount > 0,
+          hasCategory,
+          hasItem: itemCount > 0,
+          venueId: firstVenue?.id,
+          venueSlug: firstVenue?.slug,
+          itemCount,
+        }}
+      />
+
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Venues" value={venueCount} />
-        <StatCard label="Menus" value={menuCount} />
-        <StatCard label="Trial ends" value={formatTrial(org?.subscription?.trialEndsAt)} />
+        <StatCard label="Venues" value={venueCount} hint={venueCount === 0 ? "Πρόσθεσε το πρώτο" : undefined} />
+        <StatCard label="Πιάτα" value={itemCount} hint={itemCount === 0 ? "Πρόσθεσε στο Menus" : undefined} />
+        <StatCard label="Δοκιμή έως" value={formatTrial(org?.subscription?.trialEndsAt)} />
       </div>
 
       <Card>
-        <h2 className="font-semibold text-primary">Quick start</h2>
+        <h2 className="font-semibold text-primary">Γρήγορες ενέργειες</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Create your first venue and menu, then generate a QR code for your tables.
+          {itemCount === 0
+            ? "Ξεκίνα προσθέτοντας κατηγορίες και πιάτα — μετά βγάλε QR για τα τραπέζια σου."
+            : "Το menu σου είναι live! Βγάλε QR ή δες κλήσεις σερβιτόρου."}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/dashboard/venues/new" className={buttonClass("primary")}>
-            Add venue
-          </Link>
-          <Link href="/dashboard/menus" className={buttonClass("secondary")}>
-            Manage menus
-          </Link>
+          {venueCount === 0 ? (
+            <Link href="/dashboard/venues/new" className={buttonClass("primary")}>
+              + Προσθήκη venue
+            </Link>
+          ) : (
+            <>
+              <Link
+                href={`/dashboard/menus${firstVenue ? `?venue=${firstVenue.id}` : ""}`}
+                className={buttonClass("primary")}
+              >
+                Επεξεργασία menu
+              </Link>
+              <Link
+                href={`/dashboard/qr${firstVenue ? `?venue=${firstVenue.id}` : ""}`}
+                className={buttonClass("secondary")}
+              >
+                QR codes
+              </Link>
+              {firstVenue ? (
+                <a
+                  href={`/m/${firstVenue.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={buttonClass("secondary")}
+                >
+                  Live preview
+                </a>
+              ) : null}
+            </>
+          )}
           <Link href="/dashboard/billing" className={buttonClass("secondary")}>
-            Upgrade plan
+            Συνδρομή
           </Link>
         </div>
       </Card>
@@ -57,11 +110,12 @@ export default async function DashboardPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
     <Card>
       <p className="text-sm text-slate-500">{label}</p>
       <p className="mt-1 font-serif text-2xl font-bold text-primary">{value}</p>
+      {hint ? <p className="mt-1 text-xs text-brand-blue">{hint}</p> : null}
     </Card>
   );
 }

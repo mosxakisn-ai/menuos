@@ -1,7 +1,37 @@
 import { NextResponse } from "next/server";
 import { prisma, WaiterCallStatus } from "@menuos/db";
-import { waiterCallSchema } from "@menuos/shared";
+import { waiterCallSchema, waiterCallUpdateSchema } from "@menuos/shared";
+import { requireActiveSubscription } from "@/lib/api-auth";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { getVenueForOrganization } from "@/lib/venue-access";
+
+export async function GET(request: Request) {
+  const auth = await requireActiveSubscription();
+  if (auth.response) return auth.response;
+
+  const venueId = new URL(request.url).searchParams.get("venueId");
+  if (!venueId) {
+    return NextResponse.json({ error: "venueId required" }, { status: 400 });
+  }
+
+  const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
+  if (!venue) {
+    return NextResponse.json({ error: "Venue not found" }, { status: 404 });
+  }
+
+  const calls = await prisma.waiterCall.findMany({
+    where: {
+      venueId,
+      status: { in: ["PENDING", "ACKNOWLEDGED"] },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
+  const pendingCount = calls.filter((c) => c.status === "PENDING").length;
+
+  return NextResponse.json({ calls, pendingCount });
+}
 
 export async function POST(request: Request) {
   let body: unknown;

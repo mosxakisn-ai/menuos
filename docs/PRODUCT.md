@@ -89,7 +89,7 @@ Prefer `item_translations` table over flat `lang_gr/en/de/fr` columns.
 
 | Plan | Price | Includes |
 |------|-------|----------|
-| Trial | €0 / 14 days | 1 venue, 1 menu, 50 items |
+| Trial | €0 / 7 days | 1 venue, 1 menu, 50 items |
 | Basic | €29/mo | 1 venue, 3 menus, unlimited items, QR |
 | Pro | €79/mo | 3 venues, unlimited menus, OCR, push, analytics |
 | Enterprise | Custom | Custom domain, white-label, priority support |

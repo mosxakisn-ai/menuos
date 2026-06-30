@@ -3,19 +3,20 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { slugifyOrFallback } from "@/lib/utils";
 
 export default function NewVenuePage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setFlash(null);
     const form = new FormData(e.currentTarget);
     const name = String(form.get("name"));
     const res = await fetch("/api/venues", {
@@ -30,23 +31,30 @@ export default function NewVenuePage() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) {
-      setError(data.error ?? "Failed to create venue");
+      showFromResponse(data, false);
       return;
     }
-    router.push("/dashboard");
-    router.refresh();
+    showFromResponse(data, true);
+    setTimeout(() => {
+      router.push(`/dashboard/menus?venue=${data.venue.id}&welcome=1`);
+      router.refresh();
+    }, 800);
   }
 
   return (
-    <div className="max-w-lg">
+    <div className="max-w-lg space-y-4">
       <Link href="/dashboard" className="text-sm text-primary hover:underline">
-        ← Back
+        ← Πίσω
       </Link>
-      <Card className="mt-4">
-        <h1 className="font-serif text-xl font-bold text-primary">Add venue</h1>
+      <FlashMessages initial={flash} onClear={() => setFlash(null)} />
+      <Card>
+        <h1 className="font-serif text-xl font-bold text-primary">Νέο venue</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Το εστιατόριο, bar ή ξενοδοχείο σου. Θα δημιουργηθεί αυτόματα ένα κύριο menu.
+        </p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <label className="block text-sm">
-            <span className="font-medium text-primary">Venue name</span>
+            <span className="font-medium text-primary">Όνομα venue *</span>
             <input
               name="name"
               required
@@ -55,16 +63,16 @@ export default function NewVenuePage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="font-medium text-primary">Description (optional)</span>
+            <span className="font-medium text-primary">Περιγραφή (προαιρετικό)</span>
             <textarea
               name="description"
               rows={3}
               className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
+              placeholder="Pool bar & restaurant στη Ρόδο"
             />
           </label>
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <button type="submit" disabled={loading} className={buttonClass("primary")}>
-            {loading ? "Saving..." : "Create venue"}
+            {loading ? "Δημιουργία..." : "Δημιουργία venue"}
           </button>
         </form>
       </Card>

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 ROOT="${APP_DIR:-/opt/menuos}"
 CADDY_FILE="/opt/matchwork/docker/Caddyfile"
 MARKER="# Append to /opt/matchwork/docker/Caddyfile — MenuOS (menuos.gr)"

@@ -1,57 +1,93 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Heart, MapPin, Sparkles } from "lucide-react";
+import { MarketingCtaBand, SectionHeader, StatStrip } from "@/components/marketing/marketing-blocks";
 import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { buttonClass } from "@/components/ui/button";
+import { MARKETING } from "@/content/marketing-el";
 import { SEO_PAGES } from "@/content/seo-el";
 import { seoPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = seoPageMetadata(SEO_PAGES.about);
+const valueIcons = [Sparkles, MapPin, Heart];
 
 export default function AboutPage() {
+  const p = MARKETING.pages.about;
+
   return (
     <MarketingLayout>
       <MarketingPageJsonLd page={SEO_PAGES.about} />
-      <MarketingPageHero
-        title="Σχετικά με εμάς"
-        subtitle="Φτιάχνουμε εργαλεία που κάνουν την καθημερινότητα στην εστίαση πιο απλή — για εσάς και για τον πελάτη."
-      />
+      <MarketingPageHero title="Σχετικά με εμάς" subtitle={p.hero} badge={p.badge} />
+      <MarketingSection variant="muted">
+        <StatStrip items={[...MARKETING.stats]} />
+      </MarketingSection>
       <MarketingSection>
         <div className="mx-auto max-w-3xl space-y-6 text-lg leading-relaxed text-slate-600">
           <p>
-            Το <strong className="text-brand-navy">MenuOS</strong> είναι μια ελληνική πλατφόρμα ψηφιακών menus με QR.
-            Στόχος μας είναι απλός: να μπορεί κάθε εστιατόριο, ξενοδοχείο ή bar να προσφέρει σύγχρονο menu στο
-            κινητό, χωρίς να χρειάζεται δικό του app ή περίπλοκο λογισμικό.
+            Το <strong className="text-brand-navy">MenuOS</strong> είναι ελληνική πλατφόρμα ψηφιακών menus με QR.
+            Στόχος μας: κάθε εστιατόριο, ξενοδοχείο ή bar να προσφέρει σύγχρονο menu στο κινητό — χωρίς δικό του
+            app ή περίπλοκο λογισμικό.
           </p>
           <p>
-            Ξέρουμε την ελληνική αγορά φιλοξενίας — εποχικότητα, τουρίστες, πολλές γλώσσες, γρήγορες αλλαγές τιμών.
-            Γι&apos; αυτό βάλαμε από την αρχή πολυγλωσσικό menu, call waiter και εύκολο dashboard που μπορεί να
-            χρησιμοποιήσει ο manager χωρίς IT τμήμα.
+            Γνωρίζουμε την ελληνική αγορά φιλοξενίας: εποχικότητα, τουρίστες, πολλές γλώσσες, γρήγορες αλλαγές
+            τιμών. Γι&apos; αυτό βάλαμε από την αρχή πολυγλωσσικό menu, call waiter και dashboard που χρησιμοποιεί
+            ο manager χωρίς IT τμήμα.
           </p>
           <p>
-            Δεν πουλάμε hardware ούτε «μαγικές» λύσεις. Σας δίνουμε μια καθαρή online υπηρεσία: φτιάχνετε menu,
-            βγάζετε QR, οι πελάτες σκανάρουν. Εσείς κρατάτε τον έλεγχο του περιεχομένου και των τιμών.
-          </p>
-          <p>
-            Η ομάδα πίσω από το MenuOS έχει εμπειρία σε digital προϊόντα και φιλοξενία. Υποστηρίζουμε πελάτες στην
-            Ελλάδα με email και ξεκάθαρη επικοινωνία — χωρίς jargon.
+            Δεν πουλάμε hardware ούτε «μαγικές» λύσεις. Σας δίνουμε καθαρή online υπηρεσία: φτιάχνετε menu, βγάζετε
+            QR, οι πελάτες σκανάρουν. Εσείς κρατάτε τον έλεγχο περιεχομένου και τιμών.
           </p>
         </div>
-        <div className="mx-auto mt-12 max-w-3xl rounded-card border border-slate-200 bg-brand-surface p-8">
-          <h2 className="text-xl font-bold text-brand-navy">Η αποστολή μας</h2>
-          <p className="mt-3 leading-relaxed text-slate-600">
-            Να είναι το ψηφιακό menu τόσο απλό όσο το να αλλάξετε μια τιμή στο ταμπλό — αλλά πιο όμορφο, πιο
-            πρακτικό και πιο φιλικό για τον επισκέπτη.
+      </MarketingSection>
+      <MarketingSection variant="muted">
+        <SectionHeader title="Οι αξίες μας" description="Αυτό που μας οδηγεί σε κάθε feature και κάθε υποστήριξη." />
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {p.values.map(({ title, text }, i) => {
+            const Icon = valueIcons[i] ?? Sparkles;
+            return (
+              <article
+                key={title}
+                className="rounded-card border border-slate-200/80 bg-white p-6 shadow-card"
+              >
+                <div className="inline-flex rounded-xl bg-brand-blue/10 p-3 text-brand-blue">
+                  <Icon className="h-5 w-5" aria-hidden />
+                </div>
+                <h3 className="mt-4 text-lg font-bold text-brand-navy">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p>
+              </article>
+            );
+          })}
+        </div>
+      </MarketingSection>
+      <MarketingSection>
+        <div className="mx-auto max-w-3xl rounded-card border border-slate-200 bg-gradient-to-br from-brand-surface to-white p-8 sm:p-10">
+          <h2 className="text-2xl font-extrabold text-brand-navy">Η αποστολή μας</h2>
+          <p className="mt-4 text-lg leading-relaxed text-slate-600">
+            Να είναι το ψηφιακό menu τόσο απλό όσο το να αλλάξετε μια τιμή — αλλά πιο όμορφο, πιο πρακτικό και
+            πιο φιλικό για τον επισκέπτη.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <p className="mt-4 text-sm leading-relaxed text-slate-500">
+            Υποστηρίζουμε πελάτες στην Ελλάδα με τηλέφωνο, email και προσωπική επικοινωνία — χωρίς jargon.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/register" className={buttonClass("primary")}>
-              Δοκιμή 14 ημερών
+              Δοκιμή 7 ημερών
             </Link>
             <Link href="/epikoinonia" className={buttonClass("secondary")}>
               Επικοινωνία
             </Link>
           </div>
         </div>
+      </MarketingSection>
+      <MarketingSection variant="muted">
+        <MarketingCtaBand
+          title="Ας φτιάξουμε το menu σας"
+          description="7 ημέρες δωρεάν. Χωρίς κάρτα. Ξεκίνα σήμερα και δες το αποτέλεσμα στο κινητό σου."
+          primaryHref="/register"
+          primaryLabel="Δημιουργία λογαριασμού"
+          secondaryHref="/ypiresies"
+          secondaryLabel="Υπηρεσίες"
+        />
       </MarketingSection>
     </MarketingLayout>
   );

@@ -1,0 +1,59 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@menuos/db";
+import { venueSchema, venueUpdateSchema } from "@menuos/shared";
+import { canOrganizationAddVenue } from "@/lib/billing";
+import { allocateGlobalVenueSlug, baseVenueSlug } from "@/lib/venue-slug";
+
+export async function createVenueHandler(request: Request, organizationId: string) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  let parsed = venueSchema.safeParse(body);
+  if (!parsed.success && typeof body === "object" && body && "name" in body) {
+    parsed = venueSchema.safeParse({
+      ...(body as Record<string, unknown>),
+      slug: baseVenueSlug(String((body as { name: string }).name)),
+    });
+  }
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Μη έγκυρα στοιχεία." }, { status: 400 });
+  }
+
+  const venueCheck = await canOrganizationAddVenue(organizationId);
+  if (!venueCheck.ok) {
+    return NextResponse.json({ error: venueCheck.error, code: venueCheck.code }, { status: 403 });
+  }
+
+  const slug = await allocateGlobalVenueSlug(parsed.data.name, parsed.data.slug);
+
+  try {
+    const venue = await prisma.venue.create({
+      data: {
+        organizationId,
+        name: parsed.data.name,
+        slug,
+        description: parsed.data.description,
+        settings: { create: { brandName: parsed.data.name } },
+        menus: {
+          create: {
+            name: "Κύριο Menu",
+            type: "RESTAURANT",
+          },
+        },
+      },
+      include: { menus: true },
+    });
+
+    return NextResponse.json({ venue, message: "Το venue δημιουργήθηκε! Πρόσθεσε τώρα κατηγορίες και πιάτα." });
+  } catch (err) {
+    const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
+    if (code === "P2002") {
+      return NextResponse.json({ error: "Το slug υπάρχει ήδη. Δοκίμασε άλλο όνομα." }, { status: 409 });
+    }
+    throw err;
+  }
+}

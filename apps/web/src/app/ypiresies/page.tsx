@@ -1,9 +1,22 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import {
+  Bell,
+  Globe,
+  LayoutDashboard,
+  Palette,
+  QrCode,
+  Shield,
+  UtensilsCrossed,
+} from "lucide-react";
+import {
+  FeatureCard,
+  MarketingCtaBand,
+  SectionHeader,
+  StatStrip,
+} from "@/components/marketing/marketing-blocks";
 import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
-import { Card } from "@/components/ui/card";
-import { buttonClass } from "@/components/ui/button";
+import { MARKETING } from "@/content/marketing-el";
 import { SEO_PAGES } from "@/content/seo-el";
 import { seoPageMetadata } from "@/lib/seo";
 
@@ -11,73 +24,90 @@ export const metadata: Metadata = seoPageMetadata(SEO_PAGES.services);
 
 const services = [
   {
+    icon: QrCode,
     title: "Ψηφιακό menu με QR code",
-    body:
-      "Αντικαθιστάτε ή συμπληρώνετε το printed menu με ένα link που ανοίγει από QR. Ο πελάτης βλέπει κατηγορίες, φωτογραφίες, τιμές, περιγραφές και allergens — στο κινητό του, χωρίς app.",
+    description:
+      "Ο πελάτης σκανάρει και βλέπει κατηγορίες, φωτογραφίες, τιμές, περιγραφές και allergens — χωρίς εγκατάσταση app.",
+    bullets: ["Instant άνοιγμα στο browser", "QR ανά τραπέζι ή δωμάτιο", "Premium mobile layout"],
   },
   {
-    title: "Dashboard για την επιχείρησή σας",
-    body:
-      "Από ένα online panel προσθέτετε και αλλάζετε πιάτα, τιμές και διαθεσιμότητα. Δεν χρειάζεστε τεχνικές γνώσεις: συμπληρώνετε φόρμες όπως σε ένα απλό admin.",
+    icon: LayoutDashboard,
+    title: "Dashboard διαχείρισης",
+    description:
+      "Από ένα online panel προσθέτετε πιάτα, αλλάζετε τιμές και διαθεσιμότητα — χωρίς τεχνικές γνώσεις.",
+    bullets: ["Φόρμες όπως απλό admin", "Πολλαπλά venues", "Άμεσες ενημερώσεις live"],
   },
   {
+    icon: UtensilsCrossed,
     title: "Πολλαπλά menus ανά venue",
-    body:
-      "Πρωινό, εστιατόριο, pool bar, room service, spa — κάθε χώρος μπορεί να έχει δικό του menu. Ιδανικό για ξενοδοχεία με πολλές επιλογές εστίασης.",
+    description:
+      "Πρωινό, εστιατόριο, pool bar, room service, spa — κάθε χώρος με δικό του κατάλογο.",
+    bullets: ["Ιδανικό για ξενοδοχεία", "Ξεχωριστό branding ανά menu", "Εύκολη οργάνωση κατηγοριών"],
   },
   {
-    title: "4 γλώσσες out of the box",
-    body:
-      "Ελληνικά, Αγγλικά, Γερμανικά και Γαλλικά. Ο επισκέπτης επιλέγει γλώσσα με ένα πάτημα — χρήσιμο για τουρισμό σε νησιά και πόλεις.",
+    icon: Globe,
+    title: "Ελληνικά & Αγγλικά",
+    description:
+      "Στο QR menu ο πελάτης επιλέγει Ελληνικά ή English. Ξεχωριστό κείμενο ανά γλώσσα — περισσότερες γλώσσες σύντομα.",
+    bullets: ["ΕΛ / EN switch", "Ιδανικό για τουρισμό", "Allergens & συστατικά"],
   },
   {
-    title: "Call waiter (κλήση σερβιτόρου)",
-    body:
-      "Ο πελάτης πατάει ένα κουμπί στο menu και στέλνεται ειδοποίηση στο προσωπικό. Μπορείτε να ξέρετε και τον αριθμό τραπεζιού ή δωματίου από το QR link.",
+    icon: Bell,
+    title: "Call waiter",
+    description:
+      "Ο πελάτης καλεί σερβιτόρο από το menu. Μπορείτε να ξέρετε τραπέζι ή δωμάτιο από το QR link.",
+    bullets: ["Λιγότερες καθυστερήσεις", "Καλύτερη εξυπηρέτηση", "Rate limit για ασφάλεια"],
   },
   {
+    icon: QrCode,
     title: "QR codes έτοιμα για εκτύπωση",
-    body:
-      "Κατεβάζετε QR codes για τραπέζια, δωμάτια ή ειδικές γωνιές (bar, pool). Το link μπορεί να περιλαμβάνει table= ή room= για καλύτερη εξυπηρέτηση.",
+    description:
+      "Κατεβάζετε QR για τραπέζια, δωμάτια, bar ή pool. Προαιρετικά table= / room= στα links.",
+    bullets: ["High-res export", "Branded presentation", "Γρήγορη τοποθέτηση"],
   },
   {
+    icon: Palette,
     title: "Branding & χρώματα",
-    body:
-      "Προσαρμόζετε χρώματα και logo ώστε το menu να ταιριάζει στην ταυτότητα του χώρου σας — premium εμφάνιση που δείχνει επαγγελματισμό.",
+    description:
+      "Προσαρμόζετε χρώματα και logo ώστε το menu να ταιριάζει στην ταυτότητα του χώρου σας.",
+    bullets: ["Premium εμφάνιση", "Συνέπεια με το venue", "Εντύπωση ποιότητας"],
   },
   {
+    icon: Shield,
     title: "Ασφάλεια & ιδιωτικότητα",
-    body:
-      "Κάθε επιχείρηση έχει δικό της χώρο δεδομένων. Τα στοιχεία σας δεν μοιράζονται με άλλους πελάτες της πλατφόρμας. Hosting με σύγχρονα standards ασφαλείας.",
+    description:
+      "Κάθε επιχείρηση έχει δικό της χώρο δεδομένων. Hosting με σύγχρονα standards ασφαλείας.",
+    bullets: ["Multi-tenant isolation", "GDPR-ready", "Χωρίς κοινή χρήση δεδομένων"],
   },
 ];
 
 export default function ServicesPage() {
+  const p = MARKETING.pages.services;
+
   return (
     <MarketingLayout>
       <MarketingPageJsonLd page={SEO_PAGES.services} />
-      <MarketingPageHero
-        title="Οι υπηρεσίες μας"
-        subtitle="Όλα όσα χρειάζεστε για να προσφέρετε σύγχρονο ψηφιακό menu — από το QR μέχρι τη διαχείριση και την εξυπηρέτηση πελατών."
-      />
+      <MarketingPageHero title="Οι υπηρεσίες μας" subtitle={p.hero} badge={p.badge} />
+      <MarketingSection variant="muted">
+        <StatStrip items={[...MARKETING.stats]} />
+      </MarketingSection>
       <MarketingSection>
-        <div className="grid gap-6 md:grid-cols-2">
-          {services.map(({ title, body }) => (
-            <Card key={title}>
-              <h2 className="text-lg font-bold text-brand-navy">{title}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">{body}</p>
-            </Card>
+        <SectionHeader title="Τι περιλαμβάνει η πλατφόρμα" description={p.intro} />
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {services.map((s) => (
+            <FeatureCard key={s.title} {...s} />
           ))}
         </div>
-        <div className="mt-14 rounded-card bg-brand-gradient p-8 text-center text-white sm:p-10">
-          <h2 className="text-2xl font-extrabold">Θέλετε να το δείτε live;</h2>
-          <p className="mx-auto mt-3 max-w-lg text-white/90">
-            Δημιουργήστε δωρεάν λογαριασμό και φτιάξτε το πρώτο σας menu σε λίγα λεπτά.
-          </p>
-          <Link href="/register" className={`mt-6 inline-flex ${buttonClass("secondary")} !bg-white !text-brand-blue hover:!bg-brand-surface`}>
-            Ξεκίνα δωρεάν δοκιμή
-          </Link>
-        </div>
+      </MarketingSection>
+      <MarketingSection variant="muted">
+        <MarketingCtaBand
+          title="Θέλετε να το δείτε live;"
+          description="Δημιουργήστε δωρεάν λογαριασμό, φτιάξτε το πρώτο venue και δοκιμάστε το QR με τη δική σας ομάδα — σε λιγότερο από μία ώρα."
+          primaryHref="/register"
+          primaryLabel="Ξεκίνα δωρεάν 7 ημέρες"
+          secondaryHref="/pos-leitourgei"
+          secondaryLabel="Πώς λειτουργεί"
+        />
       </MarketingSection>
     </MarketingLayout>
   );

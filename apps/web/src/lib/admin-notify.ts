@@ -77,7 +77,7 @@ export async function notifyAdminOrganizationRegistered(input: {
       { label: "Slug", value: input.orgSlug },
       { label: "Υπεύθυνος", value: input.ownerName },
       { label: "Email", value: input.email },
-      { label: "Πλάνο", value: "Trial (14 ημέρες)" },
+      { label: "Πλάνο", value: "Trial (7 ημέρες)" },
     ],
   );
 }
