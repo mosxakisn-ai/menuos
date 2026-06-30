@@ -5,6 +5,9 @@ export const orderLineSchema = z.object({
   name: z.string().min(1).max(120),
   quantity: z.number().int().min(1).max(99),
   unitPrice: z.string().regex(/^\d+(\.\d{1,2})?$/),
+  extraIds: z.array(z.string().min(1).max(32)).max(12).optional(),
+  extras: z.array(z.string().max(60)).max(12).optional(),
+  note: z.string().max(80).optional(),
 });
 
 export type OrderLine = z.infer<typeof orderLineSchema>;
@@ -14,6 +17,12 @@ export type OrderPayload = {
   total: string;
   lang?: string;
 };
+
+export function orderLineKey(line: Pick<OrderLine, "itemId" | "extraIds" | "note">): string {
+  const ids = [...(line.extraIds ?? [])].sort().join(",");
+  const note = line.note?.trim() ?? "";
+  return `${line.itemId}|${ids}|${note}`;
+}
 
 export function cartStorageKey(
   venueSlug: string,
@@ -52,7 +61,8 @@ export function cartItemCount(lines: OrderLine[]): number {
 }
 
 export function mergeCartLine(lines: OrderLine[], next: OrderLine): OrderLine[] {
-  const idx = lines.findIndex((l) => l.itemId === next.itemId);
+  const key = orderLineKey(next);
+  const idx = lines.findIndex((l) => orderLineKey(l) === key);
   if (idx === -1) return [...lines, next];
   const merged = [...lines];
   merged[idx] = {
@@ -60,13 +70,18 @@ export function mergeCartLine(lines: OrderLine[], next: OrderLine): OrderLine[] 
     quantity: Math.min(99, merged[idx]!.quantity + next.quantity),
     name: next.name,
     unitPrice: next.unitPrice,
+    extraIds: next.extraIds,
+    extras: next.extras,
+    note: next.note,
   };
   return merged;
 }
 
-export function updateCartLineQty(lines: OrderLine[], itemId: string, quantity: number): OrderLine[] {
-  if (quantity < 1) return lines.filter((l) => l.itemId !== itemId);
-  return lines.map((l) => (l.itemId === itemId ? { ...l, quantity: Math.min(99, quantity) } : l));
+export function updateCartLineQty(lines: OrderLine[], lineKey: string, quantity: number): OrderLine[] {
+  if (quantity < 1) return lines.filter((l) => orderLineKey(l) !== lineKey);
+  return lines.map((l) =>
+    orderLineKey(l) === lineKey ? { ...l, quantity: Math.min(99, quantity) } : l,
+  );
 }
 
 export function buildOrderPayload(lines: OrderLine[], lang?: string): OrderPayload {

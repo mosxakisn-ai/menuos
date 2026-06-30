@@ -49,6 +49,7 @@ export async function POST(request: Request) {
           photoUrl: parsed.data.photoUrl?.trim() || null,
           available: parsed.data.available ?? true,
           sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
+          extras: parsed.data.extras?.length ? parsed.data.extras : undefined,
           translations: {
             create: nameTranslations.map((row) => ({
               language: row.language,

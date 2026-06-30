@@ -11,9 +11,15 @@ import {
   cartItemCount,
   cartStorageKey,
   cartTotal,
+  formatOrderLineDetail,
   mergeCartLine,
+  normalizeWaiterCallLocation,
+  orderLineKey,
   parseCartJson,
+  parseItemExtras,
+  pickItemExtraLabel,
   pickQrMenuTranslation,
+  resolveExtraLabels,
   updateCartLineQty,
   type OrderLine,
   type OrderPayload,
@@ -37,6 +43,7 @@ type Item = {
   price: { toString(): string };
   photoUrl: string | null;
   label: string | null;
+  extras?: unknown;
   translations: Translation[];
 };
 
@@ -63,6 +70,7 @@ type Venue = {
 type ActionKind = "WAITER" | "BILL" | "CANCEL";
 type ActionState = "idle" | "loading" | "success" | "error";
 type CallErrorCode = "rate_limited" | "generic";
+type CancelErrorCode = "not_cancellable" | "wrong_location" | "rate_limited" | "generic";
 type ActiveCallType = "WAITER" | "BILL" | "ORDER";
 type CallStatus = "PENDING" | "ACKNOWLEDGED";
 
@@ -102,6 +110,8 @@ export function PublicMenuView({
   const [activeMenuId, setActiveMenuId] = useState(venue.menus[0]?.id);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [itemQty, setItemQty] = useState(1);
+  const [selectedExtraIds, setSelectedExtraIds] = useState<string[]>([]);
+  const [orderNote, setOrderNote] = useState("");
   const [cartLines, setCartLines] = useState<OrderLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [sentOrderOpen, setSentOrderOpen] = useState(true);
@@ -115,6 +125,7 @@ export function PublicMenuView({
   });
   const [cancellingCallId, setCancellingCallId] = useState<string | null>(null);
   const [callErrorCode, setCallErrorCode] = useState<CallErrorCode | null>(null);
+  const [cancelErrorCode, setCancelErrorCode] = useState<CancelErrorCode | null>(null);
   const [orderErrorCode, setOrderErrorCode] = useState<CallErrorCode | null>(null);
   const [callCancellable, setCallCancellable] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
@@ -163,31 +174,42 @@ export function PublicMenuView({
     }
   }, [storageKey]);
 
+  const menuLocation = useMemo(
+    () => normalizeWaiterCallLocation({ tableNumber, roomNumber, sunbedNumber }),
+    [roomNumber, sunbedNumber, tableNumber],
+  );
+
+  const fetchTableCalls = useCallback(async (): Promise<TableCall[]> => {
+    if (!menuLocation.tableNumber && !menuLocation.roomNumber && !menuLocation.sunbedNumber) {
+      return [];
+    }
+    const params = new URLSearchParams({ venueSlug: venue.slug });
+    if (menuLocation.tableNumber) params.set("tableNumber", menuLocation.tableNumber);
+    if (menuLocation.roomNumber) params.set("roomNumber", menuLocation.roomNumber);
+    if (menuLocation.sunbedNumber) params.set("sunbedNumber", menuLocation.sunbedNumber);
+    const res = await fetch(`/api/waiter-call/status?${params}`);
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      calls?: Array<{
+        id: string;
+        type: ActiveCallType;
+        status?: CallStatus;
+        cancellable?: boolean;
+        orderItems?: OrderPayload | null;
+      }>;
+    };
+    return (data.calls ?? []).map((c) => ({
+      id: c.id,
+      type: c.type,
+      status: c.status ?? "PENDING",
+      cancellable: c.cancellable ?? false,
+      orderItems: c.orderItems ?? null,
+    }));
+  }, [menuLocation, venue.slug]);
+
   const syncTableStatus = useCallback(async () => {
-    if (!tableNumber && !roomNumber && !sunbedNumber) return;
     try {
-      const params = new URLSearchParams({ venueSlug: venue.slug });
-      if (tableNumber) params.set("tableNumber", tableNumber);
-      if (roomNumber) params.set("roomNumber", roomNumber);
-      if (sunbedNumber) params.set("sunbedNumber", sunbedNumber);
-      const res = await fetch(`/api/waiter-call/status?${params}`);
-      if (!res.ok) return;
-      const data = (await res.json()) as {
-        calls?: Array<{
-          id: string;
-          type: ActiveCallType;
-          status?: CallStatus;
-          cancellable?: boolean;
-          orderItems?: OrderPayload | null;
-        }>;
-      };
-      const calls = (data.calls ?? []).map((c) => ({
-        id: c.id,
-        type: c.type,
-        status: c.status ?? "PENDING",
-        cancellable: c.cancellable ?? false,
-        orderItems: c.orderItems ?? null,
-      }));
+      const calls = await fetchTableCalls();
       if (calls.length === 0) {
         clearActiveCall();
         return;
@@ -196,7 +218,7 @@ export function PublicMenuView({
     } catch {
       // keep local state on transient errors
     }
-  }, [applyTableCalls, clearActiveCall, roomNumber, sunbedNumber, tableNumber, venue.slug]);
+  }, [applyTableCalls, clearActiveCall, fetchTableCalls]);
 
   const restoreActiveCall = useCallback(async () => {
     await syncTableStatus();
@@ -226,6 +248,8 @@ export function PublicMenuView({
 
   useEffect(() => {
     setItemQty(1);
+    setSelectedExtraIds([]);
+    setOrderNote("");
   }, [selectedItem?.id]);
 
   useEffect(() => {
@@ -239,14 +263,6 @@ export function PublicMenuView({
     }
     setCanGoBack(window.history.length > 1 || Boolean(document.referrer));
   }, [isEmbedded]);
-
-  useEffect(() => {
-    if (!tableNumber && !roomNumber && !sunbedNumber) return;
-    const poll = setInterval(() => {
-      void syncTableStatus();
-    }, 8000);
-    return () => clearInterval(poll);
-  }, [roomNumber, sunbedNumber, syncTableStatus, tableNumber]);
 
   useEffect(() => {
     return () => {
@@ -307,6 +323,7 @@ export function PublicMenuView({
       delete actionResetTimersRef.current[kind];
       setActionState((s) => ({ ...s, [kind]: "idle" }));
       if (kind === "WAITER" || kind === "BILL") setCallErrorCode(null);
+      if (kind === "CANCEL") setCancelErrorCode(null);
     }, delayMs);
   }
 
@@ -355,11 +372,18 @@ export function PublicMenuView({
   function addToCart() {
     if (!selectedItem || !canUseCallActions) return;
     const tr = pickQrMenuTranslation(selectedItem.translations, lang);
+    const itemExtras = parseItemExtras(selectedItem.extras);
+    const extraIds = selectedExtraIds.filter((id) => itemExtras.some((e) => e.id === id));
+    const extras = resolveExtraLabels(itemExtras, extraIds, lang);
+    const note = orderNote.trim().slice(0, 80) || undefined;
     const line: OrderLine = {
       itemId: selectedItem.id,
       name: tr?.name ?? "—",
       quantity: itemQty,
       unitPrice: selectedItem.price.toString(),
+      ...(extraIds.length ? { extraIds } : {}),
+      ...(extras.length ? { extras } : {}),
+      ...(note ? { note } : {}),
     };
     persistCart(mergeCartLine(cartLines, line));
     setAddedFlash(true);
@@ -418,34 +442,52 @@ export function PublicMenuView({
   }
 
   async function cancelCall(callId: string) {
-    const target = activeCalls.find((c) => c.id === callId && c.cancellable);
-    if (!target) return;
+    setCancelErrorCode(null);
     setCancellingCallId(callId);
     setActionState((s) => ({ ...s, CANCEL: "loading" }));
     try {
+      const calls = await fetchTableCalls();
+      if (calls.length > 0) applyTableCalls(calls);
+      else clearActiveCall();
+
+      const target = calls.find((c) => c.id === callId && c.cancellable);
+      if (!target) {
+        setCancelErrorCode("not_cancellable");
+        setActionState((s) => ({ ...s, CANCEL: "error" }));
+        resetActionState("CANCEL", 4000);
+        return;
+      }
+
       const res = await fetch("/api/waiter-call/cancel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           venueSlug: venue.slug,
           callId: target.id,
-          tableNumber,
-          roomNumber,
-          sunbedNumber,
+          ...menuLocation,
         }),
       });
+      const data = (await res.json().catch(() => ({}))) as { code?: string };
       if (!res.ok) {
+        const code =
+          data.code === "not_cancellable"
+            ? "not_cancellable"
+            : data.code === "wrong_location"
+              ? "wrong_location"
+              : data.code === "rate_limited"
+                ? "rate_limited"
+                : "generic";
+        setCancelErrorCode(code);
         setActionState((s) => ({ ...s, CANCEL: "error" }));
         resetActionState("CANCEL", 4000);
-        if (res.status === 404 || res.status === 409) {
-          void syncTableStatus();
-        }
+        void syncTableStatus();
         return;
       }
       setActionState((s) => ({ ...s, CANCEL: "success", WAITER: "idle", BILL: "idle" }));
       resetActionState("CANCEL");
       void syncTableStatus();
     } catch {
+      setCancelErrorCode("generic");
       setActionState((s) => ({ ...s, CANCEL: "error" }));
       resetActionState("CANCEL", 4000);
     } finally {
@@ -468,7 +510,12 @@ export function PublicMenuView({
       return ui.requestBill;
     }
     if (state === "success") return ui.cancelled;
-    if (state === "error") return ui.cancelFailed;
+    if (state === "error") {
+      if (cancelErrorCode === "not_cancellable") return ui.cancelNotCancellable;
+      if (cancelErrorCode === "wrong_location") return ui.cancelWrongLocation;
+      if (cancelErrorCode === "rate_limited") return ui.rateLimited;
+      return ui.cancelFailed;
+    }
     if (state === "loading") return ui.cancelling;
     if (cancelTarget) return ui.cancelCallType(cancelTarget.type);
     return ui.cancelCall;
@@ -488,6 +535,16 @@ export function PublicMenuView({
   const hasCancellableCall = cancellableCalls.length > 0;
   const multipleCancellable = cancellableCalls.length > 1;
   const canUseCallActions = Boolean(tableNumber || roomNumber || sunbedNumber);
+
+  useEffect(() => {
+    if (!menuLocation.tableNumber && !menuLocation.roomNumber && !menuLocation.sunbedNumber) return;
+    const intervalMs = hasCancellableCall ? 3000 : 8000;
+    const poll = setInterval(() => {
+      void syncTableStatus();
+    }, intervalMs);
+    return () => clearInterval(poll);
+  }, [hasCancellableCall, menuLocation, syncTableStatus]);
+
   const cartCount = cartItemCount(cartLines);
   const cartTotalStr = cartTotal(cartLines);
   const hasCart = cartLines.length > 0;
@@ -809,16 +866,22 @@ export function PublicMenuView({
           {sentOrderOpen ? (
             <>
               <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
-                {sentOrder.lines.map((line) => (
-                  <li key={`${line.itemId}-${line.name}`} className="flex justify-between gap-2">
+                {sentOrder.lines.map((line) => {
+                  const detail = formatOrderLineDetail(line);
+                  return (
+                  <li key={orderLineKey(line)} className="flex justify-between gap-2">
                     <span>
                       {line.quantity}× {line.name}
+                      {detail ? (
+                        <span className="mt-0.5 block text-xs font-normal text-slate-500">{detail}</span>
+                      ) : null}
                     </span>
-                    <span className="font-medium">
+                    <span className="shrink-0 font-medium">
                       €{(Number(line.unitPrice) * line.quantity).toFixed(2)}
                     </span>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
               <p className="mt-2 text-xs text-slate-500">{ui.yourOrderHint}</p>
             </>
@@ -1044,6 +1107,53 @@ export function PublicMenuView({
                       <span className="font-semibold">{ui.allergens}:</span> {tr.allergens}
                     </p>
                   ) : null}
+                  {(() => {
+                    const itemExtras = parseItemExtras(selectedItem.extras);
+                    if (itemExtras.length === 0) return null;
+                    return (
+                      <div className="mt-5">
+                        <p className="text-sm font-semibold text-slate-800">{ui.extras}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{ui.extrasHint}</p>
+                        <ul className="mt-2 space-y-2">
+                          {itemExtras.map((extra) => {
+                            const checked = selectedExtraIds.includes(extra.id);
+                            return (
+                              <li key={extra.id}>
+                                <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-slate-200 bg-surface px-3 py-2.5 text-sm has-[:checked]:border-brand-blue has-[:checked]:bg-blue-50/60">
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => {
+                                      setSelectedExtraIds((prev) =>
+                                        checked ? prev.filter((id) => id !== extra.id) : [...prev, extra.id],
+                                      );
+                                    }}
+                                    className="h-4 w-4 rounded border-slate-300 text-brand-blue"
+                                  />
+                                  <span className="font-medium text-slate-800">
+                                    {pickItemExtraLabel(extra, lang)}
+                                  </span>
+                                </label>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    );
+                  })()}
+                  {canUseCallActions ? (
+                    <label className="mt-4 block">
+                      <span className="text-sm font-semibold text-slate-700">{ui.orderNote}</span>
+                      <input
+                        type="text"
+                        value={orderNote}
+                        onChange={(e) => setOrderNote(e.target.value)}
+                        maxLength={80}
+                        placeholder={ui.orderNotePlaceholder}
+                        className="mt-1.5 w-full rounded-button border border-slate-200 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400"
+                      />
+                    </label>
+                  ) : null}
                   {canUseCallActions ? (
                     <>
                       <div className="mt-6 flex items-center justify-between">
@@ -1131,19 +1241,25 @@ export function PublicMenuView({
                 <p className="py-8 text-center text-sm text-slate-500">{ui.cartEmpty}</p>
               ) : (
                 <ul className="space-y-3">
-                  {cartLines.map((line) => (
+                  {cartLines.map((line) => {
+                    const lineKey = orderLineKey(line);
+                    const detail = formatOrderLineDetail(line);
+                    return (
                     <li
-                      key={line.itemId}
+                      key={lineKey}
                       className="flex items-center justify-between gap-3 rounded-card border border-slate-100 bg-surface px-3 py-2.5"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold text-primary">{line.name}</p>
+                        {detail ? (
+                          <p className="mt-0.5 text-xs text-slate-500">{detail}</p>
+                        ) : null}
                         <p className="text-xs text-slate-500">€{line.unitPrice}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => persistCart(updateCartLineQty(cartLines, line.itemId, line.quantity - 1))}
+                          onClick={() => persistCart(updateCartLineQty(cartLines, lineKey, line.quantity - 1))}
                           aria-label={ui.decreaseQty}
                           className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white"
                         >
@@ -1152,7 +1268,7 @@ export function PublicMenuView({
                         <span className="min-w-[1.25rem] text-center text-sm font-bold">{line.quantity}</span>
                         <button
                           type="button"
-                          onClick={() => persistCart(updateCartLineQty(cartLines, line.itemId, line.quantity + 1))}
+                          onClick={() => persistCart(updateCartLineQty(cartLines, lineKey, line.quantity + 1))}
                           disabled={line.quantity >= 99}
                           aria-label={ui.increaseQty}
                           className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white disabled:opacity-40"
@@ -1166,7 +1282,8 @@ export function PublicMenuView({
                         )}
                       </p>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
               {cartLines.length > 0 ? (

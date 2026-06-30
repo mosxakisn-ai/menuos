@@ -52,6 +52,11 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
     return <PublicMenuUnavailable language={lang} />;
   }
 
+  const trimParam = (v?: string) => {
+    const t = v?.trim();
+    return t || undefined;
+  };
+
   const publicVenue = {
     name: venue.name,
     slug: venue.slug,
@@ -67,9 +72,9 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
     <PublicMenuView
       venue={publicVenue}
       language={lang}
-      tableNumber={sp.table}
-      roomNumber={sp.room}
-      sunbedNumber={sp.sunbed}
+      tableNumber={trimParam(sp.table)}
+      roomNumber={trimParam(sp.room)}
+      sunbedNumber={trimParam(sp.sunbed)}
       embedMode={sp.embed === "1"}
     />
   );

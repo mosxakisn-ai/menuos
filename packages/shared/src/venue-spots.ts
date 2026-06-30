@@ -53,9 +53,9 @@ export function countMenuLocationFields(loc: {
 
 /** One active location per call — sunbed wins over room over table if multiple are sent. */
 export function normalizeWaiterCallLocation(input: {
-  tableNumber?: string;
-  roomNumber?: string;
-  sunbedNumber?: string;
+  tableNumber?: string | null;
+  roomNumber?: string | null;
+  sunbedNumber?: string | null;
 }): { tableNumber?: string; roomNumber?: string; sunbedNumber?: string } {
   const sunbed = input.sunbedNumber?.trim();
   if (sunbed) return { sunbedNumber: sunbed };
@@ -64,4 +64,17 @@ export function normalizeWaiterCallLocation(input: {
   const table = input.tableNumber?.trim();
   if (table) return { tableNumber: table };
   return {};
+}
+
+/** True when the request targets the same spot as the stored call (single-field match). */
+export function waiterCallLocationMatches(
+  call: WaiterCallLocation,
+  request: { tableNumber?: string; roomNumber?: string; sunbedNumber?: string },
+): boolean {
+  const stored = normalizeWaiterCallLocation(call);
+  const req = normalizeWaiterCallLocation(request);
+  if (stored.tableNumber) return req.tableNumber === stored.tableNumber;
+  if (stored.roomNumber) return req.roomNumber === stored.roomNumber;
+  if (stored.sunbedNumber) return req.sunbedNumber === stored.sunbedNumber;
+  return !req.tableNumber && !req.roomNumber && !req.sunbedNumber;
 }

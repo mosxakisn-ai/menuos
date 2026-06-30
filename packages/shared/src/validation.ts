@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { itemExtrasSchema } from "./item-extras";
 
 export const registerOtpSendSchema = z.object({
   email: z.string().email().max(254),
@@ -57,6 +58,9 @@ export const waiterCallSchema = z
             name: z.string().min(1).max(120),
             quantity: z.number().int().min(1).max(99),
             unitPrice: z.string().regex(/^\d+(\.\d{1,2})?$/),
+            extraIds: z.array(z.string().min(1).max(32)).max(12).optional(),
+            extras: z.array(z.string().max(60)).max(12).optional(),
+            note: z.string().max(80).optional(),
           }),
         ),
         total: z.string(),
@@ -131,6 +135,7 @@ export const itemCreateSchema = z.object({
   ingredientsGr: z.string().max(500).optional(),
   allergensGr: z.string().max(500).optional(),
   available: z.boolean().optional(),
+  extras: itemExtrasSchema.optional(),
 });
 
 export const venueUpdateSchema = z.object({
@@ -200,6 +205,7 @@ export const itemPatchSchema = z
     nameEn: z.string().max(120).optional(),
     nameDe: z.string().max(120).optional(),
     nameFr: z.string().max(120).optional(),
+    extras: itemExtrasSchema.optional(),
   })
   .refine(
     (d) =>
@@ -210,7 +216,8 @@ export const itemPatchSchema = z
       d.nameGr !== undefined ||
       d.nameEn !== undefined ||
       d.nameDe !== undefined ||
-      d.nameFr !== undefined,
+      d.nameFr !== undefined ||
+      d.extras !== undefined,
     { message: "Nothing to update" },
   );
 

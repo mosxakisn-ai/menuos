@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { waiterCallCancelSchema } from "@menuos/shared";
+import { waiterCallCancelSchema, waiterCallLocationMatches } from "@menuos/shared";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
@@ -56,13 +56,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const reqTable = parsed.data.tableNumber ?? null;
-  const reqRoom = parsed.data.roomNumber ?? null;
-  const reqSunbed = parsed.data.sunbedNumber ?? null;
-  const callTable = call.tableNumber ?? null;
-  const callRoom = call.roomNumber ?? null;
-  const callSunbed = call.sunbedNumber ?? null;
-  if (callTable !== reqTable || callRoom !== reqRoom || callSunbed !== reqSunbed) {
+  if (!waiterCallLocationMatches(call, parsed.data)) {
     return NextResponse.json(
       { error: "Η κλήση δεν ανήκει σε αυτό το τραπέζι/δωμάτιο.", code: "wrong_location" },
       { status: 403 },

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { parseOrderPayload } from "@menuos/shared";
+import { normalizeWaiterCallLocation, parseOrderPayload } from "@menuos/shared";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
 function publicOrderItems(raw: unknown) {
@@ -57,12 +57,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Απαιτούνται callId ή tableNumber/roomNumber/sunbedNumber." }, { status: 400 });
   }
 
+  const loc = normalizeWaiterCallLocation({
+    tableNumber: tableNumber ?? undefined,
+    roomNumber: roomNumber ?? undefined,
+    sunbedNumber: sunbedNumber ?? undefined,
+  });
+
   const calls = await prisma.waiterCall.findMany({
     where: {
       venue: { slug: venueSlug },
-      tableNumber: tableNumber ?? null,
-      roomNumber: roomNumber ?? null,
-      sunbedNumber: sunbedNumber ?? null,
+      tableNumber: loc.tableNumber ?? null,
+      roomNumber: loc.roomNumber ?? null,
+      sunbedNumber: loc.sunbedNumber ?? null,
       status: { in: ["PENDING", "ACKNOWLEDGED"] },
     },
     orderBy: { createdAt: "desc" },

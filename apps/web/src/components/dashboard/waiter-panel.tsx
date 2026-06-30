@@ -2,7 +2,7 @@
 
 import { Bell, Check, Clock } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { formatWaiterCallLocation } from "@menuos/shared";
+import { formatWaiterCallLocation, formatOrderLineDetail, type OrderLine } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { buttonClass } from "@/components/ui/button";
@@ -23,7 +23,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 type Venue = { id: string; name: string };
 type OrderPayload = {
-  lines: Array<{ name: string; quantity: number; unitPrice: string }>;
+  lines: OrderLine[];
   total: string;
 };
 type WaiterCall = {
@@ -172,16 +172,22 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
                     </p>
                     {call.type === "ORDER" && call.orderItems?.lines?.length ? (
                       <ul className="mt-3 space-y-1 rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm text-slate-700">
-                        {call.orderItems.lines.map((line, i) => (
+                        {call.orderItems.lines.map((line, i) => {
+                          const detail = formatOrderLineDetail(line);
+                          return (
                           <li key={`${line.name}-${i}`} className="flex justify-between gap-2">
                             <span>
                               {line.quantity}× {line.name}
+                              {detail ? (
+                                <span className="mt-0.5 block text-xs font-normal text-slate-500">{detail}</span>
+                              ) : null}
                             </span>
-                            <span className="font-medium">
+                            <span className="shrink-0 font-medium">
                               €{(Number(line.unitPrice) * line.quantity).toFixed(2)}
                             </span>
                           </li>
-                        ))}
+                          );
+                        })}
                         <li className="flex justify-between border-t border-slate-100 pt-1 font-bold text-brand-navy">
                           <span>Σύνολο</span>
                           <span>€{call.orderItems.total}</span>

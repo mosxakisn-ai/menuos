@@ -2,6 +2,10 @@ import { prisma } from "@menuos/db";
 import {
   buildOrderPayload,
   mergeCartLine,
+  parseQrMenuLanguage,
+  filterValidExtraIds,
+  resolveExtraLabels,
+  parseItemExtras,
   type OrderLine,
   type OrderPayload,
 } from "@menuos/shared";
@@ -19,6 +23,7 @@ export async function validateOrderItemsForVenue(
 ): Promise<OrderPayload | null> {
   if (incoming.lines.length === 0) return null;
 
+  const lang = parseQrMenuLanguage(incoming.lang);
   const ids = [...new Set(incoming.lines.map((l) => l.itemId))];
   const items = await prisma.item.findMany({
     where: {
@@ -37,14 +42,22 @@ export async function validateOrderItemsForVenue(
     const item = byId.get(line.itemId);
     if (!item) return null;
     const name =
+      item.translations.find((t) => t.language === lang)?.name ??
       item.translations.find((t) => t.language === "GR")?.name ??
       item.translations[0]?.name ??
       line.name;
+    const itemExtras = parseItemExtras(item.extras);
+    const extraIds = filterValidExtraIds(itemExtras, line.extraIds);
+    const extras = resolveExtraLabels(itemExtras, extraIds, lang);
+    const note = line.note?.trim().slice(0, 80) || undefined;
     merged = mergeCartLine(merged, {
       itemId: line.itemId,
       name,
       quantity: line.quantity,
       unitPrice: formatMenuPrice(item.price),
+      ...(extraIds.length ? { extraIds } : {}),
+      ...(extras.length ? { extras } : {}),
+      ...(note ? { note } : {}),
     });
   }
 

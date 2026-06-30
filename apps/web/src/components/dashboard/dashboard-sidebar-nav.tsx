@@ -25,7 +25,7 @@ export function DashboardSidebarNav({ initialPendingCount }: { initialPendingCou
   const pendingCount = usePendingWaiterCount(initialPendingCount);
 
   return (
-    <nav className="mt-8 space-y-1">
+    <nav className="space-y-1">
       {nav.map(({ href, label, icon: Icon }) => (
         <Link
           key={href}

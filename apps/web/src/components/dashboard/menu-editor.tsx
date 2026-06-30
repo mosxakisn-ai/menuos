@@ -2,7 +2,7 @@
 
 import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, type ItemLabel } from "@menuos/shared";
+import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
 import { buttonClass } from "@/components/ui/button";
@@ -16,6 +16,7 @@ type Item = {
   available: boolean;
   label: string | null;
   photoUrl: string | null;
+  extras?: unknown;
   translations: Translation[];
 };
 type Category = {
@@ -73,6 +74,7 @@ export function MenuEditor({
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editNameGr, setEditNameGr] = useState("");
   const [editPhotoUrl, setEditPhotoUrl] = useState("");
+  const [editExtras, setEditExtras] = useState<ItemExtra[]>([]);
   const [savingName, setSavingName] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string>("");
   const [newMenuName, setNewMenuName] = useState("");
@@ -202,6 +204,9 @@ export function MenuEditor({
 
   async function saveItemEdit(itemId: string) {
     if (!editNameGr.trim()) return;
+    const extras = editExtras
+      .map((e) => ({ ...e, labels: { ...e.labels, GR: e.labels.GR.trim() } }))
+      .filter((e) => e.labels.GR);
     setSavingName(true);
     try {
       const res = await fetch(`/api/items/${itemId}`, {
@@ -210,6 +215,7 @@ export function MenuEditor({
         body: JSON.stringify({
           nameGr: editNameGr.trim(),
           photoUrl: editPhotoUrl.trim() || "",
+          extras,
         }),
       });
       const data = await res.json();
@@ -451,6 +457,46 @@ export function MenuEditor({
                               value={editPhotoUrl}
                               onChange={setEditPhotoUrl}
                             />
+                            <div className="space-y-2 rounded-lg border border-slate-100 bg-slate-50/80 p-3">
+                              <p className="text-xs font-semibold text-brand-navy">Επιλογές πελάτη</p>
+                              <p className="text-[11px] leading-snug text-slate-500">
+                                Ο πελάτης τις επιλέγει στο QR menu (π.χ. χωρίς αλάτι, λίγη ζάχαρη).
+                              </p>
+                              {editExtras.map((ex, i) => (
+                                <div key={ex.id} className="flex items-center gap-2">
+                                  <input
+                                    value={ex.labels.GR}
+                                    onChange={(e) => {
+                                      const next = [...editExtras];
+                                      next[i] = { ...ex, labels: { ...ex.labels, GR: e.target.value } };
+                                      setEditExtras(next);
+                                    }}
+                                    placeholder="π.χ. Χωρίς αλάτι"
+                                    className="min-w-0 flex-1 rounded border border-slate-200 px-2 py-1.5 text-sm"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditExtras(editExtras.filter((_, j) => j !== i))}
+                                    className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                    title="Αφαίρεση"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                              {editExtras.length < 12 ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEditExtras([...editExtras, { id: newItemExtraId(), labels: { GR: "" } }])
+                                  }
+                                  className="inline-flex items-center gap-1 text-xs font-semibold text-brand-blue"
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                  Προσθήκη επιλογής
+                                </button>
+                              ) : null}
+                            </div>
                           </div>
                         ) : (
                           <div className="flex flex-wrap items-center gap-2">
@@ -478,6 +524,7 @@ export function MenuEditor({
                                 setEditingItemId(item.id);
                                 setEditNameGr(tName(item.translations));
                                 setEditPhotoUrl(item.photoUrl ?? "");
+                                setEditExtras(parseItemExtras(item.extras));
                               }}
                               className="rounded p-1 text-slate-400 hover:text-brand-blue"
                               title="Επεξεργασία ονόματος"
@@ -487,6 +534,11 @@ export function MenuEditor({
                           </div>
                         )}
                         <p className="text-sm text-brand-blue">€{item.price.toString()}</p>
+                        {parseItemExtras(item.extras).length > 0 ? (
+                          <p className="text-[11px] text-slate-500">
+                            {parseItemExtras(item.extras).length} επιλογές QR
+                          </p>
+                        ) : null}
                       </div>
                       <div className="flex shrink-0 flex-wrap items-center gap-1">
                         <select
