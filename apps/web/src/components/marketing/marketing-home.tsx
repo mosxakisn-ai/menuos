@@ -17,6 +17,7 @@ import { HeroShowcase } from "@/components/marketing/hero-showcase";
 import { MarketingTestimonials } from "@/components/marketing/marketing-testimonials";
 import {
   FaqBlock,
+  DesignedForStrip,
   FeatureCard,
   SectionHeader,
   StatStrip,
@@ -111,21 +112,7 @@ export function MarketingHome() {
         </div>
       </section>
 
-      {/* ── Social proof strip ── */}
-      <section className="border-b border-slate-100 bg-brand-surface/50 py-8">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-            {pages.common.designedFor}
-          </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-semibold text-slate-500">
-            {pages.common.industries.map((label) => (
-              <span key={label} className="transition hover:text-brand-blue">
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+      <DesignedForStrip label={pages.common.designedFor} industries={pages.common.industries} />
 
       <MarketingTestimonials />
 

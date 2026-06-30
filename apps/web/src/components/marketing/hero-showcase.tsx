@@ -197,7 +197,10 @@ export function HeroShowcase() {
 
         {/* Phone mockup — live demo iframe (restaurant example) */}
         <div className="relative w-full max-w-[320px] shrink-0 overflow-hidden sm:max-w-[340px]">
-          <p className="mb-2 text-center text-xs font-semibold text-slate-500">{hs.liveDemoHint}</p>
+          <div className="mb-3 mx-auto max-w-[18rem] text-center sm:max-w-xs">
+            <p className="text-sm font-medium leading-snug text-slate-700">{hs.liveDemoHint}</p>
+            <p className="mt-1 text-xs font-semibold tracking-wide text-brand-blue">{hs.liveDemoTouchpoints}</p>
+          </div>
           <p className="mb-4 text-center">
             <span className="inline-flex rounded-full border border-brand-blue/20 bg-brand-blue/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-blue">
               {hs.demoExampleLabel}

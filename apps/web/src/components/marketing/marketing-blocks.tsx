@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Building2, Check, Coffee, ConciergeBell, UtensilsCrossed, Waves } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +49,63 @@ export function StatStrip({ items }: { items: { value: string; label: string }[]
         </div>
       ))}
     </div>
+  );
+}
+
+const DESIGNED_FOR_ICONS = [Building2, UtensilsCrossed, Waves, Coffee, ConciergeBell] as const;
+
+export function DesignedForStrip({
+  label,
+  industries,
+}: {
+  label: string;
+  industries: readonly string[];
+}) {
+  return (
+    <section className="relative overflow-hidden border-b border-slate-200/60 bg-gradient-to-b from-white via-slate-50/80 to-white py-12 sm:py-14">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_50%_-10%,rgba(37,99,235,0.07),transparent_55%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(15,23,42,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.025)_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]"
+        aria-hidden
+      />
+
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="flex items-center justify-center gap-3 sm:gap-5">
+          <span
+            className="h-px w-10 bg-gradient-to-r from-transparent via-slate-300 to-brand-blue/30 sm:w-24"
+            aria-hidden
+          />
+          <p className="shrink-0 text-center text-[11px] font-bold uppercase tracking-[0.32em] text-slate-500">
+            {label}
+          </p>
+          <span
+            className="h-px w-10 bg-gradient-to-l from-transparent via-slate-300 to-brand-blue/30 sm:w-24"
+            aria-hidden
+          />
+        </div>
+
+        <ul className="mt-9 grid grid-cols-2 gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+          {industries.map((name, index) => {
+            const Icon = DESIGNED_FOR_ICONS[index] ?? Building2;
+            return (
+              <li key={name}>
+                <div className="group flex h-full flex-col items-center rounded-2xl border border-slate-200/70 bg-white/95 px-3 py-5 text-center shadow-soft backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-brand-blue/20 hover:shadow-card sm:px-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-navy/[0.04] via-brand-blue/10 to-brand-cyan/15 text-brand-blue shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-brand-blue/10 transition duration-300 group-hover:scale-[1.04] group-hover:ring-brand-cyan/25">
+                    <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+                  </div>
+                  <span className="mt-3.5 text-sm font-semibold leading-snug text-slate-700 transition group-hover:text-brand-navy">
+                    {name}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
   );
 }
 
