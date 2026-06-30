@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { requireActiveSubscription } from "@/lib/api-auth";
+import { serializableTransaction } from "@/lib/plan-limits";
 import { getMenuForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ menuId: string }> };
@@ -25,7 +26,7 @@ export async function DELETE(_req: Request, { params }: Params) {
       if (categoryCount > 0 || itemCount > 0) throw new Error("menu_has_data");
 
       await tx.menu.delete({ where: { id: menuId } });
-    });
+    }, serializableTransaction);
   } catch (err) {
     if (err instanceof Error && err.message === "menu_has_data") {
       return NextResponse.json(

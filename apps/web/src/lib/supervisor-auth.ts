@@ -101,7 +101,12 @@ export async function getSupervisorSession(): Promise<{ username: string } | nul
   try {
     if (!(await isSupervisorOperatorSessionAllowed(username))) return null;
   } catch {
-    // DB unavailable — keep env-only sessions working
+    try {
+      const row = await findSupervisorOperatorByUsername(username);
+      if (row) return null;
+    } catch {
+      return null;
+    }
   }
 
   return { username };

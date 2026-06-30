@@ -39,6 +39,17 @@ export async function POST(request: Request) {
     );
   }
 
+  const emailLimit = await checkRateLimitOutcome(`register:email:${normalizedEmail}`, 10, 60 * 60 * 1000);
+  if (emailLimit === "unavailable") {
+    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
+  }
+  if (emailLimit === "limited") {
+    return NextResponse.json(
+      { error: "Πολλές προσπάθειες για αυτό το email. Δοκίμασε αργότερα.", code: "rate_limited" },
+      { status: 429 },
+    );
+  }
+
   const otpCheck = await verifyRegistrationOtp(normalizedEmail, otp);
   if (!otpCheck.ok) {
     return NextResponse.json({ error: otpCheck.error, code: otpCheck.code }, { status: 400 });

@@ -3,6 +3,12 @@ import { prisma } from "@menuos/db";
 import { normalizeWaiterCallLocation, parseOrderPayload } from "@menuos/shared";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
+function publicOrderSummary(raw: unknown) {
+  const parsed = parseOrderPayload(raw);
+  if (!parsed) return null;
+  return { total: parsed.total, lineCount: parsed.lines.length };
+}
+
 function publicOrderItems(raw: unknown) {
   const parsed = parseOrderPayload(raw);
   if (!parsed) return null;
@@ -82,7 +88,7 @@ export async function GET(request: Request) {
       type: call.type,
       active: true,
       cancellable: call.status === "PENDING",
-      orderItems: call.type === "ORDER" ? publicOrderItems(call.orderItems) : null,
+      orderSummary: call.type === "ORDER" ? publicOrderSummary(call.orderItems) : null,
     })),
   });
 }

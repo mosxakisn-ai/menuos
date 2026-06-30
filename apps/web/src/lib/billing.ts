@@ -154,13 +154,28 @@ export async function syncSubscriptionFromStripe(input: {
   currentPeriodEnd?: Date | null;
   planId?: PaidSubscriptionPlanId;
 }) {
-  let organizationId = input.organizationId ?? null;
+  let organizationId: string | null = null;
 
-  if (!organizationId && input.stripeSubId) {
-    const row = await prisma.subscription.findFirst({
+  if (input.stripeSubId) {
+    const bySub = await prisma.subscription.findFirst({
       where: { stripeSubId: input.stripeSubId },
     });
-    organizationId = row?.organizationId ?? null;
+    organizationId = bySub?.organizationId ?? null;
+  }
+
+  if (
+    organizationId &&
+    input.organizationId &&
+    input.organizationId !== organizationId
+  ) {
+    console.error(
+      "[menuos-billing] Stripe metadata organizationId mismatch — using subscription linkage",
+      { metadataOrg: input.organizationId, linkedOrg: organizationId, stripeSubId: input.stripeSubId },
+    );
+  }
+
+  if (!organizationId && input.organizationId) {
+    organizationId = input.organizationId;
   }
 
   if (!organizationId) return null;

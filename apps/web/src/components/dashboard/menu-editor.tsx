@@ -326,7 +326,7 @@ export function MenuEditor({
     ) {
       return;
     }
-    const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/categories/${id}?force=1`, { method: "DELETE" });
     const data = await res.json();
     showFromResponse(data, res.ok);
     if (res.ok) await loadMenus();

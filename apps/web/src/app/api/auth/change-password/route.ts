@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { changePasswordSchema } from "@menuos/shared";
+import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { requireSession } from "@/lib/api-auth";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
@@ -77,10 +78,20 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
-  await prisma.user.update({
+  const updated = await prisma.user.update({
     where: { id: user.id },
     data: { passwordHash },
+    select: { id: true, organizationId: true, email: true, name: true, role: true },
   });
+
+  const token = await createSessionToken({
+    userId: updated.id,
+    organizationId: updated.organizationId,
+    email: updated.email,
+    name: updated.name,
+    role: updated.role,
+  });
+  await setSessionCookie(token);
 
   return NextResponse.json({ ok: true, message: "Ο κωδικός άλλαξε." });
 }

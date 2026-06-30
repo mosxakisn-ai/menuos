@@ -16,7 +16,8 @@
     "seed:master": "node scripts/seed-master-user.mjs",
     "indexnow": "node scripts/submit-indexnow.mjs",
     "env:ensure": "bash scripts/ensure-env.sh",
-    "sync:check": "npm run db:generate && npm run build"
+    "sync:check": "npm run db:generate && npm test && npm run build",
+    "test": "npm run test -w @menuos/shared"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

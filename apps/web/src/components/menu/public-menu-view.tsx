@@ -16,6 +16,7 @@ import {
   normalizeWaiterCallLocation,
   orderLineKey,
   parseCartJson,
+  parseOrderPayload,
   parseItemExtras,
   pickItemExtraLabel,
   pickQrMenuTranslation,
@@ -81,7 +82,6 @@ type TableCall = {
   type: ActiveCallType;
   status: CallStatus;
   cancellable: boolean;
-  orderItems?: OrderPayload | null;
 };
 
 function callStorageKey(
@@ -91,6 +91,10 @@ function callStorageKey(
   sunbedNumber?: string,
 ) {
   return `menuos-call:${venueSlug}:${tableNumber ?? ""}:${roomNumber ?? ""}:${sunbedNumber ?? ""}`;
+}
+
+function sentOrderStorageKey(cartKey: string) {
+  return `${cartKey}:sent-order`;
 }
 
 export function PublicMenuView({
@@ -160,12 +164,16 @@ export function PublicMenuView({
 
   const clearActiveCall = useCallback(() => {
     sessionStorage.removeItem(storageKey);
+    sessionStorage.removeItem(sentOrderStorageKey(cartKey));
     setActiveCalls([]);
     setCallCancellable(false);
-  }, [storageKey]);
+  }, [cartKey, storageKey]);
 
   const applyTableCalls = useCallback((calls: TableCall[]) => {
     setActiveCalls(calls);
+    if (!calls.some((c) => c.type === "ORDER")) {
+      sessionStorage.removeItem(sentOrderStorageKey(cartKey));
+    }
     const cancellable = calls.find((c) => c.cancellable);
     const primary = cancellable ?? calls[0];
     if (primary) {
@@ -175,7 +183,7 @@ export function PublicMenuView({
       setCallCancellable(false);
       sessionStorage.removeItem(storageKey);
     }
-  }, [storageKey]);
+  }, [cartKey, storageKey]);
 
   const menuLocation = useMemo(
     () => normalizeWaiterCallLocation({ tableNumber, roomNumber, sunbedNumber }),
@@ -198,7 +206,6 @@ export function PublicMenuView({
         type: ActiveCallType;
         status?: CallStatus;
         cancellable?: boolean;
-        orderItems?: OrderPayload | null;
       }>;
     };
     return (data.calls ?? []).map((c) => ({
@@ -206,7 +213,6 @@ export function PublicMenuView({
       type: c.type,
       status: c.status ?? "PENDING",
       cancellable: c.cancellable ?? false,
-      orderItems: c.orderItems ?? null,
     }));
   }, [menuLocation, venue.slug]);
 
@@ -491,6 +497,8 @@ export function PublicMenuView({
         setTimeout(() => setOrderState("idle"), 4000);
         return;
       }
+      const sentPayload = buildOrderPayload(cartLines, lang);
+      sessionStorage.setItem(sentOrderStorageKey(cartKey), JSON.stringify(sentPayload));
       persistCart([]);
       setOrderState("success");
       setTimeout(() => setOrderState("idle"), 3000);
@@ -609,7 +617,16 @@ export function PublicMenuView({
   const cartCount = cartItemCount(cartLines);
   const cartTotalStr = cartTotal(cartLines);
   const hasCart = cartLines.length > 0;
-  const sentOrder = activeCalls.find((c) => c.type === "ORDER")?.orderItems ?? null;
+  const sentOrder = useMemo(() => {
+    if (!activeCalls.some((c) => c.type === "ORDER")) return null;
+    try {
+      const raw = sessionStorage.getItem(sentOrderStorageKey(cartKey));
+      if (!raw) return null;
+      return parseOrderPayload(JSON.parse(raw));
+    } catch {
+      return null;
+    }
+  }, [activeCalls, cartKey]);
   const hasSentOrder = Boolean(sentOrder?.lines?.length);
 
   const categoryNav = activeMenu?.categories ?? [];
