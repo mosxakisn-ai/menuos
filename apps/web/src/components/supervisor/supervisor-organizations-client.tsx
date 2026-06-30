@@ -106,6 +106,7 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
             <table className="min-w-full text-left text-sm">
               <thead className="border-b border-slate-100 bg-brand-surface text-xs uppercase text-slate-500">
                 <tr>
+                  <th className="w-12 px-3 py-3">#</th>
                   <th className="px-4 py-3">Επιχείρηση</th>
                   <th className="px-4 py-3">Admin</th>
                   <th className="px-4 py-3">Πακέτο</th>
@@ -123,13 +124,16 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
+                {rows.map((row, index) => (
                   <tr
                     key={row.id}
                     className={`border-b border-slate-50 last:border-0 hover:bg-brand-blue/5 ${
                       editing?.id === row.id ? "bg-brand-blue/10" : ""
                     }`}
                   >
+                    <td className="px-3 py-3 font-medium tabular-nums text-slate-400">
+                      #{index + 1}
+                    </td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-brand-navy">{row.name}</p>
                       {row.isDemo ? (
