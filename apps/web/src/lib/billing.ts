@@ -66,12 +66,14 @@ export async function activateSubscriptionFromCheckout(input: {
   stripeCustomerId?: string | null;
   stripeSubId?: string | null;
   currentPeriodEnd?: Date | null;
+  sendActivationEmail?: boolean;
 }) {
   const plan = getPlan(input.planId);
   const existing = await prisma.subscription.findUnique({
     where: { organizationId: input.organizationId },
   });
   const wasAlreadyActive = existing?.plan === input.planId && existing?.status === "ACTIVE";
+  const sendEmail = input.sendActivationEmail !== false;
 
   const periodEnd =
     input.currentPeriodEnd ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -116,7 +118,7 @@ export async function activateSubscriptionFromCheckout(input: {
     include: { users: { where: { role: "ADMIN" }, take: 1 } },
   });
   const admin = org?.users[0];
-  if (!wasAlreadyActive && admin && org) {
+  if (sendEmail && !wasAlreadyActive && admin && org) {
     void sendSubscriptionActivatedEmail({
       to: admin.email,
       name: admin.name,
@@ -269,16 +271,22 @@ export function isCheckoutPlan(planId: string): planId is PaidSubscriptionPlanId
 export function mapStripeSubscriptionStatus(stripeStatus: string): SubscriptionStatus {
   switch (stripeStatus) {
     case "active":
+    case "paused":
       return "ACTIVE";
     case "trialing":
       return "TRIALING";
     case "past_due":
+    case "incomplete":
       return "PAST_DUE";
     case "canceled":
     case "unpaid":
     case "incomplete_expired":
       return "CANCELED";
     default:
-      return "CANCELED";
+      return "PAST_DUE";
   }
+}
+
+export function organizationCanUsePdfImport(planId: string): boolean {
+  return planId === "PRO" || planId === "ENTERPRISE";
 }

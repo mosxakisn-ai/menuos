@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { Camera, Globe, RefreshCw, Smartphone, Utensils } from "lucide-react";
 import {
@@ -10,12 +9,13 @@ import {
 import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { buttonClass } from "@/components/ui/button";
-import { SEO_PAGES } from "@/content/seo-el";
 import { getMessages } from "@/i18n/get-messages";
 import { getServerLocale } from "@/i18n/server";
-import { seoPageMetadata } from "@/lib/seo";
+import { generateMarketingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = seoPageMetadata(SEO_PAGES.qrMenu);
+export async function generateMetadata() {
+  return generateMarketingMetadata("qrMenu");
+}
 
 const benefitIcons = [RefreshCw, Globe, Camera, Smartphone];
 
@@ -27,7 +27,7 @@ export default async function QrMenuLandingPage() {
 
   return (
     <MarketingLayout>
-      <MarketingPageJsonLd page={SEO_PAGES.qrMenu} faq={ui.faq} />
+      <MarketingPageJsonLd pageKey="qrMenu" faqKey="qrMenu" />
       <MarketingPageHero title={ui.heroTitle} subtitle={p.hero} badge={p.badge} />
       <MarketingSection>
         <SectionHeader title={ui.sectionTitle} description={ui.sectionDesc} />

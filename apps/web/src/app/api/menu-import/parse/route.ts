@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireActiveSubscription } from "@/lib/api-auth";
+import { requirePdfImportPlan } from "@/lib/api-auth";
 import { parseUploadedPdfFiles, readPdfFilesFromFormData, validatePdfUploadFiles } from "@/lib/pdf-extract";
 import { getMenuForOrganization } from "@/lib/venue-access";
 
@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requirePdfImportPlan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const formData = await request.formData();

@@ -2,6 +2,7 @@ import {
   activateSubscriptionFromCheckoutSession,
   isMenuOsStripeMetadata,
   isStripeEnabled,
+  stripeGetSubscription,
   verifyStripeWebhookSignature,
 } from "@/lib/stripe-client";
 import {
@@ -65,11 +66,26 @@ export async function POST(req: NextRequest) {
           isCheckoutPlan(metadata.planId) &&
           (paymentStatus === "paid" || paymentStatus === "no_payment_required")
         ) {
+          let currentPeriodEnd: Date | undefined;
+          const stripeSubId =
+            typeof session.subscription === "string" ? session.subscription : null;
+          if (stripeSubId) {
+            try {
+              const sub = await stripeGetSubscription(stripeSubId);
+              if (typeof sub.current_period_end === "number") {
+                currentPeriodEnd = new Date(sub.current_period_end * 1000);
+              }
+            } catch (err) {
+              console.error("[menuos-billing] webhook: failed to load Stripe subscription", err);
+            }
+          }
+
           await activateSubscriptionFromCheckoutSession({
             organizationId: metadata.organizationId,
             planId: metadata.planId,
             stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
-            stripeSubId: typeof session.subscription === "string" ? session.subscription : null,
+            stripeSubId,
+            currentPeriodEnd,
           });
 
           fireAdminNotify(() =>

@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { menuImportApplySchema, buildMenuNameTranslations } from "@menuos/shared";
-import { requireActiveSubscription } from "@/lib/api-auth";
-import { canOrganizationAddItems } from "@/lib/billing";
+import { requirePdfImportPlan } from "@/lib/api-auth";
+import {
+  assertCanAddItemsInTransaction,
+  planLimitErrorResponse,
+} from "@/lib/plan-limits";
 import { getMenuForOrganization } from "@/lib/venue-access";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requirePdfImportPlan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   let body: unknown;
@@ -40,14 +43,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Επίλεξε τουλάχιστον ένα πιάτο με τιμή." }, { status: 400 });
   }
 
-  const itemCheck = await canOrganizationAddItems(
-    auth.session!.organizationId,
-    selectedItems.length,
-  );
-  if (!itemCheck.ok) {
-    return NextResponse.json({ error: itemCheck.error, code: itemCheck.code }, { status: 403 });
-  }
-
   const currentCount = await prisma.item.count({
     where: { category: { menu: { venue: { organizationId: auth.session!.organizationId } } } },
   });
@@ -61,8 +56,15 @@ export async function POST(request: Request) {
   let createdCategories = 0;
   let createdItems = 0;
 
-  await prisma.$transaction(async (tx) => {
-    for (const cat of selectedCategories) {
+  try {
+    await prisma.$transaction(async (tx) => {
+      await assertCanAddItemsInTransaction(
+        tx,
+        auth.session!.organizationId,
+        selectedItems.length,
+      );
+
+      for (const cat of selectedCategories) {
       const items = cat.items.filter((i) => i.selected !== false);
       if (items.length === 0) continue;
 
@@ -114,7 +116,14 @@ export async function POST(request: Request) {
         createdItems += 1;
       }
     }
-  });
+    });
+  } catch (err) {
+    const limit = planLimitErrorResponse(err);
+    if (limit) {
+      return NextResponse.json({ error: limit.error, code: limit.code }, { status: limit.status });
+    }
+    throw err;
+  }
 
   return NextResponse.json({
     createdCategories,

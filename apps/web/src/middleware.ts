@@ -21,8 +21,23 @@ function applyLocale(request: NextRequest, response: NextResponse): NextResponse
   return response;
 }
 
+function indexNowKeyResponse(pathname: string): NextResponse | null {
+  const indexNowKey = process.env.INDEXNOW_KEY;
+  if (!indexNowKey || pathname !== `/${indexNowKey}.txt`) return null;
+  return new NextResponse(indexNowKey, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=86400",
+    },
+  });
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const indexNow = indexNowKeyResponse(pathname);
+  if (indexNow) return indexNow;
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-menuos-pathname", pathname);
 
@@ -58,5 +73,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|.*\\..*).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

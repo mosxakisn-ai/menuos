@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { menuCreateSchema } from "@menuos/shared";
-import { canOrganizationAddMenu } from "@/lib/billing";
 import { requireActiveSubscription } from "@/lib/api-auth";
+import { planLimitErrorResponse, assertCanAddMenuInTransaction } from "@/lib/plan-limits";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 export async function GET(request: Request) {
@@ -60,20 +60,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Venue not found" }, { status: 404 });
   }
 
-  const menuCheck = await canOrganizationAddMenu(auth.session!.organizationId, venue.id);
-  if (!menuCheck.ok) {
-    return NextResponse.json({ error: menuCheck.error, code: menuCheck.code }, { status: 403 });
+  try {
+    const menu = await prisma.$transaction(async (tx) => {
+      await assertCanAddMenuInTransaction(tx, auth.session!.organizationId, venue.id);
+      const count = await tx.menu.count({ where: { venueId: venue.id } });
+      return tx.menu.create({
+        data: {
+          venueId: venue.id,
+          name: parsed.data.name.trim(),
+          type: parsed.data.type ?? "RESTAURANT",
+          sortOrder: count,
+        },
+      });
+    });
+
+    return NextResponse.json({ menu, message: "Το menu δημιουργήθηκε." });
+  } catch (err) {
+    const limit = planLimitErrorResponse(err);
+    if (limit) {
+      return NextResponse.json({ error: limit.error, code: limit.code }, { status: limit.status });
+    }
+    throw err;
   }
-
-  const count = await prisma.menu.count({ where: { venueId: venue.id } });
-  const menu = await prisma.menu.create({
-    data: {
-      venueId: venue.id,
-      name: parsed.data.name.trim(),
-      type: parsed.data.type ?? "RESTAURANT",
-      sortOrder: count,
-    },
-  });
-
-  return NextResponse.json({ menu, message: "Το menu δημιουργήθηκε." });
 }

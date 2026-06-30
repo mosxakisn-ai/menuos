@@ -19,13 +19,13 @@ export async function POST(request: Request) {
   }
 
   const ip = clientIp(request);
-  if (!checkRateLimit(`login:ip:${ip}`, 30, 15 * 60 * 1000)) {
+  if (!(await checkRateLimit(`login:ip:${ip}`, 30, 15 * 60 * 1000))) {
     return NextResponse.json(
       { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },
     );
   }
-  if (!checkRateLimit(`login:email:${parsed.data.email}`, 10, 15 * 60 * 1000)) {
+  if (!(await checkRateLimit(`login:email:${parsed.data.email}`, 10, 15 * 60 * 1000))) {
     return NextResponse.json(
       { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },

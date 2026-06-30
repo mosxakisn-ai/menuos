@@ -46,3 +46,12 @@ docker exec matchwork-caddy-1 caddy reload --config /etc/caddy/Caddyfile
 echo "==> Done."
 docker compose -f docker-compose.prod.yml ps
 docker compose -f docker-compose.prod.yml exec -T menuos-web wget -q -O /dev/null -S http://127.0.0.1:3000/ 2>&1 | head -1 || true
+
+if [ "${RUN_INDEXNOW:-0}" = "1" ] && [ -f "$ROOT/scripts/submit-indexnow.mjs" ]; then
+  echo "==> IndexNow ping..."
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/.env" 2>/dev/null || true
+  set +a
+  RUN_INDEXNOW=1 node "$ROOT/scripts/submit-indexnow.mjs" || echo "    IndexNow failed (non-fatal)"
+fi

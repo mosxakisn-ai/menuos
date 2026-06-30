@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { UserRole } from "@menuos/db";
 import { getSession, type SessionPayload } from "@/lib/auth";
-import { getOrganizationPlanContext } from "@/lib/billing";
+import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
 
 type AuthResult =
   | { session: SessionPayload; response: null }
@@ -46,6 +46,29 @@ export async function requireActiveSubscription(options?: {
         {
           error: "Η συνδρομή σου δεν είναι ενεργή. Αναβάθμισε για να συνεχίσεις.",
           code: "subscription_inactive",
+        },
+        { status: 403 },
+      ),
+    };
+  }
+
+  return auth;
+}
+
+export async function requirePdfImportPlan(options?: {
+  roles?: UserRole[];
+}): Promise<AuthResult> {
+  const auth = await requireActiveSubscription(options);
+  if (auth.response) return auth;
+
+  const ctx = await getOrganizationPlanContext(auth.session!.organizationId);
+  if (!ctx || !organizationCanUsePdfImport(ctx.planId)) {
+    return {
+      session: null,
+      response: NextResponse.json(
+        {
+          error: "Το PDF import είναι διαθέσιμο στο πλάνο Pro. Αναβάθμισε για να συνεχίσεις.",
+          code: "plan_upgrade_required",
         },
         { status: 403 },
       ),

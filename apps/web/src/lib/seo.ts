@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { SEO_SITE } from "@/content/seo-el";
+import { SEO_PAGES, SEO_SITE, type SeoPageDef } from "@/content/seo-el";
+import { SEO_PAGES_EN, SEO_SITE_EN } from "@/content/seo-en";
+import { getServerLocale } from "@/i18n/server";
 import { APP_NAME, APP_URL, SITE_DESCRIPTION } from "@/lib/config";
 
 export function absoluteUrl(path = "/"): string {
@@ -14,6 +16,20 @@ function mergeKeywords(pageKeywords?: string[]): string[] {
   const base = [...SEO_SITE.keywords];
   if (!pageKeywords?.length) return base;
   return [...new Set([...pageKeywords, ...base])];
+}
+
+/** Greek canonical URL + English alternate via ?lang=en (cookie-based UI locale). */
+export function buildHreflangAlternates(path = "/"): NonNullable<Metadata["alternates"]> {
+  const canonical = absoluteUrl(path);
+  const enUrl = path === "/" ? `${canonical}?lang=en` : `${canonical}?lang=en`;
+  return {
+    canonical,
+    languages: {
+      "el-GR": canonical,
+      en: enUrl,
+      "x-default": canonical,
+    },
+  };
 }
 
 export function buildPageMetadata(options: {
@@ -32,19 +48,14 @@ export function buildPageMetadata(options: {
     title: options.title,
     description,
     keywords,
-    alternates: {
-      canonical: url,
-      languages: {
-        "el-GR": url,
-        "x-default": url,
-      },
-    },
+    alternates: buildHreflangAlternates(path),
     openGraph: {
       title: options.title,
       description,
       url,
       siteName: APP_NAME,
       locale: SEO_SITE.locale,
+      alternateLocale: ["en_US"],
       type: "website",
       images: [
         {
@@ -120,4 +131,42 @@ export function seoPageMetadata(page: {
     path: page.path,
     keywords: page.keywords ? [...page.keywords] : undefined,
   });
+}
+
+type MarketingSeoPageKey = keyof typeof SEO_PAGES;
+
+function marketingSeoPage(key: MarketingSeoPageKey, locale: "el" | "en"): SeoPageDef {
+  if (locale === "en") {
+    const en = SEO_PAGES_EN[key];
+    const el = SEO_PAGES[key];
+    return {
+      title: en.title,
+      description: en.description,
+      path: en.path,
+      breadcrumbLabel: en.breadcrumbLabel,
+      ...("keywords" in el && el.keywords ? { keywords: [...el.keywords] } : {}),
+    };
+  }
+  return SEO_PAGES[key];
+}
+
+/** Locale-aware metadata for marketing pages (cookie or ?lang=en). */
+export async function generateMarketingMetadata(key: MarketingSeoPageKey): Promise<Metadata> {
+  const locale = await getServerLocale();
+  const page = marketingSeoPage(key, locale);
+  const meta = seoPageMetadata(page);
+
+  if (locale !== "en") return meta;
+
+  return {
+    ...meta,
+    openGraph: {
+      ...meta.openGraph,
+      locale: SEO_SITE_EN.locale,
+    },
+    other: {
+      "geo.region": SEO_SITE.region,
+      "content-language": SEO_SITE_EN.language,
+    },
+  };
 }

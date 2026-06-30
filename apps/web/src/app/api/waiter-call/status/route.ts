@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   }
 
   const ip = clientIp(request);
-  if (!checkRateLimit(`waiter-status:${ip}:${venueSlug}`, 30, 60_000)) {
+  if (!(await checkRateLimit(`waiter-status:${ip}:${venueSlug}`, 30, 60_000))) {
     return NextResponse.json(
       { error: "Too many requests", code: "rate_limited" },
       { status: 429 },

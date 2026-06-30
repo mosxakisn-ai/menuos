@@ -167,12 +167,30 @@ export function verifyStripeWebhookSignature(payload: string, signature: string)
   }
 }
 
+export async function stripeGetSubscription(subscriptionId: string) {
+  const key = getStripeSecretKey();
+  if (!key) throw new Error("MENUOS_STRIPE_SECRET_KEY not configured");
+
+  const res = await fetch(`${STRIPE_API}/subscriptions/${subscriptionId}`, {
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  const subscription = (await res.json()) as {
+    current_period_end?: number;
+    error?: { message?: string };
+  };
+  if (!res.ok) {
+    throw new Error(subscription.error?.message ?? `Stripe error ${res.status}`);
+  }
+  return subscription;
+}
+
 export async function activateSubscriptionFromCheckoutSession(input: {
   organizationId: string;
   planId: string;
   stripeCustomerId?: string | null;
   stripeSubId?: string | null;
   currentPeriodEnd?: Date | null;
+  sendActivationEmail?: boolean;
 }) {
   const { activateSubscriptionFromCheckout, isCheckoutPlan } = await import("@/lib/billing");
   if (!isCheckoutPlan(input.planId)) return;
@@ -182,5 +200,6 @@ export async function activateSubscriptionFromCheckoutSession(input: {
     stripeCustomerId: input.stripeCustomerId,
     stripeSubId: input.stripeSubId,
     currentPeriodEnd: input.currentPeriodEnd,
+    sendActivationEmail: input.sendActivationEmail,
   });
 }

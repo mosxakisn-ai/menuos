@@ -160,6 +160,25 @@ export const SEO_PRICING_OFFERS = [
   { name: "Pro", price: 19.99, description: "3 venues, απεριόριστα menus" },
 ] as const;
 
+export const SEO_PRICING_FAQ = [
+  {
+    q: "Χρειάζεται πιστωτική κάρτα για τη δοκιμή;",
+    a: "Όχι. Η δοκιμή 7 ημερών ξεκινά με email και OTP επιβεβαίωση.",
+  },
+  {
+    q: "Μπορώ να αλλάξω πλάνο αργότερα;",
+    a: "Ναι. Basic και Pro αναβαθμίζονται από το billing panel. Για Enterprise επικοινωνείτε μαζί μας.",
+  },
+  {
+    q: "Τι περιλαμβάνει το Enterprise;",
+    a: "Custom domain, white-label, πολλαπλά venues, προτεραιότητα υποστήριξης — προσφορά ανά project.",
+  },
+  {
+    q: "Υπάρχει δέσμευση;",
+    a: "Όχι. Μηνιαία συνδρομή, ακύρωση όποτε θέλετε.",
+  },
+] as const;
+
 export const SEO_SITEMAP_ROUTES = Object.values(SEO_PAGES).map((page) => page.path);
 
 export const SEO_LLMS = `# MenuOS (menuos.gr)
@@ -171,6 +190,7 @@ export const SEO_LLMS = `# MenuOS (menuos.gr)
 - Πολυγλωσσικό QR menu (Ελληνικά, English, Deutsch, Français)
 - Dashboard για ενημέρωση τιμών και πιάτων
 - Δωρεάν δοκιμή 7 ημερών
+- Τιμές: Basic €9.99/μήνα, Pro €19.99/μήνα
 
 ## Κύριες σελίδες
 - ${SEO_SITE.url}/
@@ -180,6 +200,12 @@ export const SEO_LLMS = `# MenuOS (menuos.gr)
 - ${SEO_SITE.url}/pricing
 - ${SEO_SITE.url}/sxetika
 - ${SEO_SITE.url}/epikoinonia
+- ${SEO_SITE.url}/terms
+- ${SEO_SITE.url}/privacy
+
+## SEO
+- Sitemap: ${SEO_SITE.url}/sitemap.xml
+- English UI: append ?lang=en to any marketing URL
 
 ## Επικοινωνία
 - Τηλέφωνο: ${SEO_SITE.contactPhone}

@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   const ip = clientIp(request);
   const rateKey = `waiter-cancel:${ip}:${parsed.data.venueSlug}`;
-  if (!checkRateLimit(rateKey, 8, 60_000)) {
+  if (!(await checkRateLimit(rateKey, 8, 60_000))) {
     return NextResponse.json(
       { error: "Too many requests", code: "rate_limited" },
       { status: 429 },

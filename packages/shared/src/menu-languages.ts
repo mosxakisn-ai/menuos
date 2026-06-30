@@ -54,6 +54,7 @@ export const QR_MENU_UI = {
     cancelFailed: "Δεν βρέθηκε ενεργή κλήση.",
     rateLimited: "Πολλές κλήσεις. Περίμενε λίγο.",
     menuSoon: "Το menu ενημερώνεται σύντομα.",
+    menuUnavailableTitle: "Menu",
     menuUnavailable:
       "Το ψηφιακό menu δεν είναι διαθέσιμο αυτή τη στιγμή. Επικοινώνησε με το κατάστημα για φυσικό menu ή περίμενε να ενεργοποιηθεί ξανά η υπηρεσία.",
     ingredients: "Συστατικά",
@@ -76,6 +77,7 @@ export const QR_MENU_UI = {
     cancelFailed: "No active request found.",
     rateLimited: "Too many calls. Please wait.",
     menuSoon: "Menu coming soon.",
+    menuUnavailableTitle: "Menu",
     menuUnavailable:
       "The digital menu is unavailable right now. Please ask staff for a printed menu or try again later.",
     ingredients: "Ingredients",
@@ -98,6 +100,7 @@ export const QR_MENU_UI = {
     cancelFailed: "Keine aktive Anfrage.",
     rateLimited: "Zu viele Anfragen. Bitte warten.",
     menuSoon: "Speisekarte wird aktualisiert.",
+    menuUnavailableTitle: "Speisekarte",
     menuUnavailable:
       "Die digitale Speisekarte ist derzeit nicht verfügbar. Bitte fragen Sie das Personal oder versuchen Sie es später erneut.",
     ingredients: "Zutaten",
@@ -120,6 +123,7 @@ export const QR_MENU_UI = {
     cancelFailed: "Aucune demande active.",
     rateLimited: "Trop de demandes. Patientez.",
     menuSoon: "Carte bientôt disponible.",
+    menuUnavailableTitle: "Carte",
     menuUnavailable:
       "La carte numérique n'est pas disponible pour le moment. Demandez un menu papier au personnel ou réessayez plus tard.",
     ingredients: "Ingrédients",

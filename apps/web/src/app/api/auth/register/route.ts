@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const normalizedEmail = normalizeRegistrationEmail(email);
 
   const ip = clientIp(request);
-  if (!checkRateLimit(`register:ip:${ip}`, 20, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`register:ip:${ip}`, 20, 60 * 60 * 1000))) {
     return NextResponse.json(
       { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },

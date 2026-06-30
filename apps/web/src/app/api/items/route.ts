@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { itemCreateSchema, buildMenuNameTranslations } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
-import { canOrganizationAddItem } from "@/lib/billing";
+import {
+  assertCanAddItemsInTransaction,
+  planLimitErrorResponse,
+} from "@/lib/plan-limits";
 import { getCategoryForOrganization } from "@/lib/venue-access";
 
 export async function POST(request: Request) {
@@ -26,46 +29,53 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });
   }
 
-  const itemCheck = await canOrganizationAddItem(auth.session!.organizationId);
-  if (!itemCheck.ok) {
-    return NextResponse.json({ error: itemCheck.error, code: itemCheck.code }, { status: 403 });
+  try {
+    const item = await prisma.$transaction(async (tx) => {
+      await assertCanAddItemsInTransaction(tx, auth.session!.organizationId, 1);
+
+      const maxSort = await tx.item.aggregate({
+        where: { categoryId: parsed.data.categoryId },
+        _max: { sortOrder: true },
+      });
+
+      const nameTranslations = buildMenuNameTranslations(parsed.data);
+
+      return tx.item.create({
+        data: {
+          categoryId: parsed.data.categoryId,
+          price: parsed.data.price,
+          label: parsed.data.label ?? null,
+          photoUrl: parsed.data.photoUrl?.trim() || null,
+          available: parsed.data.available ?? true,
+          sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
+          translations: {
+            create: nameTranslations.map((row) => ({
+              language: row.language,
+              name: row.name,
+              description:
+                row.language === "GR"
+                  ? parsed.data.descriptionGr?.trim() || null
+                  : row.language === "EN"
+                    ? parsed.data.descriptionEn?.trim() || null
+                    : null,
+              ingredients: row.language === "GR" ? parsed.data.ingredientsGr?.trim() || null : null,
+              allergens: row.language === "GR" ? parsed.data.allergensGr?.trim() || null : null,
+            })),
+          },
+        },
+        include: { translations: true },
+      });
+    });
+
+    return NextResponse.json({
+      item,
+      message: `Το πιάτο «${parsed.data.nameGr}» προστέθηκε στο menu.`,
+    });
+  } catch (err) {
+    const limit = planLimitErrorResponse(err);
+    if (limit) {
+      return NextResponse.json({ error: limit.error, code: limit.code }, { status: limit.status });
+    }
+    throw err;
   }
-
-  const maxSort = await prisma.item.aggregate({
-    where: { categoryId: parsed.data.categoryId },
-    _max: { sortOrder: true },
-  });
-
-  const nameTranslations = buildMenuNameTranslations(parsed.data);
-
-  const item = await prisma.item.create({
-    data: {
-      categoryId: parsed.data.categoryId,
-      price: parsed.data.price,
-      label: parsed.data.label ?? null,
-      photoUrl: parsed.data.photoUrl?.trim() || null,
-      available: parsed.data.available ?? true,
-      sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
-      translations: {
-        create: nameTranslations.map((row) => ({
-          language: row.language,
-          name: row.name,
-          description:
-            row.language === "GR"
-              ? parsed.data.descriptionGr?.trim() || null
-              : row.language === "EN"
-                ? parsed.data.descriptionEn?.trim() || null
-                : null,
-          ingredients: row.language === "GR" ? parsed.data.ingredientsGr?.trim() || null : null,
-          allergens: row.language === "GR" ? parsed.data.allergensGr?.trim() || null : null,
-        })),
-      },
-    },
-    include: { translations: true },
-  });
-
-  return NextResponse.json({
-    item,
-    message: `Το πιάτο «${parsed.data.nameGr}» προστέθηκε στο menu.`,
-  });
 }

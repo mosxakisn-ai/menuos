@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingCtaBand, SectionHeader, TimelineStep } from "@/components/marketing/marketing-blocks";
 import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { buttonClass } from "@/components/ui/button";
-import { SEO_PAGES } from "@/content/seo-el";
 import { getMessages } from "@/i18n/get-messages";
 import { getServerLocale } from "@/i18n/server";
-import { seoPageMetadata } from "@/lib/seo";
+import { generateMarketingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = seoPageMetadata(SEO_PAGES.howItWorks);
+export async function generateMetadata() {
+  return generateMarketingMetadata("howItWorks");
+}
 
 export default async function HowItWorksPage() {
   const locale = await getServerLocale();
@@ -19,7 +19,7 @@ export default async function HowItWorksPage() {
 
   return (
     <MarketingLayout>
-      <MarketingPageJsonLd page={SEO_PAGES.howItWorks} />
+      <MarketingPageJsonLd pageKey="howItWorks" />
       <MarketingPageHero title={ui.heroTitle} subtitle={p.hero} badge={p.badge} />
       <MarketingSection>
         <SectionHeader

@@ -1,9 +1,15 @@
 import { SEO_SITE } from "@/content/seo-el";
+import { SEO_SITE_EN } from "@/content/seo-en";
 import { APP_NAME, APP_URL, SITE_DESCRIPTION } from "@/lib/config";
 import { absoluteUrl } from "@/lib/seo";
 
 type FaqItem = { q: string; a: string };
 type BreadcrumbItem = { name: string; path: string };
+type MarketingLocale = "el" | "en";
+
+function schemaLanguage(locale: MarketingLocale): string {
+  return locale === "en" ? "en-US" : "el-GR";
+}
 
 export function buildOrganizationSchema() {
   return {
@@ -41,14 +47,6 @@ export function buildWebSiteSchema() {
     description: SITE_DESCRIPTION,
     inLanguage: "el-GR",
     publisher: { "@id": `${APP_URL}/#organization` },
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${APP_URL}/qr-menu?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
   };
 }
 
@@ -98,27 +96,38 @@ export function buildBreadcrumbSchema(items: readonly BreadcrumbItem[]) {
   };
 }
 
-export function buildWebPageSchema(input: { name: string; path: string; description?: string }) {
+export function buildWebPageSchema(input: {
+  name: string;
+  path: string;
+  description?: string;
+  locale?: MarketingLocale;
+}) {
+  const inLanguage = schemaLanguage(input.locale ?? "el");
   return {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: input.name,
     url: absoluteUrl(input.path),
     description: input.description,
-    inLanguage: "el-GR",
+    inLanguage,
     isPartOf: { "@id": `${APP_URL}/#website` },
   };
 }
 
 export function buildPricingOffersSchema(
   offers: readonly { name: string; price: number; description: string }[],
+  locale: MarketingLocale = "el",
 ) {
+  const isEn = locale === "en";
   return {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: `${APP_NAME} — Συνδρομή`,
-    description: "Πλατφόρμα ψηφιακού menu με QR για επιχειρήσεις φιλοξενίας",
+    name: isEn ? `${APP_NAME} — Subscription` : `${APP_NAME} — Συνδρομή`,
+    description: isEn
+      ? "Digital QR menu platform for hospitality businesses"
+      : "Πλατφόρμα ψηφιακού menu με QR για επιχειρήσεις φιλοξενίας",
     brand: { "@type": "Brand", name: APP_NAME },
+    inLanguage: schemaLanguage(locale),
     offers: offers.map((offer) => ({
       "@type": "Offer",
       name: offer.name,
@@ -135,15 +144,19 @@ export function buildPricingOffersSchema(
 export function marketingPageSchema(input: {
   page: { title: string; description: string; path: string; breadcrumbLabel: string };
   faq?: readonly FaqItem[];
+  locale?: MarketingLocale;
 }) {
+  const locale = input.locale ?? "el";
+  const homeLabel = locale === "en" ? SEO_SITE_EN.breadcrumbHome : "Αρχική";
   const breadcrumbs = buildBreadcrumbSchema([
-    { name: "Αρχική", path: "/" },
+    { name: homeLabel, path: "/" },
     { name: input.page.breadcrumbLabel, path: input.page.path },
   ]);
   const webPage = buildWebPageSchema({
     name: input.page.title,
     path: input.page.path,
     description: input.page.description,
+    locale,
   });
   const schemas: Record<string, unknown>[] = [breadcrumbs, webPage];
   if (input.faq?.length) schemas.push(buildFAQPageSchema(input.faq));

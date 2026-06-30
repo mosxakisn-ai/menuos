@@ -20,14 +20,14 @@ export async function POST(request: Request) {
   const email = normalizeRegistrationEmail(parsed.data.email);
   const ip = clientIp(request);
 
-  if (!checkRateLimit(`register-otp:ip:${ip}`, 10, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`register-otp:ip:${ip}`, 10, 60 * 60 * 1000))) {
     return NextResponse.json(
       { error: "Πολλά αιτήματα. Δοκίμασε ξανά αργότερα.", code: "rate_limited" },
       { status: 429 },
     );
   }
 
-  if (!checkRateLimit(`register-otp:email:${email}`, 5, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`register-otp:email:${email}`, 5, 60 * 60 * 1000))) {
     return NextResponse.json(
       { error: "Πολλές αποστολές σε αυτό το email. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },

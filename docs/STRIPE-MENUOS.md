@@ -76,8 +76,8 @@ curl -s https://menuos.gr/api/billing
 | Plan | Price | Stripe |
 |------|-------|--------|
 | Trial | €0 / 7 days | No checkout |
-| Basic | €29/mo | Checkout subscription |
-| Pro | €79/mo | Checkout subscription |
+| Basic | €9.99/mo | Checkout subscription |
+| Pro | €19.99/mo | Checkout subscription |
 | Enterprise | Custom | Contact sales |
 
 Upgrade: `/dashboard/billing`

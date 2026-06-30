@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import {
   FaqBlock,
@@ -8,16 +7,15 @@ import {
   StatStrip,
 } from "@/components/marketing/marketing-blocks";
 import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
-import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
-import { JsonLdScript } from "@/components/seo/json-ld-script";
+import { MarketingPageJsonLd, PricingOffersJsonLd } from "@/components/seo/marketing-json-ld";
 import { buttonClass } from "@/components/ui/button";
-import { SEO_PAGES, SEO_PRICING_OFFERS } from "@/content/seo-el";
 import { getMessages } from "@/i18n/get-messages";
 import { getServerLocale } from "@/i18n/server";
-import { buildPricingOffersSchema } from "@/lib/seo-structured-data";
-import { seoPageMetadata } from "@/lib/seo";
+import { generateMarketingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = seoPageMetadata(SEO_PAGES.pricing);
+export async function generateMetadata() {
+  return generateMarketingMetadata("pricing");
+}
 
 export default async function PricingPage() {
   const locale = await getServerLocale();
@@ -27,8 +25,8 @@ export default async function PricingPage() {
 
   return (
     <MarketingLayout>
-      <MarketingPageJsonLd page={SEO_PAGES.pricing} />
-      <JsonLdScript data={buildPricingOffersSchema(SEO_PRICING_OFFERS)} />
+      <MarketingPageJsonLd pageKey="pricing" faqKey="pricing" />
+      <PricingOffersJsonLd />
       <MarketingPageHero title={ui.heroTitle} subtitle={p.hero} badge={p.badge} />
       <MarketingSection variant="muted">
         <StatStrip items={[...marketing.stats]} />

@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { venueSchema, venueUpdateSchema } from "@menuos/shared";
 import { canOrganizationAddVenue } from "@/lib/billing";
+import {
+  assertCanAddVenueInTransaction,
+  planLimitErrorResponse,
+} from "@/lib/plan-limits";
 import { allocateGlobalVenueSlug, baseVenueSlug } from "@/lib/venue-slug";
 
 export async function createVenueHandler(request: Request, organizationId: string) {
@@ -31,25 +35,32 @@ export async function createVenueHandler(request: Request, organizationId: strin
   const slug = await allocateGlobalVenueSlug(parsed.data.name, parsed.data.slug);
 
   try {
-    const venue = await prisma.venue.create({
-      data: {
-        organizationId,
-        name: parsed.data.name,
-        slug,
-        description: parsed.data.description,
-        settings: { create: { brandName: parsed.data.name } },
-        menus: {
-          create: {
-            name: "Κύριο Menu",
-            type: "RESTAURANT",
+    const venue = await prisma.$transaction(async (tx) => {
+      await assertCanAddVenueInTransaction(tx, organizationId);
+      return tx.venue.create({
+        data: {
+          organizationId,
+          name: parsed.data.name,
+          slug,
+          description: parsed.data.description,
+          settings: { create: { brandName: parsed.data.name } },
+          menus: {
+            create: {
+              name: "Κύριο Menu",
+              type: "RESTAURANT",
+            },
           },
         },
-      },
-      include: { menus: true },
+        include: { menus: true },
+      });
     });
 
     return NextResponse.json({ venue, message: "Το venue δημιουργήθηκε! Πρόσθεσε τώρα κατηγορίες και πιάτα." });
   } catch (err) {
+    const limit = planLimitErrorResponse(err);
+    if (limit) {
+      return NextResponse.json({ error: limit.error, code: limit.code }, { status: limit.status });
+    }
     const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
     if (code === "P2002") {
       return NextResponse.json({ error: "Το slug υπάρχει ήδη. Δοκίμασε άλλο όνομα." }, { status: 409 });

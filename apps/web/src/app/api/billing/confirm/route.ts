@@ -6,6 +6,7 @@ import {
   isMenuOsStripeMetadata,
   isStripeEnabled,
   stripeGetSession,
+  stripeGetSubscription,
 } from "@/lib/stripe-client";
 
 export async function POST(request: Request) {
@@ -45,11 +46,25 @@ export async function POST(request: Request) {
 
     const planId = session.metadata?.planId;
     if (session.mode === "subscription" && planId) {
+      let currentPeriodEnd: Date | undefined;
+      if (typeof session.subscription === "string") {
+        try {
+          const sub = await stripeGetSubscription(session.subscription);
+          if (typeof sub.current_period_end === "number") {
+            currentPeriodEnd = new Date(sub.current_period_end * 1000);
+          }
+        } catch (err) {
+          console.error("[menuos-billing] confirm: failed to load Stripe subscription", err);
+        }
+      }
+
       await activateSubscriptionFromCheckoutSession({
         organizationId,
         planId,
         stripeCustomerId: session.customer,
         stripeSubId: session.subscription,
+        currentPeriodEnd,
+        sendActivationEmail: false,
       });
     }
 

@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import {
   Bell,
   Globe,
@@ -16,12 +15,13 @@ import {
 } from "@/components/marketing/marketing-blocks";
 import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
-import { SEO_PAGES } from "@/content/seo-el";
 import { getMessages } from "@/i18n/get-messages";
 import { getServerLocale } from "@/i18n/server";
-import { seoPageMetadata } from "@/lib/seo";
+import { generateMarketingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = seoPageMetadata(SEO_PAGES.services);
+export async function generateMetadata() {
+  return generateMarketingMetadata("services");
+}
 
 const serviceIcons = [QrCode, LayoutDashboard, UtensilsCrossed, Globe, Bell, QrCode, Palette, Shield];
 
@@ -33,7 +33,7 @@ export default async function ServicesPage() {
 
   return (
     <MarketingLayout>
-      <MarketingPageJsonLd page={SEO_PAGES.services} />
+      <MarketingPageJsonLd pageKey="services" />
       <MarketingPageHero title={ui.heroTitle} subtitle={p.hero} badge={p.badge} />
       <MarketingSection variant="muted">
         <StatStrip items={[...marketing.stats]} />

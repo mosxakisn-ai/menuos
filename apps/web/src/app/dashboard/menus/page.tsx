@@ -4,6 +4,7 @@ import { prisma } from "@menuos/db";
 import { MenuEditor } from "@/components/dashboard/menu-editor";
 import { buttonClass } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
+import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPrivatePageMetadata("Menus", "/dashboard/menus");
@@ -13,6 +14,8 @@ type Props = { searchParams: Promise<{ venue?: string; welcome?: string }> };
 export default async function MenusPage({ searchParams }: Props) {
   const session = await getSession();
   const sp = await searchParams;
+  const planCtx = await getOrganizationPlanContext(session!.organizationId);
+  const canImportPdf = planCtx ? organizationCanUsePdfImport(planCtx.planId) : false;
   const venues = await prisma.venue.findMany({
     where: { organizationId: session!.organizationId },
     select: { id: true, name: true, slug: true },
@@ -28,12 +31,18 @@ export default async function MenusPage({ searchParams }: Props) {
             Πρόσθεσε κατηγορίες και πιάτα στα Ελληνικά — και προαιρετικά Αγγλικά για τουρίστες.
           </p>
         </div>
-        <Link
-          href={`/dashboard/menus/import${sp.venue ? `?venue=${sp.venue}` : ""}`}
-          className={buttonClass("secondary", "sm")}
-        >
-          Import από PDF
-        </Link>
+        {canImportPdf ? (
+          <Link
+            href={`/dashboard/menus/import${sp.venue ? `?venue=${sp.venue}` : ""}`}
+            className={buttonClass("secondary", "sm")}
+          >
+            Import από PDF
+          </Link>
+        ) : (
+          <Link href="/dashboard/billing" className={buttonClass("secondary", "sm")}>
+            PDF import (Pro)
+          </Link>
+        )}
       </div>
       <MenuEditor venues={venues} initialVenueId={sp.venue} welcome={sp.welcome === "1"} />
     </div>

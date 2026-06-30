@@ -33,7 +33,7 @@ Rank on Google for:
 | Schema | Where |
 |--------|-------|
 | Organization | Root layout |
-| WebSite + SearchAction | Root layout |
+| WebSite | Root layout |
 | SoftwareApplication | Homepage / pricing |
 | FAQPage | SEO landings |
 | BreadcrumbList | Landings, blog |
@@ -135,9 +135,9 @@ Public route listing all indexable pages, blog posts, landings, sitemap URL — 
 
 ## Implementation Order
 
-1. **Phase 1:** `seo.ts`, robots, sitemap (static pages), root JSON-LD, OG image
+1. **Phase 1:** ✅ `seo.ts`, robots, sitemap (static pages), root JSON-LD, OG image, hreflang el/en, IndexNow script
 2. **Phase 1b:** First 20 landings + footer hub
-3. **Phase 2:** Blog + remaining landings + IndexNow
+3. **Phase 2:** Blog + remaining landings
 4. **Ongoing:** GSC monitoring, new city/vertical pages based on Search Console data
 
 ## Do Not

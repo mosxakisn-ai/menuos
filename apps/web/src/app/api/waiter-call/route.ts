@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 
   const ip = clientIp(request);
   const rateKey = `waiter:${ip}:${parsed.data.venueSlug}`;
-  if (!checkRateLimit(rateKey, 5, 60_000)) {
+  if (!(await checkRateLimit(rateKey, 5, 60_000))) {
     return NextResponse.json(
       { error: "Too many requests", code: "rate_limited" },
       { status: 429 },
@@ -84,14 +84,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ id: existing.id, type: existing.type });
   }
 
-  const call = await prisma.waiterCall.create({
-    data: {
-      venueId: venue.id,
-      type: parsed.data.type as WaiterCallType,
-      tableNumber: parsed.data.tableNumber,
-      roomNumber: parsed.data.roomNumber,
-      status: WaiterCallStatus.PENDING,
-    },
+  const call = await prisma.$transaction(async (tx) => {
+    const pending = await tx.waiterCall.findFirst({
+      where: {
+        venueId: venue.id,
+        tableNumber: parsed.data.tableNumber ?? null,
+        roomNumber: parsed.data.roomNumber ?? null,
+        status: { in: ["PENDING", "ACKNOWLEDGED"] },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    if (pending) return pending;
+
+    return tx.waiterCall.create({
+      data: {
+        venueId: venue.id,
+        type: parsed.data.type as WaiterCallType,
+        tableNumber: parsed.data.tableNumber,
+        roomNumber: parsed.data.roomNumber,
+        status: WaiterCallStatus.PENDING,
+      },
+    });
   });
 
   return NextResponse.json({ id: call.id, type: call.type });

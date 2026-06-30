@@ -1,15 +1,16 @@
-import type { Metadata } from "next";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { MarketingLayout, MarketingProse } from "@/components/marketing/marketing-layout";
-import { SEO_PAGES, SEO_SITE } from "@/content/seo-el";
-import { seoPageMetadata } from "@/lib/seo";
+import { SEO_SITE } from "@/content/seo-el";
+import { generateMarketingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = seoPageMetadata(SEO_PAGES.terms);
+export async function generateMetadata() {
+  return generateMarketingMetadata("terms");
+}
 
 export default function TermsPage() {
   return (
     <MarketingLayout>
-      <MarketingPageJsonLd page={SEO_PAGES.terms} />
+      <MarketingPageJsonLd pageKey="terms" />
       <MarketingProse>
         <h1>Όροι χρήσης</h1>
         <p className="lead text-slate-600">Τελευταία ενημέρωση: Ιούνιος 2026</p>
