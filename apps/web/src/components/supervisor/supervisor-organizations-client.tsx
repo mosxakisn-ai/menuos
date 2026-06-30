@@ -158,7 +158,6 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
               organization={editing}
               onClose={() => setEditing(null)}
               onSaved={() => {
-                setEditing(null);
                 void load();
               }}
             />

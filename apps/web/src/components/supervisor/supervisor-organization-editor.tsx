@@ -40,6 +40,10 @@ export function SupervisorOrganizationEditor({
         return;
       }
       setMessage(data.message ?? "OK");
+      if (data.organization) {
+        setPlan(data.organization.plan);
+        setStatus(data.organization.status);
+      }
       onSaved();
     } catch {
       setError("Σφάλμα δικτύου.");

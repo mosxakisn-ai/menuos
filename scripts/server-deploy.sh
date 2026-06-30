@@ -92,5 +92,11 @@ docker compose -f docker-compose.prod.yml exec -T menuos-web node -e \
 
 if [ "${RUN_INDEXNOW:-0}" = "1" ] && [ -f "$ROOT/scripts/submit-indexnow.mjs" ]; then
   echo "==> IndexNow ping..."
-  RUN_INDEXNOW=1 node "$ROOT/scripts/submit-indexnow.mjs" || echo "    IndexNow failed (non-fatal)"
+  docker run --rm \
+    -v "$ROOT/scripts/submit-indexnow.mjs:/script.mjs:ro" \
+    -v "$ROOT/.env:/app/.env:ro" \
+    -e RUN_INDEXNOW=1 \
+    -w /app \
+    node:20-alpine node /script.mjs \
+    || echo "    IndexNow failed (non-fatal)"
 fi
