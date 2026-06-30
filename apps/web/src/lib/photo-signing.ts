@@ -57,7 +57,6 @@ export function appendPhotoSignature(url: string | null | undefined): string | n
     const parsed = new URL(trimmed, APP_URL);
     const key = photoStorageKeyFromPath(parsed.pathname);
     if (!key) return trimmed;
-    if (parsed.searchParams.has("sig")) return trimmed;
     parsed.searchParams.set("sig", signPhotoKey(key));
     if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
       return parsed.toString();

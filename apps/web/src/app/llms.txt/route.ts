@@ -1,9 +1,13 @@
 import { SEO_BLOG_POSTS, SEO_BLOG_INDEX } from "@/content/seo-blog";
 import { SEO_PAGES, SEO_SITE } from "@/content/seo-el";
+import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { getAllSeoLandingPaths } from "@/lib/seo-landing";
 import { absoluteUrl } from "@/lib/seo";
+import { trialDayLabels } from "@/lib/trial-marketing";
 
-export function GET() {
+export async function GET() {
+  const trialDays = await getTrialDaysFromCatalog();
+  const { trialDaysGen } = trialDayLabels(trialDays);
   const staticPages = Object.values(SEO_PAGES).map((p) => absoluteUrl(p.path));
   const landings = getAllSeoLandingPaths().map((path) => absoluteUrl(path));
   const blogPosts = SEO_BLOG_POSTS.map((post) => absoluteUrl(`/blog/${post.slug}`));
@@ -18,7 +22,7 @@ export function GET() {
     "- Πολυγλωσσικό QR menu (Ελληνικά, English, Deutsch, Français)",
     "- Online διαχείριση για ενημέρωση τιμών και πιάτων",
     "- Κλήση σερβιτόρου / room service από το menu",
-    "- Δωρεάν δοκιμή 7 ημερών",
+    `- Δωρεάν δοκιμή ${trialDaysGen}`,
     "- Τιμές: Basic €9.99/μήνα, Pro €19.99/μήνα",
     "",
     "## Κύριες σελίδες",

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { SEO_BLOG_INDEX } from "@/content/seo-blog";
-import { getSeoBlogPostsSorted } from "@/lib/seo-blog";
+import { getSeoBlogPostsSortedResolved } from "@/lib/seo-blog";
 import { buildPageMetadata } from "@/lib/seo";
 import { buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/seo-structured-data";
 
@@ -13,8 +13,8 @@ export const metadata = buildPageMetadata({
   keywords: ["QR menu blog", "ψηφιακό menu οδηγός", "MenuOS blog"],
 });
 
-export default function BlogIndexPage() {
-  const posts = getSeoBlogPostsSorted();
+export default async function BlogIndexPage() {
+  const posts = await getSeoBlogPostsSortedResolved();
   const breadcrumbs = [
     { name: "Αρχική", path: "/" },
     { name: SEO_BLOG_INDEX.breadcrumbLabel, path: SEO_BLOG_INDEX.path },

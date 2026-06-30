@@ -43,7 +43,7 @@ export const SEO_PAGES = {
   home: {
     title: "Ψηφιακό menu με QR — εστιατόρια, ξενοδοχεία & bars",
     description:
-      "Φτιάξτε ψηφιακό menu με QR σε λεπτά. Πολυγλωσσικό, εύκολη ενημέρωση τιμών, χωρίς app για τον πελάτη. Δωρεάν δοκιμή 7 ημερών για επιχειρήσεις φιλοξενίας.",
+      "Φτιάξτε ψηφιακό menu με QR σε λεπτά. Πολυγλωσσικό, εύκολη ενημέρωση τιμών, χωρίς app για τον πελάτη. Δωρεάν δοκιμή {trialDaysGen} για επιχειρήσεις φιλοξενίας.",
     path: "/",
     breadcrumbLabel: "Αρχική",
     keywords: [
@@ -80,7 +80,7 @@ export const SEO_PAGES = {
   pricing: {
     title: "Τιμές — Πλάνα από €9.99/μήνα",
     description:
-      "Τιμές MenuOS: δωρεάν δοκιμή 7 ημερών, Basic €9.99/μήνα, Pro €19.99/μήνα. Χωρίς κρυφές χρεώσεις. Για Enterprise επικοινωνήστε μαζί μας.",
+      "Τιμές MenuOS: δωρεάν δοκιμή {trialDaysGen}, Basic €9.99/μήνα, Pro €19.99/μήνα. Χωρίς κρυφές χρεώσεις. Για Enterprise επικοινωνήστε μαζί μας.",
     path: "/pricing",
     breadcrumbLabel: "Τιμές",
     keywords: ["τιμές QR menu", "κόστος ψηφιακού menu", "MenuOS pricing"],
@@ -123,7 +123,7 @@ export const SEO_HOME_FAQ = [
   },
   {
     q: "Πόσο γρήγορα μπορώ να είμαι έτοιμος;",
-    a: "Με βασικό menu, συνήθως σε λιγότερο από μία ώρα. Η δοκιμή είναι 7 ημέρες.",
+    a: "Με βασικό menu, συνήθως σε λιγότερο από μία ώρα. Η δοκιμή είναι {trialDays}.",
   },
   {
     q: "Ταιριάζει σε ξενοδοχεία;",
@@ -155,7 +155,7 @@ export const SEO_QR_MENU_FAQ = [
 ] as const;
 
 export const SEO_PRICING_OFFERS = [
-  { name: "Δοκιμή 7 ημερών", price: 0, description: "1 κατάστημα, 1 κατάλογος, 50 πιάτα" },
+  { name: "Δοκιμή {trialDaysGen}", price: 0, description: "1 κατάστημα, 1 κατάλογος, 50 πιάτα" },
   { name: "Basic", price: 9.99, description: "1 κατάστημα, 3 κατάλογοι, απεριόριστα πιάτα" },
   { name: "Pro", price: 19.99, description: "3 καταστήματα, απεριόριστοι κατάλογοι" },
 ] as const;
@@ -163,7 +163,7 @@ export const SEO_PRICING_OFFERS = [
 export const SEO_PRICING_FAQ = [
   {
     q: "Χρειάζεται πιστωτική κάρτα για τη δοκιμή;",
-    a: "Όχι. Η δοκιμή 7 ημερών ξεκινά με email και κωδικό επιβεβαίωσης.",
+    a: "Όχι. Η δοκιμή {trialDaysGen} ξεκινά με email και κωδικό επιβεβαίωσης.",
   },
   {
     q: "Μπορώ να αλλάξω πλάνο αργότερα;",
@@ -189,7 +189,7 @@ export const SEO_LLMS = `# MenuOS (menuos.gr)
 - Online πλατφόρμα για ψηφιακό menu με QR codes
 - Πολυγλωσσικό QR menu (Ελληνικά, English, Deutsch, Français)
 - Online διαχείριση για ενημέρωση τιμών και πιάτων
-- Δωρεάν δοκιμή 7 ημερών
+- Δωρεάν δοκιμή {trialDaysGen}
 - Τιμές: Basic €9.99/μήνα, Pro €19.99/μήνα
 
 ## Κύριες σελίδες

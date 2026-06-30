@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SeoLandingPage } from "@/components/seo/seo-landing-page";
 import { getServerLocale } from "@/i18n/server";
+import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { buildPageMetadata } from "@/lib/seo";
 import { getSeoLandingCopy } from "@/lib/seo-landing-content";
 import {
@@ -23,7 +24,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!config) notFound();
 
   const locale = await getServerLocale();
-  const copy = getSeoLandingCopy(config, locale);
+  const trialDays = await getTrialDaysFromCatalog();
+  const copy = getSeoLandingCopy(config, locale, trialDays);
 
   return buildPageMetadata({
     title: copy.metaTitle,

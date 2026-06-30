@@ -16,7 +16,7 @@ const cardIcons = [Phone, Mail, Facebook, MessageCircle];
 
 export default async function ContactPage() {
   const locale = await getServerLocale();
-  const { marketing, pages } = getMessages(locale);
+  const { marketing, pages } = await getMessages(locale);
   const ui = pages.contact;
 
   const cards = ui.cards.map((card, i) => ({

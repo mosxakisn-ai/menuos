@@ -1,5 +1,6 @@
 import { prisma } from "@menuos/db";
-import { getPlanFromCatalog } from "@/lib/plan-catalog-service";
+import { getPlanFromCatalog, getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
+import { trialDayLabels } from "@/lib/trial-marketing";
 import {
   buildAdminNotificationEmailHtml,
   buildAdminNotificationEmailText,
@@ -68,6 +69,8 @@ export async function notifyAdminOrganizationRegistered(input: {
   email: string;
   orgSlug: string;
 }) {
+  const trialDays = await getTrialDaysFromCatalog();
+  const trial = trialDayLabels(trialDays);
   await sendAdminNotification(
     `MenuOS — νέα εγγραφή: ${input.businessName}`,
     "Νέα εγγραφή πελάτη",
@@ -78,7 +81,7 @@ export async function notifyAdminOrganizationRegistered(input: {
       { label: "Slug", value: input.orgSlug },
       { label: "Υπεύθυνος", value: input.ownerName },
       { label: "Email", value: input.email },
-      { label: "Πλάνο", value: "Δωρεάν δοκιμή (7 ημέρες)" },
+      { label: "Πλάνο", value: `Δωρεάν δοκιμή (${trial.trialDays})` },
     ],
   );
 }

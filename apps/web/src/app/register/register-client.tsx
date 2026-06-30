@@ -7,7 +7,7 @@ import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
-export default function RegisterPageClient() {
+export default function RegisterPageClient({ trialDaysGen }: { trialDaysGen: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -150,7 +150,7 @@ export default function RegisterPageClient() {
   return (
     <AuthShell
       title="Δημιουργία λογαριασμού"
-      subtitle="Δωρεάν δοκιμή 7 ημερών. Θα σου στείλουμε κωδικό επιβεβαίωσης στο email (ισχύει 30 λεπτά)."
+      subtitle={`Δωρεάν δοκιμή ${trialDaysGen}. Θα σου στείλουμε κωδικό επιβεβαίωσης στο email (ισχύει 30 λεπτά).`}
       footer={
         <AuthFooterLink text="Έχεις ήδη λογαριασμό;" linkText="Σύνδεση" href="/login" />
       }

@@ -21,7 +21,7 @@ const benefitIcons = [RefreshCw, Globe, Camera, Smartphone];
 
 export default async function QrMenuLandingPage() {
   const locale = await getServerLocale();
-  const { marketing, pages } = getMessages(locale);
+  const { marketing, pages } = await getMessages(locale);
   const p = marketing.pages.qrMenu;
   const ui = pages.qrMenu;
 

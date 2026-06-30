@@ -27,7 +27,7 @@ const serviceIcons = [QrCode, LayoutDashboard, UtensilsCrossed, Globe, Bell, QrC
 
 export default async function ServicesPage() {
   const locale = await getServerLocale();
-  const { marketing, pages } = getMessages(locale);
+  const { marketing, pages } = await getMessages(locale);
   const p = marketing.pages.services;
   const ui = pages.services;
 

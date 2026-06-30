@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { SEO_PAGES, SEO_SITE, type SeoPageDef } from "@/content/seo-el";
 import { SEO_PAGES_EN, SEO_SITE_EN } from "@/content/seo-en";
 import { getServerLocale } from "@/i18n/server";
+import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
+import { applyTrialDayPlaceholdersDeep } from "@/lib/trial-marketing";
 import { APP_NAME, APP_URL, SITE_DESCRIPTION } from "@/lib/config";
 
 export function absoluteUrl(path = "/"): string {
@@ -150,10 +152,15 @@ function marketingSeoPage(key: MarketingSeoPageKey, locale: "el" | "en"): SeoPag
   return SEO_PAGES[key];
 }
 
+async function marketingSeoPageEl(key: MarketingSeoPageKey): Promise<SeoPageDef> {
+  const trialDays = await getTrialDaysFromCatalog();
+  return applyTrialDayPlaceholdersDeep(SEO_PAGES[key], trialDays);
+}
+
 /** Locale-aware metadata for marketing pages (cookie or ?lang=en). */
 export async function generateMarketingMetadata(key: MarketingSeoPageKey): Promise<Metadata> {
   const locale = await getServerLocale();
-  const page = marketingSeoPage(key, locale);
+  const page = locale === "en" ? marketingSeoPage(key, locale) : await marketingSeoPageEl(key);
   const meta = seoPageMetadata(page);
 
   if (locale !== "en") return meta;

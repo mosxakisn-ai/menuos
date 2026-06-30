@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SeoBlogArticlePage } from "@/components/seo/seo-blog-page";
-import { getAllSeoBlogSlugs, getSeoBlogPost } from "@/lib/seo-blog";
+import { getAllSeoBlogSlugs, getSeoBlogPostResolved } from "@/lib/seo-blog";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamicParams = false;
@@ -14,7 +14,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = getSeoBlogPost(slug);
+  const post = await getSeoBlogPostResolved(slug);
   if (!post) notFound();
 
   return buildPageMetadata({
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = getSeoBlogPost(slug);
+  const post = await getSeoBlogPostResolved(slug);
   if (!post) notFound();
 
   return <SeoBlogArticlePage post={post} />;

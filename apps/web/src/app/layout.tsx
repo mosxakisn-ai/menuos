@@ -23,7 +23,7 @@ export const metadata: Metadata = buildRootMetadata();
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getServerLocale();
-  const messages = getMessages(locale);
+  const messages = await getMessages(locale);
 
   return (
     <html lang={locale} className={`${manrope.variable} ${playfair.variable}`}>

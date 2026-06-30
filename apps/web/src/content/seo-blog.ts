@@ -26,7 +26,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
       {
         paragraphs: [
           "Το QR menu αντικαθιστά το printed menu: ο πελάτης σκανάρει, βλέπει πιάτα και τιμές στο κινητό, εσείς ενημερώνετε online.",
-          "Με το MenuOS ξεκινάτε δωρεάν δοκιμή 7 ημερών — χωρίς κάρτα.",
+          "Με το MenuOS ξεκινάτε δωρεάν δοκιμή {trialDaysGen} — χωρίς κάρτα.",
         ],
       },
       {
@@ -146,7 +146,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
   },
   {
     slug: "pos-energopoiw-dokimastiki-periodo",
-    title: "Πώς ξεκινάω δωρεάν δοκιμή 7 ημερών στο MenuOS",
+    title: "Πώς ξεκινάω δωρεάν δοκιμή {trialDaysGen} στο MenuOS",
     description:
       "Χωρίς κάρτα: εγγραφή με email, κωδικό επιβεβαίωσης, δημιουργία καταλόγου και QR. Τι περιλαμβάνει η δοκιμή και τι γίνεται μετά.",
     publishedAt: "2026-06-28",
@@ -155,7 +155,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
     sections: [
       {
         paragraphs: [
-          "Η δοκιμή 7 ημερών σας δίνει πρόσβαση στη διαχείριση: 1 κατάστημα, 1 κατάλογος, έως 50 πιάτα.",
+          "Η δοκιμή {trialDaysGen} σας δίνει πρόσβαση στη διαχείριση: 1 κατάστημα, 1 κατάλογος, έως 50 πιάτα.",
           "Δεν χρειάζεται πιστωτική κάρτα — μόνο email και κωδικός επιβεβαίωσης.",
         ],
       },
@@ -293,7 +293,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
         heading: "Πότε αξίζει",
         paragraphs: [
           "Εστιατόρια και bars με εποχικότητα, ξενοδοχεία με room service, beach bars με τουριστική κίνηση.",
-          "Η δοκιμή 7 ημερών του MenuOS είναι δωρεάν — δοκιμάστε πριν δεσμευτείτε.",
+          "Η δοκιμή {trialDaysGen} του MenuOS είναι δωρεάν — δοκιμάστε πριν δεσμευτείτε.",
         ],
       },
     ],

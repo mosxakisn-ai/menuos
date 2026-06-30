@@ -16,7 +16,7 @@ const valueIcons = [Sparkles, MapPin, Heart];
 
 export default async function AboutPage() {
   const locale = await getServerLocale();
-  const { marketing, pages } = getMessages(locale);
+  const { marketing, pages } = await getMessages(locale);
   const p = marketing.pages.about;
   const ui = pages.about;
 

@@ -75,3 +75,7 @@ export async function setStaffSessionCookie(venueId: string, staffToken: string)
   const token = createStaffSessionToken(venueId, staffToken);
   (await cookies()).set(STAFF_SESSION_COOKIE, token, staffSessionCookieOptions());
 }
+
+export async function clearStaffSessionCookie(): Promise<void> {
+  (await cookies()).delete({ name: STAFF_SESSION_COOKIE, path: "/" });
+}

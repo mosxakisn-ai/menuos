@@ -5,13 +5,15 @@ import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/componen
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { buttonClass } from "@/components/ui/button";
 import { getServerLocale } from "@/i18n/server";
+import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { getSeoLandingBreadcrumbs, getSeoLandingCopy } from "@/lib/seo-landing-content";
 import type { SeoLandingConfig } from "@/lib/seo-landing";
 import { buildBreadcrumbSchema, buildFAQPageSchema, buildWebPageSchema } from "@/lib/seo-structured-data";
 
 export async function SeoLandingPage({ config }: { config: SeoLandingConfig }) {
   const locale = await getServerLocale();
-  const copy = getSeoLandingCopy(config, locale);
+  const trialDays = await getTrialDaysFromCatalog();
+  const copy = getSeoLandingCopy(config, locale, trialDays);
   const breadcrumbs = getSeoLandingBreadcrumbs(config, copy, locale);
   const homeLabel = locale === "en" ? "Home" : "Αρχική";
   const trialLabel = locale === "en" ? "Start free trial" : "Ξεκίνα δωρεάν δοκιμή";

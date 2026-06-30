@@ -8,7 +8,7 @@ import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
-export default function LoginPageClient() {
+export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ export default function LoginPageClient() {
       title="Καλώς ήρθες πίσω"
       subtitle="Σύνδεση στο dashboard σου για menus, QR και billing."
       footer={
-        <AuthFooterLink text="Δεν έχεις λογαριασμό;" linkText="Δωρεάν δοκιμή 7 ημερών" href="/register" />
+        <AuthFooterLink text="Δεν έχεις λογαριασμό;" linkText={`Δωρεάν δοκιμή ${trialDaysGen}`} href="/register" />
       }
     >
       <form onSubmit={onSubmit} className="mt-6 space-y-4">

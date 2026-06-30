@@ -4,8 +4,8 @@ import type { MenuOsMessages } from "./get-messages";
 export async function loadClientMessages(locale: Locale): Promise<MenuOsMessages> {
   if (locale === "en") {
     const { getMessages } = await import("./get-messages");
-    return getMessages("en");
+    return await getMessages("en");
   }
   const { getMessages } = await import("./get-messages");
-  return getMessages("el");
+  return await getMessages("el");
 }

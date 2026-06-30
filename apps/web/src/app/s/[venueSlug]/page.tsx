@@ -3,7 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { resolveVenueByStaffKey, resolveVenueByStaffSlug } from "@/lib/staff-auth";
-import { readStaffSessionFromCookies, setStaffSessionCookie } from "@/lib/staff-session";
+import {
+  clearStaffSessionCookie,
+  readStaffSessionFromCookies,
+  setStaffSessionCookie,
+} from "@/lib/staff-session";
 
 export const metadata: Metadata = {
   title: "Σερβιτόρος — MenuOS",
@@ -31,7 +35,10 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   if (!session) notFound();
 
   const venue = await resolveVenueByStaffKey(session.venueId, session.staffToken);
-  if (!venue || venue.slug !== venueSlug) notFound();
+  if (!venue || venue.slug !== venueSlug) {
+    await clearStaffSessionCookie();
+    notFound();
+  }
 
   return (
     <div className="min-h-screen bg-brand-surface/40">

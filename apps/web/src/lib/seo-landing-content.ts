@@ -1,4 +1,6 @@
 import type { SeoCitySlug, SeoLandingConfig, SeoProductSlug, SeoVerticalSlug } from "@/lib/seo-landing";
+import { TRIAL_DAYS } from "@menuos/shared";
+import { trialDayLabels } from "@/lib/trial-marketing";
 
 export type SeoLandingLocale = "el" | "en";
 
@@ -208,11 +210,16 @@ function buildContextPhrase(config: SeoLandingConfig, locale: SeoLandingLocale):
   return locale === "el" ? "επιχειρήσεις φιλοξενίας" : "hospitality businesses";
 }
 
-export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLocale): SeoLandingCopy {
+export function getSeoLandingCopy(
+  config: SeoLandingConfig,
+  locale: SeoLandingLocale,
+  trialDays = TRIAL_DAYS,
+): SeoLandingCopy {
   const product = productLabel(config.product, locale);
   const subject = buildSubject(config, locale);
   const context = buildContextPhrase(config, locale);
   const isEl = locale === "el";
+  const trial = trialDayLabels(trialDays);
 
   const metaTitle =
     config.kind === "product"
@@ -224,7 +231,7 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
         : `${subject} | MenuOS`;
 
   const metaDescription = isEl
-    ? `Φτιάξτε ${product} για ${context}. Πολυγλωσσικό menu, ενημέρωση τιμών online, QR codes — δωρεάν δοκιμή 7 ημερών.`
+    ? `Φτιάξτε ${product} για ${context}. Πολυγλωσσικό menu, ενημέρωση τιμών online, QR codes — δωρεάν δοκιμή ${trial.trialDaysGen}.`
     : `Create a ${product} for ${context}. Multilingual menu, online price updates, QR codes — free 7-day trial.`;
 
   const h1 =
@@ -248,7 +255,7 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
           : verticalSeo
             ? `Ιδανικό για ${context} — premium εμφάνιση, πολλαπλές γλώσσες QR, ${verticalSeo.qrPlacementEl.toLowerCase()}.`
             : `Ιδανικό για ${context} που θέλουν premium εμφάνιση, πολλαπλές γλώσσες QR και απλή διαχείριση χωρίς τεχνικές γνώσεις.`,
-        "Ξεκινήστε με δωρεάν δοκιμή 7 ημερών — χωρίς κάρτα. Κατεβάζετε QR codes και είστε live την ίδια μέρα.",
+        `Ξεκινήστε με δωρεάν δοκιμή ${trial.trialDaysGen} — χωρίς κάρτα. Κατεβάζετε QR codes και είστε live την ίδια μέρα.`,
       ]
     : [
         verticalSeo
@@ -306,7 +313,7 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
         },
         {
           q: "Υπάρχει δοκιμή;",
-          a: "Ναι, 7 ημέρες δωρεάν χωρίς κάρτα.",
+          a: `Ναι, ${trial.trialDays} δωρεάν χωρίς κάρτα.`,
         },
       ]
     : [
@@ -353,7 +360,7 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
     faq,
     ctaTitle: isEl ? "Ξεκίνα δωρεάν σήμερα" : "Start free today",
     ctaDescription: isEl
-      ? "7 ημέρες δοκιμή. Χωρίς κάρτα. Φτιάξε κατάλογο και δοκίμασε το QR."
+      ? `${trial.trialDays} δοκιμή. Χωρίς κάρτα. Φτιάξε κατάλογο και δοκίμασε το QR.`
       : "7-day trial. No credit card. Build your menu and test the QR.",
     keywords,
   };

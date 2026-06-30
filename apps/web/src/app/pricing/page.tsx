@@ -22,7 +22,7 @@ export async function generateMetadata() {
 
 export default async function PricingPage() {
   const locale = await getServerLocale();
-  const { marketing, pages } = getMessages(locale);
+  const { marketing, pages } = await getMessages(locale);
   const p = marketing.pages.pricing;
   const ui = pages.pricing;
   const catalogPlans =

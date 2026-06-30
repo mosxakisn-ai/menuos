@@ -13,7 +13,7 @@ export async function generateMetadata() {
 
 export default async function HowItWorksPage() {
   const locale = await getServerLocale();
-  const { marketing, pages } = getMessages(locale);
+  const { marketing, pages } = await getMessages(locale);
   const p = marketing.pages.howItWorks;
   const ui = pages.howItWorks;
 

@@ -1,13 +1,18 @@
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { MarketingLayout, MarketingProse } from "@/components/marketing/marketing-layout";
 import { SEO_SITE } from "@/content/seo-el";
+import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { generateMarketingMetadata } from "@/lib/seo";
+import { trialDayLabels } from "@/lib/trial-marketing";
 
 export async function generateMetadata() {
   return generateMarketingMetadata("terms");
 }
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const trialDays = await getTrialDaysFromCatalog();
+  const { trialDaysGen } = trialDayLabels(trialDays);
+
   return (
     <MarketingLayout>
       <MarketingPageJsonLd pageKey="terms" />
@@ -37,7 +42,7 @@ export default function TermsPage() {
 
         <h2>4. Συνδρομές & πληρωμές</h2>
         <p>
-          Η δοκιμή 7 ημερών είναι δωρεάν σύμφωνα με το ενεργό πλάνο. Μετά, ισχύουν τα πλάνα Basic / Pro όπως
+          Η δοκιμή {trialDaysGen} είναι δωρεάν σύμφωνα με το ενεργό πλάνο. Μετά, ισχύουν τα πλάνα Basic / Pro όπως
           αναγράφονται στη σελίδα τιμών. Οι πληρωμές γίνονται online με ασφάλεια. Η ακύρωση γίνεται από τη σελίδα συνδρομής
           ή επικοινωνώντας μαζί μας — δεν υπάρχουν «κρυφές» χρεώσεις εγκατάστασης.
         </p>

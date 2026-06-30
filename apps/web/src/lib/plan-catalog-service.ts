@@ -11,6 +11,7 @@ import {
   type PlanCatalogEntry,
   type PricingPlanCard,
 } from "@/lib/plan-catalog-types";
+import { formatTrialPeriodLabel } from "@/lib/trial-marketing";
 
 export type { PlanCatalogEntry, PricingPlanCard } from "@/lib/plan-catalog-types";
 export { formatPlanPriceDisplay } from "@/lib/plan-catalog-types";
@@ -200,7 +201,10 @@ export async function getPricingPlanCards(): Promise<PricingPlanCard[]> {
       planId: e.id,
       name: e.name,
       price: formatPlanPriceDisplay(e.priceMonthly, e.priceDisplay),
-      period: e.periodLabel,
+      period:
+        e.id === "TRIAL" && e.trialDays && e.trialDays > 0
+          ? formatTrialPeriodLabel(e.trialDays)
+          : e.periodLabel,
       description: e.description ?? "",
       features: [...e.features],
       cta: e.ctaLabel ?? "Εγγραφή",
