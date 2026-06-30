@@ -76,6 +76,20 @@ export async function activateSubscriptionFromCheckout(input: {
   const periodEnd =
     input.currentPeriodEnd ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
+  const previousSubId = existing?.stripeSubId;
+  if (
+    previousSubId &&
+    input.stripeSubId &&
+    previousSubId !== input.stripeSubId
+  ) {
+    const { cancelStripeSubscription, isStripeEnabled } = await import("@/lib/stripe-client");
+    if (isStripeEnabled()) {
+      await cancelStripeSubscription(previousSubId).catch((err) =>
+        console.error("[menuos-billing] failed to cancel previous Stripe subscription", err),
+      );
+    }
+  }
+
   await prisma.subscription.upsert({
     where: { organizationId: input.organizationId },
     create: {

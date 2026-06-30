@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { loginSchema } from "@menuos/shared";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -15,6 +16,20 @@ export async function POST(request: Request) {
   const parsed = loginSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+
+  const ip = clientIp(request);
+  if (!checkRateLimit(`login:ip:${ip}`, 30, 15 * 60 * 1000)) {
+    return NextResponse.json(
+      { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
+      { status: 429 },
+    );
+  }
+  if (!checkRateLimit(`login:email:${parsed.data.email}`, 10, 15 * 60 * 1000)) {
+    return NextResponse.json(
+      { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
+      { status: 429 },
+    );
   }
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });

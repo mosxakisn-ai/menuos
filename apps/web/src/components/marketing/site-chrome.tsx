@@ -76,13 +76,23 @@ export function SiteFooter() {
             </ul>
             <p className="mt-6 text-sm font-semibold text-white">{f.columns.contact}</p>
             <p className="mt-2 text-sm text-slate-300">
+              <a href={`tel:${m.contactPhoneTel}`} className="hover:text-brand-cyan">
+                {m.contactPhone}
+              </a>
+            </p>
+            <p className="mt-1 text-sm text-slate-300">
               <a href={`mailto:${m.contactEmail}`} className="hover:text-brand-cyan">
                 {m.contactEmail}
               </a>
             </p>
-            <p className="mt-1 text-sm text-slate-400">
-              <a href="https://menuos.gr" className="hover:text-brand-cyan">
-                menuos.gr
+            <p className="mt-1 text-sm text-slate-300">
+              <a
+                href={m.contactFacebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-brand-cyan"
+              >
+                Facebook
               </a>
             </p>
           </div>

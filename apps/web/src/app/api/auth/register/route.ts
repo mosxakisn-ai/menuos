@@ -5,7 +5,11 @@ import { registerSchema } from "@menuos/shared";
 import { fireAdminNotify, notifyAdminOrganizationRegistered } from "@/lib/admin-notify";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { sendWelcomeEmail } from "@/lib/mail";
-import { normalizeRegistrationEmail, verifyRegistrationOtp } from "@/lib/registration-otp";
+import {
+  consumeRegistrationOtp,
+  normalizeRegistrationEmail,
+  verifyRegistrationOtp,
+} from "@/lib/registration-otp";
 import { slugifyOrFallback } from "@/lib/utils";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
@@ -103,6 +107,8 @@ export async function POST(request: Request) {
         trialEndsAt,
       }),
     );
+
+    await consumeRegistrationOtp(normalizedEmail);
 
     return NextResponse.json({ ok: true });
   } catch (err) {

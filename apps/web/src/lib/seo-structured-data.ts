@@ -15,6 +15,8 @@ export function buildOrganizationSchema() {
     logo: absoluteUrl("/icon"),
     description: SITE_DESCRIPTION,
     email: SEO_SITE.contactEmail,
+    telephone: SEO_SITE.contactPhoneTel,
+    sameAs: [SEO_SITE.contactFacebook],
     areaServed: {
       "@type": "Country",
       name: "Greece",
@@ -23,6 +25,7 @@ export function buildOrganizationSchema() {
       "@type": "ContactPoint",
       contactType: "customer service",
       email: SEO_SITE.contactEmail,
+      telephone: SEO_SITE.contactPhoneTel,
       availableLanguage: ["Greek", "English"],
     },
   };

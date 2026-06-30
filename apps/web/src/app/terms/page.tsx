@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { MarketingLayout, MarketingProse } from "@/components/marketing/marketing-layout";
-import { SEO_PAGES } from "@/content/seo-el";
+import { SEO_PAGES, SEO_SITE } from "@/content/seo-el";
 import { seoPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = seoPageMetadata(SEO_PAGES.terms);
@@ -69,7 +69,8 @@ export default function TermsPage() {
         <h2>9. Εφαρμοστέο δίκαιο & επικοινωνία</h2>
         <p>
           Οι όροι διέπονται από το ελληνικό δίκαιο. Για ερωτήσεις:{" "}
-          <a href="mailto:info@b-os.gr">info@b-os.gr</a>.
+          <a href={`tel:${SEO_SITE.contactPhoneTel}`}>{SEO_SITE.contactPhone}</a>,{" "}
+          <a href={`mailto:${SEO_SITE.contactEmail}`}>{SEO_SITE.contactEmail}</a>.
         </p>
       </MarketingProse>
     </MarketingLayout>

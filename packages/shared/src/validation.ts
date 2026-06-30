@@ -13,8 +13,8 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
+  email: z.string().email().max(254).transform((s) => s.trim().toLowerCase()),
+  password: z.string().min(1).max(128),
 });
 
 export const venueSchema = z.object({

@@ -16,6 +16,9 @@ export async function sendRegistrationOtpEmail(input: { to: string; code: string
   const html = buildRegistrationOtpEmailHtml({ code: input.code });
 
   if (!isMailConfigured()) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Email is not configured");
+    }
     console.log(`[menuos-mail] register OTP → ${input.to} code=${input.code}`);
     return;
   }

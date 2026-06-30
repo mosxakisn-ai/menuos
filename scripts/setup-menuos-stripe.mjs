@@ -81,6 +81,9 @@ async function main() {
     params.set("description", "MenuOS — menuos.gr (NOT MatchWork)");
     params.set("enabled_events[0]", "checkout.session.completed");
     params.set("enabled_events[1]", "customer.subscription.deleted");
+    params.set("enabled_events[2]", "customer.subscription.updated");
+    params.set("enabled_events[3]", "invoice.paid");
+    params.set("enabled_events[4]", "invoice.payment_failed");
     params.set("metadata[app]", "menuos");
     params.set("metadata[platform]", domain);
     params.set("metadata[product_line]", "menuos");

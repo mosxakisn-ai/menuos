@@ -53,6 +53,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  const existingSubscription = await getOrganizationSubscription(organizationId);
+
   const safeReturn =
     typeof returnPath === "string" && returnPath.startsWith("/") ? returnPath : "/dashboard/billing";
 
@@ -89,6 +91,7 @@ export async function POST(request: Request) {
       organizationId,
       planId: planId as PaidSubscriptionPlanId,
       customerEmail: user.email,
+      stripeCustomerId: existingSubscription?.stripeCustomerId,
       returnPath: safeReturn,
     });
 

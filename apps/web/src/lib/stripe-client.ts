@@ -20,7 +20,6 @@ import {
 export { isStripeEnabled, isMenuOsStripeMetadata, MENUOS_STRIPE_APP };
 
 const STRIPE_API = "https://api.stripe.com/v1";
-const STATEMENT_SUFFIX = "MENUOS";
 
 function stripeHeaders(): HeadersInit {
   const key = getStripeSecretKey();
@@ -65,10 +64,25 @@ export async function stripeGetSession(sessionId: string) {
   return session;
 }
 
+export async function cancelStripeSubscription(stripeSubId: string): Promise<void> {
+  const key = getStripeSecretKey();
+  if (!key) throw new Error("MENUOS_STRIPE_SECRET_KEY not configured");
+
+  const res = await fetch(`${STRIPE_API}/subscriptions/${stripeSubId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  if (!res.ok) {
+    const data = (await res.json()) as { error?: { message?: string } };
+    throw new Error(data.error?.message ?? `Stripe cancel failed ${res.status}`);
+  }
+}
+
 export async function createPlanCheckoutSession(input: {
   organizationId: string;
   planId: PaidSubscriptionPlanId;
   customerEmail?: string;
+  stripeCustomerId?: string | null;
   returnPath?: string;
   locale?: string;
 }): Promise<{ url: string; sessionId: string }> {
@@ -102,7 +116,6 @@ export async function createPlanCheckoutSession(input: {
   appendStripeMetadata(params, metadata);
   appendMenuOsProductMetadata(params, "subscription_data", metadata);
   params.set("subscription_data[description]", copy.invoiceDescription);
-  params.set("payment_intent_data[statement_descriptor_suffix]", STATEMENT_SUFFIX);
   params.set("line_items[0][price_data][currency]", "eur");
   params.set("line_items[0][price_data][product_data][name]", copy.name);
   params.set("line_items[0][price_data][product_data][description]", copy.description);
@@ -116,7 +129,11 @@ export async function createPlanCheckoutSession(input: {
   params.set("line_items[0][price_data][unit_amount]", String(plan.priceMonthly * 100));
   params.set("line_items[0][price_data][recurring][interval]", "month");
   params.set("line_items[0][quantity]", "1");
-  if (input.customerEmail) params.set("customer_email", input.customerEmail);
+  if (input.stripeCustomerId) {
+    params.set("customer", input.stripeCustomerId);
+  } else if (input.customerEmail) {
+    params.set("customer_email", input.customerEmail);
+  }
 
   const session = await stripePost<{ id: string; url: string }>("/checkout/sessions", params);
   return { url: session.url, sessionId: session.id };

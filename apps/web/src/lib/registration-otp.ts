@@ -44,6 +44,17 @@ export async function sendRegistrationOtp(email: string): Promise<
   const codeHash = await bcrypt.hash(code, 10);
   const expiresAt = new Date(Date.now() + OTP_TTL_MS);
 
+  try {
+    await sendRegistrationOtpEmail({ to: normalized, code });
+  } catch (err) {
+    console.error("[menuos-mail] OTP send failed", err);
+    return {
+      ok: false,
+      error: "Δεν ήταν δυνατή η αποστολή email. Δοκίμασε ξανά σε λίγο.",
+      code: "mail_failed",
+    };
+  }
+
   await prisma.registrationOtp.upsert({
     where: { email: normalized },
     create: {
@@ -61,8 +72,6 @@ export async function sendRegistrationOtp(email: string): Promise<
     },
   });
 
-  await sendRegistrationOtpEmail({ to: normalized, code });
-
   return { ok: true, expiresInSeconds: OTP_TTL_MS / 1000 };
 }
 
@@ -71,39 +80,46 @@ export async function verifyRegistrationOtp(email: string, otp: string): Promise
   | { ok: false; error: string; code?: string }
 > {
   const normalized = normalizeRegistrationEmail(email);
-  const record = await prisma.registrationOtp.findUnique({ where: { email: normalized } });
 
-  if (!record) {
-    return {
-      ok: false,
-      error: "Δεν βρέθηκε κωδικός. Στείλε νέο κωδικό στο email σου.",
-      code: "otp_missing",
-    };
-  }
+  return prisma.$transaction(async (tx) => {
+    const record = await tx.registrationOtp.findUnique({ where: { email: normalized } });
 
-  if (record.expiresAt.getTime() < Date.now()) {
-    await prisma.registrationOtp.delete({ where: { email: normalized } }).catch(() => undefined);
-    return { ok: false, error: "Ο κωδικός έληξε. Στείλε νέον κωδικό.", code: "otp_expired" };
-  }
+    if (!record) {
+      return {
+        ok: false as const,
+        error: "Δεν βρέθηκε κωδικός. Στείλε νέο κωδικό στο email σου.",
+        code: "otp_missing",
+      };
+    }
 
-  if (record.attempts >= MAX_VERIFY_ATTEMPTS) {
-    await prisma.registrationOtp.delete({ where: { email: normalized } }).catch(() => undefined);
-    return {
-      ok: false,
-      error: "Πολλές λανθασμένες προσπάθειες. Στείλε νέο κωδικό.",
-      code: "otp_locked",
-    };
-  }
+    if (record.expiresAt.getTime() < Date.now()) {
+      await tx.registrationOtp.delete({ where: { email: normalized } }).catch(() => undefined);
+      return { ok: false as const, error: "Ο κωδικός έληξε. Στείλε νέον κωδικό.", code: "otp_expired" };
+    }
 
-  const valid = await bcrypt.compare(otp, record.codeHash);
-  if (!valid) {
-    await prisma.registrationOtp.update({
-      where: { email: normalized },
-      data: { attempts: { increment: 1 } },
-    });
-    return { ok: false, error: "Λάθος κωδικός. Έλεγξε το email σου.", code: "otp_invalid" };
-  }
+    if (record.attempts >= MAX_VERIFY_ATTEMPTS) {
+      await tx.registrationOtp.delete({ where: { email: normalized } }).catch(() => undefined);
+      return {
+        ok: false as const,
+        error: "Πολλές λανθασμένες προσπάθειες. Στείλε νέο κωδικό.",
+        code: "otp_locked",
+      };
+    }
 
-  await prisma.registrationOtp.delete({ where: { email: normalized } });
-  return { ok: true };
+    const valid = await bcrypt.compare(otp, record.codeHash);
+    if (!valid) {
+      await tx.registrationOtp.update({
+        where: { email: normalized },
+        data: { attempts: { increment: 1 } },
+      });
+      return { ok: false as const, error: "Λάθος κωδικός. Έλεγξε το email σου.", code: "otp_invalid" };
+    }
+
+    return { ok: true as const };
+  });
+}
+
+export async function consumeRegistrationOtp(email: string): Promise<void> {
+  const normalized = normalizeRegistrationEmail(email);
+  await prisma.registrationOtp.delete({ where: { email: normalized } }).catch(() => undefined);
 }

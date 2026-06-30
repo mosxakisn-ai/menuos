@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { MarketingLayout, MarketingProse } from "@/components/marketing/marketing-layout";
-import { SEO_PAGES } from "@/content/seo-el";
+import { SEO_PAGES, SEO_SITE } from "@/content/seo-el";
 import { seoPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = seoPageMetadata(SEO_PAGES.privacy);
@@ -18,7 +18,8 @@ export default function PrivacyPage() {
         <p>
           Το MenuOS (menuos.gr) είναι online πλατφόρμα ψηφιακών menus. Υπεύθυνος επεξεργασίας για τους
           επιχειρηματικούς λογαριασμούς είναι η ομάδα που λειτουργεί το MenuOS. Για ερωτήσεις:{" "}
-          <a href="mailto:info@b-os.gr">info@b-os.gr</a>.
+          <a href={`tel:${SEO_SITE.contactPhoneTel}`}>{SEO_SITE.contactPhone}</a>,{" "}
+          <a href={`mailto:${SEO_SITE.contactEmail}`}>{SEO_SITE.contactEmail}</a>.
         </p>
 
         <h2>2. Τι δεδομένα συλλέγουμε</h2>
@@ -64,7 +65,9 @@ export default function PrivacyPage() {
         <h2>7. Τα δικαιώματά σας</h2>
         <p>
           Έχετε δικαίωμα πρόσβασης, διόρθωσης, διαγραφής, περιορισμού, φορητότητας και εναντίωσης — σύμφωνα με
-          τον GDPR. Γράψτε στο <a href="mailto:info@b-os.gr">info@b-os.gr</a>.
+          τον GDPR. Επικοινωνήστε στο{" "}
+          <a href={`tel:${SEO_SITE.contactPhoneTel}`}>{SEO_SITE.contactPhone}</a> ή{" "}
+          <a href={`mailto:${SEO_SITE.contactEmail}`}>{SEO_SITE.contactEmail}</a>.
         </p>
 
         <h2>8. Cookies</h2>
