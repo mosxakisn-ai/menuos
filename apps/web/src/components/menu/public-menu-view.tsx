@@ -99,7 +99,6 @@ export function PublicMenuView({
   const [canGoBack, setCanGoBack] = useState(false);
   const resetTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const pollFailuresRef = useRef(0);
   const [isInIframe, setIsInIframe] = useState(false);
   const isEmbedded = embedMode || isInIframe;
 
@@ -127,7 +126,6 @@ export function PublicMenuView({
     sessionStorage.removeItem(storageKey);
     setActiveCallId(null);
     setCallCancellable(false);
-    pollFailuresRef.current = 0;
   }, [storageKey]);
 
   const syncCallStatus = useCallback(
@@ -141,12 +139,9 @@ export function PublicMenuView({
           return false;
         }
         if (!res.ok) {
-          pollFailuresRef.current += 1;
-          if (pollFailuresRef.current >= 3) clearActiveCall();
           return false;
         }
         const data = (await res.json()) as { active?: boolean; cancellable?: boolean };
-        pollFailuresRef.current = 0;
         setCallCancellable(data.cancellable ?? false);
         if (data.active) {
           setActiveCallId(callId);
@@ -155,8 +150,6 @@ export function PublicMenuView({
         clearActiveCall();
         return false;
       } catch {
-        pollFailuresRef.current += 1;
-        if (pollFailuresRef.current >= 3) clearActiveCall();
         return false;
       }
     },
@@ -345,7 +338,8 @@ export function PublicMenuView({
   }
 
   async function sendOrder() {
-    if (!canUseCallActions || cartLines.length === 0 || activeCallId) return;
+    if (!canUseCallActions || cartLines.length === 0) return;
+    if (activeCallId) return;
     setOrderState("loading");
     setCartOpen(false);
     try {

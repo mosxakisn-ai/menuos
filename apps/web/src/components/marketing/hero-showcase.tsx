@@ -67,14 +67,14 @@ export function HeroShowcase() {
     return () => clearInterval(scanTimer);
   }, []);
 
-  const demoMenuPath = useMemo(
+  const demoMenuIframePath = useMemo(
     () => demoMenuUrl({ table: "12", siteLocale: locale, embed: true }),
     [locale],
   );
 
-  const demoMenuAbsoluteUrl = useMemo(
-    () => `${origin}${demoMenuPath}`,
-    [origin, demoMenuPath],
+  const demoMenuQrUrl = useMemo(
+    () => `${origin}${demoMenuUrl({ table: "12", siteLocale: locale })}`,
+    [origin, locale],
   );
 
   return (
@@ -152,7 +152,7 @@ export function HeroShowcase() {
                     <div className="mt-3 flex items-start gap-3">
                       <div className="relative shrink-0 rounded-lg bg-white p-1 ring-1 ring-slate-100">
                         <HeroQrCode
-                          url={demoMenuAbsoluteUrl}
+                          url={demoMenuQrUrl}
                           size={72}
                           color="#1e3a5f"
                           alt={hs.qrAlt}
@@ -218,7 +218,7 @@ export function HeroShowcase() {
                 <PhoneStatusBar />
                 <div className="absolute inset-x-0 bottom-3 top-10 overflow-hidden bg-white">
                   <iframe
-                    src={demoMenuPath}
+                    src={demoMenuIframePath}
                     title={`${hs.venueName} — ${hs.venueSubtitle}`}
                     className="block h-full w-full max-w-full touch-pan-y border-0 bg-white"
                     loading="eager"

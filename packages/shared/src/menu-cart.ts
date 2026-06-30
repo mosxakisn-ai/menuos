@@ -67,3 +67,29 @@ export function updateCartLineQty(lines: OrderLine[], itemId: string, quantity: 
 export function buildOrderPayload(lines: OrderLine[], lang?: string): OrderPayload {
   return { lines, total: cartTotal(lines), lang };
 }
+
+export function parseOrderPayload(raw: unknown): OrderPayload | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as OrderPayload;
+  if (!Array.isArray(o.lines)) return null;
+  const lines = o.lines
+    .map((line) => orderLineSchema.safeParse(line))
+    .filter((r) => r.success)
+    .map((r) => r.data);
+  if (lines.length === 0) return null;
+  return { lines, total: cartTotal(lines), lang: o.lang };
+}
+
+/** Merge new order lines into an existing pending order payload. */
+export function mergeOrderPayload(existing: unknown, incoming: OrderPayload): OrderPayload {
+  const prev = parseOrderPayload(existing);
+  let merged = prev?.lines ?? [];
+  for (const line of incoming.lines) {
+    merged = mergeCartLine(merged, line);
+  }
+  return {
+    lines: merged,
+    total: cartTotal(merged),
+    lang: incoming.lang ?? prev?.lang,
+  };
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma, WaiterCallStatus, WaiterCallType } from "@menuos/db";
-import { waiterCallSchema } from "@menuos/shared";
+import { mergeOrderPayload, waiterCallSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
@@ -99,6 +99,18 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
+    if (
+      parsed.data.type === "ORDER" &&
+      parsed.data.orderItems &&
+      parsed.data.orderItems.lines.length > 0
+    ) {
+      const merged = mergeOrderPayload(existing.orderItems, parsed.data.orderItems);
+      const updated = await prisma.waiterCall.update({
+        where: { id: existing.id },
+        data: { orderItems: merged },
+      });
+      return NextResponse.json({ id: updated.id, type: updated.type });
+    }
     return NextResponse.json({ id: existing.id, type: existing.type });
   }
 
@@ -112,7 +124,21 @@ export async function POST(request: Request) {
       },
       orderBy: { createdAt: "desc" },
     });
-    if (pending) return pending;
+    if (pending) {
+      if (
+        pending.type === "ORDER" &&
+        parsed.data.type === "ORDER" &&
+        parsed.data.orderItems &&
+        parsed.data.orderItems.lines.length > 0
+      ) {
+        const merged = mergeOrderPayload(pending.orderItems, parsed.data.orderItems);
+        return tx.waiterCall.update({
+          where: { id: pending.id },
+          data: { orderItems: merged },
+        });
+      }
+      return pending;
+    }
 
     return tx.waiterCall.create({
       data: {
