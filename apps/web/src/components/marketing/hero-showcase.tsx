@@ -24,18 +24,21 @@ const PHOTOS = {
 
 function PhoneStatusBar() {
   return (
-    <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 pt-2.5 text-[10px] font-semibold text-slate-900">
-      <span>9:41</span>
-      <div className="flex items-center gap-1">
-        <div className="flex gap-0.5">
-          <span className="h-2 w-0.5 rounded-full bg-slate-900" />
-          <span className="h-2.5 w-0.5 rounded-full bg-slate-900" />
-          <span className="h-3 w-0.5 rounded-full bg-slate-900" />
-          <span className="h-3.5 w-0.5 rounded-full bg-slate-900" />
-        </div>
-        <Wifi className="h-3 w-3" strokeWidth={2.5} />
-        <div className="ml-0.5 h-2.5 w-5 rounded-sm border border-slate-900 p-px">
-          <div className="h-full w-3/4 rounded-[1px] bg-slate-900" />
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-11 bg-gradient-to-b from-white via-white to-white/80">
+      <div className="flex h-full items-center justify-between px-5 pt-1.5 text-[10px] font-semibold text-slate-900">
+        <span>9:41</span>
+        <span className="w-[76px]" aria-hidden />
+        <div className="flex items-center gap-1">
+          <div className="flex gap-0.5">
+            <span className="h-2 w-0.5 rounded-full bg-slate-900" />
+            <span className="h-2.5 w-0.5 rounded-full bg-slate-900" />
+            <span className="h-3 w-0.5 rounded-full bg-slate-900" />
+            <span className="h-3.5 w-0.5 rounded-full bg-slate-900" />
+          </div>
+          <Wifi className="h-3 w-3" strokeWidth={2.5} />
+          <div className="ml-0.5 h-2.5 w-5 rounded-sm border border-slate-900 p-px">
+            <div className="h-full w-3/4 rounded-[1px] bg-slate-900" />
+          </div>
         </div>
       </div>
     </div>
@@ -65,7 +68,7 @@ export function HeroShowcase() {
   }, []);
 
   const demoMenuPath = useMemo(
-    () => demoMenuUrl({ table: "12", siteLocale: locale }),
+    () => demoMenuUrl({ table: "12", siteLocale: locale, embed: true }),
     [locale],
   );
 
@@ -193,7 +196,7 @@ export function HeroShowcase() {
         </div>
 
         {/* Phone mockup — live demo iframe (restaurant example) */}
-        <div className="relative w-full max-w-[320px] shrink-0 sm:max-w-[340px]">
+        <div className="relative w-full max-w-[320px] shrink-0 overflow-hidden sm:max-w-[340px]">
           <p className="mb-2 text-center text-xs font-semibold text-slate-500">{hs.liveDemoHint}</p>
           <p className="mb-4 text-center">
             <span className="inline-flex rounded-full border border-brand-blue/20 bg-brand-blue/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-blue">
@@ -201,7 +204,7 @@ export function HeroShowcase() {
             </span>
           </p>
 
-          <div className="animate-float relative mx-auto w-[280px] sm:w-[300px]">
+          <div className="relative mx-auto w-[280px] sm:w-[300px]">
             <div className="relative rounded-[2.75rem] border-[5px] border-slate-900 bg-slate-900 p-2 shadow-[0_32px_80px_-20px_rgba(15,23,42,0.55)] ring-1 ring-white/10">
               {/* Side buttons */}
               <div className="absolute -left-[3px] top-24 h-8 w-[3px] rounded-l-sm bg-slate-800" />
@@ -209,20 +212,21 @@ export function HeroShowcase() {
               <div className="absolute -left-[3px] top-52 h-12 w-[3px] rounded-l-sm bg-slate-800" />
               <div className="absolute -right-[3px] top-32 h-16 w-[3px] rounded-r-sm bg-slate-800" />
 
-              <div className="absolute left-1/2 top-3 z-20 h-[22px] w-[88px] -translate-x-1/2 rounded-full bg-slate-900" />
+              <div className="absolute left-1/2 top-2.5 z-40 h-[22px] w-[76px] -translate-x-1/2 rounded-full bg-slate-900" />
 
-              <div className="relative aspect-[9/19.5] overflow-hidden rounded-[2.2rem] bg-white">
+              <div className="relative isolate aspect-[9/19.5] overflow-hidden rounded-[2.2rem] bg-white">
                 <PhoneStatusBar />
-                <div className="pointer-events-none absolute inset-0 z-[5] bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-                <iframe
-                  src={demoMenuPath}
-                  title={`${hs.venueName} — ${hs.venueSubtitle}`}
-                  className="h-full w-full border-0 bg-white"
-                  loading="eager"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                />
-                <div className="pointer-events-none absolute inset-x-0 bottom-1 z-10 flex justify-center">
-                  <div className="h-1 w-24 rounded-full bg-slate-900/80" />
+                <div className="absolute inset-x-0 bottom-7 top-11 overflow-hidden bg-white">
+                  <iframe
+                    src={demoMenuPath}
+                    title={`${hs.venueName} — ${hs.venueSubtitle}`}
+                    className="block h-full w-full max-w-full border-0 bg-white"
+                    loading="eager"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
+                </div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex justify-center">
+                  <div className="h-1 w-[5.5rem] rounded-full bg-slate-900/80" />
                 </div>
               </div>
             </div>

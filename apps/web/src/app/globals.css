@@ -17,6 +17,16 @@
   body {
     @apply bg-white text-brand-navy antialiased;
   }
+
+  html.menu-embed,
+  html.menu-embed body {
+    height: 100%;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
 }
 
 @layer utilities {

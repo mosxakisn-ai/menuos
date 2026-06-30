@@ -12,6 +12,7 @@ export function demoMenuUrl(params?: {
   table?: string;
   lang?: string;
   siteLocale?: SiteLocale;
+  embed?: boolean;
 }): string {
   const q = new URLSearchParams();
   if (params?.table) q.set("table", params.table);
@@ -19,6 +20,7 @@ export function demoMenuUrl(params?: {
     params?.lang ??
     (params?.siteLocale ? demoMenuLangFromSiteLocale(params.siteLocale) : undefined);
   if (lang) q.set("lang", lang);
+  if (params?.embed) q.set("embed", "1");
   const qs = q.toString();
   return `/m/${DEMO_VENUE_SLUG}${qs ? `?${qs}` : ""}`;
 }

@@ -72,11 +72,13 @@ export function PublicMenuView({
   language,
   tableNumber,
   roomNumber,
+  embedMode = false,
 }: {
   venue: Venue;
   language: QrMenuLanguage;
   tableNumber?: string;
   roomNumber?: string;
+  embedMode?: boolean;
 }) {
   const [lang, setLang] = useState<QrMenuLanguage>(language);
   const [activeMenuId, setActiveMenuId] = useState(venue.menus[0]?.id);
@@ -164,6 +166,12 @@ export function PublicMenuView({
     if (!stored) return;
     await syncCallStatus(stored);
   }, [storageKey, syncCallStatus]);
+
+  useEffect(() => {
+    if (!embedMode) return;
+    document.documentElement.classList.add("menu-embed");
+    return () => document.documentElement.classList.remove("menu-embed");
+  }, [embedMode]);
 
   useEffect(() => {
     setLang(language);
@@ -431,17 +439,26 @@ export function PublicMenuView({
   const hasCart = cartLines.length > 0;
 
   const categoryNav = activeMenu?.categories ?? [];
+  const shell = embedMode ? "w-full max-w-full" : "mx-auto max-w-lg";
 
   return (
     <div
       className={cn(
-        "min-h-screen bg-surface",
-        canUseCallActions ? (hasCart ? "pb-52" : "pb-36") : "pb-8",
+        embedMode
+          ? "flex h-full w-full max-w-full flex-col overflow-hidden bg-surface"
+          : "min-h-screen bg-surface",
+        !embedMode && canUseCallActions && (hasCart ? "pb-52" : "pb-36"),
+        !embedMode && !canUseCallActions && "pb-8",
       )}
     >
-      {/* Sticky top nav — πίσω / πάνω */}
+      <div
+        className={cn(
+          embedMode && "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain",
+        )}
+      >
+      {!embedMode ? (
       <div className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-lg items-center gap-2 px-3 py-2.5">
+        <div className={cn(shell, "flex items-center gap-2 px-3 py-2.5")}>
           <button
             type="button"
             onClick={handleBack}
@@ -464,10 +481,14 @@ export function PublicMenuView({
           </button>
         </div>
       </div>
+      ) : null}
 
       {/* Hero — καλωσόρισμα + branding καταστήματος */}
       <header
-        className="relative overflow-hidden px-4 pb-6 pt-5 text-white"
+        className={cn(
+          "relative overflow-hidden text-white",
+          embedMode ? "px-3 pb-3 pt-2" : "px-4 pb-6 pt-5",
+        )}
         style={{ background: `linear-gradient(135deg, ${venue.primaryColor}, #121d4a)` }}
       >
         <div
@@ -478,34 +499,66 @@ export function PublicMenuView({
           }}
           aria-hidden
         />
-        <div className="relative mx-auto max-w-lg">
-          <p className="text-xs font-bold uppercase tracking-widest text-white/60">{ui.heroWelcome}</p>
-          <div className="mt-3 flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-3">
+        <div className={cn("relative", shell)}>
+          {!embedMode ? (
+            <p className="text-xs font-bold uppercase tracking-widest text-white/60">{ui.heroWelcome}</p>
+          ) : null}
+          <div className={cn("flex gap-3", embedMode ? "flex-col" : "mt-3 items-start justify-between")}>
+            <div className="flex min-w-0 items-start gap-2.5">
               {venue.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={venue.logoUrl}
                   alt={venue.name}
-                  className="mt-0.5 h-14 w-14 shrink-0 rounded-full border-2 border-white/30 object-cover shadow-lg"
+                  className={cn(
+                    "shrink-0 rounded-full border-2 border-white/30 object-cover shadow-lg",
+                    embedMode ? "mt-0.5 h-10 w-10" : "mt-0.5 h-14 w-14",
+                  )}
                 />
               ) : (
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-white/20 bg-white/15 shadow-lg">
-                  <UtensilsCrossed className="h-7 w-7 text-white/90" aria-hidden />
+                <div
+                  className={cn(
+                    "flex shrink-0 items-center justify-center rounded-full border-2 border-white/20 bg-white/15 shadow-lg",
+                    embedMode ? "h-10 w-10" : "h-14 w-14",
+                  )}
+                >
+                  <UtensilsCrossed
+                    className={cn("text-white/90", embedMode ? "h-5 w-5" : "h-7 w-7")}
+                    aria-hidden
+                  />
                 </div>
               )}
               <div className="min-w-0">
-                <h1 className="font-serif text-2xl font-bold leading-tight">{venue.name}</h1>
-                {activeMenu ? <p className="mt-1 text-sm text-white/75">{activeMenu.name}</p> : null}
+                <h1
+                  className={cn(
+                    "font-serif font-bold leading-tight",
+                    embedMode ? "text-lg" : "text-2xl",
+                  )}
+                >
+                  {venue.name}
+                </h1>
+                {activeMenu ? (
+                  <p className={cn("text-white/75", embedMode ? "mt-0.5 text-xs" : "mt-1 text-sm")}>
+                    {activeMenu.name}
+                  </p>
+                ) : null}
                 {locationLabel ? (
-                  <p className="mt-2 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                  <p
+                    className={cn(
+                      "inline-block rounded-full bg-white/20 font-semibold backdrop-blur-sm",
+                      embedMode ? "mt-1.5 px-2 py-0.5 text-[10px]" : "mt-2 px-3 py-1 text-xs",
+                    )}
+                  >
                     {locationLabel}
                   </p>
                 ) : null}
               </div>
             </div>
             <div
-              className="flex max-w-[11rem] shrink-0 items-center gap-0.5 overflow-x-auto rounded-button bg-white/10 p-1 backdrop-blur-sm"
+              className={cn(
+                "flex items-center gap-0.5 overflow-x-auto rounded-button bg-white/10 p-1 backdrop-blur-sm",
+                embedMode ? "w-full max-w-none self-start" : "max-w-[11rem] shrink-0",
+              )}
               role="group"
               aria-label={ui.language}
             >
@@ -527,10 +580,12 @@ export function PublicMenuView({
               ))}
             </div>
           </div>
-          <p className="mt-4 text-sm leading-relaxed text-white/80">{ui.heroHint}</p>
+          {!embedMode ? (
+            <p className="mt-4 text-sm leading-relaxed text-white/80">{ui.heroHint}</p>
+          ) : null}
         </div>
         {venue.menus.length > 1 ? (
-          <div className="relative mx-auto mt-5 flex max-w-lg gap-2 overflow-x-auto">
+          <div className={cn("relative mt-5 flex gap-2 overflow-x-auto", shell)}>
             {venue.menus.map((menu) => (
               <button
                 key={menu.id}
@@ -549,8 +604,13 @@ export function PublicMenuView({
       </header>
 
       {categoryNav.length > 1 ? (
-        <nav className="sticky top-[53px] z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur">
-          <div className="mx-auto flex max-w-lg gap-2 overflow-x-auto px-4 py-2">
+        <nav
+          className={cn(
+            "sticky z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur",
+            embedMode ? "top-0" : "top-[53px]",
+          )}
+        >
+          <div className={cn(shell, "flex gap-2 overflow-x-auto", embedMode ? "px-3 py-1.5" : "px-4 py-2")}>
             {categoryNav.map((category) => {
               const id = `cat-${category.id}`;
               return (
@@ -567,7 +627,7 @@ export function PublicMenuView({
         </nav>
       ) : null}
 
-      <main className="mx-auto max-w-lg space-y-6 px-4 py-6">
+      <main className={cn(shell, "space-y-6", embedMode ? "px-3 py-4" : "px-4 py-6")}>
         {!activeMenu || activeMenu.categories.length === 0 ? (
           <p className="text-center text-sm text-slate-500">{ui.menuSoon}</p>
         ) : (
@@ -596,9 +656,11 @@ export function PublicMenuView({
         )}
       </main>
 
+      {!embedMode ? (
       <footer
         className={cn(
-          "mx-auto max-w-lg border-t border-slate-200/80 bg-white px-4 py-8 text-center",
+          shell,
+          "border-t border-slate-200/80 bg-white px-4 py-8 text-center",
           canUseCallActions ? "mb-2" : "",
         )}
       >
@@ -628,10 +690,19 @@ export function PublicMenuView({
           </button>
         </div>
       </footer>
+      ) : null}
+      </div>
 
       {canUseCallActions && hasCart ? (
-        <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-slate-200/80 bg-white/95 px-3 py-2.5 backdrop-blur">
-          <div className="mx-auto flex max-w-lg items-center gap-2">
+        <div
+          className={cn(
+            "z-40 w-full max-w-full border-t border-slate-200/80 bg-white/95 backdrop-blur",
+            embedMode
+              ? "shrink-0 px-2 py-2"
+              : "fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-0 right-0 px-3 py-2",
+          )}
+        >
+          <div className={cn(shell, "flex items-center gap-2")}>
             <button
               type="button"
               onClick={() => setCartOpen(true)}
@@ -670,14 +741,22 @@ export function PublicMenuView({
       ) : null}
 
       {canUseCallActions ? (
-      <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200/80 bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-        <div className="mx-auto grid max-w-lg grid-cols-3 gap-2">
+      <div
+        className={cn(
+          "z-40 w-full max-w-full border-t border-slate-200/80 bg-white/95 backdrop-blur",
+          embedMode
+            ? "shrink-0 px-2 pb-2 pt-2"
+            : "fixed bottom-0 left-0 right-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3",
+        )}
+      >
+        <div className={cn(shell, "grid grid-cols-3 gap-1.5", !embedMode && "gap-2")}>
           <button
             type="button"
             onClick={() => sendCall("WAITER")}
             disabled={actionState.WAITER === "loading" || hasPendingCall}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 rounded-button py-3 text-[11px] font-semibold leading-tight",
+              "flex flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
+              embedMode ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
               hasPendingCall
                 ? "bg-slate-100 text-slate-400"
                 : "bg-primary text-white shadow-glow",
@@ -685,15 +764,18 @@ export function PublicMenuView({
               actionState.WAITER === "error" && "bg-red-600 text-white",
             )}
           >
-            <Bell className="h-4 w-4 shrink-0" aria-hidden />
-            <span className="text-center">{buttonLabel("WAITER")}</span>
+            <Bell className={cn("shrink-0", embedMode ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
+            <span className="text-center leading-tight">
+              {embedMode && actionState.WAITER === "idle" ? ui.callWaiterShort : buttonLabel("WAITER")}
+            </span>
           </button>
           <button
             type="button"
             onClick={() => sendCall("BILL")}
             disabled={actionState.BILL === "loading" || hasPendingCall}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 rounded-button py-3 text-[11px] font-semibold leading-tight",
+              "flex flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
+              embedMode ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
               hasPendingCall
                 ? "bg-slate-100 text-slate-400"
                 : "bg-brand-blue text-white",
@@ -701,7 +783,7 @@ export function PublicMenuView({
               actionState.BILL === "error" && "bg-red-600 text-white",
             )}
           >
-            <Receipt className="h-4 w-4 shrink-0" aria-hidden />
+            <Receipt className={cn("shrink-0", embedMode ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
             <span className="text-center">{buttonLabel("BILL")}</span>
           </button>
           <button
@@ -709,7 +791,8 @@ export function PublicMenuView({
             onClick={cancelCall}
             disabled={!hasPendingCall || !callCancellable || actionState.CANCEL === "loading"}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 rounded-button border py-3 text-[11px] font-semibold leading-tight",
+              "flex flex-col items-center justify-center gap-0.5 rounded-button border font-semibold leading-tight",
+              embedMode ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
               hasPendingCall
                 ? "border-slate-300 bg-white text-slate-700"
                 : "border-slate-200 bg-slate-50 text-slate-400",
@@ -717,7 +800,7 @@ export function PublicMenuView({
               actionState.CANCEL === "error" && "border-red-300 bg-red-50 text-red-800",
             )}
           >
-            <X className="h-4 w-4 shrink-0" aria-hidden />
+            <X className={cn("shrink-0", embedMode ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
             <span className="text-center">{buttonLabel("CANCEL")}</span>
           </button>
         </div>
