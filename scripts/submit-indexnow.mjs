@@ -11,23 +11,35 @@ const APP_URL = (process.env.APP_URL ?? "https://menuos.gr").replace(/\/$/, "");
 const KEY = process.env.INDEXNOW_KEY;
 const HOST = process.env.INDEXNOW_HOST ?? new URL(APP_URL).host;
 
-/** Keep in sync with SEO_SITEMAP_ROUTES in apps/web/src/content/seo-el.ts */
-const SITEMAP_PATHS = [
-  "/",
-  "/qr-menu",
-  "/ypiresies",
-  "/pos-leitourgei",
-  "/pricing",
-  "/sxetika",
-  "/epikoinonia",
-  "/terms",
-  "/privacy",
-];
-
 const INDEXNOW_ENDPOINTS = [
   "https://api.indexnow.org/indexnow",
   "https://www.bing.com/indexnow",
 ];
+
+function parseSitemapLocs(xml) {
+  const locs = [];
+  const re = /<loc>([^<]+)<\/loc>/g;
+  let match;
+  while ((match = re.exec(xml)) !== null) {
+    locs.push(match[1].trim());
+  }
+  return locs;
+}
+
+async function fetchSitemapUrls() {
+  const res = await fetch(`${APP_URL}/sitemap.xml`, {
+    headers: { Accept: "application/xml,text/xml" },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch sitemap.xml: ${res.status}`);
+  }
+  const xml = await res.text();
+  const urls = parseSitemapLocs(xml);
+  if (!urls.length) {
+    throw new Error("sitemap.xml returned no URLs");
+  }
+  return urls;
+}
 
 async function main() {
   if (process.env.RUN_INDEXNOW !== "1") {
@@ -40,9 +52,7 @@ async function main() {
     return;
   }
 
-  const urlList = SITEMAP_PATHS.map((path) =>
-    path === "/" ? `${APP_URL}/` : `${APP_URL}${path}`,
-  );
+  const urlList = await fetchSitemapUrls();
 
   const body = {
     host: HOST,

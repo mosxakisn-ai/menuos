@@ -26,7 +26,7 @@ export const SEO_PAGES_EN = {
   services: {
     title: "Services — Digital menu & QR codes",
     description:
-      "MenuOS services: digital menu, QR codes, 4 languages (EL/EN/DE/FR), call waiter, dashboard for restaurants and hotels.",
+      "MenuOS services: digital menu, QR codes, 4 languages (EL/EN/DE/FR), call waiter, online panel for restaurants and hotels.",
     path: "/ypiresies",
     breadcrumbLabel: "Services",
   },

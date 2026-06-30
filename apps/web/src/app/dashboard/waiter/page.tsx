@@ -4,7 +4,7 @@ import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { getSession } from "@/lib/auth";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = buildPrivatePageMetadata("Waiter Calls", "/dashboard/waiter");
+export const metadata: Metadata = buildPrivatePageMetadata("Κλήσεις σερβιτόρου", "/dashboard/waiter");
 
 type Props = { searchParams: Promise<{ venue?: string }> };
 

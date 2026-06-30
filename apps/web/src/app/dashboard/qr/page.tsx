@@ -5,7 +5,7 @@ import { MarkQrOnboarding } from "@/components/dashboard/mark-qr-onboarding";
 import { getSession } from "@/lib/auth";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = buildPrivatePageMetadata("QR Codes", "/dashboard/qr");
+export const metadata: Metadata = buildPrivatePageMetadata("Κωδικοί QR", "/dashboard/qr");
 
 type Props = { searchParams: Promise<{ venue?: string }> };
 

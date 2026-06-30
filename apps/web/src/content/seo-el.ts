@@ -64,7 +64,7 @@ export const SEO_PAGES = {
   services: {
     title: "Υπηρεσίες — Ψηφιακό menu & QR codes",
     description:
-      "Υπηρεσίες MenuOS: ψηφιακό menu, QR codes, 4 γλώσσες (ΕΛ/EN/DE/FR), κλήση σερβιτόρου, dashboard για εστιατόρια και ξενοδοχεία.",
+      "Υπηρεσίες MenuOS: ψηφιακό menu, QR codes, 4 γλώσσες (ΕΛ/EN/DE/FR), κλήση σερβιτόρου, online panel για εστιατόρια και ξενοδοχεία.",
     path: "/ypiresies",
     breadcrumbLabel: "Υπηρεσίες",
     keywords: ["υπηρεσίες QR menu", "ψηφιακό menu SaaS", "menu platform εστιατόριο"],
@@ -150,14 +150,14 @@ export const SEO_QR_MENU_FAQ = [
   },
   {
     q: "Μπορώ να αλλάξω τιμές γρήγορα;",
-    a: "Ναι. Αλλάζετε από το dashboard και η αλλαγή φαίνεται αμέσως στους πελάτες.",
+    a: "Ναι. Αλλάζετε από το panel σας και η αλλαγή φαίνεται αμέσως στους πελάτες.",
   },
 ] as const;
 
 export const SEO_PRICING_OFFERS = [
-  { name: "Δοκιμή 7 ημερών", price: 0, description: "1 venue, 1 menu, 50 πιάτα" },
-  { name: "Basic", price: 9.99, description: "1 venue, 3 menus, απεριόριστα πιάτα" },
-  { name: "Pro", price: 19.99, description: "3 venues, απεριόριστα menus" },
+  { name: "Δοκιμή 7 ημερών", price: 0, description: "1 κατάστημα, 1 κατάλογος, 50 πιάτα" },
+  { name: "Basic", price: 9.99, description: "1 κατάστημα, 3 κατάλογοι, απεριόριστα πιάτα" },
+  { name: "Pro", price: 19.99, description: "3 καταστήματα, απεριόριστοι κατάλογοι" },
 ] as const;
 
 export const SEO_PRICING_FAQ = [
@@ -167,11 +167,11 @@ export const SEO_PRICING_FAQ = [
   },
   {
     q: "Μπορώ να αλλάξω πλάνο αργότερα;",
-    a: "Ναι. Basic και Pro αναβαθμίζονται από το billing panel. Για Enterprise επικοινωνείτε μαζί μας.",
+    a: "Ναι. Basic και Pro αναβαθμίζονται από το panel τιμολόγησης. Για Enterprise επικοινωνείτε μαζί μας.",
   },
   {
     q: "Τι περιλαμβάνει το Enterprise;",
-    a: "Custom domain, white-label, πολλαπλά venues, προτεραιότητα υποστήριξης — προσφορά ανά project.",
+    a: "Custom domain, white-label, πολλαπλά καταστήματα, προτεραιότητα υποστήριξης — προσφορά ανά project.",
   },
   {
     q: "Υπάρχει δέσμευση;",
@@ -188,13 +188,19 @@ export const SEO_LLMS = `# MenuOS (menuos.gr)
 ## Τι κάνουμε
 - Online πλατφόρμα για ψηφιακό menu με QR codes
 - Πολυγλωσσικό QR menu (Ελληνικά, English, Deutsch, Français)
-- Dashboard για ενημέρωση τιμών και πιάτων
+- Online panel για ενημέρωση τιμών και πιάτων
 - Δωρεάν δοκιμή 7 ημερών
 - Τιμές: Basic €9.99/μήνα, Pro €19.99/μήνα
 
 ## Κύριες σελίδες
 - ${SEO_SITE.url}/
 - ${SEO_SITE.url}/qr-menu
+- ${SEO_SITE.url}/digital-menu
+- ${SEO_SITE.url}/estiatorio/qr-menu
+- ${SEO_SITE.url}/xenodocheio/digital-menu
+- ${SEO_SITE.url}/rodos/qr-menu
+- ${SEO_SITE.url}/santorini/digital-menu
+- ${SEO_SITE.url}/athina/qr-menu
 - ${SEO_SITE.url}/ypiresies
 - ${SEO_SITE.url}/pos-leitourgei
 - ${SEO_SITE.url}/pricing

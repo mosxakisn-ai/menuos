@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useDemoMenuUrl } from "@/lib/demo-menu-url";
+import { SEO_FOOTER_HUB } from "@/lib/seo-landing";
 import { Logo } from "@/components/brand/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { buttonClass } from "@/components/ui/button";
@@ -113,10 +114,11 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
-  const { m } = useI18n();
+  const { m, locale } = useI18n();
   const marketing = m.marketing;
   const f = marketing.footer;
   const demoUrl = useDemoMenuUrl();
+  const isEn = locale === "en";
   const taglineSuffix =
     "taglineSuffix" in f ? (f as { taglineSuffix: string }).taglineSuffix : null;
 
@@ -177,6 +179,37 @@ export function SiteFooter() {
                 {f.links.facebook}
               </a>
             </p>
+          </div>
+        </div>
+
+        <div className="mt-12 grid gap-8 border-t border-white/10 pt-10 sm:grid-cols-2">
+          <div>
+            <p className="text-sm font-semibold text-white">
+              {isEn ? "Guides by area" : "Οδηγοί ανά περιοχή"}
+            </p>
+            <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400">
+              {SEO_FOOTER_HUB.cities.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="hover:text-brand-cyan">
+                    {isEn ? link.labelEn : link.labelEl}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white">
+              {isEn ? "Guides by business type" : "Οδηγοί ανά τύπο επιχείρησης"}
+            </p>
+            <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400">
+              {SEO_FOOTER_HUB.verticals.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="hover:text-brand-cyan">
+                    {isEn ? link.labelEn : link.labelEl}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
