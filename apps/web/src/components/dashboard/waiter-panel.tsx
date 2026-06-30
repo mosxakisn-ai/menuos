@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Σε αναμονή",
@@ -63,7 +64,7 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
   if (venues.length === 0) {
     return (
       <Card>
-        <p className="text-sm text-slate-600">Δημιούργησε venue για να λαμβάνεις κλήσεις σερβιτόρου.</p>
+        <p className="text-sm text-slate-600">Φτιάξε πρώτα κατάστημα για να λαμβάνεις κλήσεις από πελάτες.</p>
       </Card>
     );
   }
@@ -74,7 +75,7 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
 
       <div className="flex flex-wrap items-center gap-4">
         <label className="block text-sm">
-          <span className="font-medium text-brand-navy">Venue</span>
+          <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}</span>
           <select
             value={venueId}
             onChange={(e) => setVenueId(e.target.value)}
@@ -102,7 +103,7 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 font-medium text-brand-navy">Καμία ενεργή κλήση</p>
           <p className="mt-1 text-sm text-slate-500">
-            Όταν πελάτης πατήσει «Κλήση σερβιτόρου», «Λογαριασμός» ή «Ακύρωση» στο QR menu, θα εμφανιστεί εδώ.
+            Όταν πελάτης πατήσει «Κλήση σερβιτόρου» ή «Λογαριασμός» στο κινητό, θα εμφανιστεί εδώ με τον αριθμό τραπεζιού.
           </p>
         </Card>
       ) : (

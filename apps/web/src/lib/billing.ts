@@ -75,8 +75,14 @@ export async function activateSubscriptionFromCheckout(input: {
   const wasAlreadyActive = existing?.plan === input.planId && existing?.status === "ACTIVE";
   const sendEmail = input.sendActivationEmail !== false;
 
-  const periodEnd =
-    input.currentPeriodEnd ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  let periodEnd: Date;
+  if (input.currentPeriodEnd) {
+    periodEnd = input.currentPeriodEnd;
+  } else if (input.stripeSubId) {
+    throw new Error("Missing subscription period end");
+  } else {
+    periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  }
 
   const previousSubId = existing?.stripeSubId;
   if (
@@ -268,11 +274,27 @@ export function isCheckoutPlan(planId: string): planId is PaidSubscriptionPlanId
   return isPaidPlan(planId);
 }
 
+export function planIdFromStripeSubscription(
+  subscription: Record<string, unknown>,
+): PaidSubscriptionPlanId | undefined {
+  const metadata = (subscription.metadata ?? {}) as Record<string, string>;
+  if (metadata.planId && isCheckoutPlan(metadata.planId)) return metadata.planId;
+
+  const items = subscription.items as
+    | { data?: Array<{ price?: { unit_amount?: number | null } }> }
+    | undefined;
+  const amount = items?.data?.[0]?.price?.unit_amount;
+  if (amount === 999) return "BASIC";
+  if (amount === 1999) return "PRO";
+  return undefined;
+}
+
 export function mapStripeSubscriptionStatus(stripeStatus: string): SubscriptionStatus {
   switch (stripeStatus) {
     case "active":
-    case "paused":
       return "ACTIVE";
+    case "paused":
+      return "PAST_DUE";
     case "trialing":
       return "TRIALING";
     case "past_due":

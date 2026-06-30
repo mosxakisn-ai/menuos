@@ -17,7 +17,9 @@ export default async function SettingsPage() {
     <div className="space-y-4">
       <div>
         <h1 className="font-serif text-2xl font-bold text-primary">Ρυθμίσεις</h1>
-        <p className="text-sm text-slate-600">Branding, χρώματα και στοιχεία venue.</p>
+        <p className="text-sm text-slate-600">
+          Χρώματα και εμφάνιση — αυτά βλέπουν οι πελάτες όταν ανοίγουν τον κατάλογο από το QR.
+        </p>
       </div>
       <SettingsForm venues={venues} />
     </div>

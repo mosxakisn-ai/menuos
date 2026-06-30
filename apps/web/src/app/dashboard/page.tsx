@@ -3,12 +3,15 @@ import Link from "next/link";
 import { prisma } from "@menuos/db";
 import { DashboardWelcome } from "@/components/dashboard/dashboard-welcome";
 import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
+import { TrialEndingBanner } from "@/components/dashboard/trial-ending-banner";
+import { TrialLimitsHint } from "@/components/dashboard/trial-limits-hint";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
+import { DASHBOARD_EL, planLabel } from "@/content/dashboard-el";
 import { getSession } from "@/lib/auth";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = buildPrivatePageMetadata("Dashboard", "/dashboard");
+export const metadata: Metadata = buildPrivatePageMetadata("Επισκόπηση", "/dashboard");
 
 type Props = { searchParams: Promise<{ welcome?: string }> };
 
@@ -41,15 +44,23 @@ export default async function DashboardPage({ searchParams }: Props) {
   const firstVenue = venues[0];
   const hasCategory = venues.some((v) => v.menus.some((m) => m.categories.length > 0));
 
+  const planId = org?.subscription?.plan ?? "TRIAL";
+  const trialEndsAt = org?.subscription?.trialEndsAt?.toISOString() ?? null;
+
   return (
     <div className="space-y-6">
       <DashboardWelcome show={sp.welcome === "1"} />
+      <TrialEndingBanner trialEndsAt={planId === "TRIAL" ? trialEndsAt : null} />
       <div>
         <h1 className="font-serif text-2xl font-bold text-primary">{org?.name}</h1>
         <p className="text-sm text-slate-600">
-          Πλάνο: {org?.subscription?.plan ?? "TRIAL"} · {venueCount} venue · {menuCount} menu · {itemCount} πιάτα
+          Πλάνο: {planLabel(planId)} · {venueCount}{" "}
+          {venueCount === 1 ? DASHBOARD_EL.venue.toLowerCase() : DASHBOARD_EL.venues.toLowerCase()} ·{" "}
+          {menuCount} {menuCount === 1 ? "κατάλογος" : "κατάλογοι"} · {itemCount} πιάτα
         </p>
       </div>
+
+      <TrialLimitsHint plan={planId} itemCount={itemCount} />
 
       <OnboardingWizard
         state={{
@@ -63,9 +74,9 @@ export default async function DashboardPage({ searchParams }: Props) {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Μαγαζιά" value={venueCount} hint={venueCount === 0 ? "Πρόσθεσε το πρώτο" : undefined} />
+        <StatCard label={DASHBOARD_EL.venues} value={venueCount} hint={venueCount === 0 ? "Πρόσθεσε το πρώτο" : undefined} />
         <StatCard label="Πιάτα" value={itemCount} hint={itemCount === 0 ? "Πρόσθεσε στον κατάλογο" : undefined} />
-        <StatCard label="Δοκιμή έως" value={formatTrial(org?.subscription?.trialEndsAt)} />
+        <StatCard label={DASHBOARD_EL.trial.endsOn} value={formatTrial(org?.subscription?.trialEndsAt)} />
       </div>
 
       <Card>
@@ -73,12 +84,12 @@ export default async function DashboardPage({ searchParams }: Props) {
         <p className="mt-2 text-sm text-slate-600">
           {itemCount === 0
             ? "Ξεκίνα προσθέτοντας κατηγορίες και πιάτα — μετά βγάλε QR για τα τραπέζια σου."
-            : "Το menu σου είναι live! Βγάλε QR ή δες κλήσεις σερβιτόρου."}
+            : "Ο κατάλογος σου είναι online! Βγάλε QR ή δες τις κλήσεις από πελάτες."}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           {venueCount === 0 ? (
             <Link href="/dashboard/venues/new" className={buttonClass("primary")}>
-              + Προσθήκη venue
+              + {DASHBOARD_EL.addVenue}
             </Link>
           ) : (
             <>
@@ -86,13 +97,13 @@ export default async function DashboardPage({ searchParams }: Props) {
                 href={`/dashboard/menus${firstVenue ? `?venue=${firstVenue.id}` : ""}`}
                 className={buttonClass("primary")}
               >
-                Επεξεργασία menu
+                {DASHBOARD_EL.editCatalog}
               </Link>
               <Link
                 href={`/dashboard/qr${firstVenue ? `?venue=${firstVenue.id}` : ""}`}
                 className={buttonClass("secondary")}
               >
-                QR codes
+                {DASHBOARD_EL.qrCodes}
               </Link>
               {firstVenue ? (
                 <a
@@ -101,13 +112,13 @@ export default async function DashboardPage({ searchParams }: Props) {
                   rel="noopener noreferrer"
                   className={buttonClass("secondary")}
                 >
-                Live προεπισκόπηση
+                  {DASHBOARD_EL.livePreview}
                 </a>
               ) : null}
             </>
           )}
           <Link href="/dashboard/billing" className={buttonClass("secondary")}>
-            Συνδρομή
+            {DASHBOARD_EL.subscription}
           </Link>
         </div>
       </Card>

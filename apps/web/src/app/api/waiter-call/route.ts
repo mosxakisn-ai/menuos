@@ -71,6 +71,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!parsed.data.tableNumber && !parsed.data.roomNumber) {
+    return NextResponse.json(
+      { error: "Table or room number required", code: "location_required" },
+      { status: 400 },
+    );
+  }
+
   const existing = await prisma.waiterCall.findFirst({
     where: {
       venueId: venue.id,
@@ -81,6 +88,12 @@ export async function POST(request: Request) {
     orderBy: { createdAt: "desc" },
   });
   if (existing) {
+    if (existing.type !== parsed.data.type) {
+      return NextResponse.json(
+        { error: "An active call already exists with a different type", code: "call_type_mismatch" },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ id: existing.id, type: existing.type });
   }
 

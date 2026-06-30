@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 type Venue = {
   id: string;
@@ -55,7 +56,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
   if (venues.length === 0) {
     return (
       <Card>
-        <p className="text-sm text-slate-600">Δημιούργησε venue για να ρυθμίσεις branding και χρώματα.</p>
+        <p className="text-sm text-slate-600">Φτιάξε πρώτα κατάστημα για να ρυθμίσεις χρώματα και εμφάνιση.</p>
       </Card>
     );
   }
@@ -65,7 +66,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       <label className="block text-sm">
-        <span className="font-medium text-brand-navy">Venue</span>
+        <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}</span>
         <select
           value={venueId}
           onChange={(e) => selectVenue(e.target.value)}
@@ -80,11 +81,11 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
       </label>
 
       <Card>
-        <h2 className="font-semibold text-brand-navy">Branding & εμφάνιση menu</h2>
-        <p className="mt-1 text-xs text-slate-500">Τα χρώματα εμφανίζονται στο public QR menu.</p>
+        <h2 className="font-semibold text-brand-navy">Εμφάνιση καταλόγου</h2>
+        <p className="mt-1 text-xs text-slate-500">Τα χρώματα φαίνονται όταν ο πελάτης ανοίγει το menu από το QR.</p>
         <form onSubmit={onSubmit} className="mt-4 space-y-4">
           <label className="block text-sm">
-            <span className="font-medium">Όνομα venue</span>
+            <span className="font-medium">Όνομα καταστήματος</span>
             <input
               required
               value={name}

@@ -35,12 +35,12 @@ export default async function MenuImportPage({ searchParams }: Props) {
   return (
     <div className="space-y-4">
       <Link href={`/dashboard/menus${sp.venue ? `?venue=${sp.venue}` : ""}`} className="text-sm text-brand-blue hover:underline">
-        ← Πίσω στο Menu
+        ← Πίσω στον κατάλογο
       </Link>
       <div>
-        <h1 className="font-serif text-2xl font-bold text-primary">Import από PDF</h1>
+        <h1 className="font-serif text-2xl font-bold text-primary">Εισαγωγή από PDF</h1>
         <p className="text-sm text-slate-600">
-          Ανέβασε τα menu PDF σου — ελέγχεις τα αποτελέσματα πριν τα αποθηκεύσεις.
+          Ανέβασε PDF menu — ελέγχεις τα αποτελέσματα πριν τα αποθηκεύσεις στον κατάλογο.
         </p>
       </div>
       <MenuImportWizard venues={venues} initialVenueId={sp.venue} />

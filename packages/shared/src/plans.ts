@@ -21,12 +21,12 @@ export type PlanDefinition = {
 export const PLAN_DEFINITIONS: Record<SubscriptionPlanId, PlanDefinition> = {
   TRIAL: {
     id: "TRIAL",
-    name: "Trial",
+    name: "Δωρεάν δοκιμή",
     priceMonthly: 0,
     maxVenues: 1,
     maxMenusPerVenue: 1,
     maxItems: 50,
-    features: ["1 venue", "1 menu", "50 items", "QR codes"],
+    features: ["1 κατάστημα", "1 κατάλογος", "50 πιάτα", "QR codes", "4 γλώσσες"],
   },
   BASIC: {
     id: "BASIC",
@@ -35,7 +35,7 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlanId, PlanDefinition> = {
     maxVenues: 1,
     maxMenusPerVenue: 3,
     maxItems: null,
-    features: ["1 venue", "3 menus", "Απεριόριστα πιάτα", "QR codes", "4 γλώσσες QR", "Κλήση σερβιτόρου"],
+    features: ["1 κατάστημα", "3 κατάλογοι", "Απεριόριστα πιάτα", "QR codes", "4 γλώσσες", "Κλήση σερβιτόρου"],
   },
   PRO: {
     id: "PRO",
@@ -44,7 +44,7 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlanId, PlanDefinition> = {
     maxVenues: 3,
     maxMenusPerVenue: null,
     maxItems: null,
-    features: ["3 venues", "Απεριόριστα menus", "PDF import", "4 γλώσσες QR", "Προτεραιότητα", "Κλήση σερβιτόρου"],
+    features: ["3 καταστήματα", "Απεριόριστοι κατάλογοι", "Εισαγωγή PDF", "4 γλώσσες", "Προτεραιότητα", "Κλήση σερβιτόρου"],
   },
   ENTERPRISE: {
     id: "ENTERPRISE",
@@ -53,7 +53,7 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlanId, PlanDefinition> = {
     maxVenues: 999,
     maxMenusPerVenue: null,
     maxItems: null,
-    features: ["Custom domain", "White-label", "Priority support"],
+    features: ["Δικό σας domain", "White-label", "Προτεραιότητα υποστήριξης"],
   },
 };
 

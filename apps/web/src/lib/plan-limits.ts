@@ -1,5 +1,9 @@
-import type { Prisma } from "@menuos/db";
+import { Prisma } from "@menuos/db";
 import { getPlan, organizationHasPaidPlan, type PlanDefinition } from "@menuos/shared";
+
+export const serializableTransaction = {
+  isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+} as const;
 
 export class PlanLimitError extends Error {
   readonly code: string;

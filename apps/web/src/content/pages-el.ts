@@ -15,7 +15,7 @@ export const PAGES_EL = {
     cta: {
       title: "Θέλετε να το δείτε live;",
       description:
-        "Δημιουργήστε δωρεάν λογαριασμό, φτιάξτε το πρώτο venue και δοκιμάστε το QR με τη δική σας ομάδα — σε λιγότερο από μία ώρα.",
+        "Δημιουργήστε δωρεάν λογαριασμό, φτιάξτε το πρώτο κατάστημά σας και δοκιμάστε το QR με τη δική σας ομάδα — σε λιγότερο από μία ώρα.",
       primary: "Ξεκίνα δωρεάν 7 ημέρες",
       secondary: "Πώς λειτουργεί",
     },
@@ -24,18 +24,18 @@ export const PAGES_EL = {
         title: "Ψηφιακό menu με QR code",
         description:
           "Ο πελάτης σκανάρει και βλέπει κατηγορίες, φωτογραφίες, τιμές, περιγραφές και allergens — χωρίς εγκατάσταση app.",
-        bullets: ["Instant άνοιγμα στο browser", "QR ανά τραπέζι ή δωμάτιο", "Premium mobile layout"],
+        bullets: ["Άμεσο άνοιγμα στο browser", "QR ανά τραπέζι ή δωμάτιο", "Premium mobile layout"],
       },
       {
-        title: "Dashboard διαχείρισης",
+        title: "Online panel διαχείρισης",
         description:
           "Από ένα online panel προσθέτετε πιάτα, αλλάζετε τιμές και διαθεσιμότητα — χωρίς τεχνικές γνώσεις.",
-        bullets: ["Φόρμες όπως απλό admin", "Πολλαπλά venues", "Άμεσες ενημερώσεις live"],
+        bullets: ["Φόρμες όπως απλό admin", "Πολλαπλά καταστήματα", "Άμεσες ενημερώσεις τιμών"],
       },
       {
-        title: "Πολλαπλά menus ανά venue",
+        title: "Πολλαπλοί κατάλογοι ανά κατάστημα",
         description: "Πρωινό, εστιατόριο, pool bar, room service, spa — κάθε χώρος με δικό του κατάλογο.",
-        bullets: ["Ιδανικό για ξενοδοχεία", "Ξεχωριστό branding ανά menu", "Εύκολη οργάνωση κατηγοριών"],
+        bullets: ["Ιδανικό για ξενοδοχεία", "Ξεχωριστό branding ανά κατάλογο", "Εύκολη οργάνωση κατηγοριών"],
       },
       {
         title: "4 γλώσσες QR",
@@ -44,10 +44,10 @@ export const PAGES_EL = {
         bullets: ["4 γλώσσες QR", "Ιδανικό για τουρισμό", "Allergens & συστατικά"],
       },
       {
-        title: "Call waiter",
+        title: "Κλήση σερβιτόρου",
         description:
           "Ο πελάτης καλεί σερβιτόρο από το menu. Μπορείτε να ξέρετε τραπέζι ή δωμάτιο από το QR link.",
-        bullets: ["Λιγότερες καθυστερήσεις", "Καλύτερη εξυπηρέτηση", "Rate limit για ασφάλεια"],
+        bullets: ["Λιγότερες καθυστερήσεις", "Καλύτερη εξυπηρέτηση", "Προστασία από κατάχρηση"],
       },
       {
         title: "QR codes έτοιμα για εκτύπωση",
@@ -57,19 +57,19 @@ export const PAGES_EL = {
       {
         title: "Branding & χρώματα",
         description: "Προσαρμόζετε χρώματα και logo ώστε το menu να ταιριάζει στην ταυτότητα του χώρου σας.",
-        bullets: ["Premium εμφάνιση", "Συνέπεια με το venue", "Εντύπωση ποιότητας"],
+        bullets: ["Premium εμφάνιση", "Συνέπεια με το κατάστημα", "Εντύπωση ποιότητας"],
       },
       {
         title: "Ασφάλεια & ιδιωτικότητα",
         description: "Κάθε επιχείρηση έχει δικό της χώρο δεδομένων. Hosting με σύγχρονα standards ασφαλείας.",
-        bullets: ["Multi-tenant isolation", "GDPR-ready", "Χωρίς κοινή χρήση δεδομένων"],
+        bullets: ["Ξεχωριστά δεδομένα ανά επιχείρηση", "GDPR-ready", "Χωρίς κοινή χρήση δεδομένων"],
       },
     ],
   },
   howItWorks: {
     heroTitle: "Πώς λειτουργεί",
     eyebrow: "Η διαδικασία",
-    sectionTitle: "Από το signup μέχρι το live menu",
+    sectionTitle: "Από την εγγραφή μέχρι το live menu",
     sectionDesc: "Έξι απλά βήματα. Χωρίς εγκατάσταση, χωρίς printed menu, χωρίς IT τμήμα.",
     ctaButton: "Ξεκίνα τώρα — δωρεάν 7 ημέρες",
     cta: {
@@ -82,11 +82,11 @@ export const PAGES_EL = {
       {
         title: "Εγγραφή & δοκιμή",
         body: "Δημιουργείτε λογαριασμό με email, επωνυμία επιχείρησης και OTP επιβεβαίωση. 7 ημέρες δωρεάν — χωρίς κάρτα.",
-        detail: "Μετά την εγγραφή μπαίνετε αμέσως στο dashboard με trial πλάνο.",
+        detail: "Μετά την εγγραφή μπαίνετε αμέσως στο panel σας με δωρεάν δοκιμή 7 ημερών.",
       },
       {
-        title: "Δημιουργία venue & menu",
-        body: "Προσθέτετε venue, menu και κατηγορίες. Κάθε πιάτο έχει τιμή, περιγραφή και προαιρετική φωτογραφία.",
+        title: "Δημιουργία καταστήματος & καταλόγου",
+        body: "Προσθέτετε κατάστημα, κατάλογο και κατηγορίες. Κάθε πιάτο έχει τιμή, περιγραφή και προαιρετική φωτογραφία.",
         detail: "Παράδειγμα: Σαλάτες → Χωριάτικη €12, allergens, φωτό.",
       },
       {
@@ -96,8 +96,8 @@ export const PAGES_EL = {
       },
       {
         title: "QR codes & τοποθέτηση",
-        body: "Κατεβάζετε QR codes από το dashboard και τους τοποθετείτε σε τραπέζια, δωμάτια ή bar.",
-        detail: "Links τύπου ?table=12 βοηθούν το call waiter.",
+        body: "Κατεβάζετε QR codes από το panel σας και τους τοποθετείτε σε τραπέζια, δωμάτια ή bar.",
+        detail: "Links τύπου ?table=12 βοηθούν την κλήση σερβιτόρου.",
       },
       {
         title: "Εμπειρία πελάτη",
@@ -107,7 +107,7 @@ export const PAGES_EL = {
       {
         title: "Ενημερώσεις & συνδρομή",
         body: "Αλλαγές τιμών φαίνονται αμέσως. Μετά τη δοκιμή επιλέγετε Basic ή Pro — ή Enterprise.",
-        detail: "Billing μέσω Stripe, διαφανής τιμολόγηση.",
+        detail: "Τιμολόγηση μέσω Stripe, διαφανής χρέωση.",
       },
     ],
   },
@@ -116,7 +116,7 @@ export const PAGES_EL = {
     sectionTitle: "Γιατί QR menu αντί για printed;",
     sectionDesc:
       "Το printed menu κοστίζει, καθυστερεί και δεν ακολουθεί τις αλλαγές. Το ψηφιακό menu είναι live, όμορφο και ελεγχόμενο από εσάς.",
-    useCasesEyebrow: "Use cases",
+    useCasesEyebrow: "Περιπτώσεις χρήσης",
     useCasesTitle: "Πού ταιριάζει το MenuOS",
     useCasesDesc: "Από μικρή ταβέρνα μέχρι ξενοδοχειακή μονάδα — ίδια απλότητα, premium αποτέλεσμα.",
     useCases: [
@@ -131,7 +131,7 @@ export const PAGES_EL = {
       { q: "Τι είναι QR menu;", a: "Ψηφιακό menu που ανοίγει όταν ο πελάτης σκανάρει QR. Δεν χρειάζεται εφαρμογή." },
       { q: "Ταιριάζει σε ξενοδοχεία;", a: "Ναι — pool bar, breakfast, room service. Ξεχωριστό menu ανά χώρο." },
       { q: "Πόσες γλώσσες;", a: "4 γλώσσες στο QR menu: Ελληνικά, English, Deutsch, Français — αλλαγή με ένα πάτημα." },
-      { q: "Μπορώ να αλλάξω τιμές γρήγορα;", a: "Ναι. Από το dashboard — η αλλαγή φαίνεται αμέσως." },
+      { q: "Μπορώ να αλλάξω τιμές γρήγορα;", a: "Ναι. Από το panel σας — η αλλαγή φαίνεται αμέσως." },
     ],
     cta: {
       title: "Έτοιμοι για premium QR menu;",
@@ -188,7 +188,7 @@ export const PAGES_EL = {
     enterpriseBadge: "Enterprise",
     enterpriseTitle: "Custom για αλυσίδες",
     enterpriseDesc:
-      "White-label, custom domain, πολλαπλά venues, προτεραιότητα υποστήριξης — επικοινωνήστε για προσφορά.",
+      "White-label, custom domain, πολλαπλά καταστήματα, προτεραιότητα υποστήριξης — επικοινωνήστε για προσφορά.",
     enterpriseCta: "Ζήτησε προσφορά",
     faqTitle: "Ερωτήσεις για τιμές",
     faqDesc: "Ό,τι χρειάζεστε να ξέρετε πριν ξεκινήσετε.",
@@ -201,7 +201,7 @@ export const PAGES_EL = {
     demoCta: "Δες live demo menu",
     cta: {
       title: "Ξεκίνα δωρεάν σήμερα",
-      description: "7 ημέρες trial. Χωρίς κάρτα.",
+      description: "7 ημέρες δοκιμή. Χωρίς κάρτα.",
       primary: "Δημιουργία λογαριασμού",
       secondary: "Ρώτα μας",
     },
@@ -211,15 +211,15 @@ export const PAGES_EL = {
         price: "€0",
         period: " / 7 ημέρες",
         description: "Για να δοκιμάσεις την πλατφόρμα πριν επιλέξεις πλάνο.",
-        features: ["1 venue", "1 menu", "50 πιάτα", "QR codes", "4 γλώσσες QR", "Χωρίς κάρτα"],
+        features: ["1 κατάστημα", "1 κατάλογος", "50 πιάτα", "QR codes", "4 γλώσσες QR", "Χωρίς κάρτα"],
         cta: "Εγγραφή",
       },
       {
         name: "Basic",
         price: "€9.99",
         period: "/μήνα",
-        description: "Ιδανικό για εστιατόριο, cafe ή μοναδικό venue.",
-        features: ["1 venue", "3 menus", "Απεριόριστα πιάτα", "QR codes", "Call waiter", "4 γλώσσες QR"],
+        description: "Ιδανικό για εστιατόριο, cafe ή μοναδικό κατάστημα.",
+        features: ["1 κατάστημα", "3 κατάλογοι", "Απεριόριστα πιάτα", "QR codes", "Κλήση σερβιτόρου", "4 γλώσσες QR"],
         cta: "Ξεκίνα Basic",
         badge: "Δημοφιλές",
         highlighted: true,
@@ -229,7 +229,7 @@ export const PAGES_EL = {
         price: "€19.99",
         period: "/μήνα",
         description: "Για ξενοδοχεία και επιχειρήσεις με πολλαπλούς χώρους.",
-        features: ["3 venues", "Απεριόριστα menus", "Call waiter", "4 γλώσσες QR", "Προτεραιότητα", "PDF import"],
+        features: ["3 καταστήματα", "Απεριόριστοι κατάλογοι", "Κλήση σερβιτόρου", "4 γλώσσες QR", "Προτεραιότητα", "PDF import"],
         cta: "Ξεκίνα Pro",
       },
     ],
@@ -247,10 +247,10 @@ export const PAGES_EL = {
     ],
     newCustomerTitle: "Νέος πελάτης;",
     newCustomerBody:
-      "Η δωρεάν εγγραφή είναι ο πιο γρήγορος τρόπος — 7 ημέρες χωρίς κάρτα. Φτιάξε venue και δοκίμασε το QR.",
+      "Η δωρεάν εγγραφή είναι ο πιο γρήγορος τρόπος — 7 ημέρες χωρίς κάρτα. Φτιάξε κατάστημα και δοκίμασε το QR.",
     enterpriseTitle: "Enterprise & αλυσίδες",
     enterpriseBody: "Για πολλαπλά καταστήματα, white-label, custom domain — επικοινωνήστε για προσφορά.",
-    enterpriseBullets: ["Προσαρμοσμένα πλάνα & SLA", "Onboarding βοήθεια", "Billing από dashboard"],
+    enterpriseBullets: ["Προσαρμοσμένα πλάνα & SLA", "Onboarding βοήθεια", "Τιμολόγηση από το panel"],
     infoTitle: "MenuOS — menuos.gr",
     infoDesc: "Απευθύνεται σε επιχειρήσεις στην Ελλάδα και στο εξωτερικό.",
     cta: {
@@ -262,7 +262,7 @@ export const PAGES_EL = {
   home: {
     trialCardTitle: "Ξεκίνα χωρίς ρίσκο",
     trialCardBody:
-      "Δημιούργησε venue, βάλε πιάτα και δοκίμασε το QR με τη δική σου ομάδα πριν επιλέξεις πλάνο.",
+      "Δημιούργησε κατάστημα, βάλε πιάτα και δοκίμασε το QR με τη δική σου ομάδα πριν επιλέξεις πλάνο.",
     trialBadge: "Δοκιμή 7 ημερών",
   },
 } as const;

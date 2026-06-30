@@ -1,4 +1,4 @@
-import { prisma } from "@menuos/db";
+import { Prisma, prisma } from "@menuos/db";
 
 type Bucket = { count: number; resetAt: number };
 
@@ -44,19 +44,20 @@ async function checkRateLimitDb(key: string, limit: number, windowMs: number): P
 
     if (row.count >= limit) return false;
 
-    await tx.rateLimitBucket.update({
-      where: { key },
+    const updated = await tx.rateLimitBucket.updateMany({
+      where: { key, count: { lt: limit } },
       data: { count: { increment: 1 } },
     });
-    return true;
-  });
+    return updated.count > 0;
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
 /** Postgres-backed when available; in-memory fallback for local dev without migrations. */
 export async function checkRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
   try {
     return await checkRateLimitDb(key, limit, windowMs);
-  } catch {
+  } catch (err) {
+    console.warn("[menuos-rate-limit] Postgres unavailable, using in-memory fallback", err);
     return checkRateLimitMemory(key, limit, windowMs);
   }
 }

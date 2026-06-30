@@ -1,6 +1,7 @@
 "use client";
 
 import { FlashMessages } from "@/components/dashboard/flash-message";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 export function DashboardWelcome({ show }: { show?: boolean }) {
   if (!show) return null;
@@ -9,7 +10,7 @@ export function DashboardWelcome({ show }: { show?: boolean }) {
     <FlashMessages
       initial={{
         type: "info",
-        text: "Καλώς ήρθες στο MenuOS! Ακολούθησε τον οδηγό εκκίνησης για να δημιουργήσεις το πρώτο σου venue και menu.",
+        text: DASHBOARD_EL.welcome,
       }}
     />
   );

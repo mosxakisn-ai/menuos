@@ -6,6 +6,7 @@ import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, type ItemLabel } fr
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 type Translation = { language: string; name: string; description?: string | null };
 type Item = {
@@ -28,10 +29,12 @@ export function MenuEditor({
   venues,
   initialVenueId,
   welcome,
+  canImportPdf = false,
 }: {
   venues: Venue[];
   initialVenueId?: string;
   welcome?: boolean;
+  canImportPdf?: boolean;
 }) {
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -43,7 +46,7 @@ export function MenuEditor({
     if (welcome) {
       setFlash({
         type: "info",
-        text: "Το venue δημιουργήθηκε! Πρόσθεσε κατηγορίες χειροκίνητα ή κάνε import από PDF.",
+        text: DASHBOARD_EL.venueCreated,
       });
     }
   }, [welcome, setFlash]);
@@ -255,12 +258,12 @@ export function MenuEditor({
   if (venues.length === 0) {
     return (
       <Card>
-        <p className="font-semibold text-brand-navy">Δεν υπάρχει venue ακόμα</p>
+        <p className="font-semibold text-brand-navy">Δεν έχεις ακόμα κατάστημα</p>
         <p className="mt-2 text-sm text-slate-600">
-          Πρώτα δημιούργησε venue (π.χ. εστιατόριο ή ξενοδοχείο) και μετά πρόσθεσε πιάτα.
+          Πρώτα φτιάξε το κατάστημά σου (εστιατόριο, bar ή ξενοδοχείο) και μετά πρόσθεσε πιάτα.
         </p>
         <a href="/dashboard/venues/new" className={`mt-4 inline-flex ${buttonClass("primary")}`}>
-          Προσθήκη venue
+          {DASHBOARD_EL.addVenue}
         </a>
       </Card>
     );
@@ -272,7 +275,7 @@ export function MenuEditor({
 
       <div className="flex flex-wrap items-end gap-4">
         <label className="block text-sm">
-          <span className="font-medium text-brand-navy">Venue</span>
+          <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}</span>
           <select
             value={venueId}
             onChange={(e) => setVenueId(e.target.value)}
@@ -287,19 +290,28 @@ export function MenuEditor({
         </label>
         {venue ? (
           <>
-            <a
-              href={`/dashboard/menus/import?venue=${venueId}`}
-              className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
-            >
-              Import PDF
-            </a>
+            {canImportPdf ? (
+              <a
+                href={`/dashboard/menus/import?venue=${venueId}`}
+                className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+              >
+                {DASHBOARD_EL.importPdf}
+              </a>
+            ) : (
+              <a
+                href="/dashboard/billing?upgrade=pdf-import"
+                className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+              >
+                {DASHBOARD_EL.importPdfPro}
+              </a>
+            )}
             <a
               href={`/m/${venue.slug}`}
               target="_blank"
               rel="noopener noreferrer"
               className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
             >
-              Προεπισκόπηση menu
+              {DASHBOARD_EL.previewCatalog}
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </>
@@ -307,12 +319,12 @@ export function MenuEditor({
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Φόρτωση menu...</p>
+        <p className="text-sm text-slate-500">{DASHBOARD_EL.loadingCatalog}</p>
       ) : (
         <>
           {menus.length > 0 ? (
             <Card>
-              <h2 className="font-semibold text-brand-navy">Menus</h2>
+              <h2 className="font-semibold text-brand-navy">{DASHBOARD_EL.menus}</h2>
               <div className="mt-3 flex flex-wrap gap-2">
                 {menus.map((m) => (
                   <button
@@ -331,13 +343,13 @@ export function MenuEditor({
               </div>
               <form onSubmit={addMenu} className="mt-4 flex flex-wrap items-end gap-2">
                 <input
-                  placeholder="Νέο menu (π.χ. Pool Bar)"
+                  placeholder={DASHBOARD_EL.newCatalogPlaceholder}
                   value={newMenuName}
                   onChange={(e) => setNewMenuName(e.target.value)}
                   className="min-w-[200px] flex-1 rounded-button border border-slate-200 px-3 py-2 text-sm"
                 />
                 <button type="submit" disabled={addingMenu} className={buttonClass("secondary", "sm")}>
-                  {addingMenu ? "..." : "+ Menu"}
+                  {addingMenu ? "..." : DASHBOARD_EL.addCatalog}
                 </button>
               </form>
             </Card>

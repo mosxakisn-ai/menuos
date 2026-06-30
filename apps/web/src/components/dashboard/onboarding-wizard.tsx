@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { hasQrOnboardingVisit } from "@/components/dashboard/mark-qr-onboarding";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 export type OnboardingState = {
   hasVenue: boolean;
@@ -26,31 +27,31 @@ export function OnboardingWizard({ state }: { state: OnboardingState }) {
   const steps = [
     {
       id: "venue",
-      title: "Δημιούργησε venue",
-      desc: "Το κατάστημα ή ξενοδοχείο σου (π.χ. Marine Hotel).",
+      title: "Φτιάξε το κατάστημά σου",
+      desc: "Το εστιατόριο, το bar ή το ξενοδοχείο σου — π.χ. «Marine Hotel» ή «Ταβέρνα του Γιώργου».",
       done: state.hasVenue,
       href: "/dashboard/venues/new",
-      cta: "Προσθήκη venue",
+      cta: DASHBOARD_EL.addVenue,
     },
     {
       id: "menu",
-      title: "Πρόσθεσε πιάτα",
+      title: "Βάλε πιάτα στον κατάλογο",
       desc: state.hasCategory
-        ? "Πρόσθεσε πιάτα χειροκίνητα ή κάνε import από PDF (breakfast, pool bar κ.λπ.)."
-        : "Κατηγορίες και πιάτα — χειροκίνητα ή import από PDF.",
+        ? "Πρόσθεσε πιάτα χειροκίνητα ή κάνε εισαγωγή από PDF αν έχεις Pro."
+        : "Φτιάξε κατηγορίες (Σαλάτες, Κυρίως πιάτα...) και βάλε τιμές και φωτογραφίες.",
       done: state.hasItem,
       href: state.venueId ? `/dashboard/menus?venue=${state.venueId}` : "/dashboard/menus",
-      cta: "Επεξεργασία menu",
+      cta: DASHBOARD_EL.editCatalog,
       altHref: state.venueId ? `/dashboard/menus/import?venue=${state.venueId}` : "/dashboard/menus/import",
-      altCta: "Import PDF",
+      altCta: DASHBOARD_EL.importPdf,
     },
     {
       id: "qr",
-      title: "Βγάλε QR codes",
-      desc: "Κατέβασε QR για τραπέζια και δοκίμασε το live menu.",
+      title: "Βγάλε QR για τα τραπέζια",
+      desc: "Κατέβασε QR codes, τύπωσέ τα ή βάλτα σε stand. Οι πελάτες σκανάρουν και βλέπουν τον κατάλογο.",
       done: qrVisited && state.hasItem,
       href: state.venueId ? `/dashboard/qr?venue=${state.venueId}` : "/dashboard/qr",
-      cta: "QR codes",
+      cta: DASHBOARD_EL.qrCodes,
     },
   ];
 
@@ -66,7 +67,7 @@ export function OnboardingWizard({ state }: { state: OnboardingState }) {
             Βήμα {Math.min(completed + 1, 3)} από 3 — φτιάξε το menu σου
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Ακολούθησε τα βήματα για live QR menu σε λιγότερο από μία ώρα.
+            Σε λιγότερο από μία ώρα μπορείς να έχεις QR menu στα τραπέζια σου.
           </p>
         </div>
         <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-blue shadow-soft">
@@ -125,14 +126,14 @@ export function OnboardingWizard({ state }: { state: OnboardingState }) {
 
       {state.hasItem && state.venueSlug ? (
         <p className="mt-4 text-sm text-slate-600">
-          Το live menu σου:{" "}
+          Δες πώς φαίνεται στους πελάτες:{" "}
           <a
             href={`/m/${state.venueSlug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="font-semibold text-brand-blue hover:underline"
           >
-            /m/{state.venueSlug}
+            Άνοιγμα καταλόγου
           </a>
         </p>
       ) : null}

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { menuCreateSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
-import { planLimitErrorResponse, assertCanAddMenuInTransaction } from "@/lib/plan-limits";
+import { planLimitErrorResponse, assertCanAddMenuInTransaction, serializableTransaction } from "@/lib/plan-limits";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 export async function GET(request: Request) {
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
           sortOrder: count,
         },
       });
-    });
+    }, serializableTransaction);
 
     return NextResponse.json({ menu, message: "Το menu δημιουργήθηκε." });
   } catch (err) {

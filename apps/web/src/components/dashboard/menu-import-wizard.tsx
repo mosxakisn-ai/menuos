@@ -67,7 +67,7 @@ export function MenuImportWizard({
 
   const parsePdfs = useCallback(async () => {
     if (!menuId || files.length === 0) {
-      setFlash({ type: "error", text: "Επίλεξε menu και τουλάχιστον ένα PDF." });
+      setFlash({ type: "error", text: "Επίλεξε κατάλογο και τουλάχιστον ένα PDF." });
       return;
     }
     setParsing(true);
@@ -168,9 +168,9 @@ export function MenuImportWizard({
   if (venues.length === 0) {
     return (
       <Card>
-        <p className="font-semibold text-brand-navy">Χρειάζεσαι venue πρώτα</p>
+        <p className="font-semibold text-brand-navy">Χρειάζεσαι κατάστημα πρώτα</p>
         <Link href="/dashboard/venues/new" className={`mt-4 inline-flex ${buttonClass("primary")}`}>
-          Προσθήκη venue
+          Προσθήκη καταστήματος
         </Link>
       </Card>
     );
@@ -186,7 +186,7 @@ export function MenuImportWizard({
           Βήμα {step} από 2 — {step === 1 ? "Ανέβασμα PDF" : "Έλεγχος & εισαγωγή"}
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          Ανέβασε ένα ή περισσότερα menu PDF. Μετά ελέγχεις/διορθώνεις κατηγορίες και τιμές πριν
+          Ανέβασε ένα ή περισσότερα PDF καταλόγων. Μετά ελέγχεις/διορθώνεις κατηγορίες και τιμές πριν
           την αποθήκευση. Μετά μπορείς να αλλάξεις φωτο, τιμές και περιγραφές χειροκίνητα.
         </p>
       </Card>
@@ -196,7 +196,7 @@ export function MenuImportWizard({
           <Card>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm">
-                <span className="font-medium text-brand-navy">Venue</span>
+                <span className="font-medium text-brand-navy">Κατάστημα</span>
                 <select
                   value={venueId}
                   onChange={(e) => onVenueChange(e.target.value)}
@@ -210,7 +210,7 @@ export function MenuImportWizard({
                 </select>
               </label>
               <label className="block text-sm">
-                <span className="font-medium text-brand-navy">Menu</span>
+                <span className="font-medium text-brand-navy">Κατάλογος</span>
                 <select
                   value={menuId}
                   onChange={(e) => setMenuId(e.target.value)}
@@ -229,7 +229,7 @@ export function MenuImportWizard({
           <Card>
             <h3 className="font-semibold text-brand-navy">PDF αρχεία (έως 10)</h3>
             <p className="mt-1 text-sm text-slate-600">
-              Ιδανικά digital PDF (όχι σαρωμένη φωτο). Κάθε PDF μπορεί να είναι ξεχωριστό menu
+              Ιδανικά digital PDF (όχι σαρωμένη φωτο). Κάθε PDF μπορεί να είναι ξεχωριστός κατάλογος
               (π.χ. breakfast, pool bar).
             </p>
             <label
@@ -394,7 +394,7 @@ export function MenuImportWizard({
             <div className="flex flex-wrap items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               <p className="flex-1 text-sm text-emerald-900">
-                Μετά την εισαγωγή, άνοιξε το Menu για φωτογραφίες, διόρθωση τιμών και διαθεσιμότητα.
+                Μετά την εισαγωγή, άνοιξε τον κατάλογο για φωτογραφίες, διόρθωση τιμών και διαθεσιμότητα.
               </p>
               <button
                 type="button"
@@ -412,7 +412,7 @@ export function MenuImportWizard({
 
       <p className="text-center text-sm text-slate-500">
         <Link href={`/dashboard/menus?venue=${venueId}`} className="text-brand-blue hover:underline">
-          ← Χειροκίνητη επεξεργασία menu
+          ← Χειροκίνητη επεξεργασία καταλόγου
         </Link>
       </p>
     </div>

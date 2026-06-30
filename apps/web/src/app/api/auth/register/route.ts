@@ -47,6 +47,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Αυτό το email είναι ήδη εγγεγραμμένο.", code: "email_taken" }, { status: 409 });
   }
 
+  await consumeRegistrationOtp(normalizedEmail);
+
   let orgSlug = slugifyOrFallback(businessName, "org");
   const slugTaken = await prisma.organization.findUnique({ where: { slug: orgSlug } });
   if (slugTaken) {
@@ -107,8 +109,6 @@ export async function POST(request: Request) {
         trialEndsAt,
       }),
     );
-
-    await consumeRegistrationOtp(normalizedEmail);
 
     return NextResponse.json({ ok: true });
   } catch (err) {

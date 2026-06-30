@@ -256,3 +256,8 @@ model RateLimitBucket {
 
   @@index([resetAt])
 }
+
+model StripeWebhookEvent {
+  id        String   @id
+  createdAt DateTime @default(now())
+}

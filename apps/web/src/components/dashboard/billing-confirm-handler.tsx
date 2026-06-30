@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 export function BillingConfirmHandler({ organizationId }: { organizationId: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
   const confirmStarted = useRef(false);
 
   useEffect(() => {
@@ -14,12 +16,14 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
     const sessionId = searchParams.get("session_id");
 
     if (billing === "cancelled") {
-      setMessage("Checkout cancelled. No charges were made.");
+      setMessage(DASHBOARD_EL.billing.cancelled);
+      setIsError(true);
       return;
     }
 
     if (billing === "activated") {
-      setMessage("Plan activated (dev mode).");
+      setMessage(DASHBOARD_EL.billing.activatedDev);
+      setIsError(false);
       router.replace("/dashboard/billing");
       router.refresh();
       return;
@@ -29,23 +33,37 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
       if (confirmStarted.current) return;
       confirmStarted.current = true;
 
-      setMessage("Confirming payment…");
+      setMessage(DASHBOARD_EL.billing.confirming);
+      setIsError(false);
       fetch("/api/billing/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, organizationId }),
       })
         .then(async (res) => {
-          const data = (await res.json()) as { error?: string };
+          const data = (await res.json()) as {
+            error?: string;
+            subscription?: { status?: string; plan?: string };
+          };
           if (!res.ok) {
-            setMessage(data.error ?? "Payment confirmation failed");
+            setMessage(data.error ?? DASHBOARD_EL.billing.confirmFailed);
+            setIsError(true);
             return;
           }
-          setMessage("Subscription activated. Thank you!");
+          if (data.subscription?.status !== "ACTIVE") {
+            setMessage(DASHBOARD_EL.billing.confirmFailed);
+            setIsError(true);
+            return;
+          }
+          setMessage(DASHBOARD_EL.billing.activated);
+          setIsError(false);
           router.replace("/dashboard/billing");
           router.refresh();
         })
-        .catch(() => setMessage("Payment confirmation failed"));
+        .catch(() => {
+          setMessage(DASHBOARD_EL.billing.confirmFailed);
+          setIsError(true);
+        });
     }
   }, [organizationId, router, searchParams]);
 
@@ -54,7 +72,7 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
   return (
     <div
       className={`rounded-button border px-4 py-3 text-sm ${
-        message.includes("failed") || message.includes("cancelled")
+        isError
           ? "border-amber-200 bg-amber-50 text-amber-800"
           : "border-emerald-200 bg-emerald-50 text-emerald-800"
       }`}

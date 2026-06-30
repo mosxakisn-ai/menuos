@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 type Venue = { id: string; name: string; slug: string };
 
@@ -66,10 +67,10 @@ export function QrGenerator({
   if (venues.length === 0) {
     return (
       <Card>
-        <p className="font-semibold text-brand-navy">Χρειάζεσαι venue πρώτα</p>
-        <p className="mt-2 text-sm text-slate-600">Δημιούργησε venue και πρόσθεσε πιάτα πριν βγάλεις QR.</p>
+        <p className="font-semibold text-brand-navy">Χρειάζεσαι πρώτα κατάστημα</p>
+        <p className="mt-2 text-sm text-slate-600">Φτιάξε κατάστημα και πρόσθεσε πιάτα πριν βγάλεις QR.</p>
         <a href="/dashboard/venues/new" className={`mt-4 inline-flex ${buttonClass("primary")}`}>
-          Προσθήκη venue
+          {DASHBOARD_EL.addVenue}
         </a>
       </Card>
     );
@@ -84,11 +85,11 @@ export function QrGenerator({
           role="alert"
           className="rounded-card border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
         >
-          <p className="font-semibold">Το menu είναι άδειο</p>
+          <p className="font-semibold">Ο κατάλογος είναι άδειος</p>
           <p className="mt-1">
-            Πρόσθεσε κατηγορίες και πιάτα στο{" "}
+            Πρόσθεσε κατηγορίες και πιάτα στον{" "}
             <a href={`/dashboard/menus?venue=${venueId}`} className="font-semibold underline">
-              Menu
+              κατάλογο
             </a>{" "}
             πριν μοιράσεις QR στους πελάτες.
           </p>
@@ -98,11 +99,11 @@ export function QrGenerator({
       <Card>
         <h2 className="font-semibold text-brand-navy">Ρυθμίσεις QR</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Κάθε QR ανοίγει το live menu. Προαιρετικά βάλε αριθμό τραπεζιού ή δωματίου για call waiter.
+          Κάθε QR ανοίγει τον online κατάλογο. Βάλε αριθμό τραπεζιού ή δωματίου — έτσι ξέρεις από πού σε καλούν.
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block text-sm sm:col-span-2">
-            <span className="font-medium">Venue</span>
+            <span className="font-medium">{DASHBOARD_EL.venue}</span>
             <select
               value={venueId}
               onChange={(e) => setVenueId(e.target.value)}
@@ -170,7 +171,7 @@ export function QrGenerator({
               rel="noopener noreferrer"
               className={`inline-flex items-center gap-1 ${buttonClass("secondary")}`}
             >
-              Άνοιγμα menu
+              Άνοιγμα καταλόγου
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>

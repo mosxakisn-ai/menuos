@@ -8,6 +8,7 @@ import {
 import {
   isCheckoutPlan,
   mapStripeSubscriptionStatus,
+  planIdFromStripeSubscription,
   syncSubscriptionFromStripe,
 } from "@/lib/billing";
 import { fireAdminNotify, notifyAdminStripePayment } from "@/lib/admin-notify";
@@ -43,11 +44,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  let event: { type: string; data: { object: Record<string, unknown> } };
+  let event: { id?: string; type: string; data: { object: Record<string, unknown> } };
   try {
     event = JSON.parse(payload) as typeof event;
   } catch {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
+  if (event.id) {
+    try {
+      await prisma.stripeWebhookEvent.create({ data: { id: event.id } });
+    } catch (err) {
+      const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
+      if (code === "P2002") {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
+      throw err;
+    }
   }
 
   try {
@@ -70,35 +83,35 @@ export async function POST(req: NextRequest) {
           const stripeSubId =
             typeof session.subscription === "string" ? session.subscription : null;
           if (stripeSubId) {
-            try {
-              const sub = await stripeGetSubscription(stripeSubId);
-              if (typeof sub.current_period_end === "number") {
-                currentPeriodEnd = new Date(sub.current_period_end * 1000);
-              }
-            } catch (err) {
-              console.error("[menuos-billing] webhook: failed to load Stripe subscription", err);
+            const sub = await stripeGetSubscription(stripeSubId);
+            if (typeof sub.current_period_end === "number") {
+              currentPeriodEnd = new Date(sub.current_period_end * 1000);
             }
           }
 
-          await activateSubscriptionFromCheckoutSession({
-            organizationId: metadata.organizationId,
-            planId: metadata.planId,
-            stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
-            stripeSubId,
-            currentPeriodEnd,
-          });
-
-          fireAdminNotify(() =>
-            notifyAdminStripePayment({
-              paymentType: "subscription",
-              amountEur: sessionAmountEur(session),
+          if (!currentPeriodEnd) {
+            console.error("[menuos-billing] webhook: missing subscription period end", stripeSubId);
+          } else {
+            await activateSubscriptionFromCheckoutSession({
               organizationId: metadata.organizationId,
-              customerEmail:
-                typeof session.customer_email === "string" ? session.customer_email : undefined,
-              sessionId: typeof session.id === "string" ? session.id : undefined,
               planId: metadata.planId,
-            }),
-          );
+              stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
+              stripeSubId,
+              currentPeriodEnd,
+            });
+
+            fireAdminNotify(() =>
+              notifyAdminStripePayment({
+                paymentType: "subscription",
+                amountEur: sessionAmountEur(session),
+                organizationId: metadata.organizationId,
+                customerEmail:
+                  typeof session.customer_email === "string" ? session.customer_email : undefined,
+                sessionId: typeof session.id === "string" ? session.id : undefined,
+                planId: metadata.planId,
+              }),
+            );
+          }
         }
       }
     }
@@ -107,6 +120,10 @@ export async function POST(req: NextRequest) {
       const subscription = event.data.object;
       const metadata = (subscription.metadata ?? {}) as Record<string, string>;
       const stripeSubId = typeof subscription.id === "string" ? subscription.id : null;
+      const resolvedPlanId =
+        metadata.planId && isCheckoutPlan(metadata.planId)
+          ? metadata.planId
+          : planIdFromStripeSubscription(subscription);
 
       if (isMenuOsStripeMetadata(metadata) || stripeSubId) {
         await syncSubscriptionFromStripe({
@@ -115,8 +132,7 @@ export async function POST(req: NextRequest) {
           stripeCustomerId: typeof subscription.customer === "string" ? subscription.customer : null,
           status: mapStripeSubscriptionStatus(String(subscription.status ?? "canceled")),
           currentPeriodEnd: stripePeriodEnd(subscription),
-          planId:
-            metadata.planId && isCheckoutPlan(metadata.planId) ? metadata.planId : undefined,
+          planId: resolvedPlanId,
         });
       }
     }

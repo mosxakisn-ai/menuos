@@ -48,13 +48,13 @@ export default function NewVenuePage() {
       </Link>
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
       <Card>
-        <h1 className="font-serif text-xl font-bold text-primary">Νέο venue</h1>
+        <h1 className="font-serif text-xl font-bold text-primary">Νέο κατάστημα</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Το εστιατόριο, bar ή ξενοδοχείο σου. Θα δημιουργηθεί αυτόματα ένα κύριο menu.
+          Το εστιατόριο, bar ή ξενοδοχείο σου. Θα δημιουργηθεί αυτόματα ο πρώτος κατάλογος.
         </p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <label className="block text-sm">
-            <span className="font-medium text-primary">Όνομα venue *</span>
+            <span className="font-medium text-primary">Όνομα καταστήματος *</span>
             <input
               name="name"
               required
@@ -72,7 +72,7 @@ export default function NewVenuePage() {
             />
           </label>
           <button type="submit" disabled={loading} className={buttonClass("primary")}>
-            {loading ? "Δημιουργία..." : "Δημιουργία venue"}
+            {loading ? "Δημιουργία..." : "Δημιουργία καταστήματος"}
           </button>
         </form>
       </Card>

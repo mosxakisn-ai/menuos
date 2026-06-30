@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PLAN_DEFINITIONS, PAID_SUBSCRIPTION_PLANS } from "@menuos/shared";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 
@@ -50,7 +51,7 @@ export function BillingPlans({
         mode?: string;
       };
       if (!res.ok) {
-        setError(data.error ?? "Αποτυχία checkout");
+        setError(data.error ?? DASHBOARD_EL.billing.checkoutFailed);
         return;
       }
       if (data.checkoutUrl) {
@@ -139,7 +140,7 @@ export function BillingPlans({
       <Card>
         <h3 className="font-semibold text-primary">Enterprise</h3>
         <p className="mt-2 text-sm text-slate-600">
-          Custom domain, white-label και προτεραιότητα υποστήριξης. Επικοινωνήστε στο{" "}
+          Custom domain, white-label και προτεραιότητα υποστήριξης. Γράψε μας στο{" "}
           <a href="mailto:info@b-os.gr" className="text-brand-blue hover:underline">
             info@b-os.gr
           </a>

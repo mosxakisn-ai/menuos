@@ -36,15 +36,20 @@ export default async function MenusPage({ searchParams }: Props) {
             href={`/dashboard/menus/import${sp.venue ? `?venue=${sp.venue}` : ""}`}
             className={buttonClass("secondary", "sm")}
           >
-            Import από PDF
+            Εισαγωγή από PDF
           </Link>
         ) : (
-          <Link href="/dashboard/billing" className={buttonClass("secondary", "sm")}>
-            PDF import (Pro)
+          <Link href="/dashboard/billing?upgrade=pdf-import" className={buttonClass("secondary", "sm")}>
+            Εισαγωγή PDF (μόνο Pro)
           </Link>
         )}
       </div>
-      <MenuEditor venues={venues} initialVenueId={sp.venue} welcome={sp.welcome === "1"} />
+      <MenuEditor
+        venues={venues}
+        initialVenueId={sp.venue}
+        welcome={sp.welcome === "1"}
+        canImportPdf={canImportPdf}
+      />
     </div>
   );
 }

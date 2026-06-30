@@ -79,6 +79,7 @@ export function PublicMenuView({
     CANCEL: "idle",
   });
   const [callErrorCode, setCallErrorCode] = useState<CallErrorCode | null>(null);
+  const [callCancellable, setCallCancellable] = useState(false);
   const resetTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -95,18 +96,22 @@ export function PublicMenuView({
         const res = await fetch(
           `/api/waiter-call/status?callId=${encodeURIComponent(callId)}&venueSlug=${encodeURIComponent(venue.slug)}`,
         );
-        if (!res.ok) {
+        if (res.status === 404) {
           sessionStorage.removeItem(storageKey);
           setActiveCallId(null);
+          setCallCancellable(false);
           return false;
         }
-        const data = (await res.json()) as { active?: boolean };
+        if (!res.ok) return false;
+        const data = (await res.json()) as { active?: boolean; cancellable?: boolean };
+        setCallCancellable(data.cancellable ?? false);
         if (data.active) {
           setActiveCallId(callId);
           return true;
         }
         sessionStorage.removeItem(storageKey);
         setActiveCallId(null);
+        setCallCancellable(false);
         return false;
       } catch {
         return false;
@@ -188,15 +193,32 @@ export function PublicMenuView({
           roomNumber,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { id?: string; code?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        id?: string;
+        type?: string;
+        code?: string;
+      };
       if (!res.ok) {
-        setCallErrorCode(data.code === "rate_limited" ? "rate_limited" : "generic");
+        setCallErrorCode(
+          data.code === "rate_limited"
+            ? "rate_limited"
+            : data.code === "location_required"
+              ? "generic"
+              : "generic",
+        );
+        setActionState((s) => ({ ...s, [type]: "error" }));
+        resetActionState(type, 4000);
+        return;
+      }
+      if (data.type && data.type !== type) {
+        setCallErrorCode("generic");
         setActionState((s) => ({ ...s, [type]: "error" }));
         resetActionState(type, 4000);
         return;
       }
       if (data.id) {
         setActiveCallId(data.id);
+        setCallCancellable(true);
         sessionStorage.setItem(storageKey, data.id);
       }
       setActionState((s) => ({ ...s, [type]: "success" }));
@@ -222,13 +244,15 @@ export function PublicMenuView({
       if (!res.ok) {
         setActionState((s) => ({ ...s, CANCEL: "error" }));
         resetActionState("CANCEL", 4000);
-        if (res.status === 404 || res.status === 409) {
+        if (res.status === 404) {
           setActiveCallId(null);
+          setCallCancellable(false);
           sessionStorage.removeItem(storageKey);
         }
         return;
       }
       setActiveCallId(null);
+      setCallCancellable(false);
       sessionStorage.removeItem(storageKey);
       setActionState((s) => ({ ...s, CANCEL: "success", WAITER: "idle", BILL: "idle" }));
       resetActionState("CANCEL");
@@ -430,7 +454,7 @@ export function PublicMenuView({
           <button
             type="button"
             onClick={cancelCall}
-            disabled={!hasPendingCall || actionState.CANCEL === "loading"}
+            disabled={!hasPendingCall || !callCancellable || actionState.CANCEL === "loading"}
             className={cn(
               "flex flex-col items-center justify-center gap-1 rounded-button border py-3 text-[11px] font-semibold leading-tight",
               hasPendingCall

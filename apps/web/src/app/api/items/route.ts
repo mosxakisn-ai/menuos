@@ -5,6 +5,7 @@ import { requireActiveSubscription } from "@/lib/api-auth";
 import {
   assertCanAddItemsInTransaction,
   planLimitErrorResponse,
+  serializableTransaction,
 } from "@/lib/plan-limits";
 import { getCategoryForOrganization } from "@/lib/venue-access";
 
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
         },
         include: { translations: true },
       });
-    });
+    }, serializableTransaction);
 
     return NextResponse.json({
       item,

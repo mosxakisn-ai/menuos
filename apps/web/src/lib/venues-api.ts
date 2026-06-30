@@ -5,6 +5,7 @@ import { canOrganizationAddVenue } from "@/lib/billing";
 import {
   assertCanAddVenueInTransaction,
   planLimitErrorResponse,
+  serializableTransaction,
 } from "@/lib/plan-limits";
 import { allocateGlobalVenueSlug, baseVenueSlug } from "@/lib/venue-slug";
 
@@ -53,7 +54,7 @@ export async function createVenueHandler(request: Request, organizationId: strin
         },
         include: { menus: true },
       });
-    });
+    }, serializableTransaction);
 
     return NextResponse.json({ venue, message: "Το venue δημιουργήθηκε! Πρόσθεσε τώρα κατηγορίες και πιάτα." });
   } catch (err) {
