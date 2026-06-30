@@ -105,6 +105,9 @@ export default async function DashboardPage({ searchParams }: Props) {
               >
                 {DASHBOARD_EL.qrCodes}
               </Link>
+              <Link href="/dashboard/waiter" className={buttonClass("secondary")}>
+                {DASHBOARD_EL.calls} σερβιτόρου
+              </Link>
               {firstVenue ? (
                 <a
                   href={`/m/${firstVenue.slug}`}

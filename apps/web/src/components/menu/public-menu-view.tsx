@@ -63,10 +63,12 @@ type ActionKind = "WAITER" | "BILL" | "CANCEL";
 type ActionState = "idle" | "loading" | "success" | "error";
 type CallErrorCode = "rate_limited" | "generic";
 type ActiveCallType = "WAITER" | "BILL" | "ORDER";
+type CallStatus = "PENDING" | "ACKNOWLEDGED";
 
 type TableCall = {
   id: string;
   type: ActiveCallType;
+  status: CallStatus;
   cancellable: boolean;
 };
 
@@ -161,11 +163,12 @@ export function PublicMenuView({
       const res = await fetch(`/api/waiter-call/status?${params}`);
       if (!res.ok) return;
       const data = (await res.json()) as {
-        calls?: Array<{ id: string; type: ActiveCallType; cancellable?: boolean }>;
+        calls?: Array<{ id: string; type: ActiveCallType; status?: CallStatus; cancellable?: boolean }>;
       };
       const calls = (data.calls ?? []).map((c) => ({
         id: c.id,
         type: c.type,
+        status: c.status ?? "PENDING",
         cancellable: c.cancellable ?? false,
       }));
       if (calls.length === 0) {
@@ -178,54 +181,9 @@ export function PublicMenuView({
     }
   }, [applyTableCalls, clearActiveCall, roomNumber, tableNumber, venue.slug]);
 
-  const syncCallStatus = useCallback(
-    async (callId: string) => {
-      try {
-        const res = await fetch(
-          `/api/waiter-call/status?callId=${encodeURIComponent(callId)}&venueSlug=${encodeURIComponent(venue.slug)}`,
-        );
-        if (res.status === 404) {
-          clearActiveCall();
-          return false;
-        }
-        if (!res.ok) {
-          return false;
-        }
-        const data = (await res.json()) as {
-          active?: boolean;
-          cancellable?: boolean;
-          type?: ActiveCallType;
-        };
-        if (!data.active) {
-          clearActiveCall();
-          void syncTableStatus();
-          return false;
-        }
-        setCallCancellable(data.cancellable ?? false);
-        setActiveCallId(callId);
-        if (data.type) {
-          setActiveCalls((prev) => {
-            const rest = prev.filter((c) => c.id !== callId);
-            return [
-              ...rest,
-              { id: callId, type: data.type!, cancellable: data.cancellable ?? false },
-            ];
-          });
-        }
-        void syncTableStatus();
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [clearActiveCall, syncTableStatus, venue.slug],
-  );
-
   const restoreActiveCall = useCallback(async () => {
     await syncTableStatus();
-    const stored = sessionStorage.getItem(storageKey);
-    if (stored) await syncCallStatus(stored);
-  }, [storageKey, syncCallStatus, syncTableStatus]);
+  }, [syncTableStatus]);
 
   useEffect(() => {
     setIsInIframe(window.self !== window.top);
@@ -332,7 +290,7 @@ export function PublicMenuView({
   }
 
   async function sendCall(type: "WAITER" | "BILL") {
-    if (hasActiveType(type)) return;
+    if (hasPendingType(type)) return;
     setCallErrorCode(null);
     setActionState((s) => ({ ...s, [type]: "loading", CANCEL: "idle" }));
     try {
@@ -352,15 +310,7 @@ export function PublicMenuView({
         code?: string;
       };
       if (!res.ok) {
-        setCallErrorCode(
-          data.code === "rate_limited"
-            ? "rate_limited"
-            : data.code === "call_type_mismatch"
-              ? "generic"
-              : data.code === "location_required"
-                ? "generic"
-                : "generic",
-        );
+        setCallErrorCode(data.code === "rate_limited" ? "rate_limited" : "generic");
         setActionState((s) => ({ ...s, [type]: "error" }));
         resetActionState(type, 4000);
         return;
@@ -370,15 +320,6 @@ export function PublicMenuView({
         setActionState((s) => ({ ...s, [type]: "error" }));
         resetActionState(type, 4000);
         return;
-      }
-      if (data.id) {
-        setActiveCallId(data.id);
-        setCallCancellable(true);
-        sessionStorage.setItem(storageKey, data.id);
-        setActiveCalls((prev) => [
-          ...prev.filter((c) => c.type !== type),
-          { id: data.id!, type, cancellable: true },
-        ]);
       }
       setActionState((s) => ({ ...s, [type]: "success" }));
       resetActionState(type);
@@ -439,15 +380,6 @@ export function PublicMenuView({
         return;
       }
       persistCart([]);
-      if (data.id) {
-        setActiveCallId(data.id);
-        setCallCancellable(true);
-        sessionStorage.setItem(storageKey, data.id);
-        setActiveCalls((prev) => [
-          ...prev.filter((c) => c.type !== "ORDER"),
-          { id: data.id!, type: "ORDER", cancellable: true },
-        ]);
-      }
       setOrderState("success");
       setTimeout(() => setOrderState("idle"), 3000);
       void syncTableStatus();
@@ -458,9 +390,7 @@ export function PublicMenuView({
   }
 
   async function cancelCall() {
-    const target =
-      activeCalls.find((c) => c.cancellable) ??
-      (activeCallId && callCancellable ? activeCalls.find((c) => c.id === activeCallId) : null);
+    const target = cancelTarget;
     if (!target) return;
     setActionState((s) => ({ ...s, CANCEL: "loading" }));
     try {
@@ -506,6 +436,7 @@ export function PublicMenuView({
     if (state === "success") return ui.cancelled;
     if (state === "error") return ui.cancelFailed;
     if (state === "loading") return ui.cancelling;
+    if (cancelTarget) return ui.cancelCallType(cancelTarget.type);
     return ui.cancelCall;
   }
 
@@ -513,9 +444,11 @@ export function PublicMenuView({
     return pickQrMenuTranslation(translations, lang)?.name ?? "—";
   }
 
-  const hasActiveType = (type: ActiveCallType) => activeCalls.some((c) => c.type === type);
-  const hasCancellableCall = activeCalls.some((c) => c.cancellable);
-  const hasActiveOrder = hasActiveType("ORDER");
+  const hasPendingType = (type: ActiveCallType) =>
+    activeCalls.some((c) => c.type === type && c.status === "PENDING");
+  const hasActiveOrder = activeCalls.some((c) => c.type === "ORDER");
+  const cancelTarget = activeCalls.find((c) => c.cancellable) ?? null;
+  const hasCancellableCall = cancelTarget !== null;
   const canUseCallActions = Boolean(tableNumber || roomNumber);
   const cartCount = cartItemCount(cartLines);
   const cartTotalStr = cartTotal(cartLines);
@@ -840,11 +773,11 @@ export function PublicMenuView({
           <button
             type="button"
             onClick={() => void sendCall("WAITER")}
-            disabled={actionState.WAITER === "loading" || hasActiveType("WAITER")}
+            disabled={actionState.WAITER === "loading" || hasPendingType("WAITER")}
             className={cn(
               "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
-              hasActiveType("WAITER")
+              hasPendingType("WAITER")
                 ? "bg-slate-100 text-slate-400"
                 : "bg-primary text-white shadow-glow",
               actionState.WAITER === "success" && "bg-emerald-600 text-white",
@@ -859,11 +792,11 @@ export function PublicMenuView({
           <button
             type="button"
             onClick={() => void sendCall("BILL")}
-            disabled={actionState.BILL === "loading" || hasActiveType("BILL")}
+            disabled={actionState.BILL === "loading" || hasPendingType("BILL")}
             className={cn(
               "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
-              hasActiveType("BILL")
+              hasPendingType("BILL")
                 ? "bg-slate-100 text-slate-400"
                 : "bg-brand-blue text-white",
               actionState.BILL === "success" && "bg-emerald-600 text-white",

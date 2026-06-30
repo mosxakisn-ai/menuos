@@ -9,6 +9,7 @@ import {
   Settings,
   UtensilsCrossed,
 } from "lucide-react";
+import { prisma } from "@menuos/db";
 import { Logo } from "@/components/brand/logo";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { DashboardMobileNav } from "@/components/dashboard/dashboard-mobile-nav";
@@ -37,6 +38,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }
   }
 
+  const pendingWaiterCount = await prisma.waiterCall.count({
+    where: {
+      venue: { organizationId: session.organizationId },
+      status: "PENDING",
+    },
+  });
+
   return (
     <div className="flex min-h-screen bg-brand-surface">
       <aside className="hidden w-64 shrink-0 bg-sidebar-gradient p-6 text-white md:block">
@@ -51,6 +59,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
             >
               <Icon className="h-4 w-4 text-brand-cyan" />
               {label}
+              {href === "/dashboard/waiter" && pendingWaiterCount > 0 ? (
+                <span className="ml-auto rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-950">
+                  {pendingWaiterCount}
+                </span>
+              ) : null}
             </Link>
           ))}
         </nav>
@@ -70,7 +83,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </header>
         <main className="flex-1 p-4 pb-24 sm:p-6 md:pb-6">{children}</main>
       </div>
-      <DashboardMobileNav />
+      <DashboardMobileNav pendingCount={pendingWaiterCount} />
     </div>
   );
 }

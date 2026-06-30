@@ -48,8 +48,8 @@ export async function POST(request: Request) {
   }
 
   const ip = clientIp(request);
-  const rateKey = `waiter:${ip}:${parsed.data.venueSlug}`;
-  const rateLimit = await checkRateLimitOutcome(rateKey, 5, 60_000);
+  const rateKey = `waiter-post:${ip}:${parsed.data.venueSlug}:${parsed.data.type}`;
+  const rateLimit = await checkRateLimitOutcome(rateKey, 12, 60_000);
   if (rateLimit === "unavailable") {
     return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
   }
@@ -102,11 +102,24 @@ export async function POST(request: Request) {
       const merged = mergeOrderPayload(existing.orderItems, parsed.data.orderItems);
       const updated = await prisma.waiterCall.update({
         where: { id: existing.id },
-        data: { orderItems: merged },
+        data: {
+          orderItems: merged,
+          ...(existing.status === "ACKNOWLEDGED" ? { status: WaiterCallStatus.PENDING } : {}),
+        },
       });
-      return NextResponse.json({ id: updated.id, type: updated.type });
+      return NextResponse.json({
+        id: updated.id,
+        type: updated.type,
+        status: updated.status,
+        cancellable: updated.status === "PENDING",
+      });
     }
-    return NextResponse.json({ id: existing.id, type: existing.type });
+    return NextResponse.json({
+      id: existing.id,
+      type: existing.type,
+      status: existing.status,
+      cancellable: existing.status === "PENDING",
+    });
   }
 
   const call = await prisma.$transaction(async (tx) => {
@@ -130,7 +143,10 @@ export async function POST(request: Request) {
         const merged = mergeOrderPayload(pending.orderItems, parsed.data.orderItems);
         return tx.waiterCall.update({
           where: { id: pending.id },
-          data: { orderItems: merged },
+          data: {
+            orderItems: merged,
+            ...(pending.status === "ACKNOWLEDGED" ? { status: WaiterCallStatus.PENDING } : {}),
+          },
         });
       }
       return pending;
@@ -151,7 +167,12 @@ export async function POST(request: Request) {
     });
   });
 
-  return NextResponse.json({ id: call.id, type: call.type });
+  return NextResponse.json({
+    id: call.id,
+    type: call.type,
+    status: call.status,
+    cancellable: call.status === "PENDING",
+  });
   } catch (err) {
     console.error("[menuos] waiter-call POST failed", err);
     return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 500 });

@@ -47,6 +47,12 @@ export const QR_MENU_UI = {
     callWaiterShort: "Σερβιτόρος",
     requestBill: "Λογαριασμός",
     cancelCall: "Ακύρωση",
+    cancelCallType: (type: "ORDER" | "WAITER" | "BILL") =>
+      type === "ORDER"
+        ? "Ακύρωση παραγγελίας"
+        : type === "WAITER"
+          ? "Ακύρωση κλήσης"
+          : "Ακύρωση λογαριασμού",
     calling: "Αποστολή...",
     called: "Ο σερβιτόρος ειδοποιήθηκε ✓",
     calledShort: "Εστάλη!",
@@ -96,6 +102,12 @@ export const QR_MENU_UI = {
     callWaiterShort: "Waiter",
     requestBill: "Bill",
     cancelCall: "Cancel",
+    cancelCallType: (type: "ORDER" | "WAITER" | "BILL") =>
+      type === "ORDER"
+        ? "Cancel order"
+        : type === "WAITER"
+          ? "Cancel waiter call"
+          : "Cancel bill request",
     calling: "Calling...",
     called: "Waiter notified ✓",
     calledShort: "Sent!",
@@ -145,6 +157,12 @@ export const QR_MENU_UI = {
     callWaiterShort: "Kellner",
     requestBill: "Rechnung",
     cancelCall: "Abbrechen",
+    cancelCallType: (type: "ORDER" | "WAITER" | "BILL") =>
+      type === "ORDER"
+        ? "Bestellung abbrechen"
+        : type === "WAITER"
+          ? "Kellnerruf abbrechen"
+          : "Rechnung abbrechen",
     calling: "Senden...",
     called: "Kellner benachrichtigt ✓",
     calledShort: "Gesendet!",
@@ -194,6 +212,12 @@ export const QR_MENU_UI = {
     callWaiterShort: "Serveur",
     requestBill: "Addition",
     cancelCall: "Annuler",
+    cancelCallType: (type: "ORDER" | "WAITER" | "BILL") =>
+      type === "ORDER"
+        ? "Annuler la commande"
+        : type === "WAITER"
+          ? "Annuler l'appel serveur"
+          : "Annuler l'addition",
     calling: "Envoi...",
     called: "Serveur prévenu ✓",
     calledShort: "Envoyé!",

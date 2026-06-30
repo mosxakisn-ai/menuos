@@ -31,8 +31,14 @@ type WaiterCall = {
   roomNumber: string | null;
   status: string;
   createdAt: string;
+  updatedAt: string;
   orderItems?: OrderPayload | null;
 };
+
+function isOrderUpdated(call: WaiterCall): boolean {
+  if (call.type !== "ORDER") return false;
+  return new Date(call.updatedAt).getTime() - new Date(call.createdAt).getTime() > 1500;
+}
 
 export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initialVenueId?: string }) {
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
@@ -52,7 +58,7 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 8000);
+    const t = setInterval(load, 5000);
     return () => clearInterval(t);
   }, [load]);
 
@@ -100,7 +106,7 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
             {pendingCount} σε αναμονή
           </span>
         ) : (
-          <span className="text-sm text-slate-500">Ανανέωση κάθε 8 δευτ.</span>
+          <span className="text-sm text-slate-500">Ανανέωση κάθε 5 δευτ.</span>
         )}
       </div>
 
@@ -136,6 +142,11 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
                     </p>
                     <p className="mt-1 text-xs font-medium text-slate-500">
                       {STATUS_LABELS[call.status] ?? call.status}
+                      {isOrderUpdated(call) && call.status === "PENDING" ? (
+                        <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
+                          Νέα πιάτα
+                        </span>
+                      ) : null}
                     </p>
                     {call.type === "ORDER" && call.orderItems?.lines?.length ? (
                       <ul className="mt-3 space-y-1 rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm text-slate-700">

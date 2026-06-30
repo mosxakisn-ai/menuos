@@ -14,7 +14,7 @@ const links = [
   { href: "/dashboard/settings", label: "Ρυθμίσεις", icon: Settings },
 ];
 
-export function DashboardMobileNav() {
+export function DashboardMobileNav({ pendingCount = 0 }: { pendingCount?: number }) {
   const pathname = usePathname();
 
   return (
@@ -22,16 +22,24 @@ export function DashboardMobileNav() {
       <ul className="flex justify-around">
         {links.map(({ href, label, icon: Icon, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(href);
+          const showBadge = href === "/dashboard/waiter" && pendingCount > 0;
           return (
             <li key={href}>
               <Link
                 href={href}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 px-2 py-2.5 text-[10px] font-medium",
+                  "relative flex flex-col items-center gap-0.5 px-2 py-2.5 text-[10px] font-medium",
                   active ? "text-brand-blue" : "text-slate-500",
                 )}
               >
-                <Icon className={cn("h-5 w-5", active && "text-brand-blue")} />
+                <span className="relative">
+                  <Icon className={cn("h-5 w-5", active && "text-brand-blue")} />
+                  {showBadge ? (
+                    <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">
+                      {pendingCount > 9 ? "9+" : pendingCount}
+                    </span>
+                  ) : null}
+                </span>
                 {label}
               </Link>
             </li>
