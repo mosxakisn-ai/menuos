@@ -93,9 +93,63 @@ export function HeroShowcase() {
         ))}
       </div>
 
-      <div className="relative flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:justify-end lg:gap-10 xl:gap-14">
-        {/* Lifestyle scene — real photos + table tent */}
-        <div className="relative w-full max-w-[440px] lg:max-w-[460px] lg:flex-1">
+      <div className="relative flex flex-col items-center gap-6 sm:gap-8 lg:flex-row lg:items-center lg:justify-end lg:gap-10 xl:gap-14">
+        {/* Phone mockup — πρώτο στο mobile (ζωντανό demo) */}
+        <div className="relative order-1 w-full max-w-[320px] shrink-0 sm:max-w-[340px] lg:order-2">
+          <div className="mb-3 flex justify-center lg:hidden">
+            <span className="inline-flex rounded-full bg-brand-gradient px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+              {hs.liveDemo}
+            </span>
+          </div>
+          <div className="mx-auto max-w-[18rem] text-center sm:max-w-xs">
+            <p className="text-sm font-medium leading-snug text-slate-700">{hs.liveDemoHint}</p>
+            <p className="mt-1 text-xs font-semibold tracking-wide text-brand-blue">{hs.liveDemoTouchpoints}</p>
+          </div>
+          <p className="mb-4 mt-3 text-center">
+            <span className="inline-flex rounded-full border border-brand-blue/20 bg-brand-blue/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-blue">
+              {hs.demoExampleLabel}
+            </span>
+          </p>
+
+          <div className="relative mx-auto w-[min(100%,280px)] sm:w-[300px]">
+            <div className="relative rounded-[2.75rem] border-[5px] border-slate-900 bg-slate-900 p-2 shadow-[0_32px_80px_-20px_rgba(15,23,42,0.55)] ring-1 ring-white/10">
+              <div className="absolute -left-[3px] top-24 h-8 w-[3px] rounded-l-sm bg-slate-800" />
+              <div className="absolute -left-[3px] top-36 h-12 w-[3px] rounded-l-sm bg-slate-800" />
+              <div className="absolute -left-[3px] top-52 h-12 w-[3px] rounded-l-sm bg-slate-800" />
+              <div className="absolute -right-[3px] top-32 h-16 w-[3px] rounded-r-sm bg-slate-800" />
+
+              <div className="absolute left-1/2 top-2.5 z-40 h-[22px] w-[76px] -translate-x-1/2 rounded-full bg-slate-900" />
+
+              <div className="relative isolate aspect-[9/19.5] overflow-hidden rounded-[2.2rem] bg-white">
+                <PhoneStatusBar />
+                <div className="absolute inset-x-0 bottom-3 top-10 overflow-hidden bg-white">
+                  <iframe
+                    src={demoMenuIframePath}
+                    title={`${hs.venueName} — ${hs.venueSubtitle}`}
+                    className="block h-full w-full max-w-full touch-pan-y border-0 bg-white"
+                    loading="eager"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
+                </div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex justify-center">
+                  <div className="h-1 w-[5.5rem] rounded-full bg-slate-900/80" />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <DemoTavernaLogo showName size={36} tagline={`${hs.demoExampleLabel} · ${hs.venueTagline}`} />
+              <p className="text-center text-xs text-slate-500">
+                {hs.noAppPrefix}{" "}
+                <span className="font-extrabold text-brand-navy">Menu</span>
+                <span className="font-extrabold text-brand-blue">Os</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Lifestyle scene — QR table tent (δεύτερο στο mobile) */}
+        <div className="relative order-2 w-full max-w-[440px] lg:order-1 lg:max-w-[460px] lg:flex-1">
           <div className="relative overflow-hidden rounded-[1.75rem] border border-white/60 shadow-glow ring-1 ring-slate-200/50">
             <div className="relative aspect-[4/5] sm:aspect-[5/6]">
               <Image
@@ -108,12 +162,10 @@ export function HeroShowcase() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/85 via-brand-navy/25 to-brand-navy/10" />
 
-              {/* MenuOS branding */}
               <div className="absolute left-4 top-4 z-10 rounded-2xl bg-white/95 p-2 shadow-lg backdrop-blur-sm ring-1 ring-white/80">
                 <Logo href={false} markSize={28} />
               </div>
 
-              {/* Food inset — adds authenticity */}
               <div className="absolute right-4 top-4 z-10 overflow-hidden rounded-2xl border-2 border-white/90 shadow-xl ring-1 ring-black/5">
                 <div className="relative h-20 w-20 sm:h-24 sm:w-24">
                   <Image
@@ -126,7 +178,6 @@ export function HeroShowcase() {
                 </div>
               </div>
 
-              {/* Guest with phone — inset photo */}
               <div className="absolute right-4 top-[5.5rem] z-10 hidden overflow-hidden rounded-2xl border-2 border-white/90 shadow-xl ring-1 ring-black/5 sm:block sm:top-[6.5rem]">
                 <div className="relative h-24 w-32">
                   <Image
@@ -140,10 +191,9 @@ export function HeroShowcase() {
                 </div>
               </div>
 
-              {/* Table tent with real QR + venue logo */}
-              <div className="absolute bottom-6 left-4 right-4 z-10 sm:bottom-8 sm:left-6 sm:right-auto">
+              <div className="absolute bottom-6 left-1/2 z-10 w-[calc(100%-2rem)] max-w-[240px] -translate-x-1/2 sm:bottom-8 sm:left-6 sm:w-auto sm:translate-x-0">
                 <div
-                  className="relative max-w-[240px] origin-bottom-left"
+                  className="relative mx-auto max-w-[240px] origin-bottom sm:origin-bottom-left"
                   style={{ transform: "perspective(800px) rotateY(-6deg) rotateX(2deg)" }}
                 >
                   <div className="rounded-2xl bg-white p-4 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.45)] ring-1 ring-slate-200/80">
@@ -187,61 +237,9 @@ export function HeroShowcase() {
                 </div>
               </div>
 
-              {/* Live demo pill */}
-              <div className="absolute bottom-6 right-4 z-10 rounded-full bg-brand-gradient px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg sm:bottom-8">
+              <div className="absolute bottom-6 right-4 z-10 hidden rounded-full bg-brand-gradient px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg sm:bottom-8 lg:block">
                 {hs.liveDemo}
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Phone mockup — live demo iframe (restaurant example) */}
-        <div className="relative w-full max-w-[320px] shrink-0 overflow-hidden sm:max-w-[340px]">
-          <div className="mb-3 mx-auto max-w-[18rem] text-center sm:max-w-xs">
-            <p className="text-sm font-medium leading-snug text-slate-700">{hs.liveDemoHint}</p>
-            <p className="mt-1 text-xs font-semibold tracking-wide text-brand-blue">{hs.liveDemoTouchpoints}</p>
-          </div>
-          <p className="mb-4 text-center">
-            <span className="inline-flex rounded-full border border-brand-blue/20 bg-brand-blue/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-blue">
-              {hs.demoExampleLabel}
-            </span>
-          </p>
-
-          <div className="relative mx-auto w-[280px] sm:w-[300px]">
-            <div className="relative rounded-[2.75rem] border-[5px] border-slate-900 bg-slate-900 p-2 shadow-[0_32px_80px_-20px_rgba(15,23,42,0.55)] ring-1 ring-white/10">
-              {/* Side buttons */}
-              <div className="absolute -left-[3px] top-24 h-8 w-[3px] rounded-l-sm bg-slate-800" />
-              <div className="absolute -left-[3px] top-36 h-12 w-[3px] rounded-l-sm bg-slate-800" />
-              <div className="absolute -left-[3px] top-52 h-12 w-[3px] rounded-l-sm bg-slate-800" />
-              <div className="absolute -right-[3px] top-32 h-16 w-[3px] rounded-r-sm bg-slate-800" />
-
-              <div className="absolute left-1/2 top-2.5 z-40 h-[22px] w-[76px] -translate-x-1/2 rounded-full bg-slate-900" />
-
-              <div className="relative isolate aspect-[9/19.5] overflow-hidden rounded-[2.2rem] bg-white">
-                <PhoneStatusBar />
-                <div className="absolute inset-x-0 bottom-3 top-10 overflow-hidden bg-white">
-                  <iframe
-                    src={demoMenuIframePath}
-                    title={`${hs.venueName} — ${hs.venueSubtitle}`}
-                    className="block h-full w-full max-w-full touch-pan-y border-0 bg-white"
-                    loading="eager"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                  />
-                </div>
-                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex justify-center">
-                  <div className="h-1 w-[5.5rem] rounded-full bg-slate-900/80" />
-                </div>
-              </div>
-            </div>
-
-            {/* Venue label under phone */}
-            <div className="mt-4 flex flex-col items-center gap-2">
-              <DemoTavernaLogo showName size={36} tagline={`${hs.demoExampleLabel} · ${hs.venueTagline}`} />
-              <p className="text-center text-xs text-slate-500">
-                {hs.noAppPrefix}{" "}
-                <span className="font-extrabold text-brand-navy">Menu</span>
-                <span className="font-extrabold text-brand-blue">Os</span>
-              </p>
             </div>
           </div>
         </div>
