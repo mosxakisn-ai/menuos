@@ -2,10 +2,25 @@ import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/
 import { DEMO_VENUE_SLUG, PLAN_DEFINITIONS, isPaidPlan, organizationHasPaidPlan } from "@menuos/shared";
 import type { SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
 
+export type SupervisorOrganizationUser = {
+  name: string;
+  email: string;
+  role: string;
+};
+
+export type SupervisorOrganizationVenue = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
 export type SupervisorOrganizationRow = {
   id: string;
   name: string;
   slug: string;
+  phone: string | null;
+  city: string | null;
+  notes: string | null;
   createdAt: string;
   isDemo: boolean;
   adminEmail: string;
@@ -19,6 +34,8 @@ export type SupervisorOrganizationRow = {
   venueCount: number;
   menuCount: number;
   itemCount: number;
+  venues: SupervisorOrganizationVenue[];
+  users: SupervisorOrganizationUser[];
 };
 
 export type SupervisorOverview = {
@@ -71,6 +88,9 @@ function mapOrganizationRow(
     id: string;
     name: string;
     slug: string;
+    phone: string | null;
+    city: string | null;
+    notes: string | null;
     createdAt: Date;
     users: { email: string; name: string; role: string; createdAt: Date }[];
     subscription: {
@@ -81,7 +101,12 @@ function mapOrganizationRow(
       stripeCustomerId: string | null;
       stripeSubId: string | null;
     } | null;
-    venues: { menus: { categories: { items: unknown[] }[] }[] }[];
+    venues: {
+      id: string;
+      name: string;
+      slug: string;
+      menus: { categories: { items: unknown[] }[] }[];
+    }[];
   },
   isDemo: boolean,
 ): SupervisorOrganizationRow {
@@ -94,6 +119,9 @@ function mapOrganizationRow(
     id: org.id,
     name: org.name,
     slug: org.slug,
+    phone: org.phone,
+    city: org.city,
+    notes: org.notes,
     createdAt: org.createdAt.toISOString(),
     isDemo,
     adminEmail: admin?.email ?? "—",
@@ -107,6 +135,8 @@ function mapOrganizationRow(
     venueCount: org.venues.length,
     menuCount,
     itemCount,
+    venues: org.venues.map((v) => ({ id: v.id, name: v.name, slug: v.slug })),
+    users: org.users.map((u) => ({ name: u.name, email: u.email, role: u.role })),
   };
 }
 
@@ -118,12 +148,16 @@ const orgInclude = {
   subscription: true,
   venues: {
     select: {
+      id: true,
+      name: true,
+      slug: true,
       menus: {
         select: {
           categories: { select: { items: { select: { id: true } } } },
         },
       },
     },
+    orderBy: { createdAt: "asc" as const },
   },
 } as const;
 
@@ -259,6 +293,29 @@ export async function updateOrganizationForSupervisor(
 ): Promise<SupervisorOrganizationRow> {
   const existing = await prisma.organization.findUnique({ where: { id } });
   if (!existing) throw new Error("not_found");
+
+  const profileData: { name?: string; phone?: string | null; city?: string | null; notes?: string | null } =
+    {};
+  if (input.name !== undefined) profileData.name = input.name;
+  if (input.phone !== undefined) profileData.phone = input.phone;
+  if (input.city !== undefined) profileData.city = input.city;
+  if (input.notes !== undefined) profileData.notes = input.notes;
+
+  if (Object.keys(profileData).length > 0) {
+    await prisma.organization.update({ where: { id }, data: profileData });
+  }
+
+  const hasSubscriptionPatch =
+    input.plan !== undefined ||
+    input.status !== undefined ||
+    input.extendTrialDays !== undefined ||
+    input.grantProMonths !== undefined;
+
+  if (!hasSubscriptionPatch) {
+    const updated = await getOrganizationForSupervisor(id);
+    if (!updated) throw new Error("not_found");
+    return updated;
+  }
 
   const now = new Date();
   const data: {

@@ -2,6 +2,34 @@ import { z } from "zod";
 
 export const supervisorOrganizationUpdateSchema = z
   .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    phone: z
+      .union([z.string().max(40), z.null()])
+      .optional()
+      .transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === null) return null;
+        const trimmed = v.trim();
+        return trimmed === "" ? null : trimmed;
+      }),
+    city: z
+      .union([z.string().max(120), z.null()])
+      .optional()
+      .transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === null) return null;
+        const trimmed = v.trim();
+        return trimmed === "" ? null : trimmed;
+      }),
+    notes: z
+      .union([z.string().max(2000), z.null()])
+      .optional()
+      .transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === null) return null;
+        const trimmed = v.trim();
+        return trimmed === "" ? null : trimmed;
+      }),
     plan: z.enum(["TRIAL", "BASIC", "PRO", "ENTERPRISE"]).optional(),
     status: z.enum(["ACTIVE", "TRIALING", "PAST_DUE", "CANCELED"]).optional(),
     extendTrialDays: z.number().int().min(1).max(90).optional(),
@@ -9,6 +37,10 @@ export const supervisorOrganizationUpdateSchema = z
   })
   .refine(
     (data) =>
+      data.name !== undefined ||
+      data.phone !== undefined ||
+      data.city !== undefined ||
+      data.notes !== undefined ||
       data.plan !== undefined ||
       data.status !== undefined ||
       data.extendTrialDays !== undefined ||

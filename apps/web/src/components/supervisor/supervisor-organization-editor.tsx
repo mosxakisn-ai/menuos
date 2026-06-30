@@ -1,18 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ExternalLink, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import type { SupervisorOrganizationRow } from "@/lib/supervisor-service";
+import {
+  stripeCustomerDashboardUrl,
+  stripeSubscriptionDashboardUrl,
+} from "@/lib/stripe-dashboard-urls";
+import { cn } from "@/lib/utils";
+
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: "Διαχειριστής",
+  MANAGER: "Manager",
+  STAFF: "Προσωπικό",
+};
 
 function planStatusForSave(plan: string): string {
   return plan === "TRIAL" ? "TRIALING" : "ACTIVE";
 }
 
+function formatDate(iso: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("el-GR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className={dashboardLabelClass}>{label}</dt>
+      <dd className="mt-0.5 text-sm text-brand-navy">{children}</dd>
+    </div>
+  );
+}
+
 export function SupervisorOrganizationEditor({
-  organization,
+  organization: initial,
   onClose,
   onSaved,
 }: {
@@ -20,12 +49,46 @@ export function SupervisorOrganizationEditor({
   onClose: () => void;
   onSaved: (updated?: SupervisorOrganizationRow) => void;
 }) {
-  const [plan, setPlan] = useState(organization.plan);
+  const [tab, setTab] = useState<"details" | "subscription">("details");
+  const [organization, setOrganization] = useState(initial);
+  const [loading, setLoading] = useState(true);
+
+  const [businessName, setBusinessName] = useState(initial.name);
+  const [phone, setPhone] = useState(initial.phone ?? "");
+  const [city, setCity] = useState(initial.city ?? "");
+  const [notes, setNotes] = useState(initial.notes ?? "");
+
+  const [plan, setPlan] = useState(initial.plan);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function save(patch: Record<string, unknown>) {
+  const loadDetails = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/supervisor/organizations/${initial.id}`, {
+        credentials: "same-origin",
+      });
+      if (!res.ok) throw new Error("failed");
+      const data = (await res.json()) as { organization: SupervisorOrganizationRow };
+      setOrganization(data.organization);
+      setBusinessName(data.organization.name);
+      setPhone(data.organization.phone ?? "");
+      setCity(data.organization.city ?? "");
+      setNotes(data.organization.notes ?? "");
+      setPlan(data.organization.plan);
+    } catch {
+      setError("Αποτυχία φόρτωσης στοιχείων.");
+    } finally {
+      setLoading(false);
+    }
+  }, [initial.id]);
+
+  useEffect(() => {
+    void loadDetails();
+  }, [loadDetails]);
+
+  async function save(patch: Record<string, unknown>, successFallback: string) {
     setSaving(true);
     setError(null);
     setMessage(null);
@@ -40,8 +103,13 @@ export function SupervisorOrganizationEditor({
         setError(data.error ?? "Αποτυχία.");
         return;
       }
-      setMessage(data.message ?? "Αποθήκευση πακέτου.");
+      setMessage(data.message ?? successFallback);
       if (data.organization) {
+        setOrganization(data.organization);
+        setBusinessName(data.organization.name);
+        setPhone(data.organization.phone ?? "");
+        setCity(data.organization.city ?? "");
+        setNotes(data.organization.notes ?? "");
         setPlan(data.organization.plan);
         onSaved(data.organization);
       } else {
@@ -53,6 +121,12 @@ export function SupervisorOrganizationEditor({
       setSaving(false);
     }
   }
+
+  const profileDirty =
+    businessName !== organization.name ||
+    phone !== (organization.phone ?? "") ||
+    city !== (organization.city ?? "") ||
+    notes !== (organization.notes ?? "");
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-brand-navy/40 p-4 sm:items-center">
@@ -67,27 +141,190 @@ export function SupervisorOrganizationEditor({
           </button>
         </div>
 
-        <div className="mt-6 space-y-4">
-          <label className="block text-sm">
-            <span className={dashboardLabelClass}>Πακέτο</span>
-            <select className={dashboardFieldClass} value={plan} onChange={(e) => setPlan(e.target.value)}>
-              <option value="TRIAL">TRIAL</option>
-              <option value="BASIC">BASIC</option>
-              <option value="PRO">PRO</option>
-              <option value="ENTERPRISE">ENTERPRISE</option>
-            </select>
-          </label>
-          <button
-            type="button"
-            disabled={saving || plan === organization.plan}
-            className={buttonClass("primary", "sm")}
-            onClick={() => void save({ plan, status: planStatusForSave(plan) })}
-          >
-            {saving ? "Αποθήκευση…" : "Αποθήκευση"}
-          </button>
-          {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        <div className="mt-5 flex gap-2 border-b border-slate-100">
+          {(
+            [
+              ["details", "Στοιχεία"],
+              ["subscription", "Συνδρομή"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setTab(key);
+                setMessage(null);
+                setError(null);
+              }}
+              className={cn(
+                "border-b-2 px-3 py-2 text-sm font-medium transition",
+                tab === key
+                  ? "border-brand-blue text-brand-navy"
+                  : "border-transparent text-slate-500 hover:text-brand-navy",
+              )}
+            >
+              {label}
+            </button>
+          ))}
         </div>
+
+        {loading ? (
+          <p className="mt-6 text-sm text-slate-500">Φόρτωση…</p>
+        ) : tab === "details" ? (
+          <div className="mt-6 space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm sm:col-span-2">
+                <span className={dashboardLabelClass}>Επωνυμία επιχείρησης</span>
+                <input
+                  className={dashboardFieldClass}
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  required
+                />
+              </label>
+              <label className="block text-sm">
+                <span className={dashboardLabelClass}>Τηλέφωνο</span>
+                <input
+                  className={dashboardFieldClass}
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="π.χ. 210 1234567"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className={dashboardLabelClass}>Πόλη</span>
+                <input
+                  className={dashboardFieldClass}
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="π.χ. Ρόδος"
+                />
+              </label>
+              <label className="block text-sm sm:col-span-2">
+                <span className={dashboardLabelClass}>Σημειώσεις (εσωτερικές)</span>
+                <textarea
+                  className={`${dashboardFieldClass} min-h-[88px] resize-y`}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Σημειώσεις ops…"
+                />
+              </label>
+            </div>
+
+            <dl className="grid gap-3 rounded-xl border border-slate-200 bg-brand-surface/40 p-4 sm:grid-cols-2">
+              <DetailRow label="Email">{organization.adminEmail}</DetailRow>
+              <DetailRow label="Υπεύθυνος">{organization.adminName}</DetailRow>
+              <DetailRow label="Slug">{organization.slug}</DetailRow>
+              <DetailRow label="Εγγραφή">{formatDate(organization.createdAt)}</DetailRow>
+              <DetailRow label="Καταστήματα">
+                {organization.venues.length
+                  ? organization.venues.map((v) => v.name).join(", ")
+                  : "—"}
+              </DetailRow>
+              <DetailRow label="Χρήστες">{organization.users.length}</DetailRow>
+            </dl>
+
+            {organization.users.length ? (
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-brand-surface text-xs uppercase text-slate-500">
+                    <tr>
+                      <th className="px-3 py-2">Όνομα</th>
+                      <th className="px-3 py-2">Email</th>
+                      <th className="px-3 py-2">Ρόλος</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {organization.users.map((user) => (
+                      <tr key={user.email} className="border-t border-slate-100">
+                        <td className="px-3 py-2 font-medium text-brand-navy">{user.name}</td>
+                        <td className="px-3 py-2 text-slate-600">{user.email}</td>
+                        <td className="px-3 py-2 text-slate-600">
+                          {ROLE_LABELS[user.role] ?? user.role}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              disabled={saving || !profileDirty}
+              className={buttonClass("primary", "sm")}
+              onClick={() =>
+                void save(
+                  { name: businessName, phone, city, notes },
+                  "Αποθήκευση στοιχείων.",
+                )
+              }
+            >
+              {saving ? "Αποθήκευση…" : "Αποθήκευση στοιχείων"}
+            </button>
+          </div>
+        ) : (
+          <div className="mt-6 space-y-4">
+            <dl className="grid gap-3 rounded-xl border border-slate-200 bg-brand-surface/40 p-4 sm:grid-cols-2">
+              <DetailRow label="Κατάσταση">{organization.status}</DetailRow>
+              <DetailRow label="Trial λήγει">{formatDate(organization.trialEndsAt)}</DetailRow>
+              <DetailRow label="Περίοδος έως">{formatDate(organization.currentPeriodEnd)}</DetailRow>
+              <DetailRow label="Venues / Μενού / Πιάτα">
+                {organization.venueCount} / {organization.menuCount} / {organization.itemCount}
+              </DetailRow>
+              <DetailRow label="Stripe">
+                <div className="flex flex-wrap gap-3">
+                  {organization.stripeCustomerId ? (
+                    <a
+                      href={stripeCustomerDashboardUrl(organization.stripeCustomerId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-brand-blue hover:underline"
+                    >
+                      Πελάτης
+                      <ExternalLink className="h-3 w-3" aria-hidden />
+                    </a>
+                  ) : (
+                    <span className="text-slate-500">—</span>
+                  )}
+                  {organization.stripeSubId ? (
+                    <a
+                      href={stripeSubscriptionDashboardUrl(organization.stripeSubId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-brand-blue hover:underline"
+                    >
+                      Συνδρομή
+                      <ExternalLink className="h-3 w-3" aria-hidden />
+                    </a>
+                  ) : null}
+                </div>
+              </DetailRow>
+            </dl>
+
+            <label className="block text-sm">
+              <span className={dashboardLabelClass}>Πακέτο</span>
+              <select className={dashboardFieldClass} value={plan} onChange={(e) => setPlan(e.target.value)}>
+                <option value="TRIAL">TRIAL</option>
+                <option value="BASIC">BASIC</option>
+                <option value="PRO">PRO</option>
+                <option value="ENTERPRISE">ENTERPRISE</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              disabled={saving || plan === organization.plan}
+              className={buttonClass("primary", "sm")}
+              onClick={() => void save({ plan, status: planStatusForSave(plan) }, "Αποθήκευση συνδρομής.")}
+            >
+              {saving ? "Αποθήκευση…" : "Αποθήκευση πακέτου"}
+            </button>
+          </div>
+        )}
+
+        {message ? <p className="mt-4 text-sm text-emerald-700">{message}</p> : null}
+        {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
       </Card>
     </div>
   );

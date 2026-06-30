@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Download, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { SupervisorOrganizationEditor } from "@/components/supervisor/supervisor-organization-editor";
-import { downloadSupervisorOrganizationsCsv } from "@/lib/supervisor-export";
 import { stripeCustomerDashboardUrl } from "@/lib/stripe-dashboard-urls";
 import type { SupervisorOrganizationRow } from "@/lib/supervisor-service";
 
@@ -62,23 +61,6 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
           loading
             ? "Φόρτωση…"
             : `${rows.length} εγγραφές · επεξεργασία συνδρομής χωρίς διαγραφή δεδομένων`
-        }
-        action={
-          rows.length > 0 ? (
-            <button
-              type="button"
-              className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
-              onClick={() =>
-                downloadSupervisorOrganizationsCsv(
-                  rows,
-                  mode === "subscriptions" ? "menuos-subscriptions.csv" : "menuos-organizations.csv",
-                )
-              }
-            >
-              <Download className="h-4 w-4" aria-hidden />
-              Export CSV
-            </button>
-          ) : undefined
         }
       />
 

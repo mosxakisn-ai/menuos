@@ -39,7 +39,14 @@ export async function PATCH(request: Request, { params }: Params) {
 
   try {
     const organization = await updateOrganizationForSupervisor(id, parsed.data);
-    return NextResponse.json({ organization, message: "Αποθήκευση πακέτου." });
+    const message =
+      parsed.data.plan !== undefined ||
+      parsed.data.status !== undefined ||
+      parsed.data.extendTrialDays !== undefined ||
+      parsed.data.grantProMonths !== undefined
+        ? "Αποθήκευση συνδρομής."
+        : "Αποθήκευση στοιχείων.";
+    return NextResponse.json({ organization, message });
   } catch (err) {
     if (err instanceof Error && err.message === "not_found") {
       return NextResponse.json({ error: "Δεν βρέθηκε." }, { status: 404 });
