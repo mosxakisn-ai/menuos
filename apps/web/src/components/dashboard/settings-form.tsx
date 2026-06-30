@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
   dashboardFieldClass,
@@ -16,6 +17,7 @@ type Venue = {
   name: string;
   slug: string;
   description: string | null;
+  logoUrl: string | null;
   primaryColor: string;
   secondaryColor: string;
 };
@@ -25,6 +27,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
   const venue = venues.find((v) => v.id === venueId);
   const [name, setName] = useState(venue?.name ?? "");
   const [description, setDescription] = useState(venue?.description ?? "");
+  const [logoUrl, setLogoUrl] = useState(venue?.logoUrl ?? "");
   const [primaryColor, setPrimaryColor] = useState(venue?.primaryColor ?? "#2563EB");
   const [secondaryColor, setSecondaryColor] = useState(venue?.secondaryColor ?? "#06B6D4");
   const [saving, setSaving] = useState(false);
@@ -36,6 +39,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
     if (v) {
       setName(v.name);
       setDescription(v.description ?? "");
+      setLogoUrl(v.logoUrl ?? "");
       setPrimaryColor(v.primaryColor);
       setSecondaryColor(v.secondaryColor);
     }
@@ -49,7 +53,13 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
       const res = await fetch(`/api/venues/${venueId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description: description || undefined, primaryColor, secondaryColor }),
+        body: JSON.stringify({
+          name,
+          description: description || undefined,
+          logoUrl: logoUrl.trim() || "",
+          primaryColor,
+          secondaryColor,
+        }),
       });
       const data = await res.json();
       showFromResponse(data, res.ok);
@@ -75,7 +85,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-semibold text-brand-navy">Εμφάνιση καταλόγου</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Χρώματα και στοιχεία που βλέπουν οι πελάτες από το QR.
+              Logo, χρώματα και στοιχεία που βλέπουν οι πελάτες από το QR.
             </p>
           </div>
           <label className="block w-full lg:max-w-xs">
@@ -113,6 +123,13 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
               className={dashboardTextareaClass}
             />
           </label>
+          <PhotoUploadField
+            className="lg:col-span-2"
+            value={logoUrl}
+            onChange={setLogoUrl}
+            label={DASHBOARD_EL.photos.logoLabel}
+            hint={DASHBOARD_EL.photos.logoHint}
+          />
           <label className="block">
             <span className={dashboardLabelClass}>Κύριο χρώμα</span>
             <input

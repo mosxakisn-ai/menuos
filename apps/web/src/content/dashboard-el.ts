@@ -130,6 +130,8 @@ export const DASHBOARD_EL = {
   },
   photos: {
     label: "Φωτογραφία πιάτου (προαιρετικό)",
+    logoLabel: "Logo καταστήματος",
+    logoHint: "Εμφανίζεται στο QR menu δίπλα στο όνομα. Τετράγωνο ή στρογγυλό PNG/JPG — ιδανικά 200×200 px.",
     uploadButton: "Ανέβασμα από κινητό/υπολογιστή",
     uploading: "Ανέβασμα...",
     uploadHint: "JPG ή PNG έως 5 MB — βελτιστοποιείται αυτόματα για το menu.",

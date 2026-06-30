@@ -104,9 +104,22 @@ export const waiterCallCancelSchema = z.object({
 
 export const venueSpotTypeSchema = z.enum(["TABLE", "ROOM", "SUNBED"]);
 
+export const venueSpotLabelSchema = z
+  .string()
+  .min(1)
+  .max(20)
+  .trim()
+  .regex(/^[a-zA-Z0-9\u0370-\u03FF\u1F00-\u1FFF_-]+$/, {
+    message: "Μόνο γράμματα, αριθμοί, παύλα και κάτω παύλα.",
+  });
+
 export const venueSpotCreateSchema = z.object({
   type: venueSpotTypeSchema,
-  label: z.string().min(1).max(20).trim(),
+  label: venueSpotLabelSchema,
+});
+
+export const venueSpotUpdateSchema = z.object({
+  label: venueSpotLabelSchema,
 });
 
 export const venueSpotBulkCreateSchema = z
@@ -114,9 +127,20 @@ export const venueSpotBulkCreateSchema = z
     type: venueSpotTypeSchema,
     from: z.number().int().min(1).max(999),
     to: z.number().int().min(1).max(999),
+    prefix: z.string().max(15).trim().optional().default(""),
   })
   .refine((d) => d.to >= d.from, { message: "Το 'έως' πρέπει να είναι ≥ 'από'." })
-  .refine((d) => d.to - d.from < 200, { message: "Μέγιστο 200 θέσεις ανά φορά." });
+  .refine((d) => d.to - d.from < 200, { message: "Μέγιστο 200 θέσεις ανά φορά." })
+  .refine(
+    (d) => {
+      const prefix = d.prefix ?? "";
+      for (let n = d.from; n <= d.to; n++) {
+        if (`${prefix}${n}`.length > 20) return false;
+      }
+      return true;
+    },
+    { message: "Το πρόθεμα + αριθμός ξεπερνά 20 χαρακτήρες." },
+  );
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type RegisterOtpSendInput = z.infer<typeof registerOtpSendSchema>;
@@ -157,6 +181,9 @@ export const itemCreateSchema = z.object({
 export const venueUpdateSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   description: z.string().max(500).optional(),
+  logoUrl: z
+    .union([z.string().url().max(2048), z.literal(""), z.null()])
+    .optional(),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
 });

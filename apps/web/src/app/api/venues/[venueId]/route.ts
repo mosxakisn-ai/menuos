@@ -41,9 +41,16 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Μη έγκυρα στοιχεία." }, { status: 400 });
   }
 
+  const { logoUrl, ...rest } = parsed.data;
+  const normalizedLogo =
+    logoUrl === undefined ? undefined : logoUrl === "" || logoUrl === null ? null : logoUrl.trim();
+
   const venue = await prisma.venue.update({
     where: { id: venueId },
-    data: parsed.data,
+    data: {
+      ...rest,
+      ...(normalizedLogo !== undefined ? { logoUrl: normalizedLogo } : {}),
+    },
   });
 
   return NextResponse.json({ venue, message: "Οι ρυθμίσεις αποθηκεύτηκαν." });

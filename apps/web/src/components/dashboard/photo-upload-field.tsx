@@ -9,16 +9,22 @@ export function PhotoUploadField({
   value,
   onChange,
   className,
+  label,
+  hint,
 }: {
   value: string;
   onChange: (url: string) => void;
   className?: string;
+  label?: string;
+  hint?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploadEnabled, setUploadEnabled] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const p = DASHBOARD_EL.photos;
+  const displayLabel = label ?? p.label;
+  const displayHint = hint ?? p.uploadHint;
 
   useEffect(() => {
     void fetch("/api/photos/config")
@@ -50,7 +56,7 @@ export function PhotoUploadField({
 
   return (
     <div className={className}>
-      <span className="block text-sm font-medium text-brand-navy">{p.label}</span>
+      <span className="block text-sm font-medium text-brand-navy">{displayLabel}</span>
       {value ? (
         <div className="mt-2 flex items-start gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -125,7 +131,7 @@ export function PhotoUploadField({
             )}
             {uploading ? p.uploading : p.uploadButton}
           </button>
-          <p className="text-xs text-slate-500">{p.uploadHint}</p>
+          <p className="text-xs text-slate-500">{displayHint}</p>
           <input
             type="url"
             value={value}

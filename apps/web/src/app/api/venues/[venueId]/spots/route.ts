@@ -43,9 +43,10 @@ export async function POST(request: Request, { params }: Params) {
 
   const bulk = venueSpotBulkCreateSchema.safeParse(body);
   if (bulk.success) {
+    const prefix = bulk.data.prefix ?? "";
     const labels: string[] = [];
     for (let n = bulk.data.from; n <= bulk.data.to; n++) {
-      labels.push(String(n));
+      labels.push(`${prefix}${n}`);
     }
     const created = await prisma.$transaction(
       labels.map((label, index) =>

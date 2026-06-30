@@ -11,8 +11,17 @@ export function venueSpotTypeLabel(type: VenueSpotType): string {
   return VENUE_SPOT_TYPE_LABELS_EL[type] ?? type;
 }
 
+/** Pure numbers get a type prefix (e.g. «Τραπέζι 12»); custom ids show as-is (e.g. «sala-1»). */
 export function formatVenueSpotLabel(type: VenueSpotType, label: string): string {
-  return `${venueSpotTypeLabel(type)} ${label}`;
+  const trimmed = label.trim();
+  if (/^[0-9]+$/.test(trimmed)) return `${venueSpotTypeLabel(type)} ${trimmed}`;
+  return trimmed;
+}
+
+function formatLocationValue(typeLabel: string, value: string): string {
+  const trimmed = value.trim();
+  if (/^[0-9]+$/.test(trimmed)) return `${typeLabel} ${trimmed}`;
+  return trimmed;
 }
 
 export function spotToQueryParams(
@@ -31,9 +40,9 @@ export type WaiterCallLocation = {
 };
 
 export function formatWaiterCallLocation(call: WaiterCallLocation): string {
-  if (call.tableNumber) return `Τραπέζι ${call.tableNumber}`;
-  if (call.roomNumber) return `Δωμάτιο ${call.roomNumber}`;
-  if (call.sunbedNumber) return `Ξαπλώστρα ${call.sunbedNumber}`;
+  if (call.tableNumber) return formatLocationValue(VENUE_SPOT_TYPE_LABELS_EL.TABLE, call.tableNumber);
+  if (call.roomNumber) return formatLocationValue(VENUE_SPOT_TYPE_LABELS_EL.ROOM, call.roomNumber);
+  if (call.sunbedNumber) return formatLocationValue(VENUE_SPOT_TYPE_LABELS_EL.SUNBED, call.sunbedNumber);
   return "Χωρίς θέση";
 }
 

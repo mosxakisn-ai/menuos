@@ -73,6 +73,7 @@ export function MenuEditor({
   const [addingItem, setAddingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editNameGr, setEditNameGr] = useState("");
+  const [editPrice, setEditPrice] = useState("");
   const [editPhotoUrl, setEditPhotoUrl] = useState("");
   const [editExtras, setEditExtras] = useState<ItemExtra[]>([]);
   const [savingName, setSavingName] = useState(false);
@@ -204,6 +205,11 @@ export function MenuEditor({
 
   async function saveItemEdit(itemId: string) {
     if (!editNameGr.trim()) return;
+    const price = parseFloat(editPrice);
+    if (!Number.isFinite(price) || price < 0) {
+      setFlash({ type: "error", text: "Βάλε έγκυρη τιμή (π.χ. 4.50)." });
+      return;
+    }
     const extras = editExtras
       .map((e) => ({ ...e, labels: { ...e.labels, GR: e.labels.GR.trim() } }))
       .filter((e) => e.labels.GR);
@@ -214,6 +220,7 @@ export function MenuEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nameGr: editNameGr.trim(),
+          price,
           photoUrl: editPhotoUrl.trim() || "",
           extras,
         }),
@@ -258,6 +265,14 @@ export function MenuEditor({
 
   function tName(translations: Translation[]) {
     return translations.find((t) => t.language === "GR")?.name ?? translations[0]?.name ?? "—";
+  }
+
+  function startEditingItem(item: Item) {
+    setEditingItemId(item.id);
+    setEditNameGr(tName(item.translations));
+    setEditPrice(item.price.toString());
+    setEditPhotoUrl(item.photoUrl ?? "");
+    setEditExtras(parseItemExtras(item.extras));
   }
 
   const activeMenu = menus.find((m) => m.id === activeMenuId) ?? menus[0];
@@ -434,9 +449,21 @@ export function MenuEditor({
                               <input
                                 value={editNameGr}
                                 onChange={(e) => setEditNameGr(e.target.value)}
+                                placeholder="Όνομα πιάτου"
                                 className="min-w-[8rem] flex-1 rounded border border-slate-200 px-2 py-1 text-sm"
                                 autoFocus
                               />
+                              <label className="flex items-center gap-1.5 text-sm text-brand-navy">
+                                <span className="font-medium">€</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={editPrice}
+                                  onChange={(e) => setEditPrice(e.target.value)}
+                                  className="w-24 rounded border border-slate-200 px-2 py-1 text-sm"
+                                />
+                              </label>
                               <button
                                 type="button"
                                 disabled={savingName}
@@ -520,20 +547,24 @@ export function MenuEditor({
                             ) : null}
                             <button
                               type="button"
-                              onClick={() => {
-                                setEditingItemId(item.id);
-                                setEditNameGr(tName(item.translations));
-                                setEditPhotoUrl(item.photoUrl ?? "");
-                                setEditExtras(parseItemExtras(item.extras));
-                              }}
+                              onClick={() => startEditingItem(item)}
                               className="rounded p-1 text-slate-400 hover:text-brand-blue"
-                              title="Επεξεργασία ονόματος"
+                              title="Επεξεργασία πιάτου"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
                           </div>
                         )}
-                        <p className="text-sm text-brand-blue">€{item.price.toString()}</p>
+                        {editingItemId !== item.id ? (
+                          <button
+                            type="button"
+                            onClick={() => startEditingItem(item)}
+                            className="mt-0.5 text-sm text-brand-blue hover:underline"
+                            title="Αλλαγή τιμής"
+                          >
+                            €{item.price.toString()}
+                          </button>
+                        ) : null}
                         {parseItemExtras(item.extras).length > 0 ? (
                           <p className="text-[11px] text-slate-500">
                             {parseItemExtras(item.extras).length} επιλογές QR
