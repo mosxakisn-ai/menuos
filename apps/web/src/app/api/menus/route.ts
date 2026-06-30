@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
   const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
   if (!venue) {
-    return NextResponse.json({ error: "Venue not found" }, { status: 404 });
+    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
   }
 
   const menus = await prisma.menu.findMany({
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 
   const venue = await getVenueForOrganization(parsed.data.venueId, auth.session!.organizationId);
   if (!venue) {
-    return NextResponse.json({ error: "Venue not found" }, { status: 404 });
+    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
   }
 
   try {
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       });
     }, serializableTransaction);
 
-    return NextResponse.json({ menu, message: "Το menu δημιουργήθηκε." });
+    return NextResponse.json({ menu, message: "Ο κατάλογος δημιουργήθηκε." });
   } catch (err) {
     const limit = planLimitErrorResponse(err);
     if (limit) {

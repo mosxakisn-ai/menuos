@@ -106,7 +106,7 @@ export const SEO_QR_MENU_FAQ_EN = [
   },
   {
     q: "Can I change prices quickly?",
-    a: "Yes. Update from the dashboard and guests see the change immediately.",
+    a: "Yes. Update from your online panel and guests see the change immediately.",
   },
 ] as const;
 
@@ -121,7 +121,7 @@ export const SEO_PRICING_FAQ_EN = [
   },
   {
     q: "What does Enterprise include?",
-    a: "Custom domain, white-label, multiple venues, priority support — quote per project.",
+    a: "Custom domain, white-label, multiple locations, priority support — quote per project.",
   },
   {
     q: "Is there a long-term commitment?",
@@ -130,7 +130,7 @@ export const SEO_PRICING_FAQ_EN = [
 ] as const;
 
 export const SEO_PRICING_OFFERS_EN = [
-  { name: "7-day trial", price: 0, description: "1 venue, 1 menu, 50 items" },
-  { name: "Basic", price: 9.99, description: "1 venue, 3 menus, unlimited items" },
-  { name: "Pro", price: 19.99, description: "3 venues, unlimited menus" },
+  { name: "7-day trial", price: 0, description: "1 location, 1 menu, 50 items" },
+  { name: "Basic", price: 9.99, description: "1 location, 3 menus, unlimited items" },
+  { name: "Pro", price: 19.99, description: "3 locations, unlimited menus" },
 ] as const;

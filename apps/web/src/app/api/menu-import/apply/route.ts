@@ -130,6 +130,6 @@ export async function POST(request: Request) {
     createdCategories,
     createdItems,
     previousItemCount: currentCount,
-    message: `Εισήχθησαν ${createdItems} πιάτα σε ${createdCategories} κατηγορίες. Μπορείς να τα επεξεργαστείς (φωτο, τιμές) από το Menu.`,
+    message: `Εισήχθησαν ${createdItems} πιάτα σε ${createdCategories} κατηγορίες. Μπορείς να τα επεξεργαστείς (φωτο, τιμές) από τον κατάλογο.`,
   });
 }

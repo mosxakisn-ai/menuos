@@ -47,7 +47,7 @@ export async function createVenueHandler(request: Request, organizationId: strin
           settings: { create: { brandName: parsed.data.name } },
           menus: {
             create: {
-              name: "Κύριο Menu",
+              name: "Κύριος κατάλογος",
               type: "RESTAURANT",
             },
           },
@@ -56,7 +56,7 @@ export async function createVenueHandler(request: Request, organizationId: strin
       });
     }, serializableTransaction);
 
-    return NextResponse.json({ venue, message: "Το venue δημιουργήθηκε! Πρόσθεσε τώρα κατηγορίες και πιάτα." });
+    return NextResponse.json({ venue, message: "Το κατάστημα δημιουργήθηκε! Πρόσθεσε τώρα κατηγορίες και πιάτα." });
   } catch (err) {
     const limit = planLimitErrorResponse(err);
     if (limit) {

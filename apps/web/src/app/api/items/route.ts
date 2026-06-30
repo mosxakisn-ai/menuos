@@ -70,7 +70,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       item,
-      message: `Το πιάτο «${parsed.data.nameGr}» προστέθηκε στο menu.`,
+      message: `Το πιάτο «${parsed.data.nameGr}» προστέθηκε στον κατάλογο.`,
     });
   } catch (err) {
     const limit = planLimitErrorResponse(err);

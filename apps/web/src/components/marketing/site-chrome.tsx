@@ -135,6 +135,7 @@ export function SiteFooter() {
           <div>
             <p className="text-sm font-semibold text-white">{f.columns.product}</p>
             <ul className="mt-4 space-y-2.5 text-sm text-slate-300">
+              <li><Link href="/blog" className="hover:text-brand-cyan">Blog</Link></li>
               <li><Link href="/qr-menu" className="hover:text-brand-cyan">{f.links.qrMenu}</Link></li>
               <li><Link href={demoUrl} className="hover:text-brand-cyan">{f.links.demo}</Link></li>
               <li><Link href="/ypiresies" className="hover:text-brand-cyan">{f.links.services}</Link></li>

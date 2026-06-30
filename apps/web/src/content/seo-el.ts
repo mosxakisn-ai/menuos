@@ -206,7 +206,8 @@ export const SEO_LLMS = `# MenuOS (menuos.gr)
 - ${SEO_SITE.url}/pricing
 - ${SEO_SITE.url}/sxetika
 - ${SEO_SITE.url}/epikoinonia
-- ${SEO_SITE.url}/terms
+- ${SEO_SITE.url}/blog
+- ${SEO_SITE.url}/blog/pws-ftiaxno-qr-menu
 - ${SEO_SITE.url}/privacy
 
 ## SEO

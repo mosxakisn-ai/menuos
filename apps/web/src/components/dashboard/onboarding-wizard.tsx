@@ -64,7 +64,7 @@ export function OnboardingWizard({ state }: { state: OnboardingState }) {
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">Οδηγός εκκίνησης</p>
           <h2 className="mt-1 text-lg font-bold text-brand-navy">
-            Βήμα {Math.min(completed + 1, 3)} από 3 — φτιάξε το menu σου
+            Βήμα {Math.min(completed + 1, 3)} από 3 — φτιάξε τον κατάλογο σου
           </h2>
           <p className="mt-1 text-sm text-slate-600">
             Σε λιγότερο από μία ώρα μπορείς να έχεις QR menu στα τραπέζια σου.

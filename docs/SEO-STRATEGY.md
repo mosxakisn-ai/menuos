@@ -137,7 +137,7 @@ Public route listing all indexable pages, blog posts, landings, sitemap URL — 
 
 1. **Phase 1:** ✅ `seo.ts`, robots, sitemap (static pages), root JSON-LD, OG image, hreflang el/en, IndexNow script
 2. **Phase 1b:** ✅ 20 programmatic landings + footer hub (`lib/seo-landing.ts`, `[...slug]/page.tsx`)
-3. **Phase 2:** Blog + additional city combos (ongoing)
+3. **Phase 2:** ✅ Launch blog (3 articles) + additional city combos (ongoing via GSC data)
 4. **Ongoing:** GSC monitoring, new city/vertical pages based on Search Console data
 
 ## Do Not
