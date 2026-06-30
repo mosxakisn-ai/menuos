@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * Adds demo food photos to demo-taverna items (mains & salads only).
- * Drinks stay as compact list rows without photos.
+ * Adds demo food/drink photos to demo-taverna items missing images.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
+import { DEMO_PHOTO_CATEGORY_NAMES, resolveDemoPhoto } from "./lib/demo-photos.mjs";
 
 function loadDotEnv() {
   try {
@@ -35,18 +35,6 @@ loadDotEnv();
 const prisma = new PrismaClient();
 const venueSlug = "demo-taverna";
 
-const DEMO_PHOTOS = {
-  "Χωριάτικη":
-    "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80",
-  Ρόκα: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80",
-  Μουσακάς:
-    "https://images.unsplash.com/photo-1604908176997-431836457af9?auto=format&fit=crop&w=800&q=80",
-  "Σουβλάκι χοιρινό":
-    "https://images.unsplash.com/photo-1529006557810-274b1b4c8577?auto=format&fit=crop&w=800&q=80",
-  "Ψητή τσιπούρα":
-    "https://images.unsplash.com/photo-1544943910-4c1dc44aab44?auto=format&fit=crop&w=800&q=80",
-};
-
 async function main() {
   const venue = await prisma.venue.findUnique({
     where: { slug: venueSlug },
@@ -56,6 +44,7 @@ async function main() {
           categories: {
             include: {
               items: { include: { translations: true } },
+              translations: true,
             },
           },
         },
@@ -69,12 +58,25 @@ async function main() {
   }
 
   let updated = 0;
+  let skipped = 0;
+
   for (const menu of venue.menus) {
     for (const category of menu.categories) {
+      const catNameGr =
+        category.translations.find((t) => t.language === "GR")?.name ?? "";
+      const categoryWantsPhotos = DEMO_PHOTO_CATEGORY_NAMES.test(catNameGr);
+
       for (const item of category.items) {
         const nameGr = item.translations.find((t) => t.language === "GR")?.name;
-        const photo = nameGr ? DEMO_PHOTOS[nameGr] : undefined;
-        if (!photo) continue;
+        const photo = resolveDemoPhoto(nameGr);
+        if (!photo) {
+          skipped++;
+          continue;
+        }
+        if (!categoryWantsPhotos && !item.photoUrl) {
+          skipped++;
+          continue;
+        }
         if (item.photoUrl === photo) continue;
         await prisma.item.update({
           where: { id: item.id },
@@ -85,7 +87,7 @@ async function main() {
     }
   }
 
-  console.log(JSON.stringify({ ok: true, venueSlug, updated }));
+  console.log(JSON.stringify({ ok: true, venueSlug, updated, skipped }));
 }
 
 main()
