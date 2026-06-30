@@ -10,8 +10,8 @@ fi
 
 docker run --rm --network menuos_default \
   -e DATABASE_URL="$DB_URL" \
-  -e SEED_MASTER_EMAIL='mosxakisn@gmail.com' \
-  -e SEED_MASTER_PASSWORD='MenuOS-Master-2026!' \
+  -e SEED_MASTER_EMAIL="${SEED_MASTER_EMAIL:-mosxakisn@gmail.com}" \
+  -e SEED_MASTER_PASSWORD="${SEED_MASTER_PASSWORD:-MenuOS-Master-2026!}" \
   -v /opt/menuos/scripts/seed-master-user.mjs:/seed.mjs:ro \
   -v /opt/menuos/packages/db/prisma:/prisma:ro \
   -w /tmp \
