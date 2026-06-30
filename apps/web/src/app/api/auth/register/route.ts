@@ -119,6 +119,7 @@ export async function POST(request: Request) {
         name,
         businessName,
         trialEndsAt,
+        trialDays,
       }),
     );
 

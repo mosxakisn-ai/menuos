@@ -30,4 +30,10 @@ export function formatTrialDaysLeft(daysLeft: number): string {
   return `${daysLeft} μέρες απομένουν`;
 }
 
+/** Whole calendar days in a trial window (e.g. signup → trialEndsAt). */
+export function getTrialPeriodDays(trialEndsAt: Date, startedAt: Date): number {
+  const ms = trialEndsAt.getTime() - startedAt.getTime();
+  return Math.max(1, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+}
+
 export { TRIAL_DAYS };

@@ -13,6 +13,7 @@ import {
   cartTotal,
   formatOrderLineDetail,
   mergeCartLine,
+  mergeOrderPayload,
   normalizeWaiterCallLocation,
   orderLineKey,
   parseCartJson,
@@ -134,6 +135,7 @@ export function PublicMenuView({
   const [cancelErrorCode, setCancelErrorCode] = useState<CancelErrorCode | null>(null);
   const [orderErrorCode, setOrderErrorCode] = useState<CallErrorCode | null>(null);
   const [callCancellable, setCallCancellable] = useState(false);
+  const [sentOrder, setSentOrder] = useState<OrderPayload | null>(null);
   const [canGoBack, setCanGoBack] = useState(false);
   const [scrolledFromTop, setScrolledFromTop] = useState(false);
   const actionResetTimersRef = useRef<Partial<Record<ActionKind, ReturnType<typeof setTimeout>>>>({});
@@ -162,28 +164,45 @@ export function PublicMenuView({
     [cartKey],
   );
 
+  const persistSentOrder = useCallback(
+    (payload: OrderPayload | null) => {
+      const key = sentOrderStorageKey(cartKey);
+      if (!payload?.lines?.length) {
+        sessionStorage.removeItem(key);
+        setSentOrder(null);
+      } else {
+        sessionStorage.setItem(key, JSON.stringify(payload));
+        setSentOrder(payload);
+      }
+    },
+    [cartKey],
+  );
+
   const clearActiveCall = useCallback(() => {
     sessionStorage.removeItem(storageKey);
-    sessionStorage.removeItem(sentOrderStorageKey(cartKey));
+    persistSentOrder(null);
     setActiveCalls([]);
     setCallCancellable(false);
-  }, [cartKey, storageKey]);
+  }, [persistSentOrder, storageKey]);
 
-  const applyTableCalls = useCallback((calls: TableCall[]) => {
-    setActiveCalls(calls);
-    if (!calls.some((c) => c.type === "ORDER")) {
-      sessionStorage.removeItem(sentOrderStorageKey(cartKey));
-    }
-    const cancellable = calls.find((c) => c.cancellable);
-    const primary = cancellable ?? calls[0];
-    if (primary) {
-      setCallCancellable(primary.cancellable);
-      sessionStorage.setItem(storageKey, primary.id);
-    } else {
-      setCallCancellable(false);
-      sessionStorage.removeItem(storageKey);
-    }
-  }, [cartKey, storageKey]);
+  const applyTableCalls = useCallback(
+    (calls: TableCall[]) => {
+      setActiveCalls(calls);
+      if (!calls.some((c) => c.type === "ORDER")) {
+        persistSentOrder(null);
+      }
+      const cancellable = calls.find((c) => c.cancellable);
+      const primary = cancellable ?? calls[0];
+      if (primary) {
+        setCallCancellable(primary.cancellable);
+        sessionStorage.setItem(storageKey, primary.id);
+      } else {
+        setCallCancellable(false);
+        sessionStorage.removeItem(storageKey);
+      }
+    },
+    [persistSentOrder, storageKey],
+  );
 
   const menuLocation = useMemo(
     () => normalizeWaiterCallLocation({ tableNumber, roomNumber, sunbedNumber }),
@@ -216,6 +235,18 @@ export function PublicMenuView({
     }));
   }, [menuLocation, venue.slug]);
 
+  const fetchSentOrderForCall = useCallback(
+    async (callId: string): Promise<OrderPayload | null> => {
+      const params = new URLSearchParams({ venueSlug: venue.slug, callId });
+      const res = await fetch(`/api/waiter-call/status?${params}`);
+      if (!res.ok) return null;
+      const data = (await res.json()) as { type?: string; orderItems?: unknown };
+      if (data.type !== "ORDER" || !data.orderItems) return null;
+      return parseOrderPayload(data.orderItems);
+    },
+    [venue.slug],
+  );
+
   const syncTableStatus = useCallback(async () => {
     try {
       const calls = await fetchTableCalls();
@@ -224,10 +255,21 @@ export function PublicMenuView({
         return;
       }
       applyTableCalls(calls);
+      const orderCall = calls.find((c) => c.type === "ORDER");
+      if (orderCall) {
+        const fromServer = await fetchSentOrderForCall(orderCall.id);
+        if (fromServer) persistSentOrder(fromServer);
+      }
     } catch {
       // keep local state on transient errors
     }
-  }, [applyTableCalls, clearActiveCall, fetchTableCalls]);
+  }, [
+    applyTableCalls,
+    clearActiveCall,
+    fetchSentOrderForCall,
+    fetchTableCalls,
+    persistSentOrder,
+  ]);
 
   const restoreActiveCall = useCallback(async () => {
     await syncTableStatus();
@@ -497,9 +539,19 @@ export function PublicMenuView({
         setTimeout(() => setOrderState("idle"), 4000);
         return;
       }
-      const sentPayload = buildOrderPayload(cartLines, lang);
-      sessionStorage.setItem(sentOrderStorageKey(cartKey), JSON.stringify(sentPayload));
+      const incoming = buildOrderPayload(cartLines, lang);
       persistCart([]);
+      if (data.id) {
+        const fromServer = await fetchSentOrderForCall(data.id);
+        if (fromServer) {
+          persistSentOrder(fromServer);
+        } else {
+          const stored = parseOrderPayload(sessionStorage.getItem(sentOrderStorageKey(cartKey)));
+          persistSentOrder(mergeOrderPayload(stored, incoming));
+        }
+      } else {
+        persistSentOrder(incoming);
+      }
       setOrderState("success");
       setTimeout(() => setOrderState("idle"), 3000);
       void syncTableStatus();
@@ -617,16 +669,6 @@ export function PublicMenuView({
   const cartCount = cartItemCount(cartLines);
   const cartTotalStr = cartTotal(cartLines);
   const hasCart = cartLines.length > 0;
-  const sentOrder = useMemo(() => {
-    if (!activeCalls.some((c) => c.type === "ORDER")) return null;
-    try {
-      const raw = sessionStorage.getItem(sentOrderStorageKey(cartKey));
-      if (!raw) return null;
-      return parseOrderPayload(JSON.parse(raw));
-    } catch {
-      return null;
-    }
-  }, [activeCalls, cartKey]);
   const hasSentOrder = Boolean(sentOrder?.lines?.length);
 
   const categoryNav = activeMenu?.categories ?? [];

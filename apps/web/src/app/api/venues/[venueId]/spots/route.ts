@@ -52,16 +52,22 @@ export async function POST(request: Request, { params }: Params) {
     for (let n = bulkResult.data.from; n <= bulkResult.data.to; n++) {
       labels.push(`${prefix}${n}`);
     }
+    const maxSort = await prisma.venueSpot.aggregate({
+      where: { venueId, type: bulkResult.data.type },
+      _max: { sortOrder: true },
+    });
+    let nextSort = (maxSort._max.sortOrder ?? -1) + 1;
     const created = await prisma.$transaction(
-      labels.map((label, index) =>
-        prisma.venueSpot.upsert({
+      labels.map((label) => {
+        const sortOrder = nextSort++;
+        return prisma.venueSpot.upsert({
           where: {
             venueId_type_label: { venueId, type: bulkResult.data.type, label },
           },
-          create: { venueId, type: bulkResult.data.type, label, sortOrder: index },
+          create: { venueId, type: bulkResult.data.type, label, sortOrder },
           update: {},
-        }),
-      ),
+        });
+      }),
     );
     return NextResponse.json({
       spots: created,

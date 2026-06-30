@@ -94,6 +94,16 @@ function pickPrimaryOrgUser<T extends { role: string; createdAt: Date }>(users: 
   );
 }
 
+function addCalendarMonths(from: Date, months: number): Date {
+  const result = new Date(from);
+  const day = result.getDate();
+  result.setDate(1);
+  result.setMonth(result.getMonth() + months);
+  const lastDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+  result.setDate(Math.min(day, lastDay));
+  return result;
+}
+
 function mapOrganizationRow(
   org: {
     id: string;
@@ -374,8 +384,7 @@ export async function updateOrganizationForSupervisor(
   } = {};
 
   if (input.grantProMonths) {
-    const periodEnd = new Date(now);
-    periodEnd.setMonth(periodEnd.getMonth() + input.grantProMonths);
+    const periodEnd = addCalendarMonths(now, input.grantProMonths);
     data.plan = "PRO";
     data.status = "ACTIVE";
     data.trialEndsAt = null;
@@ -387,9 +396,7 @@ export async function updateOrganizationForSupervisor(
       data.trialEndsAt = null;
       const sub = await prisma.subscription.findUnique({ where: { organizationId: id } });
       if (!sub?.currentPeriodEnd && input.plan !== "ENTERPRISE") {
-        const periodEnd = new Date(now);
-        periodEnd.setMonth(periodEnd.getMonth() + 1);
-        data.currentPeriodEnd = periodEnd;
+        data.currentPeriodEnd = addCalendarMonths(now, 1);
       }
     }
     if (input.extendTrialDays) {

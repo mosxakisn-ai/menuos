@@ -9,7 +9,7 @@ import { DashboardSidebarSubscription } from "@/components/dashboard/dashboard-s
 import { DashboardSidebarNav } from "@/components/dashboard/dashboard-sidebar-nav";
 import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
 import { getSession } from "@/lib/auth";
-import { isTrialPlan, isTrialStillActive } from "@menuos/shared";
+import { isTrialPlan, isTrialStillActive, getTrialPeriodDays, TRIAL_DAYS } from "@menuos/shared";
 import { organizationHasActiveSubscription } from "@/lib/billing";
 import { formatSubscriptionSummary } from "@/lib/subscription-display";
 import { roleLabel } from "@/content/dashboard-el";
@@ -80,6 +80,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     subscription.trialEndsAt &&
     isTrialStillActive(subscription.trialEndsAt);
   const trialEndsAtIso = subscription?.trialEndsAt?.toISOString() ?? null;
+  const trialPeriodDays =
+    org?.subscription?.trialEndsAt && org.createdAt
+      ? getTrialPeriodDays(org.subscription.trialEndsAt, org.createdAt)
+      : TRIAL_DAYS;
 
   return (
     <div className="flex min-h-screen bg-brand-surface">
@@ -142,7 +146,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className="mx-auto w-full max-w-6xl">
             {showTrialBanner && trialEndsAtIso ? (
               <div className="mb-6">
-                <TrialStatusBanner trialEndsAt={trialEndsAtIso} />
+                <TrialStatusBanner trialEndsAt={trialEndsAtIso} trialPeriodDays={trialPeriodDays} />
               </div>
             ) : null}
             {children}

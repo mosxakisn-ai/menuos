@@ -12,7 +12,6 @@ import {
   buildWelcomeEmailHtml,
   buildWelcomeEmailText,
 } from "@/lib/mail-templates";
-import { TRIAL_DAYS } from "@menuos/shared";
 import { createMailTransporter, isMailConfigured, mailFromAddress } from "@/lib/mail-transport";
 
 export { isMailConfigured };
@@ -64,8 +63,12 @@ export async function sendWelcomeEmail(input: {
   name: string;
   businessName: string;
   trialEndsAt: Date;
+  trialDays?: number;
 }): Promise<void> {
   const trialEndsAt = input.trialEndsAt.toLocaleDateString("el-GR");
+  const trialDays =
+    input.trialDays ??
+    Math.max(1, Math.ceil((input.trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
   await sendBrandedEmail({
     to: input.to,
     subject: "MenuOS — καλώς ήρθες · ξεκίνα τη δοκιμή σου",
@@ -73,13 +76,13 @@ export async function sendWelcomeEmail(input: {
       name: input.name,
       businessName: input.businessName,
       trialEndsAt,
-      trialDays: TRIAL_DAYS,
+      trialDays,
     }),
     html: buildWelcomeEmailHtml({
       name: input.name,
       businessName: input.businessName,
       trialEndsAt,
-      trialDays: TRIAL_DAYS,
+      trialDays,
     }),
     logLabel: `welcome (${input.businessName})`,
   });

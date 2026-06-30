@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { Clock } from "lucide-react";
-import { formatTrialDaysLeft, getTrialDaysLeft, getTrialUrgency, TRIAL_DAYS } from "@menuos/shared";
+import { formatTrialDaysLeft, getTrialDaysLeft, getTrialPeriodDays, getTrialUrgency } from "@menuos/shared";
 import { buttonClass } from "@/components/ui/button";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
 import { cn } from "@/lib/utils";
 
-export function TrialStatusBanner({ trialEndsAt }: { trialEndsAt: string }) {
+export function TrialStatusBanner({
+  trialEndsAt,
+  trialPeriodDays,
+}: {
+  trialEndsAt: string;
+  trialPeriodDays: number;
+}) {
   const end = new Date(trialEndsAt);
   const daysLeft = getTrialDaysLeft(end);
   if (daysLeft <= 0) return null;
@@ -41,7 +47,7 @@ export function TrialStatusBanner({ trialEndsAt }: { trialEndsAt: string }) {
         </p>
         <p className="mt-1.5 text-sm leading-relaxed opacity-90">{DASHBOARD_EL.trial.setupHint}</p>
         <p className="mt-1 text-xs opacity-75">
-          {TRIAL_DAYS}ήμερη δοκιμή · {daysLabel} · λήγει {endsLabel}
+          {trialPeriodDays}ήμερη δοκιμή · {daysLabel} · λήγει {endsLabel}
         </p>
       </div>
       <Link

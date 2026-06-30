@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { TRIAL_DAYS } from "@menuos/shared";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
@@ -8,9 +7,11 @@ import { DASHBOARD_EL } from "@/content/dashboard-el";
 export function WelcomeTrialCard({
   show,
   trialEndsAt,
+  trialPeriodDays,
 }: {
   show?: boolean;
   trialEndsAt: string | null;
+  trialPeriodDays: number;
 }) {
   if (!show) return null;
 
@@ -28,7 +29,7 @@ export function WelcomeTrialCard({
           <p className="mt-2 text-sm leading-relaxed text-slate-600">{DASHBOARD_EL.welcome}</p>
           {endsLabel ? (
             <p className="mt-3 text-sm font-medium text-brand-navy">
-              {DASHBOARD_EL.trial.welcomeEnds(TRIAL_DAYS, endsLabel)}
+              {DASHBOARD_EL.trial.welcomeEnds(trialPeriodDays, endsLabel)}
             </p>
           ) : null}
           <p className="mt-2 text-xs leading-relaxed text-slate-500">{DASHBOARD_EL.trial.welcomeEmailHint}</p>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@menuos/db";
-import { isTrialPlan } from "@menuos/shared";
+import { isTrialPlan, getTrialPeriodDays, TRIAL_DAYS } from "@menuos/shared";
 import { WelcomeTrialCard } from "@/components/dashboard/welcome-trial-card";
 import {
   DashboardPage as DashboardPageShell,
@@ -53,11 +53,15 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   const planId = org?.subscription?.plan ?? "TRIAL";
   const trialEndsAt = org?.subscription?.trialEndsAt?.toISOString() ?? null;
+  const trialPeriodDays =
+    org?.subscription?.trialEndsAt && org.createdAt
+      ? getTrialPeriodDays(org.subscription.trialEndsAt, org.createdAt)
+      : TRIAL_DAYS;
   const renewalStat = subscriptionRenewalStat(org?.subscription);
 
   return (
     <DashboardPageShell>
-      <WelcomeTrialCard show={sp.welcome === "1"} trialEndsAt={trialEndsAt} />
+      <WelcomeTrialCard show={sp.welcome === "1"} trialEndsAt={trialEndsAt} trialPeriodDays={trialPeriodDays} />
       <DashboardPageHeader
         title={org?.name ?? "Επισκόπηση"}
         description={`Πλάνο: ${planLabel(planId)} · ${venueCount} ${venueCount === 1 ? DASHBOARD_EL.venue.toLowerCase() : DASHBOARD_EL.venues.toLowerCase()} · ${menuCount} ${menuCount === 1 ? "κατάλογος" : "κατάλογοι"} · ${itemCount} πιάτα`}
