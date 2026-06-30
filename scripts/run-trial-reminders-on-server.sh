@@ -5,10 +5,9 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-set -a
 # shellcheck disable=SC1091
-source scripts/load-env.sh 2>/dev/null || true
-set +a
+source scripts/load-env.sh
+load_env "$ROOT"
 SECRET="${CRON_SECRET:-}"
 APP="${APP_URL:-https://menuos.gr}"
 if [[ -z "$SECRET" ]]; then
