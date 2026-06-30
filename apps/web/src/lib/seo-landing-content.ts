@@ -35,6 +35,12 @@ const CITY_LABELS: Record<SeoCitySlug, { el: string; en: string; inEl: string; i
   patra: { el: "Πάτρα", en: "Patras", inEl: "στην Πάτρα", inEn: "in Patras" },
   ioannina: { el: "Ιωάννινα", en: "Ioannina", inEl: "στα Ιωάννινα", inEn: "in Ioannina" },
   kavala: { el: "Καβάλα", en: "Kavala", inEl: "στην Καβάλα", inEn: "in Kavala" },
+  milos: { el: "Μήλος", en: "Milos", inEl: "στη Μήλο", inEn: "in Milos" },
+  rethymno: { el: "Ρέθυμνο", en: "Rethymno", inEl: "στο Ρέθυμνο", inEn: "in Rethymno" },
+  iraklio: { el: "Ηράκλειο", en: "Heraklion", inEl: "στο Ηράκλειο", inEn: "in Heraklion" },
+  sifnos: { el: "Σίφνος", en: "Sifnos", inEl: "στη Σίφνο", inEn: "in Sifnos" },
+  larisa: { el: "Λάρισα", en: "Larissa", inEl: "στη Λάρισα", inEn: "in Larissa" },
+  volos: { el: "Βόλος", en: "Volos", inEl: "στον Βόλο", inEn: "in Volos" },
 };
 
 const VERTICAL_LABELS: Record<

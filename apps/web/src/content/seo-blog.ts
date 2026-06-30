@@ -329,6 +329,99 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
       },
     ],
   },
+  {
+    slug: "pool-bar-qr-menu-xenodoxeia",
+    title: "Pool bar QR menu — ψηφιακός κατάλογος γύρω από την πισίνα",
+    description:
+      "QR menu για pool bar σε ξενοδοχεία: ξαπλώστρες, ποτά, snacks, κλήση σερβιτόρου. Πολυγλωσσικό για τουρίστες.",
+    publishedAt: "2026-06-30",
+    readingMinutes: 4,
+    relatedPaths: ["/pool-bar/digital-menu", "/xenodocheio/digital-menu", "/santorini/xenodocheio/digital-menu"],
+    sections: [
+      {
+        paragraphs: [
+          "Στο pool bar οι επισκέπτες θέλουν να παραγγέλνουν χωρίς να φεύγουν από την ξαπλώστρα. Το QR menu λύνει ακριβώς αυτό.",
+          "Με MenuOS φτιάχνετε ξεχωριστό κατάλογο pool bar — ποτά, cocktails, light meals — με τιμές που ενημερώνονται online.",
+        ],
+      },
+      {
+        heading: "Πού μπαίνουν τα QR",
+        paragraphs: [
+          "Στις ξαπλώστρες γύρω από το pool ή στα τραπέζια του bar.",
+          "Κάθε QR μπορεί να έχει αριθμό ξαπλώστρας για κλήση σερβιτόρου.",
+        ],
+      },
+      {
+        heading: "Σύνδεση με ξενοδοχείο",
+        paragraphs: [
+          "Ξεχωριστός κατάλογος από το εστιατόριο και το room service — όλα στο ίδιο dashboard.",
+          "Πολλαπλές γλώσσες για διεθνείς επισκέπτες.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "room-service-qr-menu",
+    title: "Room service με QR menu — παραγγελία από το δωμάτιο",
+    description:
+      "QR ανά δωμάτιο (?room=): ο πελάτης βλέπει menu, παραγγέλνει και καλεί room service χωρίς τηλεφώνημα.",
+    publishedAt: "2026-06-30",
+    readingMinutes: 4,
+    relatedPaths: ["/room-service/qr-menu", "/blog/qr-menu-xenodocheio", "/kriti/xenodocheio/digital-menu"],
+    sections: [
+      {
+        paragraphs: [
+          "Το room service με printed φακέλο στο δωμάτιο ξεπερνιέται. Με QR menu ο πελάτης σκανάρει, βλέπει ενημερωμένες τιμές και παραγγέλνει.",
+          "Το link περιλαμβάνει αριθμό δωματίου — το προσωπικό ξέρει ακριβώς πού να πάει.",
+        ],
+      },
+      {
+        heading: "Τι χρειάζεστε",
+        paragraphs: [
+          "Ξεχωριστός κατάλογος room service στη διαχείριση MenuOS.",
+          "QR card ή sticker στο δωμάτιο με ?room=101 στο link.",
+        ],
+      },
+      {
+        heading: "Πλεονεκτήματα",
+        paragraphs: [
+          "Άμεση ενημέρωση τιμών και διαθεσιμότητας πιάτων.",
+          "Πολυγλωσσικό menu — ιδανικό για ξένους επισκέπτες.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "pos-vazw-qr-sta-trapezia",
+    title: "Πού βάζω QR codes στα τραπέζια — πρακτικός οδηγός",
+    description:
+      "Μέγεθος, υλικό, τοποθέτηση και link με αριθμό τραπεζιού. Tips για εστιατόρια και beach bars.",
+    publishedAt: "2026-06-30",
+    readingMinutes: 3,
+    relatedPaths: ["/pos-leitourgei", "/blog/pws-ftiaxno-qr-menu", "/estiatorio/qr-menu"],
+    sections: [
+      {
+        paragraphs: [
+          "Το QR πρέπει να σκανάρεται εύκολα — όχι πολύ μικρό, όχι κρυμμένο κάτω από το τραπέζι.",
+          "Από το MenuOS κατεβάζετε έτοιμα PNG/SVG QR codes για κάθε τραπέζι ή χώρο.",
+        ],
+      },
+      {
+        heading: "Link με αριθμό τραπεζιού",
+        paragraphs: [
+          "Προσθέστε ?table=12 στο link — ενεργοποιείται κλήση σερβιτόρου και λογαριασμός από το menu.",
+          "Χωρίς table/room parameter τα κουμπιά κλήσης δεν εμφανίζονται (ασφάλεια).",
+        ],
+      },
+      {
+        heading: "Υλικά",
+        paragraphs: [
+          "Εκτύπωση σε ανθεκτικό PVC ή ακρυλικό stand — ιδιαίτερα σε beach bars.",
+          "Δοκιμάστε σκανάρισμα από 30–40 cm πριν την μαζική εκτύπωση.",
+        ],
+      },
+    ],
+  },
 ];
 
 export const SEO_BLOG_INDEX = {

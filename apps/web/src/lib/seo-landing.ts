@@ -30,7 +30,13 @@ export type SeoCitySlug =
   | "kalamata"
   | "patra"
   | "ioannina"
-  | "kavala";
+  | "kavala"
+  | "milos"
+  | "rethymno"
+  | "iraklio"
+  | "sifnos"
+  | "larisa"
+  | "volos";
 
 export type SeoLandingKind = "product" | "vertical" | "city" | "city-vertical";
 
@@ -239,6 +245,162 @@ const LANDINGS: SeoLandingConfig[] = [
     city: "kalamata",
     vertical: "estiatorio",
   }),
+
+  landing({
+    kind: "city-vertical",
+    path: "/athina/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "athina",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/athina/xenodocheio/digital-menu",
+    product: "digital-menu",
+    city: "athina",
+    vertical: "xenodocheio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/korfu/beach-bar/qr-menu",
+    product: "qr-menu",
+    city: "korfu",
+    vertical: "beach-bar",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/paros/beach-bar/qr-menu",
+    product: "qr-menu",
+    city: "paros",
+    vertical: "beach-bar",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/patra/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "patra",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/ioannina/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "ioannina",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/kavala/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "kavala",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/thessaloniki/xenodocheio/digital-menu",
+    product: "digital-menu",
+    city: "thessaloniki",
+    vertical: "xenodocheio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/rodos/xenodocheio/digital-menu",
+    product: "digital-menu",
+    city: "rodos",
+    vertical: "xenodocheio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/santorini/beach-bar/qr-menu",
+    product: "qr-menu",
+    city: "santorini",
+    vertical: "beach-bar",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/naxos/beach-bar/qr-menu",
+    product: "qr-menu",
+    city: "naxos",
+    vertical: "beach-bar",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/lefkada/beach-bar/qr-menu",
+    product: "qr-menu",
+    city: "lefkada",
+    vertical: "beach-bar",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/halkidiki/beach-bar/qr-menu",
+    product: "qr-menu",
+    city: "halkidiki",
+    vertical: "beach-bar",
+  }),
+
+  landing({ kind: "city", path: "/milos/qr-menu", product: "qr-menu", city: "milos" }),
+  landing({ kind: "city", path: "/rethymno/digital-menu", product: "digital-menu", city: "rethymno" }),
+  landing({ kind: "city", path: "/iraklio/qr-menu", product: "qr-menu", city: "iraklio" }),
+  landing({ kind: "city", path: "/sifnos/digital-menu", product: "digital-menu", city: "sifnos" }),
+  landing({ kind: "city", path: "/larisa/qr-menu", product: "qr-menu", city: "larisa" }),
+  landing({ kind: "city", path: "/volos/digital-menu", product: "digital-menu", city: "volos" }),
+
+  landing({
+    kind: "city-vertical",
+    path: "/milos/beach-bar/qr-menu",
+    product: "qr-menu",
+    city: "milos",
+    vertical: "beach-bar",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/rethymno/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "rethymno",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/rethymno/xenodocheio/digital-menu",
+    product: "digital-menu",
+    city: "rethymno",
+    vertical: "xenodocheio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/iraklio/xenodocheio/digital-menu",
+    product: "digital-menu",
+    city: "iraklio",
+    vertical: "xenodocheio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/iraklio/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "iraklio",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/sifnos/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "sifnos",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/larisa/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "larisa",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/volos/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "volos",
+    vertical: "estiatorio",
+  }),
 ];
 
 const LANDING_BY_PATH = new Map(LANDINGS.map((entry) => [entry.path, entry]));
@@ -316,9 +478,19 @@ export const SEO_FOOTER_HUB = {
       labelEn: "Beach bar · Zakynthos",
     },
     {
-      href: "/halkidiki/xenodocheio/digital-menu",
-      labelEl: "Ξενοδοχείο · Χαλκιδική",
-      labelEn: "Hotel · Halkidiki",
+      href: "/iraklio/xenodocheio/digital-menu",
+      labelEl: "Ξενοδοχείο · Ηράκλειο",
+      labelEn: "Hotel · Heraklion",
+    },
+    {
+      href: "/milos/beach-bar/qr-menu",
+      labelEl: "Beach bar · Μήλος",
+      labelEn: "Beach bar · Milos",
+    },
+    {
+      href: "/rethymno/estiatorio/qr-menu",
+      labelEl: "Εστιατόριο · Ρέθυμνο",
+      labelEn: "Restaurant · Rethymno",
     },
   ] as const,
   verticals: [
