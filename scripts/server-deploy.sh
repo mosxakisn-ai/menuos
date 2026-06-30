@@ -21,8 +21,13 @@ docker compose -f docker-compose.prod.yml build menuos-web
 
 if [ "$RUN_DB_PUSH" = "1" ]; then
   echo "==> DB schema sync..."
-  docker compose -f docker-compose.prod.yml run --rm --no-deps --user root --entrypoint sh menuos-web -c \
-    "node /app/node_modules/prisma/build/index.js db push --schema=/app/packages/db/prisma/schema.prisma --skip-generate"
+  if docker compose -f docker-compose.prod.yml run --rm --no-deps --user root --entrypoint sh menuos-web -c \
+    "node /app/node_modules/prisma/build/index.js db push --schema=/app/packages/db/prisma/schema.prisma --skip-generate" 2>/dev/null; then
+    echo "    prisma db push OK"
+  else
+    echo "    prisma db push failed — applying SQL migrations..."
+    bash "$ROOT/scripts/apply-sql-migrations.sh"
+  fi
 else
   echo "==> Skipping DB schema sync (RUN_DB_PUSH=0)"
 fi

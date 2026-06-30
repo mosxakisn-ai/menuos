@@ -49,7 +49,7 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
   if (!venue) notFound();
 
   if (!organizationIsPubliclyActive(venue.organization.subscription)) {
-    return <PublicMenuUnavailable venueName={venue.name} />;
+    return <PublicMenuUnavailable venueName={venue.name} language={lang} />;
   }
 
   const publicVenue = {

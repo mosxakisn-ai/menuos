@@ -8,7 +8,7 @@ import { getSession } from "@/lib/auth";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
 
-export const metadata: Metadata = buildPrivatePageMetadata("Billing", "/dashboard/billing");
+export const metadata: Metadata = buildPrivatePageMetadata("Συνδρομή", "/dashboard/billing");
 
 export default async function BillingPage() {
   const session = await getSession();
@@ -21,9 +21,9 @@ export default async function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-2xl font-bold text-primary">Billing</h1>
+        <h1 className="font-serif text-2xl font-bold text-primary">Συνδρομή</h1>
         <p className="text-sm text-slate-600">
-          Manage your MenuOS subscription. Payments are processed securely via Stripe.
+          Διαχείριση συνδρομής MenuOS. Οι πληρωμές γίνονται με ασφάλεια μέσω Stripe.
         </p>
       </div>
 

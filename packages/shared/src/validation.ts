@@ -116,17 +116,38 @@ export const menuImportApplySchema = z.object({
   categories: z.array(menuImportCategorySchema).min(1),
 });
 
+export const menuCreateSchema = z.object({
+  venueId: z.string().min(1),
+  name: z.string().min(1).max(120),
+  type: z
+    .enum(["BREAKFAST", "RESTAURANT", "POOL_BAR", "BEACH_BAR", "ROOM_SERVICE", "SPA", "ACTIVITIES", "OTHER"])
+    .optional(),
+});
+
 export const itemPatchSchema = z
   .object({
     available: z.boolean().optional(),
     price: z.number().finite().min(0).max(99999).optional(),
     label: itemLabelSchema.optional(),
+    nameGr: z.string().min(1).max(120).optional(),
+    nameEn: z.string().max(120).optional(),
+    nameDe: z.string().max(120).optional(),
+    nameFr: z.string().max(120).optional(),
   })
-  .refine((d) => d.available !== undefined || d.price !== undefined || d.label !== undefined, {
-    message: "Nothing to update",
-  });
+  .refine(
+    (d) =>
+      d.available !== undefined ||
+      d.price !== undefined ||
+      d.label !== undefined ||
+      d.nameGr !== undefined ||
+      d.nameEn !== undefined ||
+      d.nameDe !== undefined ||
+      d.nameFr !== undefined,
+    { message: "Nothing to update" },
+  );
 
 export type ItemPatchInput = z.infer<typeof itemPatchSchema>;
+export type MenuCreateInput = z.infer<typeof menuCreateSchema>;
 export type MenuImportApplyInput = z.infer<typeof menuImportApplySchema>;
 export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
 export type ItemCreateInput = z.infer<typeof itemCreateSchema>;

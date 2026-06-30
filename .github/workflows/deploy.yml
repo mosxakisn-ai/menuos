@@ -24,9 +24,14 @@ jobs:
             set -euo pipefail
             APP_DIR="/opt/menuos"
             cd "$APP_DIR"
+            if [ ! -d .git ]; then
+              echo "No git repo — adopting in place..."
+              chmod +x scripts/server-git-adopt.sh 2>/dev/null || true
+              APP_DIR="$APP_DIR" bash scripts/server-git-adopt.sh
+            fi
             git config core.sshCommand "ssh -i /root/.ssh/github_menuos -o IdentitiesOnly=yes"
             if [ ! -d .git ]; then
-              echo "ERROR: $APP_DIR is not a git repo. Run scripts/server-git-init.sh on the server first."
+              echo "ERROR: git adopt failed. Run scripts/server-git-adopt.sh on the server."
               exit 1
             fi
             PREV="$(git rev-parse HEAD)"

@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, type ItemLabel } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -64,6 +64,9 @@ export function MenuEditor({
     label: "" as "" | ItemLabel,
   });
   const [addingItem, setAddingItem] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editNameGr, setEditNameGr] = useState("");
+  const [savingName, setSavingName] = useState(false);
 
   const loadMenus = useCallback(async () => {
     if (!venueId) return;
@@ -157,6 +160,26 @@ export function MenuEditor({
     const data = await res.json();
     showFromResponse(data, res.ok);
     if (res.ok) await loadMenus();
+  }
+
+  async function saveItemName(itemId: string) {
+    if (!editNameGr.trim()) return;
+    setSavingName(true);
+    try {
+      const res = await fetch(`/api/items/${itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nameGr: editNameGr.trim() }),
+      });
+      const data = await res.json();
+      showFromResponse(data, res.ok);
+      if (res.ok) {
+        setEditingItemId(null);
+        await loadMenus();
+      }
+    } finally {
+      setSavingName(false);
+    }
   }
 
   async function toggleItem(item: Item) {
@@ -313,19 +336,56 @@ export function MenuEditor({
                 ) : (
                   cat.items.map((item) => (
                     <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className={`font-medium ${item.available ? "text-brand-navy" : "text-slate-400 line-through"}`}>
-                            {tName(item.translations)}
-                          </p>
-                          {isItemLabel(item.label) ? (
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${ITEM_LABEL_STYLES[item.label]}`}
+                      <div className="min-w-0 flex-1">
+                        {editingItemId === item.id ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <input
+                              value={editNameGr}
+                              onChange={(e) => setEditNameGr(e.target.value)}
+                              className="min-w-[8rem] flex-1 rounded border border-slate-200 px-2 py-1 text-sm"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              disabled={savingName}
+                              onClick={() => void saveItemName(item.id)}
+                              className={buttonClass("primary", "sm")}
                             >
-                              {ITEM_LABEL_OPTIONS.find((o) => o.value === item.label)?.dashboardGr}
-                            </span>
-                          ) : null}
-                        </div>
+                              {savingName ? "..." : "OK"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingItemId(null)}
+                              className={buttonClass("secondary", "sm")}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className={`font-medium ${item.available ? "text-brand-navy" : "text-slate-400 line-through"}`}>
+                              {tName(item.translations)}
+                            </p>
+                            {isItemLabel(item.label) ? (
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${ITEM_LABEL_STYLES[item.label]}`}
+                              >
+                                {ITEM_LABEL_OPTIONS.find((o) => o.value === item.label)?.dashboardGr}
+                              </span>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingItemId(item.id);
+                                setEditNameGr(tName(item.translations));
+                              }}
+                              className="rounded p-1 text-slate-400 hover:text-brand-blue"
+                              title="Επεξεργασία ονόματος"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
                         <p className="text-sm text-brand-blue">€{item.price.toString()}</p>
                       </div>
                       <div className="flex shrink-0 flex-wrap items-center gap-1">

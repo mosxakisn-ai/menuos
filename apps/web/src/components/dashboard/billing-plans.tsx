@@ -13,6 +13,13 @@ type Subscription = {
   currentPeriodEnd: string | null;
 };
 
+const STATUS_GR: Record<string, string> = {
+  TRIALING: "Δοκιμή",
+  ACTIVE: "Ενεργή",
+  PAST_DUE: "Καθυστέρηση πληρωμής",
+  CANCELED: "Ακυρωμένη",
+};
+
 export function BillingPlans({
   organizationId,
   subscription,
@@ -39,7 +46,7 @@ export function BillingPlans({
         mode?: string;
       };
       if (!res.ok) {
-        setError(data.error ?? "Checkout failed");
+        setError(data.error ?? "Αποτυχία checkout");
         return;
       }
       if (data.checkoutUrl) {
@@ -51,31 +58,34 @@ export function BillingPlans({
         window.location.href = data.checkoutUrl;
       }
     } catch {
-      setError("Network error");
+      setError("Σφάλμα δικτύου");
     } finally {
       setLoadingPlan(null);
     }
   }
 
   const currentPlan = subscription?.plan ?? "TRIAL";
+  const statusLabel = STATUS_GR[subscription?.status ?? "TRIALING"] ?? subscription?.status ?? "Δοκιμή";
 
   return (
     <div className="space-y-6">
       <Card>
-        <h2 className="font-semibold text-primary">Current plan</h2>
+        <h2 className="font-semibold text-primary">Τρέχον πλάνο</h2>
         <p className="mt-2 text-sm text-slate-600">
-          <span className="font-medium text-primary">{PLAN_DEFINITIONS[currentPlan as keyof typeof PLAN_DEFINITIONS]?.name ?? currentPlan}</span>
+          <span className="font-medium text-primary">
+            {PLAN_DEFINITIONS[currentPlan as keyof typeof PLAN_DEFINITIONS]?.name ?? currentPlan}
+          </span>
           {" · "}
-          Status: {subscription?.status ?? "TRIALING"}
+          Κατάσταση: {statusLabel}
         </p>
         {subscription?.trialEndsAt && currentPlan === "TRIAL" && (
           <p className="mt-1 text-sm text-slate-500">
-            Trial ends: {new Date(subscription.trialEndsAt).toLocaleDateString("el-GR")}
+            Δοκιμή έως: {new Date(subscription.trialEndsAt).toLocaleDateString("el-GR")}
           </p>
         )}
         {subscription?.currentPeriodEnd && currentPlan !== "TRIAL" && (
           <p className="mt-1 text-sm text-slate-500">
-            Current period ends:{" "}
+            Τρέχουσα περίοδος έως:{" "}
             {new Date(subscription.currentPeriodEnd).toLocaleDateString("el-GR")}
           </p>
         )}
@@ -98,7 +108,7 @@ export function BillingPlans({
               </p>
               <p className="mt-2 font-serif text-3xl font-bold text-primary">
                 €{plan.priceMonthly}
-                <span className="text-base font-normal text-slate-500">/month</span>
+                <span className="text-base font-normal text-slate-500">/μήνα</span>
               </p>
               <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
                 {plan.features.map((f) => (
@@ -112,10 +122,10 @@ export function BillingPlans({
                 className={`mt-6 w-full ${buttonClass(isCurrent ? "secondary" : "primary")}`}
               >
                 {loadingPlan === planId
-                  ? "Redirecting…"
+                  ? "Μετάβαση..."
                   : isCurrent
-                    ? "Current plan"
-                    : `Upgrade to ${plan.name}`}
+                    ? "Τρέχον πλάνο"
+                    : `Αναβάθμιση σε ${plan.name}`}
               </button>
             </Card>
           );
@@ -125,7 +135,7 @@ export function BillingPlans({
       <Card>
         <h3 className="font-semibold text-primary">Enterprise</h3>
         <p className="mt-2 text-sm text-slate-600">
-          Custom domain, white-label, and priority support. Contact us at{" "}
+          Custom domain, white-label και προτεραιότητα υποστήριξης. Επικοινωνήστε στο{" "}
           <a href="mailto:info@b-os.gr" className="text-brand-blue hover:underline">
             info@b-os.gr
           </a>

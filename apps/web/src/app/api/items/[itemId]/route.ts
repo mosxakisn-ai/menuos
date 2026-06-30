@@ -1,10 +1,29 @@
 import { NextResponse } from "next/server";
+import type { SupportedLanguage } from "@menuos/db";
 import { prisma } from "@menuos/db";
 import { itemPatchSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { getItemForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ itemId: string }> };
+
+async function upsertItemName(
+  itemId: string,
+  language: SupportedLanguage,
+  name: string | undefined,
+) {
+  if (name === undefined) return;
+  const trimmed = name.trim();
+  if (!trimmed) {
+    await prisma.itemTranslation.deleteMany({ where: { itemId, language } });
+    return;
+  }
+  await prisma.itemTranslation.upsert({
+    where: { itemId_language: { itemId, language } },
+    create: { itemId, language, name: trimmed },
+    update: { name: trimmed },
+  });
+}
 
 export async function PATCH(request: Request, { params }: Params) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
@@ -28,19 +47,30 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Μη έγκυρα δεδομένα πιάτου." }, { status: 400 });
   }
 
-  const item = await prisma.item.update({
+  const { nameGr, nameEn, nameDe, nameFr, available, price, label } = parsed.data;
+
+  await prisma.item.update({
     where: { id: itemId },
     data: {
-      ...(parsed.data.available !== undefined ? { available: parsed.data.available } : {}),
-      ...(parsed.data.price !== undefined ? { price: parsed.data.price } : {}),
-      ...(parsed.data.label !== undefined ? { label: parsed.data.label } : {}),
+      ...(available !== undefined ? { available } : {}),
+      ...(price !== undefined ? { price } : {}),
+      ...(label !== undefined ? { label } : {}),
     },
+  });
+
+  await upsertItemName(itemId, "GR", nameGr);
+  await upsertItemName(itemId, "EN", nameEn);
+  await upsertItemName(itemId, "DE", nameDe);
+  await upsertItemName(itemId, "FR", nameFr);
+
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
     include: { translations: true },
   });
 
   return NextResponse.json({
     item,
-    message: parsed.data.available === false ? "Το πιάτο απενεργοποιήθηκε." : "Το πιάτο ενημερώθηκε.",
+    message: available === false ? "Το πιάτο απενεργοποιήθηκε." : "Το πιάτο ενημερώθηκε.",
   });
 }
 
