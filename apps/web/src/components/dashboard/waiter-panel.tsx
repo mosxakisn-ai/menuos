@@ -1,13 +1,14 @@
 "use client";
 
 import { Bell, Check, Clock } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatWaiterCallLocation, formatOrderLineDetail, type OrderLine } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { alertNewWaiterCall } from "@/lib/waiter-alert";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Σε αναμονή",
@@ -59,9 +60,14 @@ export function WaiterPanel({
       ? initialVenueId
       : (venues[0]?.id ?? "");
   const [venueId, setVenueId] = useState(resolvedInitial);
+  const [staffTokens, setStaffTokens] = useState<Record<string, string>>(() =>
+    Object.fromEntries(venues.filter((v) => v.staffToken).map((v) => [v.id, v.staffToken!])),
+  );
   const [calls, setCalls] = useState<WaiterCall[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [updatingCallId, setUpdatingCallId] = useState<string | null>(null);
+  const prevPendingRef = useRef<number | null>(null);
+  const pendingBaselineSetRef = useRef(false);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   const load = useCallback(async () => {
@@ -72,9 +78,18 @@ export function WaiterPanel({
     const data = await res.json();
     if (res.ok) {
       setCalls(data.calls ?? []);
-      setPendingCount(data.pendingCount ?? 0);
+      const nextPending = data.pendingCount ?? 0;
+      if (!pendingBaselineSetRef.current) {
+        prevPendingRef.current = nextPending;
+        pendingBaselineSetRef.current = true;
+      }
+      setPendingCount(nextPending);
     } else {
       setCalls([]);
+      if (!pendingBaselineSetRef.current) {
+        prevPendingRef.current = 0;
+        pendingBaselineSetRef.current = true;
+      }
       setPendingCount(0);
     }
   }, [venueId, staffKey]);
@@ -82,7 +97,17 @@ export function WaiterPanel({
   useEffect(() => {
     setCalls([]);
     setPendingCount(0);
+    prevPendingRef.current = null;
+    pendingBaselineSetRef.current = false;
   }, [venueId]);
+
+  useEffect(() => {
+    if (!pendingBaselineSetRef.current || prevPendingRef.current === null) return;
+    if (pendingCount > prevPendingRef.current) {
+      alertNewWaiterCall();
+    }
+    prevPendingRef.current = pendingCount;
+  }, [pendingCount]);
 
   useEffect(() => {
     load();
@@ -119,13 +144,26 @@ export function WaiterPanel({
   }
 
   const activeVenue = venues.find((v) => v.id === venueId);
+  const activeStaffToken = activeVenue ? (staffTokens[activeVenue.id] ?? activeVenue.staffToken) : undefined;
 
   return (
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
-      {showShareLink && activeVenue?.slug && activeVenue?.staffToken ? (
-        <WaiterShareLink venueSlug={activeVenue.slug} staffToken={activeVenue.staffToken} />
+      {showShareLink && activeVenue?.slug && activeStaffToken ? (
+        <WaiterShareLink
+          venueSlug={activeVenue.slug}
+          staffToken={activeStaffToken}
+          venueId={staffKey ? undefined : activeVenue.id}
+          onStaffTokenRotated={
+            staffKey
+              ? undefined
+              : (newToken) => {
+                  setStaffTokens((prev) => ({ ...prev, [activeVenue.id]: newToken }));
+                  setFlash({ type: "success", text: DASHBOARD_EL.waiter.rotateSuccess });
+                }
+          }
+        />
       ) : null}
 
       <div className="flex flex-wrap items-center gap-4">

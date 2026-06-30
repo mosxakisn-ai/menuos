@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { prisma } from "@menuos/db";
 import { BillingConfirmHandler } from "@/components/dashboard/billing-confirm-handler";
 import { BillingPlans } from "@/components/dashboard/billing-plans";
+import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
 import { TrialExpiredBanner } from "@/components/dashboard/trial-expired-banner";
 import { UpgradeReasonBanner } from "@/components/dashboard/upgrade-reason-banner";
 import { getSession } from "@/lib/auth";
@@ -20,13 +21,11 @@ export default async function BillingPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-serif text-2xl font-bold text-primary">Συνδρομή</h1>
-        <p className="text-sm text-slate-600">
-          Διαχείριση συνδρομής MenuOS. Οι πληρωμές γίνονται με ασφάλεια online.
-        </p>
-      </div>
+    <DashboardPage>
+      <DashboardPageHeader
+        title="Συνδρομή"
+        description="Διαχείριση συνδρομής MenuOS. Οι πληρωμές γίνονται με ασφάλεια online."
+      />
 
       <Suspense fallback={null}>
         <UpgradeReasonBanner />
@@ -49,6 +48,6 @@ export default async function BillingPage() {
         }
         />
       </div>
-    </div>
+    </DashboardPage>
   );
 }

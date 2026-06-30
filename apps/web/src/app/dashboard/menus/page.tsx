@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@menuos/db";
 import { MenuEditor } from "@/components/dashboard/menu-editor";
+import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
@@ -23,33 +24,31 @@ export default async function MenusPage({ searchParams }: Props) {
   });
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-serif text-2xl font-bold text-primary">Κατάλογος</h1>
-          <p className="text-sm text-slate-600">
-            Πρόσθεσε κατηγορίες και πιάτα — υποστηρίζονται πολλαπλές γλώσσες στο QR menu.
-          </p>
-        </div>
-        {canImportPdf ? (
-          <Link
-            href={`/dashboard/menus/import${sp.venue ? `?venue=${sp.venue}` : ""}`}
-            className={buttonClass("secondary", "sm")}
-          >
-            Εισαγωγή από PDF
-          </Link>
-        ) : (
-          <Link href="/dashboard/billing?upgrade=pdf-import" className={buttonClass("secondary", "sm")}>
-            Εισαγωγή PDF (μόνο Pro)
-          </Link>
-        )}
-      </div>
+    <DashboardPage>
+      <DashboardPageHeader
+        title="Κατάλογος"
+        description="Πρόσθεσε κατηγορίες και πιάτα — υποστηρίζονται πολλαπλές γλώσσες στο QR menu."
+        action={
+          canImportPdf ? (
+            <Link
+              href={`/dashboard/menus/import${sp.venue ? `?venue=${sp.venue}` : ""}`}
+              className={buttonClass("secondary", "sm")}
+            >
+              Εισαγωγή από PDF
+            </Link>
+          ) : (
+            <Link href="/dashboard/billing?upgrade=pdf-import" className={buttonClass("secondary", "sm")}>
+              Εισαγωγή PDF (μόνο Pro)
+            </Link>
+          )
+        }
+      />
       <MenuEditor
         venues={venues}
         initialVenueId={sp.venue}
         welcome={sp.welcome === "1"}
         canImportPdf={canImportPdf}
       />
-    </div>
+    </DashboardPage>
   );
 }

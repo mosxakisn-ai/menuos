@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import {
+  dashboardFieldClass,
+  dashboardLabelClass,
+  dashboardTextareaClass,
+} from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
@@ -62,15 +67,15 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
   }
 
   return (
-    <div className="max-w-lg space-y-4">
+    <div className="max-w-2xl space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
-      <label className="block text-sm">
-        <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}</span>
+      <label className="block">
+        <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
         <select
           value={venueId}
           onChange={(e) => selectVenue(e.target.value)}
-          className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
+          className={dashboardFieldClass}
         >
           {venues.map((v) => (
             <option key={v.id} value={v.id}>
@@ -80,49 +85,49 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
         </select>
       </label>
 
-      <Card>
+      <Card className="p-6 sm:p-8">
         <h2 className="font-semibold text-brand-navy">Εμφάνιση καταλόγου</h2>
-        <p className="mt-1 text-xs text-slate-500">Τα χρώματα φαίνονται όταν ο πελάτης ανοίγει το menu από το QR.</p>
-        <form onSubmit={onSubmit} className="mt-4 space-y-4">
-          <label className="block text-sm">
-            <span className="font-medium">Όνομα καταστήματος</span>
+        <p className="mt-1 text-sm text-slate-500">Τα χρώματα φαίνονται όταν ο πελάτης ανοίγει το menu από το QR.</p>
+        <form onSubmit={onSubmit} className="mt-6 space-y-5">
+          <label className="block">
+            <span className={dashboardLabelClass}>Όνομα καταστήματος</span>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
+              className={dashboardFieldClass}
             />
           </label>
-          <label className="block text-sm">
-            <span className="font-medium">Περιγραφή</span>
+          <label className="block">
+            <span className={dashboardLabelClass}>Περιγραφή</span>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
+              className={dashboardTextareaClass}
             />
           </label>
           <div className="grid grid-cols-2 gap-4">
-            <label className="block text-sm">
-              <span className="font-medium">Κύριο χρώμα</span>
+            <label className="block">
+              <span className={dashboardLabelClass}>Κύριο χρώμα</span>
               <input
                 type="color"
                 value={primaryColor}
                 onChange={(e) => setPrimaryColor(e.target.value)}
-                className="mt-1 h-10 w-full cursor-pointer rounded border border-slate-200"
+                className="mt-1.5 h-10 w-full cursor-pointer rounded-button border border-slate-200 bg-white shadow-sm"
               />
             </label>
-            <label className="block text-sm">
-              <span className="font-medium">Δευτερεύον</span>
+            <label className="block">
+              <span className={dashboardLabelClass}>Δευτερεύον</span>
               <input
                 type="color"
                 value={secondaryColor}
                 onChange={(e) => setSecondaryColor(e.target.value)}
-                className="mt-1 h-10 w-full cursor-pointer rounded border border-slate-200"
+                className="mt-1.5 h-10 w-full cursor-pointer rounded-button border border-slate-200 bg-white shadow-sm"
               />
             </label>
           </div>
-          <button type="submit" disabled={saving} className={buttonClass("primary")}>
+          <button type="submit" disabled={saving} className={`h-10 ${buttonClass("primary", "md")}`}>
             {saving ? "Αποθήκευση..." : "Αποθήκευση ρυθμίσεων"}
           </button>
         </form>

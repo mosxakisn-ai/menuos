@@ -326,54 +326,24 @@ export function SiteFooter() {
           </div>
         ) : null}
 
-        {/* SEO hub — visible, crawlable */}
-        {hub ? (
-          <nav
-            className="mt-14 border-t border-white/10 pt-14"
-            aria-label={isEn ? "Guides & solutions" : "Οδηγοί & λύσεις"}
-          >
-            <div className="max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-cyan">
-                {hub.title}
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-slate-400">{hub.description}</p>
-            </div>
-            <div className="mt-8 grid gap-10 lg:grid-cols-2">
-              <div>
-                <p className="text-sm font-semibold text-slate-300">{hub.localTitle}</p>
-                <ul className="mt-4 flex flex-wrap gap-2">
-                  {SEO_FOOTER_HUB.local.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="inline-block rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs text-slate-300 transition hover:border-brand-cyan/30 hover:bg-white/[0.08] hover:text-white"
-                      >
-                        {isEn ? link.labelEn : link.labelEl}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-300">{hub.verticalTitle}</p>
-                <ul className="mt-4 flex flex-wrap gap-2">
-                  {SEO_FOOTER_HUB.verticals.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="inline-block rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs text-slate-300 transition hover:border-brand-cyan/30 hover:bg-white/[0.08] hover:text-white"
-                      >
-                        {isEn ? link.labelEn : link.labelEl}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </nav>
-        ) : null}
+        {/* SEO hub — crawlable, visually hidden */}
+        <nav className="sr-only" aria-label={isEn ? "Site guides" : "Οδηγοί ιστοτόπου"}>
+          {hub ? <p>{hub.description}</p> : null}
+          <ul>
+            {SEO_FOOTER_HUB.local.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href}>{isEn ? link.labelEn : link.labelEl}</Link>
+              </li>
+            ))}
+            {SEO_FOOTER_HUB.verticals.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href}>{isEn ? link.labelEn : link.labelEl}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
           <p className="text-xs text-slate-500">
             © {new Date().getFullYear()} MenuOS. {f.rights}
           </p>

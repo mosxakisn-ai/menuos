@@ -10,6 +10,11 @@ import {
   VENUE_SPOT_TYPES,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import {
+  DashboardSectionTitle,
+  dashboardFieldClass,
+  dashboardLabelClass,
+} from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
@@ -177,18 +182,18 @@ export function VenueSpotsManager({
         </div>
       ) : null}
 
-      <Card>
-        <h2 className="font-semibold text-brand-navy">Τραπέζια, δωμάτια & ξαπλώστρες</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Πρόσθεσε κάθε θέση μία φορά. Κάθε QR «δένει» τον αριθμό — ο σερβιτόρος βλέπει ακριβώς από πού καλούν.
-        </p>
+      <Card className="p-6 sm:p-8">
+        <DashboardSectionTitle
+          title="Τραπέζια, δωμάτια & ξαπλώστρες"
+          description="Πρόσθεσε κάθε θέση μία φορά. Κάθε QR «δένει» τον αριθμό — ο σερβιτόρος βλέπει ακριβώς από πού καλούν."
+        />
 
-        <label className="mt-4 block text-sm">
-          <span className="font-medium">{DASHBOARD_EL.venue}</span>
+        <label className="mt-6 block max-w-md">
+          <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
           <select
             value={venueId}
             onChange={(e) => setVenueId(e.target.value)}
-            className="mt-1 w-full max-w-md rounded-button border border-slate-200 px-3 py-2.5"
+            className={dashboardFieldClass}
           >
             {venues.map((v) => (
               <option key={v.id} value={v.id}>
@@ -198,13 +203,16 @@ export function VenueSpotsManager({
           </select>
         </label>
 
-        <form onSubmit={addSpot} className="mt-6 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="block text-sm">
-            <span className="font-medium">Τύπος</span>
+        <form
+          onSubmit={addSpot}
+          className="mt-8 grid items-end gap-4 border-t border-slate-100 pt-8 sm:grid-cols-2 lg:grid-cols-[minmax(0,10rem)_minmax(0,1fr)_auto]"
+        >
+          <label className="block">
+            <span className={dashboardLabelClass}>Τύπος</span>
             <select
               value={spotType}
               onChange={(e) => setSpotType(e.target.value as VenueSpotType)}
-              className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
+              className={dashboardFieldClass}
             >
               {VENUE_SPOT_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -213,58 +221,56 @@ export function VenueSpotsManager({
               ))}
             </select>
           </label>
-          <label className="block text-sm sm:col-span-2">
-            <span className="font-medium">Αριθμός / όνομα</span>
+          <label className="block">
+            <span className={dashboardLabelClass}>Αριθμός / όνομα</span>
             <input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder={spotType === "ROOM" ? "204" : spotType === "SUNBED" ? "A12" : "12"}
               maxLength={20}
-              className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
+              className={dashboardFieldClass}
             />
           </label>
-          <div className="flex items-end">
-            <button
-              type="submit"
-              disabled={busy !== null || !label.trim()}
-              className={`inline-flex w-full items-center justify-center gap-2 ${buttonClass("primary")}`}
-            >
-              <Plus className="h-4 w-4" />
-              Προσθήκη
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={busy !== null || !label.trim()}
+            className={`inline-flex h-10 w-full items-center justify-center gap-2 sm:w-auto sm:min-w-[9.5rem] ${buttonClass("primary", "md")}`}
+          >
+            <Plus className="h-4 w-4" />
+            Προσθήκη
+          </button>
         </form>
 
-        <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50/80 p-4">
-          <p className="text-sm font-medium text-brand-navy">Μαζική προσθήκη (π.χ. τραπέζια 1–50)</p>
-          <div className="mt-3 flex flex-wrap items-end gap-3">
-            <label className="text-sm">
-              <span className="text-slate-600">Από</span>
+        <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-5">
+          <p className="text-sm font-semibold text-brand-navy">Μαζική προσθήκη (π.χ. τραπέζια 1–50)</p>
+          <div className="mt-4 flex flex-wrap items-end gap-4">
+            <label className="block">
+              <span className={dashboardLabelClass}>Από</span>
               <input
                 type="number"
                 min={1}
                 max={999}
                 value={bulkFrom}
                 onChange={(e) => setBulkFrom(e.target.value)}
-                className="mt-1 block w-24 rounded-button border border-slate-200 px-3 py-2"
+                className={`${dashboardFieldClass} w-24`}
               />
             </label>
-            <label className="text-sm">
-              <span className="text-slate-600">Έως</span>
+            <label className="block">
+              <span className={dashboardLabelClass}>Έως</span>
               <input
                 type="number"
                 min={1}
                 max={999}
                 value={bulkTo}
                 onChange={(e) => setBulkTo(e.target.value)}
-                className="mt-1 block w-24 rounded-button border border-slate-200 px-3 py-2"
+                className={`${dashboardFieldClass} w-24`}
               />
             </label>
             <button
               type="button"
               disabled={busy !== null}
               onClick={() => void bulkAdd()}
-              className={buttonClass("secondary", "sm")}
+              className={`h-10 ${buttonClass("secondary", "md")}`}
             >
               {busy === "bulk" ? "Προσθήκη..." : "Προσθήκη όλων"}
             </button>
@@ -272,8 +278,8 @@ export function VenueSpotsManager({
         </div>
       </Card>
 
-      <Card>
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      <Card className="p-6 sm:p-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-semibold text-brand-navy">
             Οι θέσεις σου {spots.length > 0 ? `(${spots.length})` : ""}
           </h2>
@@ -281,18 +287,21 @@ export function VenueSpotsManager({
         </div>
 
         {spots.length === 0 && !loadingSpots ? (
-          <p className="mt-4 text-sm text-slate-500">
+          <p className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm text-slate-500">
             Δεν έχεις ακόμα θέσεις. Πρόσθεσε τραπέζι 12 ή κάνε μαζική προσθήκη 1–50.
           </p>
         ) : (
-          <ul className="mt-4 divide-y divide-slate-100">
+          <ul className="mt-6 space-y-3">
             {spots.map((spot) => (
-              <li key={spot.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0">
-                <div>
+              <li
+                key={spot.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/40 px-4 py-3.5"
+              >
+                <div className="min-w-0 flex-1">
                   <p className="font-medium text-brand-navy">{formatVenueSpotLabel(spot.type, spot.label)}</p>
-                  <p className="mt-0.5 break-all text-xs text-slate-500">{menuPathFor(spot)}</p>
+                  <p className="mt-0.5 truncate text-xs text-slate-500">{menuPathFor(spot)}</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     disabled={busy !== null}

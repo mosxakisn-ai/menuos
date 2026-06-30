@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@menuos/db";
 import { DashboardWelcome } from "@/components/dashboard/dashboard-welcome";
+import { DashboardPage as DashboardPageShell, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
 import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
 import { TrialEndingBanner } from "@/components/dashboard/trial-ending-banner";
 import { TrialLimitsHint } from "@/components/dashboard/trial-limits-hint";
@@ -48,17 +49,13 @@ export default async function DashboardPage({ searchParams }: Props) {
   const trialEndsAt = org?.subscription?.trialEndsAt?.toISOString() ?? null;
 
   return (
-    <div className="space-y-6">
+    <DashboardPageShell>
       <DashboardWelcome show={sp.welcome === "1"} />
       <TrialEndingBanner trialEndsAt={planId === "TRIAL" ? trialEndsAt : null} />
-      <div>
-        <h1 className="font-serif text-2xl font-bold text-primary">{org?.name}</h1>
-        <p className="text-sm text-slate-600">
-          Πλάνο: {planLabel(planId)} · {venueCount}{" "}
-          {venueCount === 1 ? DASHBOARD_EL.venue.toLowerCase() : DASHBOARD_EL.venues.toLowerCase()} ·{" "}
-          {menuCount} {menuCount === 1 ? "κατάλογος" : "κατάλογοι"} · {itemCount} πιάτα
-        </p>
-      </div>
+      <DashboardPageHeader
+        title={org?.name ?? "Επισκόπηση"}
+        description={`Πλάνο: ${planLabel(planId)} · ${venueCount} ${venueCount === 1 ? DASHBOARD_EL.venue.toLowerCase() : DASHBOARD_EL.venues.toLowerCase()} · ${menuCount} ${menuCount === 1 ? "κατάλογος" : "κατάλογοι"} · ${itemCount} πιάτα`}
+      />
 
       <TrialLimitsHint plan={planId} itemCount={itemCount} />
 
@@ -125,7 +122,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           </Link>
         </div>
       </Card>
-    </div>
+    </DashboardPageShell>
   );
 }
 

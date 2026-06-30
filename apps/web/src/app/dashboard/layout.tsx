@@ -71,10 +71,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {org ? <DashboardSidebarSubscription subscription={subscription} /> : null}
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex min-h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 py-2 sm:px-6 sm:py-0">
-          <div className="min-w-0">
-            <p className="text-sm text-slate-500">Καλώς ήρθες</p>
-            <p className="truncate font-semibold text-primary">{session.name}</p>
+        <header className="flex min-h-[4.25rem] items-center justify-between gap-4 border-b border-slate-200/80 bg-white px-4 sm:px-6">
+          <div className="min-w-0 py-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Καλώς ήρθες</p>
+            <p className="truncate text-base font-semibold text-primary">{session.name}</p>
             <p className="truncate text-xs text-slate-500">{session.email}</p>
             {org ? (
               <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-slate-500 md:hidden">
@@ -99,7 +99,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <LogoutButton variant="header" />
           </div>
         </header>
-        <main className="flex-1 p-4 pb-24 sm:p-6 md:pb-6">{children}</main>
+        <main className="flex-1 bg-brand-surface/50 p-4 pb-24 sm:p-6 md:pb-8">{children}</main>
       </div>
       <DashboardMobileNav initialPendingCount={pendingWaiterCount} />
     </div>

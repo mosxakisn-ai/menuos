@@ -5,7 +5,7 @@ const nextConfig = {
   transpilePackages: ["@menuos/db", "@menuos/shared"],
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
-  serverExternalPackages: ["sharp"],
+  serverExternalPackages: ["sharp", "pdf-parse"],
   images: {
     remotePatterns: [
       {

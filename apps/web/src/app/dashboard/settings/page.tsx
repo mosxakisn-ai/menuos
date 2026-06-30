@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
 import { SettingsForm } from "@/components/dashboard/settings-form";
+import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
 import { Card } from "@/components/ui/card";
 import { getSession } from "@/lib/auth";
 import { buildPrivatePageMetadata } from "@/lib/seo";
@@ -16,14 +17,12 @@ export default async function SettingsPage() {
   });
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="font-serif text-2xl font-bold text-primary">Ρυθμίσεις</h1>
-        <p className="text-sm text-slate-600">
-          Χρώματα και εμφάνιση — αυτά βλέπουν οι πελάτες όταν ανοίγουν τον κατάλογο από το QR.
-        </p>
-      </div>
-      <Card>
+    <DashboardPage>
+      <DashboardPageHeader
+        title="Ρυθμίσεις"
+        description="Χρώματα και εμφάνιση — αυτά βλέπουν οι πελάτες όταν ανοίγουν τον κατάλογο από το QR."
+      />
+      <Card className="p-6 sm:p-8">
         <h2 className="font-semibold text-primary">{DASHBOARD_EL.account}</h2>
         <dl className="mt-3 space-y-2 text-sm">
           <div>
@@ -41,6 +40,6 @@ export default async function SettingsPage() {
         </dl>
       </Card>
       <SettingsForm venues={venues} />
-    </div>
+    </DashboardPage>
   );
 }

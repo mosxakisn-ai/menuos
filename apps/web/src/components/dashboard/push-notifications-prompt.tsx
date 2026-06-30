@@ -1,12 +1,14 @@
 "use client";
 
-import { Bell, BellOff, Loader2 } from "lucide-react";
+import { Bell, BellOff, CheckCircle2, Loader2, Smartphone } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { isInAppBrowser, isIosDevice } from "@/lib/waiter-alert";
+import { cn } from "@/lib/utils";
 
-type PushState = "loading" | "unsupported" | "disabled" | "prompt" | "subscribed" | "denied";
+type PushState = "loading" | "unsupported" | "disabled" | "prompt" | "subscribed" | "denied" | "failed";
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -24,9 +26,13 @@ export function PushNotificationsPrompt({
 } = {}) {
   const [state, setState] = useState<PushState>("loading");
   const [busy, setBusy] = useState(false);
+  const [justEnabled, setJustEnabled] = useState(false);
+  const [inApp, setInApp] = useState(false);
 
   const checkState = useCallback(async () => {
     if (typeof window === "undefined") return;
+    setInApp(isInAppBrowser());
+
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       setState("unsupported");
       return;
@@ -55,6 +61,7 @@ export function PushNotificationsPrompt({
 
   async function enablePush() {
     setBusy(true);
+    setJustEnabled(false);
     let createdNewSub = false;
     let sub: PushSubscription | null = null;
     try {
@@ -94,23 +101,23 @@ export function PushNotificationsPrompt({
         body: JSON.stringify({
           endpoint: json.endpoint,
           keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
-          ...(staffAuth
-            ? { staffKey: staffAuth.staffKey, venueId: staffAuth.venueId }
-            : {}),
+          ...(staffAuth ? { staffKey: staffAuth.staffKey, venueId: staffAuth.venueId } : {}),
         }),
       });
       if (!saveRes.ok) throw new Error("subscribe failed");
 
       setState("subscribed");
+      setJustEnabled(true);
+      window.setTimeout(() => setJustEnabled(false), 8000);
     } catch {
       if (createdNewSub) {
         try {
           await sub?.unsubscribe();
         } catch {
-          /* ignore rollback errors */
+          /* ignore */
         }
       }
-      setState("prompt");
+      setState("failed");
     } finally {
       setBusy(false);
     }
@@ -118,6 +125,7 @@ export function PushNotificationsPrompt({
 
   async function disablePush() {
     setBusy(true);
+    setJustEnabled(false);
     try {
       const reg = await navigator.serviceWorker.getRegistration("/sw.js");
       const sub = await reg?.pushManager.getSubscription();
@@ -128,9 +136,7 @@ export function PushNotificationsPrompt({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             endpoint,
-            ...(staffAuth
-              ? { staffKey: staffAuth.staffKey, venueId: staffAuth.venueId }
-              : {}),
+            ...(staffAuth ? { staffKey: staffAuth.staffKey, venueId: staffAuth.venueId } : {}),
           }),
         });
         if (!res.ok) throw new Error("unsubscribe failed");
@@ -142,49 +148,103 @@ export function PushNotificationsPrompt({
     }
   }
 
-  if (state === "loading") return null;
-  if (state === "unsupported" || state === "disabled") return null;
-
   const p = DASHBOARD_EL.push;
+  const canEnable = (state === "prompt" || state === "failed") && !inApp;
+
+  if (state === "loading") {
+    return (
+      <Card className="border-slate-200 bg-white">
+        <p className="text-sm text-slate-500">Έλεγχος ειδοποιήσεων...</p>
+      </Card>
+    );
+  }
+
+  const description =
+    justEnabled
+      ? p.enableSuccess
+      : state === "subscribed"
+        ? p.subscribed
+        : state === "denied"
+          ? p.denied
+          : state === "failed"
+            ? p.enableFailed
+            : state === "unsupported"
+              ? p.unsupported
+              : state === "disabled"
+                ? p.disabledServer
+                : inApp
+                  ? p.inAppBrowser
+                  : p.description;
 
   return (
-    <Card className="border-brand-blue/20 bg-brand-blue/5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-3">
-          <Bell className="mt-0.5 h-5 w-5 shrink-0 text-brand-blue" aria-hidden />
-          <div>
-            <p className="font-semibold text-primary">{p.title}</p>
-            <p className="text-sm text-slate-600">
-              {state === "subscribed"
-                ? p.subscribed
-                : state === "denied"
-                  ? p.denied
-                  : p.description}
-            </p>
-          </div>
+    <div className="space-y-3">
+      {inApp ? (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="flex items-start gap-2 font-semibold">
+            <Smartphone className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            {p.inAppBrowser}
+          </p>
         </div>
-        {state === "subscribed" ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void disablePush()}
-            className={buttonClass("secondary", "sm")}
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellOff className="h-4 w-4" />}
-            {p.disable}
-          </button>
-        ) : state === "denied" ? null : (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void enablePush()}
-            className={buttonClass("primary", "sm")}
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
-            {p.enable}
-          </button>
+      ) : null}
+
+      <Card
+        className={cn(
+          "border-brand-blue/20 bg-brand-blue/5",
+          justEnabled && "border-emerald-300 bg-emerald-50/80",
+          state === "failed" && "border-amber-300 bg-amber-50/80",
+          state === "subscribed" && !justEnabled && "border-emerald-200/80 bg-emerald-50/40",
         )}
-      </div>
-    </Card>
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex gap-3">
+            {justEnabled || state === "subscribed" ? (
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
+            ) : (
+              <Bell className="mt-0.5 h-5 w-5 shrink-0 text-brand-blue" aria-hidden />
+            )}
+            <div>
+              <p className="font-semibold text-primary">{p.title}</p>
+              <p
+                className={cn(
+                  "mt-1 text-sm leading-relaxed",
+                  justEnabled ? "font-medium text-emerald-800" : "text-slate-600",
+                )}
+              >
+                {description}
+              </p>
+              {staffAuth && state === "prompt" && !inApp ? (
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                  {isIosDevice() ? p.iosHint : p.androidHint}
+                </p>
+              ) : null}
+              {staffAuth ? (
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">{p.pageOpenHint}</p>
+              ) : null}
+            </div>
+          </div>
+          {state === "subscribed" ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void disablePush()}
+              className={buttonClass("secondary", "sm")}
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellOff className="h-4 w-4" />}
+              {p.disable}
+            </button>
+          ) : state === "denied" || state === "unsupported" || state === "disabled" ? null : (
+            <button
+              type="button"
+              disabled={busy || !canEnable}
+              onClick={() => void enablePush()}
+              className={buttonClass("primary", "sm")}
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
+              {p.enable}
+            </button>
+          )}
+        </div>
+      </Card>
+    </div>
   );
 }
