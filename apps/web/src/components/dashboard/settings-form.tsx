@@ -13,6 +13,7 @@ import {
 } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { cn } from "@/lib/utils";
 
 type Venue = {
@@ -118,6 +119,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
+              placeholder={FORM_PLACEHOLDERS.venueName}
               className={dashboardFieldClass}
             />
           </label>
@@ -127,6 +129,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder={FORM_PLACEHOLDERS.storeDescription}
               className={dashboardTextareaClass}
             />
           </label>

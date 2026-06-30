@@ -7,6 +7,7 @@ import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-mes
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 type Venue = { id: string; name: string; slug: string };
 
@@ -122,7 +123,7 @@ export function QrGenerator({
             <input
               value={table}
               onChange={(e) => setTable(e.target.value)}
-              placeholder="12"
+              placeholder={FORM_PLACEHOLDERS.qrTable}
               className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
             />
           </label>
@@ -131,7 +132,7 @@ export function QrGenerator({
             <input
               value={room}
               onChange={(e) => setRoom(e.target.value)}
-              placeholder="204"
+              placeholder={FORM_PLACEHOLDERS.qrRoom}
               className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
             />
           </label>

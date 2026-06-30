@@ -16,6 +16,7 @@ import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { cn } from "@/lib/utils";
 
 type Translation = { language: string; name: string; description?: string | null };
@@ -479,25 +480,25 @@ export function MenuEditor({
             <form onSubmit={addCategory} className={cn(dashboardFormGridClass, "mt-4")}>
               <input
                 required
-                placeholder="Όνομα (Ελληνικά) *"
+                placeholder={`${FORM_PLACEHOLDERS.categoryGr} *`}
                 value={catNameGr}
                 onChange={(e) => setCatNameGr(e.target.value)}
                 className={dashboardFieldClass}
               />
               <input
-                placeholder="Name (English)"
+                placeholder={FORM_PLACEHOLDERS.categoryEn}
                 value={catNameEn}
                 onChange={(e) => setCatNameEn(e.target.value)}
                 className={dashboardFieldClass}
               />
               <input
-                placeholder="Name (Deutsch)"
+                placeholder={FORM_PLACEHOLDERS.categoryDe}
                 value={catNameDe}
                 onChange={(e) => setCatNameDe(e.target.value)}
                 className={dashboardFieldClass}
               />
               <input
-                placeholder="Nom (Français)"
+                placeholder={FORM_PLACEHOLDERS.categoryFr}
                 value={catNameFr}
                 onChange={(e) => setCatNameFr(e.target.value)}
                 className={dashboardFieldClass}
@@ -543,7 +544,7 @@ export function MenuEditor({
                               <input
                                 value={editNameGr}
                                 onChange={(e) => setEditNameGr(e.target.value)}
-                                placeholder="Όνομα πιάτου"
+                                placeholder={FORM_PLACEHOLDERS.itemNameGr}
                                 className="min-w-[8rem] flex-1 rounded border border-slate-200 px-2 py-1 text-sm"
                                 autoFocus
                               />
@@ -555,6 +556,7 @@ export function MenuEditor({
                                   min="0"
                                   value={editPrice}
                                   onChange={(e) => setEditPrice(e.target.value)}
+                                  placeholder={FORM_PLACEHOLDERS.itemPrice}
                                   className="w-24 rounded border border-slate-200 px-2 py-1 text-sm"
                                 />
                               </label>
@@ -592,7 +594,7 @@ export function MenuEditor({
                                       next[i] = { ...ex, labels: { ...ex.labels, GR: e.target.value } };
                                       setEditExtras(next);
                                     }}
-                                    placeholder="π.χ. Χωρίς αλάτι"
+                                    placeholder={FORM_PLACEHOLDERS.extraOption}
                                     className="min-w-0 flex-1 rounded border border-slate-200 px-2 py-1.5 text-sm"
                                   />
                                   <input
@@ -617,7 +619,7 @@ export function MenuEditor({
                                       }
                                       setEditExtras(next);
                                     }}
-                                    placeholder="+ €"
+                                    placeholder={FORM_PLACEHOLDERS.extraPrice}
                                     className="w-[4.5rem] shrink-0 rounded border border-slate-200 px-2 py-1.5 text-sm"
                                     title="Extra χρέωση (προαιρετικό)"
                                   />
@@ -736,25 +738,25 @@ export function MenuEditor({
                   <div className={dashboardFormGridClass}>
                     <input
                       required
-                      placeholder="Όνομα (Ελληνικά) *"
+                      placeholder={`${FORM_PLACEHOLDERS.itemNameGr} *`}
                       value={itemForm.nameGr}
                       onChange={(e) => setItemForm((f) => ({ ...f, nameGr: e.target.value }))}
                       className={dashboardInputClass}
                     />
                     <input
-                      placeholder="Name (English)"
+                      placeholder={FORM_PLACEHOLDERS.itemNameEn}
                       value={itemForm.nameEn}
                       onChange={(e) => setItemForm((f) => ({ ...f, nameEn: e.target.value }))}
                       className={dashboardInputClass}
                     />
                     <input
-                      placeholder="Name (Deutsch)"
+                      placeholder={FORM_PLACEHOLDERS.itemNameDe}
                       value={itemForm.nameDe}
                       onChange={(e) => setItemForm((f) => ({ ...f, nameDe: e.target.value }))}
                       className={dashboardInputClass}
                     />
                     <input
-                      placeholder="Nom (Français)"
+                      placeholder={FORM_PLACEHOLDERS.itemNameFr}
                       value={itemForm.nameFr}
                       onChange={(e) => setItemForm((f) => ({ ...f, nameFr: e.target.value }))}
                       className={dashboardInputClass}
@@ -764,13 +766,13 @@ export function MenuEditor({
                       type="number"
                       step="0.01"
                       min="0"
-                      placeholder="Τιμή (€) *"
+                      placeholder={`${FORM_PLACEHOLDERS.itemPrice} *`}
                       value={itemForm.price}
                       onChange={(e) => setItemForm((f) => ({ ...f, price: e.target.value }))}
                       className={dashboardInputClass}
                     />
                     <input
-                      placeholder="Περιγραφή (Ελληνικά)"
+                      placeholder={FORM_PLACEHOLDERS.itemDescription}
                       value={itemForm.descriptionGr}
                       onChange={(e) => setItemForm((f) => ({ ...f, descriptionGr: e.target.value }))}
                       className={`${dashboardInputClass} sm:col-span-2`}

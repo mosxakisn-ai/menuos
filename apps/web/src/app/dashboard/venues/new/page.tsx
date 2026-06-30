@@ -13,6 +13,7 @@ import {
 } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { slugifyOrFallback } from "@/lib/utils";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 export default function NewVenuePage() {
   const router = useRouter();
@@ -62,7 +63,7 @@ export default function NewVenuePage() {
               name="name"
               required
               className={dashboardFieldClass}
-              placeholder="Marine Hotel"
+              placeholder={FORM_PLACEHOLDERS.venueName}
             />
           </label>
           <label className="block">
@@ -71,7 +72,7 @@ export default function NewVenuePage() {
               name="description"
               rows={3}
               className={dashboardTextareaClass}
-              placeholder="Pool bar & restaurant στη Ρόδο"
+              placeholder={FORM_PLACEHOLDERS.venueDescription}
             />
           </label>
           <button type="submit" disabled={loading} className={`h-10 w-full sm:w-auto ${buttonClass("primary", "md")}`}>

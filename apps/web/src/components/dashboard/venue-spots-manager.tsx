@@ -22,6 +22,7 @@ import {
 } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 type Venue = { id: string; name: string; slug: string };
 type Spot = { id: string; type: VenueSpotType; label: string };
@@ -316,7 +317,7 @@ export function VenueSpotsManager({
                 type="text"
                 value={bulkPrefix}
                 onChange={(e) => setBulkPrefix(e.target.value)}
-                placeholder="sala-"
+                placeholder={FORM_PLACEHOLDERS.spotPrefix}
                 maxLength={15}
                 className={`${dashboardFieldClass} w-32`}
               />
@@ -329,6 +330,7 @@ export function VenueSpotsManager({
                 max={999}
                 value={bulkFrom}
                 onChange={(e) => setBulkFrom(e.target.value)}
+                placeholder={FORM_PLACEHOLDERS.spotBulkFrom}
                 className={`${dashboardFieldClass} w-24`}
               />
             </label>
@@ -338,7 +340,7 @@ export function VenueSpotsManager({
                 type="number"
                 min={1}
                 max={999}
-                placeholder="120"
+                placeholder={FORM_PLACEHOLDERS.spotBulkTo}
                 value={bulkTo}
                 onChange={(e) => setBulkTo(e.target.value)}
                 className={`${dashboardFieldClass} w-24`}

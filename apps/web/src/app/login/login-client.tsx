@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AuthFooterLink, AuthShell } from "@/components/marketing/marketing-layout";
 import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 export default function LoginPageClient() {
   const router = useRouter();
@@ -44,8 +45,21 @@ export default function LoginPageClient() {
       }
     >
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <Field label="Email" name="email" type="email" required autoComplete="email" />
-        <PasswordField label="Κωδικός πρόσβασης" name="password" required autoComplete="current-password" />
+        <Field
+          label="Email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder={FORM_PLACEHOLDERS.email}
+        />
+        <PasswordField
+          label="Κωδικός πρόσβασης"
+          name="password"
+          required
+          autoComplete="current-password"
+          placeholder={FORM_PLACEHOLDERS.passwordCurrent}
+        />
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <button type="submit" disabled={loading} className={`w-full ${buttonClass("primary")}`}>
           {loading ? "Σύνδεση..." : "Σύνδεση"}

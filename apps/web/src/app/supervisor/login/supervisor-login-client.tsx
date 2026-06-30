@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 export function SupervisorLoginClient() {
   const router = useRouter();
@@ -60,6 +61,7 @@ export function SupervisorLoginClient() {
               spellCheck={false}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              placeholder={FORM_PLACEHOLDERS.supervisorUsername}
             />
           </label>
           <PasswordField
@@ -70,6 +72,7 @@ export function SupervisorLoginClient() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder={FORM_PLACEHOLDERS.passwordCurrent}
           />
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <button type="submit" disabled={loading} className={`w-full ${buttonClass("primary")}`}>

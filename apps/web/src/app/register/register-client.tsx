@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { AuthFooterLink, AuthShell } from "@/components/marketing/marketing-layout";
 import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 export default function RegisterPageClient() {
   const router = useRouter();
@@ -155,8 +156,20 @@ export default function RegisterPageClient() {
       }
     >
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <Field label="Το όνομά σου" name="name" required autoComplete="name" />
-        <Field label="Επωνυμία επιχείρησης" name="businessName" required autoComplete="organization" />
+        <Field
+          label="Το όνομά σου"
+          name="name"
+          required
+          autoComplete="name"
+          placeholder={FORM_PLACEHOLDERS.personName}
+        />
+        <Field
+          label="Επωνυμία επιχείρησης"
+          name="businessName"
+          required
+          autoComplete="organization"
+          placeholder={FORM_PLACEHOLDERS.businessName}
+        />
 
         <label className="block text-sm">
           <span className="font-medium text-brand-navy">Email</span>
@@ -171,6 +184,7 @@ export default function RegisterPageClient() {
               setOtpExpiresAt(null);
             }}
             autoComplete="email"
+            placeholder={FORM_PLACEHOLDERS.email}
             className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5 outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
           />
         </label>
@@ -207,11 +221,18 @@ export default function RegisterPageClient() {
             pattern="[0-9]{6}"
             maxLength={6}
             required
-            placeholder="123456"
+            placeholder={FORM_PLACEHOLDERS.otp}
           />
         ) : null}
 
-        <PasswordField label="Κωδικός πρόσβασης" name="password" required minLength={8} autoComplete="new-password" />
+        <PasswordField
+          label="Κωδικός πρόσβασης"
+          name="password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+          placeholder={FORM_PLACEHOLDERS.passwordNew}
+        />
 
         {info ? <p className="text-sm text-emerald-700">{info}</p> : null}
         {error ? <p className="text-sm text-red-600">{error}</p> : null}

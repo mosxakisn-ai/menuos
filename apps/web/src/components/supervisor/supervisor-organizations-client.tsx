@@ -9,6 +9,7 @@ import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard
 import { SupervisorOrganizationEditor } from "@/components/supervisor/supervisor-organization-editor";
 import { stripeCustomerDashboardUrl } from "@/lib/stripe-dashboard-urls";
 import type { SupervisorOrganizationRow } from "@/lib/supervisor-service";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 function formatDate(iso: string | null) {
   if (!iso) return "—";
@@ -69,7 +70,7 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
           <span className={dashboardLabelClass}>Αναζήτηση</span>
           <input
             className={dashboardFieldClass}
-            placeholder="Όνομα, email, slug…"
+            placeholder={FORM_PLACEHOLDERS.searchOrganizations}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

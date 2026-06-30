@@ -16,6 +16,7 @@ import type { MenuPdfParseResult, ParsedMenuCategoryDraft, ParsedMenuItemDraft }
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 type Venue = {
   id: string;
@@ -317,6 +318,7 @@ export function MenuImportWizard({
                     <input
                       value={cat.nameGr}
                       onChange={(e) => updateCategory(cat.id, { nameGr: e.target.value })}
+                      placeholder={FORM_PLACEHOLDERS.importCategory}
                       className="rounded-button border border-slate-200 px-2 py-1 text-sm font-bold"
                     />
                     {cat.sourceFile ? (
@@ -356,6 +358,7 @@ export function MenuImportWizard({
                           <input
                             value={item.nameGr}
                             onChange={(e) => updateItem(cat.id, item.id, { nameGr: e.target.value })}
+                            placeholder={FORM_PLACEHOLDERS.importItemGr}
                             className="w-full min-w-[140px] rounded border border-slate-200 px-2 py-1"
                           />
                         </td>
@@ -363,6 +366,7 @@ export function MenuImportWizard({
                           <input
                             value={item.nameEn ?? ""}
                             onChange={(e) => updateItem(cat.id, item.id, { nameEn: e.target.value || undefined })}
+                            placeholder={FORM_PLACEHOLDERS.importItemEn}
                             className="w-full min-w-[120px] rounded border border-slate-200 px-2 py-1"
                           />
                         </td>
@@ -377,6 +381,7 @@ export function MenuImportWizard({
                                 price: e.target.value ? Number.parseFloat(e.target.value) : null,
                               })
                             }
+                            placeholder={FORM_PLACEHOLDERS.importItemPrice}
                             className="w-24 rounded border border-slate-200 px-2 py-1"
                           />
                         </td>

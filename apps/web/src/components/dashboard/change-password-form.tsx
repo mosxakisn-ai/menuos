@@ -5,6 +5,7 @@ import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-mes
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -57,6 +58,7 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             autoComplete="current-password"
+            placeholder={FORM_PLACEHOLDERS.passwordCurrent}
             required
           />
         </label>
@@ -69,6 +71,7 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
             onChange={(e) => setNewPassword(e.target.value)}
             minLength={8}
             autoComplete="new-password"
+            placeholder={FORM_PLACEHOLDERS.passwordNew}
             required
           />
         </label>
@@ -81,6 +84,7 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
             onChange={(e) => setConfirmPassword(e.target.value)}
             minLength={8}
             autoComplete="new-password"
+            placeholder={FORM_PLACEHOLDERS.passwordNew}
             required
           />
         </label>

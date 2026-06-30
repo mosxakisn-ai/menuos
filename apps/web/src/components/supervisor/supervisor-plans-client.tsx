@@ -13,6 +13,7 @@ import {
 import type { PlanCatalogEntry } from "@/lib/plan-catalog-types";
 import { formatPlanPriceDisplay } from "@/lib/plan-catalog-types";
 import { cn } from "@/lib/utils";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 function formatLimit(value: number | null, unlimited = "Απεριόριστο") {
   return value === null ? unlimited : String(value);
@@ -164,7 +165,7 @@ function PlanEditor({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm sm:col-span-2">
               <span className={dashboardLabelClass}>Όνομα εμφάνισης</span>
-              <input className={dashboardFieldClass} value={name} onChange={(e) => setName(e.target.value)} required />
+              <input className={dashboardFieldClass} value={name} onChange={(e) => setName(e.target.value)} placeholder={FORM_PLACEHOLDERS.planDisplayName} required />
             </label>
             <label className="block text-sm">
               <span className={dashboardLabelClass}>Τιμή / μήνα (€)</span>
@@ -173,6 +174,7 @@ function PlanEditor({
                 inputMode="decimal"
                 value={priceMonthly}
                 onChange={(e) => setPriceMonthly(e.target.value)}
+                placeholder={FORM_PLACEHOLDERS.planPriceMonthly}
                 required
               />
             </label>
@@ -203,6 +205,7 @@ function PlanEditor({
                 min={0}
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
+                placeholder={FORM_PLACEHOLDERS.planSortOrder}
               />
             </label>
             <label className="block text-sm sm:col-span-2">
@@ -211,6 +214,7 @@ function PlanEditor({
                 className={cn(dashboardFieldClass, "min-h-[72px] resize-y")}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                placeholder={FORM_PLACEHOLDERS.planDescription}
               />
             </label>
             <label className="block text-sm sm:col-span-2">
@@ -219,6 +223,7 @@ function PlanEditor({
                 className={cn(dashboardFieldClass, "min-h-[140px] resize-y font-mono text-xs")}
                 value={featuresText}
                 onChange={(e) => setFeaturesText(e.target.value)}
+                placeholder={FORM_PLACEHOLDERS.planFeatures}
                 required
               />
             </label>
@@ -235,6 +240,7 @@ function PlanEditor({
                   min={1}
                   value={maxVenues}
                   onChange={(e) => setMaxVenues(e.target.value)}
+                  placeholder={FORM_PLACEHOLDERS.maxVenues}
                   required
                 />
               </label>
@@ -264,11 +270,11 @@ function PlanEditor({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm">
               <span className={dashboardLabelClass}>Κουμπί CTA</span>
-              <input className={dashboardFieldClass} value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} />
+              <input className={dashboardFieldClass} value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} placeholder={FORM_PLACEHOLDERS.planCta} />
             </label>
             <label className="block text-sm">
               <span className={dashboardLabelClass}>Badge (π.χ. Δημοφιλές)</span>
-              <input className={dashboardFieldClass} value={badge} onChange={(e) => setBadge(e.target.value)} />
+              <input className={dashboardFieldClass} value={badge} onChange={(e) => setBadge(e.target.value)} placeholder={FORM_PLACEHOLDERS.planBadge} />
             </label>
             {plan.id === "TRIAL" ? (
               <label className="block text-sm">
@@ -279,6 +285,7 @@ function PlanEditor({
                   min={1}
                   value={trialDays}
                   onChange={(e) => setTrialDays(e.target.value)}
+                  placeholder={FORM_PLACEHOLDERS.trialDays}
                 />
               </label>
             ) : null}

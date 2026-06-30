@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import type { SupervisorOperatorRow } from "@/lib/supervisor-operator-service";
 
 function formatDate(iso: string) {
@@ -210,6 +211,7 @@ export function SupervisorUsersClient() {
                     value={ownCurrentPassword}
                     onChange={(e) => setOwnCurrentPassword(e.target.value)}
                     autoComplete="current-password"
+                    placeholder={FORM_PLACEHOLDERS.passwordCurrent}
                     required
                   />
                 </label>
@@ -222,6 +224,7 @@ export function SupervisorUsersClient() {
                     onChange={(e) => setOwnNewPassword(e.target.value)}
                     minLength={8}
                     autoComplete="new-password"
+                    placeholder={FORM_PLACEHOLDERS.passwordNew}
                     required
                   />
                 </label>
@@ -234,6 +237,7 @@ export function SupervisorUsersClient() {
                     onChange={(e) => setOwnConfirmPassword(e.target.value)}
                     minLength={8}
                     autoComplete="new-password"
+                    placeholder={FORM_PLACEHOLDERS.passwordNew}
                     required
                   />
                 </label>
@@ -347,6 +351,7 @@ export function SupervisorUsersClient() {
                   minLength={2}
                   required
                   autoComplete="off"
+                  placeholder={FORM_PLACEHOLDERS.supervisorUsername}
                 />
               </label>
               <label className="block text-sm">
@@ -356,6 +361,7 @@ export function SupervisorUsersClient() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  placeholder={FORM_PLACEHOLDERS.supervisorName}
                 />
               </label>
               <label className="block text-sm">
@@ -367,6 +373,7 @@ export function SupervisorUsersClient() {
                   onChange={(e) => setPassword(e.target.value)}
                   minLength={8}
                   required
+                  placeholder={FORM_PLACEHOLDERS.passwordNew}
                 />
               </label>
               <div className="sm:col-span-3">
@@ -394,6 +401,7 @@ export function SupervisorUsersClient() {
                   minLength={8}
                   required
                   autoFocus
+                  placeholder={FORM_PLACEHOLDERS.passwordNew}
                 />
               </label>
               <div className="flex gap-2">

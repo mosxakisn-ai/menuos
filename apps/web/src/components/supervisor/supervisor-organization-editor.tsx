@@ -12,6 +12,7 @@ import {
 } from "@/lib/stripe-dashboard-urls";
 import { ORGANIZATION_ACTIVITIES, ORGANIZATION_ACTIVITY_LABELS } from "@menuos/shared";
 import { cn } from "@/lib/utils";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Διαχειριστής",
@@ -203,6 +204,7 @@ export function SupervisorOrganizationEditor({
                   className={dashboardFieldClass}
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
+                  placeholder={FORM_PLACEHOLDERS.businessName}
                   required
                 />
               </label>
@@ -213,7 +215,7 @@ export function SupervisorOrganizationEditor({
                   type="email"
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="π.χ. owner@example.gr"
+                  placeholder={FORM_PLACEHOLDERS.email}
                   required
                 />
               </label>
@@ -224,7 +226,7 @@ export function SupervisorOrganizationEditor({
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="π.χ. 210 1234567"
+                  placeholder={FORM_PLACEHOLDERS.phone}
                 />
               </label>
               <label className="block text-sm">
@@ -234,7 +236,7 @@ export function SupervisorOrganizationEditor({
                   type="tel"
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value)}
-                  placeholder="π.χ. 694 1234567"
+                  placeholder={FORM_PLACEHOLDERS.mobile}
                 />
               </label>
               <label className="block text-sm">
@@ -244,7 +246,7 @@ export function SupervisorOrganizationEditor({
                   inputMode="numeric"
                   value={vatNumber}
                   onChange={(e) => setVatNumber(e.target.value.replace(/\D/g, "").slice(0, 9))}
-                  placeholder="9 ψηφία"
+                  placeholder={FORM_PLACEHOLDERS.vat}
                 />
               </label>
               <label className="block text-sm">
@@ -268,7 +270,7 @@ export function SupervisorOrganizationEditor({
                   className={dashboardFieldClass}
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  placeholder="π.χ. Ρόδος"
+                  placeholder={FORM_PLACEHOLDERS.city}
                 />
               </label>
               <label className="block text-sm sm:col-span-2">
@@ -277,7 +279,7 @@ export function SupervisorOrganizationEditor({
                   className={`${dashboardFieldClass} min-h-[88px] resize-y`}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Σημειώσεις ops…"
+                  placeholder={FORM_PLACEHOLDERS.internalNotes}
                 />
               </label>
             </div>
