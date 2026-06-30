@@ -26,6 +26,7 @@ const LANG_ALIASES: Record<string, QrMenuLanguage> = {
   fr: "FR",
   french: "FR",
   francais: "FR",
+  français: "FR",
 };
 
 export function parseQrMenuLanguage(raw?: string | null): QrMenuLanguage {

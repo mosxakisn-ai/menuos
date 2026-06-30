@@ -56,10 +56,17 @@ export async function POST(request: Request) {
     );
   }
 
-  await prisma.waiterCall.update({
-    where: { id: call.id },
+  const updated = await prisma.waiterCall.updateMany({
+    where: { id: call.id, status: "PENDING" },
     data: { status: "CANCELED" },
   });
+
+  if (updated.count === 0) {
+    return NextResponse.json(
+      { error: "Η κλήση δεν μπορεί να ακυρωθεί.", code: "not_cancellable" },
+      { status: 409 },
+    );
+  }
 
   return NextResponse.json({ ok: true, id: call.id });
 }

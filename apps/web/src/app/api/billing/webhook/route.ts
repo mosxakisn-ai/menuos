@@ -41,6 +41,17 @@ async function resolveSubscriptionPeriodEnd(stripeSubId: string): Promise<Date> 
   return new Date(sub.current_period_end * 1000);
 }
 
+async function claimWebhookEvent(eventId: string): Promise<"claimed" | "duplicate"> {
+  try {
+    await prisma.stripeWebhookEvent.create({ data: { id: eventId } });
+    return "claimed";
+  } catch (err) {
+    const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
+    if (code === "P2002") return "duplicate";
+    throw err;
+  }
+}
+
 export async function POST(req: NextRequest) {
   if (!isStripeEnabled()) {
     return NextResponse.json({ error: "Stripe not configured" }, { status: 503 });
@@ -60,8 +71,8 @@ export async function POST(req: NextRequest) {
   }
 
   if (event.id) {
-    const existing = await prisma.stripeWebhookEvent.findUnique({ where: { id: event.id } });
-    if (existing) {
+    const claim = await claimWebhookEvent(event.id);
+    if (claim === "duplicate") {
       return NextResponse.json({ received: true, duplicate: true });
     }
   }
@@ -191,20 +202,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (event.id) {
-      try {
-        await prisma.stripeWebhookEvent.create({ data: { id: event.id } });
-      } catch (err) {
-        const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
-        if (code === "P2002") {
-          return NextResponse.json({ received: true, duplicate: true });
-        }
-        throw err;
-      }
-    }
-
     return NextResponse.json({ received: true });
   } catch (err) {
+    if (event.id) {
+      await prisma.stripeWebhookEvent.delete({ where: { id: event.id } }).catch(() => undefined);
+    }
     console.error("[MenuOS Stripe webhook]", err);
     return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
   }

@@ -135,6 +135,6 @@ export async function POST(request: Request) {
   return NextResponse.json({ id: call.id, type: call.type });
   } catch (err) {
     console.error("[menuos] waiter-call POST failed", err);
-    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
+    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 500 });
   }
 }

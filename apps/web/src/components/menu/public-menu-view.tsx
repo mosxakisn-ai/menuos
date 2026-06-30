@@ -84,6 +84,7 @@ export function PublicMenuView({
   const [canGoBack, setCanGoBack] = useState(false);
   const resetTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const pollFailuresRef = useRef(0);
 
   const ui = QR_MENU_UI[lang];
   const activeMenu = venue.menus.find((m) => m.id === activeMenuId) ?? venue.menus[0];
@@ -92,6 +93,13 @@ export function PublicMenuView({
     [venue.slug, tableNumber, roomNumber],
   );
 
+  const clearActiveCall = useCallback(() => {
+    sessionStorage.removeItem(storageKey);
+    setActiveCallId(null);
+    setCallCancellable(false);
+    pollFailuresRef.current = 0;
+  }, [storageKey]);
+
   const syncCallStatus = useCallback(
     async (callId: string) => {
       try {
@@ -99,27 +107,30 @@ export function PublicMenuView({
           `/api/waiter-call/status?callId=${encodeURIComponent(callId)}&venueSlug=${encodeURIComponent(venue.slug)}`,
         );
         if (res.status === 404) {
-          sessionStorage.removeItem(storageKey);
-          setActiveCallId(null);
-          setCallCancellable(false);
+          clearActiveCall();
           return false;
         }
-        if (!res.ok) return false;
+        if (!res.ok) {
+          pollFailuresRef.current += 1;
+          if (pollFailuresRef.current >= 3) clearActiveCall();
+          return false;
+        }
         const data = (await res.json()) as { active?: boolean; cancellable?: boolean };
+        pollFailuresRef.current = 0;
         setCallCancellable(data.cancellable ?? false);
         if (data.active) {
           setActiveCallId(callId);
           return true;
         }
-        sessionStorage.removeItem(storageKey);
-        setActiveCallId(null);
-        setCallCancellable(false);
+        clearActiveCall();
         return false;
       } catch {
+        pollFailuresRef.current += 1;
+        if (pollFailuresRef.current >= 3) clearActiveCall();
         return false;
       }
     },
-    [storageKey, venue.slug],
+    [clearActiveCall, venue.slug],
   );
 
   const restoreActiveCall = useCallback(async () => {
@@ -127,6 +138,10 @@ export function PublicMenuView({
     if (!stored) return;
     await syncCallStatus(stored);
   }, [storageKey, syncCallStatus]);
+
+  useEffect(() => {
+    setLang(language);
+  }, [language]);
 
   useEffect(() => {
     void restoreActiveCall();

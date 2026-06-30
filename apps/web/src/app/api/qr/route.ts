@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
+import { parseQrMenuLanguage } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { APP_URL } from "@/lib/config";
 import { getVenueForOrganization } from "@/lib/venue-access";
+
+const MAX_LOCATION_LEN = 20;
 
 export async function GET(request: Request) {
   const auth = await requireActiveSubscription();
@@ -10,9 +13,9 @@ export async function GET(request: Request) {
 
   const sp = new URL(request.url).searchParams;
   const venueId = sp.get("venueId");
-  const table = sp.get("table") ?? "";
-  const room = sp.get("room") ?? "";
-  const lang = sp.get("lang") === "en" ? "en" : "gr";
+  const table = (sp.get("table") ?? "").slice(0, MAX_LOCATION_LEN);
+  const room = (sp.get("room") ?? "").slice(0, MAX_LOCATION_LEN);
+  const lang = parseQrMenuLanguage(sp.get("lang"));
 
   if (!venueId) {
     return NextResponse.json({ error: "Απαιτείται venueId." }, { status: 400 });
@@ -24,7 +27,7 @@ export async function GET(request: Request) {
   }
 
   const params = new URLSearchParams();
-  if (lang === "en") params.set("lang", "en");
+  if (lang !== "GR") params.set("lang", lang.toLowerCase());
   if (table) params.set("table", table);
   if (room) params.set("room", room);
   const qs = params.toString();

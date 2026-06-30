@@ -57,7 +57,10 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
     slug: venue.slug,
     logoUrl: venue.logoUrl,
     primaryColor: venue.primaryColor,
-    menus: venue.menus,
+    menus: venue.menus.map((menu) => ({
+      ...menu,
+      categories: menu.categories.filter((category) => category.items.length > 0),
+    })),
   };
 
   return (

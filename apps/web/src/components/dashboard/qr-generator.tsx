@@ -2,6 +2,7 @@
 
 import { Download, ExternalLink } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { QR_MENU_LANGUAGE_LABELS, type QrMenuLanguage } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,7 +22,7 @@ export function QrGenerator({
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
   const [table, setTable] = useState("");
   const [room, setRoom] = useState("");
-  const [lang, setLang] = useState<"gr" | "en">("gr");
+  const [lang, setLang] = useState<QrMenuLanguage>("GR");
   const [menuUrl, setMenuUrl] = useState("");
   const [pngDataUrl, setPngDataUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,7 +35,7 @@ export function QrGenerator({
       const params = new URLSearchParams({ venueId });
       if (table) params.set("table", table);
       if (room) params.set("room", room);
-      if (lang === "en") params.set("lang", "en");
+      if (lang !== "GR") params.set("lang", lang.toLowerCase());
       const res = await fetch(`/api/qr?${params}`);
       const data = await res.json();
       if (res.ok) {
@@ -138,11 +139,14 @@ export function QrGenerator({
             <span className="font-medium">Προεπιλεγμένη γλώσσα QR</span>
             <select
               value={lang}
-              onChange={(e) => setLang(e.target.value as "gr" | "en")}
+              onChange={(e) => setLang(e.target.value as QrMenuLanguage)}
               className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
             >
-              <option value="gr">Ελληνικά</option>
-              <option value="en">English</option>
+              {(Object.keys(QR_MENU_LANGUAGE_LABELS) as QrMenuLanguage[]).map((code) => (
+                <option key={code} value={code}>
+                  {QR_MENU_LANGUAGE_LABELS[code].name}
+                </option>
+              ))}
             </select>
           </label>
         </div>
