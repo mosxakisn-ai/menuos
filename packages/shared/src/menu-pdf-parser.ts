@@ -48,7 +48,10 @@ const PRICE_PATTERNS: RegExp[] = [
 const PRICE_ONLY = /^(\d{1,4}(?:[.,]\d{1,2})?)\s*(?:€|EUR)?\s*$/iu;
 
 const SKIP_LINE =
-  /^(page\s+\d+|σελίδα\s+\d+|\d+\s*\/\s*\d+|menu\s*#?\d*|www\.|http|tel:|email:|@)/i;
+  /^(page\s+\d+|σελίδα\s+\d+|\d+\s*\/\s*\d+|menu\s*#?\d*|www\.|http|tel:|email:|@|--\s*\d+\s+of\s+\d+\s*--)/i;
+
+const SKIP_HEADER =
+  /^(all[\s-]*inclusive|all\s*beverages|beverages\s*list|legend|notes?|allerg|general\s*information|hotel\s*guide|room\s*service\s*hours|opening\s*hours|copyright|©)/i;
 
 let idCounter = 0;
 function nextId(prefix: string) {
@@ -77,17 +80,34 @@ function isMostlyLatin(text: string): boolean {
   return latin > greek && latin >= 3;
 }
 
+function isAllCapsTitle(line: string): boolean {
+  const letters = line.match(/[A-Za-zΑ-ΩΆΈΉΊΌΎΏ]/gu) ?? [];
+  if (letters.length < 2) return false;
+  const upper = line.match(/[A-ZΑ-ΩΆΈΉΊΌΎΏ]/gu) ?? [];
+  if (upper.length / letters.length < 0.85) return false;
+
+  const words = line.trim().split(/\s+/);
+  if (words.length >= 2) return true;
+
+  return /^(beers?|wines?|cocktails?|spirits?|soft\s*drinks?|coffee|tea|breakfast|lunch|dinner|appetizers?|salads?|desserts?|soups?|mains?|beverages?|drinks?|πρωιν|μεσημ|βραδ|σαλάτ|ποτ|κοκτέιλ|μπύρ|κρασ|αναψυκτ)/i.test(
+    line,
+  );
+}
+
 function looksLikeCategory(line: string, nextLineHasPrice: boolean): boolean {
   if (line.length < 2 || line.length > 80) return false;
   if (extractItemFromLine(line)) return false;
   if (/^\d+$/.test(line)) return false;
-  if (SKIP_LINE.test(line)) return false;
+  if (SKIP_LINE.test(line) || SKIP_HEADER.test(line)) return false;
+
+  const colonMatch = line.match(/^(.{2,60}):\s*$/);
+  if (colonMatch) return true;
 
   const upperRatio =
     (line.match(/[A-ZΑ-ΩΆΈΉΊΌΎΏ]/gu) ?? []).length / Math.max(line.length, 1);
   const titleLike = upperRatio > 0.6 || /^[A-ZΑ-ΩΆΈΉΊΌΎΏ]/.test(line);
 
-  return titleLike || nextLineHasPrice;
+  return titleLike || nextLineHasPrice || isAllCapsTitle(line);
 }
 
 function extractItemFromLine(line: string): { name: string; price: number | null } | null {
@@ -101,28 +121,63 @@ function extractItemFromLine(line: string): { name: string; price: number | null
   return null;
 }
 
+function extractNumberedItem(line: string): string | null {
+  const match = line.match(/^\d+[\.)]\s*(.+)$/);
+  if (!match) return null;
+  const name = cleanLine(match[1] ?? "").replace(/^[-•●▪*]\s*/, "").trim();
+  if (name.length < 2 || SKIP_LINE.test(name) || SKIP_HEADER.test(name)) return null;
+  return name;
+}
+
 function looksLikeNameOnlyItem(line: string): boolean {
   if (line.length < 2 || line.length > 100) return false;
   if (extractItemFromLine(line)) return false;
-  if (SKIP_LINE.test(line)) return false;
+  if (extractNumberedItem(line)) return false;
+  if (SKIP_LINE.test(line) || SKIP_HEADER.test(line)) return false;
   if (/^\d+$/.test(line)) return false;
+  if (looksLikeCategory(line, false)) return false;
   const stripped = line.replace(/^[-•●▪*]\s*/, "").trim();
   if (stripped.length < 2) return false;
-  if (/^(all\s*inclusive|beverages|ποτά|drinks?)$/i.test(stripped)) return false;
+  if (/^(all\s*inclusive|beverages?|ποτά|drinks?)$/i.test(stripped)) return false;
   return true;
 }
 
 function itemWarnings(name: string, price: number | null): string[] {
   const warnings: string[] = [];
-  if (price === null) warnings.push("Λείπει τιμή — συμπλήρωσέ την πριν την εισαγωγή.");
+  if (price === null) warnings.push("Χωρίς τιμή — συμπλήρωσέ την ή άφησε €0.");
   if (name.length < 3) warnings.push("Πολύ σύντομο όνομα.");
   if (price !== null && price > 500) warnings.push("Ύψηλη τιμή — έλεγξε αν είναι σωστή.");
   return warnings;
 }
 
+function preprocessMenuPdfLines(text: string): string[] {
+  const raw = text.split(/\r?\n/);
+  const merged: string[] = [];
+
+  for (const line of raw) {
+    const trimmed = line.replace(/\s+/g, " ").trim();
+    if (!trimmed) continue;
+
+    const prev = merged[merged.length - 1];
+    if (prev && /-\s*$/.test(prev) && /^[a-zα-ωά-ώ]/.test(trimmed)) {
+      merged[merged.length - 1] = prev.replace(/-\s*$/, "") + trimmed;
+      continue;
+    }
+
+    merged.push(trimmed);
+  }
+
+  return merged;
+}
+
+function categoryNameFromLine(line: string): string {
+  const colon = line.match(/^(.{2,60}):\s*$/);
+  if (colon) return colon[1]!.trim();
+  return line.replace(/^[-•●▪*]\s*/, "").trim();
+}
+
 export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdfParseResult {
-  const rawLines = text
-    .split(/\r?\n/)
+  const rawLines = preprocessMenuPdfLines(text)
     .map(cleanLine)
     .filter((line) => line.length > 0 && !SKIP_LINE.test(line));
 
@@ -133,8 +188,10 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
   let itemsWithPrice = 0;
 
   function ensureCategory(nameGr: string) {
+    const normalized = categoryNameFromLine(nameGr);
+    if (SKIP_HEADER.test(normalized)) return;
     const existing = categories.find(
-      (c) => c.nameGr.toLowerCase() === nameGr.toLowerCase() && c.sourceFile === sourceFile,
+      (c) => c.nameGr.toLowerCase() === normalized.toLowerCase() && c.sourceFile === sourceFile,
     );
     if (existing) {
       currentCategory = existing;
@@ -142,8 +199,8 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
     }
     currentCategory = {
       id: nextId("cat"),
-      nameGr,
-      nameEn: isMostlyLatin(nameGr) ? nameGr : undefined,
+      nameGr: normalized,
+      nameEn: isMostlyLatin(normalized) ? normalized : undefined,
       items: [],
       warnings: [],
       selected: true,
@@ -157,7 +214,6 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
     const nextLine = rawLines[i + 1];
     const nextHasPrice = nextLine ? Boolean(extractItemFromLine(nextLine)) : false;
 
-    // Name on one line, price alone on next (common in column layouts)
     if (nextLine) {
       const priceOnly = nextLine.match(PRICE_ONLY);
       if (priceOnly && !extractItemFromLine(line) && line.length >= 3 && !looksLikeCategory(line, true)) {
@@ -168,7 +224,7 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
           itemsWithPrice += 1;
           currentCategory!.items.push({
             id: nextId("item"),
-            nameGr: isMostlyLatin(line) ? line : line,
+            nameGr: line,
             nameEn: isMostlyLatin(line) ? line : undefined,
             price,
             warnings: itemWarnings(line, price),
@@ -181,12 +237,28 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
       }
     }
 
+    const numbered = extractNumberedItem(line);
+    if (numbered) {
+      if (!currentCategory) ensureCategory("Γενικά");
+      itemsFound += 1;
+      currentCategory!.items.push({
+        id: nextId("item"),
+        nameGr: numbered,
+        nameEn: isMostlyLatin(numbered) ? numbered : undefined,
+        price: null,
+        warnings: itemWarnings(numbered, null),
+        selected: true,
+        sourceFile,
+      });
+      continue;
+    }
+
     const item = extractItemFromLine(line);
 
     if (item) {
       if (!currentCategory) ensureCategory("Γενικά");
 
-      const nameGr = isMostlyLatin(item.name) ? item.name : item.name;
+      const nameGr = item.name;
       const nameEn = isMostlyLatin(item.name) ? item.name : undefined;
       const warnings = itemWarnings(nameGr, item.price);
       if (item.price !== null) itemsWithPrice += 1;
@@ -194,7 +266,7 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
 
       currentCategory!.items.push({
         id: nextId("item"),
-        nameGr: isMostlyLatin(item.name) ? item.name : item.name,
+        nameGr,
         nameEn,
         price: item.price,
         warnings,
@@ -211,14 +283,14 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
 
     if (looksLikeNameOnlyItem(line)) {
       if (!currentCategory) ensureCategory("Γενικά");
+      const name = line.replace(/^[-•●▪*]\s*/, "").trim();
       itemsFound += 1;
-      itemsWithPrice += 1;
       currentCategory!.items.push({
         id: nextId("item"),
-        nameGr: line.replace(/^[-•●▪*]\s*/, "").trim(),
-        nameEn: isMostlyLatin(line) ? line.replace(/^[-•●▪*]\s*/, "").trim() : undefined,
-        price: 0,
-        warnings: ["Χωρίς τιμή στο PDF — βάλαμε €0 (άλλαξέ το αν χρειάζεται)."],
+        nameGr: name,
+        nameEn: isMostlyLatin(name) ? name : undefined,
+        price: null,
+        warnings: itemWarnings(name, null),
         selected: true,
         sourceFile,
       });
@@ -243,9 +315,12 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
     );
   }
 
-  if (itemsFound > 0 && itemsWithPrice / itemsFound < 0.5) {
+  const itemsWithoutPrice = itemsFound - itemsWithPrice;
+  if (itemsFound > 0 && itemsWithoutPrice > 0) {
     globalWarnings.push(
-      "Πολλά πιάτα χωρίς τιμή — έλεγξε τον πίνακα πριν την εισαγωγή.",
+      itemsWithoutPrice === itemsFound
+        ? "Δεν βρέθηκαν τιμές στο PDF — τα πιάτα εισάγονται χωρίς τιμή (€0). Μπορείς να τις συμπληρώσεις μετά."
+        : `${itemsWithoutPrice} πιάτα χωρίς τιμή — έλεγξέ τα πριν την εισαγωγή.`,
     );
   }
 

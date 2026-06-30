@@ -46,7 +46,7 @@ export function MenuImportWizard({
     const categories = draft.categories.filter((c) => c.selected).length;
     const items = draft.categories
       .filter((c) => c.selected)
-      .flatMap((c) => c.items.filter((i) => i.selected && i.price !== null)).length;
+      .flatMap((c) => c.items.filter((i) => i.selected)).length;
     return { categories, items };
   }, [draft]);
 
@@ -129,11 +129,11 @@ export function MenuImportWizard({
         nameEn: c.nameEn,
         selected: c.selected,
         items: c.items
-          .filter((i) => i.selected && i.price !== null)
+          .filter((i) => i.selected)
           .map((i) => ({
             nameGr: i.nameGr,
             nameEn: i.nameEn,
-            price: i.price as number,
+            price: i.price ?? 0,
             descriptionGr: i.descriptionGr,
             selected: true,
           })),
@@ -141,7 +141,7 @@ export function MenuImportWizard({
       .filter((c) => c.items.length > 0);
 
     if (categories.length === 0) {
-      setFlash({ type: "error", text: "Επίλεξε πιάτα με έγκυρες τιμές." });
+      setFlash({ type: "error", text: "Επίλεξε τουλάχιστον ένα πιάτο." });
       return;
     }
 
@@ -229,8 +229,8 @@ export function MenuImportWizard({
           <Card>
             <h3 className="font-semibold text-brand-navy">PDF αρχεία (έως 10)</h3>
             <p className="mt-1 text-sm text-slate-600">
-              Ιδανικά digital PDF (όχι σαρωμένη φωτο). Κάθε PDF μπορεί να είναι ξεχωριστός κατάλογος
-              (π.χ. breakfast, pool bar).
+              Ιδανικά digital PDF (όχι σαρωμένη φωτο). Λειτουργεί και με PDF χωρίς τιμές (all-inclusive κ.λπ.) —
+              συμπληρώνεις τιμές μετά. Κάθε PDF μπορεί να είναι ξεχωριστός κατάλογος.
             </p>
             <label
               className={`mt-4 flex cursor-pointer flex-col items-center rounded-card border-2 border-dashed border-slate-200 bg-white px-6 py-10 text-center hover:border-brand-blue/40`}
@@ -292,7 +292,8 @@ export function MenuImportWizard({
                   {selectedCounts.categories} κατηγορίες · {selectedCounts.items} πιάτα επιλεγμένα
                 </p>
                 <p className="text-xs text-slate-500">
-                  Από {draft.stats.filesProcessed} PDF · {draft.stats.itemsWithPrice} τιμές εντοπίστηκαν
+                  Από {draft.stats.filesProcessed} PDF · {draft.stats.itemsWithPrice} τιμές ·{" "}
+                  {draft.stats.itemsFound - draft.stats.itemsWithPrice} χωρίς τιμή (€0)
                 </p>
               </div>
               <button type="button" onClick={() => setStep(1)} className={buttonClass("secondary", "sm")}>

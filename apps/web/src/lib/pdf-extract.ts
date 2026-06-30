@@ -2,6 +2,7 @@ import type { MenuPdfParseResult } from "@menuos/shared";
 
 const MAX_FILES = 10;
 const MAX_BYTES = 10 * 1024 * 1024;
+const MIN_TEXT_CHARS = 15;
 
 export class PdfTextExtractionError extends Error {
   constructor(
@@ -13,15 +14,76 @@ export class PdfTextExtractionError extends Error {
   }
 }
 
-export async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
+type TableResultLike = {
+  pages: Array<{ tables: string[][][] }>;
+};
+
+function scoreMenuText(text: string): number {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  const withPrice = lines.filter((l) => /\d{1,4}[.,]\d{0,2}\s*€?/u.test(l)).length;
+  const withTab = lines.filter((l) => l.includes("\t")).length;
+  return lines.length * 40 + text.length + withPrice * 25 + withTab * 15;
+}
+
+function pickBestMenuText(candidates: string[]): string {
+  const unique = [...new Set(candidates.map((t) => t.trim()).filter((t) => t.length > 0))];
+  if (unique.length === 0) return "";
+  return unique.sort((a, b) => scoreMenuText(b) - scoreMenuText(a))[0]!;
+}
+
+function tablesToText(tableResult: TableResultLike): string {
+  const lines: string[] = [];
+  for (const page of tableResult.pages) {
+    for (const table of page.tables) {
+      for (const row of table) {
+        const cells = row.map((c) => c.replace(/\s+/g, " ").trim()).filter(Boolean);
+        if (cells.length === 0) continue;
+        if (cells.length === 1) {
+          lines.push(cells[0]!);
+        } else {
+          lines.push(cells.join("\t"));
+        }
+      }
+      lines.push("");
+    }
+  }
+  return lines.join("\n").trim();
+}
+
+async function createPdfParser(buffer: Buffer) {
   const { PDFParse } = await import("pdf-parse");
-  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  return new PDFParse({ data: new Uint8Array(buffer) });
+}
+
+export async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
+  const parser = await createPdfParser(buffer);
+  const candidates: string[] = [];
+
   try {
-    const result = await parser.getText();
-    return result.text?.trim() ?? "";
+    const primary = await parser.getText({
+      cellSeparator: "\t",
+      lineEnforce: true,
+      pageJoiner: "",
+    });
+    if (primary.text?.trim()) candidates.push(primary.text.trim());
+
+    if ((primary.text?.trim().length ?? 0) < 120) {
+      const loose = await parser.getText({ lineEnforce: false, pageJoiner: "" });
+      if (loose.text?.trim()) candidates.push(loose.text.trim());
+    }
+
+    try {
+      const tables = await parser.getTable();
+      const tableText = tablesToText(tables);
+      if (tableText.length > 0) candidates.push(tableText);
+    } catch (tableErr) {
+      console.warn("pdf-extract getTable skipped", tableErr);
+    }
   } finally {
     await parser.destroy().catch(() => undefined);
   }
+
+  return pickBestMenuText(candidates);
 }
 
 export function readPdfFilesFromFormData(formData: FormData): File[] {
@@ -65,7 +127,7 @@ export async function parseUploadedPdfFiles(files: File[]): Promise<MenuPdfParse
         file.name,
       );
     }
-    if (text.length < 20) {
+    if (text.length < MIN_TEXT_CHARS) {
       throw new PdfTextExtractionError(
         `Το «${file.name}» δεν έχει εξαγόμενο κείμενο — συνήθως είναι σαρωμένη εικόνα, όχι digital PDF.`,
         file.name,

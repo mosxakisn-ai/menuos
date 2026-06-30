@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   );
 
   if (selectedItems.length === 0) {
-    return NextResponse.json({ error: "Επίλεξε τουλάχιστον ένα πιάτο με τιμή." }, { status: 400 });
+    return NextResponse.json({ error: "Επίλεξε τουλάχιστον ένα πιάτο." }, { status: 400 });
   }
 
   const currentCount = await prisma.item.count({
