@@ -12,11 +12,13 @@ import {
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
   DashboardSectionTitle,
+  DashboardToolbar,
+  dashboardCardClass,
   dashboardFieldClass,
+  dashboardFormGridClass,
   dashboardLabelClass,
 } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 type Venue = { id: string; name: string; slug: string };
@@ -214,13 +216,13 @@ export function VenueSpotsManager({
 
   if (venues.length === 0) {
     return (
-      <Card>
+      <div className={dashboardCardClass}>
         <p className="font-semibold text-brand-navy">Χρειάζεσαι πρώτα κατάστημα</p>
         <p className="mt-2 text-sm text-slate-600">Φτιάξε κατάστημα και πρόσθεσε πιάτα πριν βγάλεις QR.</p>
         <a href="/dashboard/venues/new" className={`mt-4 inline-flex ${buttonClass("primary")}`}>
           {DASHBOARD_EL.addVenue}
         </a>
-      </Card>
+      </div>
     );
   }
 
@@ -244,44 +246,45 @@ export function VenueSpotsManager({
         </div>
       ) : null}
 
-      <Card className="p-6 sm:p-8">
+      <div className={dashboardCardClass}>
         <DashboardSectionTitle
           title="Τραπέζια, δωμάτια & ξαπλώστρες"
           description="Πρόσθεσε κάθε θέση μία φορά. Κάθε QR «δένει» τον αριθμό — ο σερβιτόρος βλέπει ακριβώς από πού καλούν."
         />
 
-        <label className="mt-6 block max-w-md">
-          <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
-          <select
-            value={venueId}
-            onChange={(e) => {
-              setVenueId(e.target.value);
-              cancelEditing();
-            }}
-            className={dashboardFieldClass}
-          >
-            {venues.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="mt-6 block max-w-xs">
-          <span className={dashboardLabelClass}>Τύπος</span>
-          <select
-            value={spotType}
-            onChange={(e) => setSpotType(e.target.value as VenueSpotType)}
-            className={dashboardFieldClass}
-          >
-            {VENUE_SPOT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {venueSpotTypeLabel(t)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <DashboardToolbar className="mt-6">
+          <label className="block min-w-[12rem] flex-1 sm:max-w-md">
+            <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
+            <select
+              value={venueId}
+              onChange={(e) => {
+                setVenueId(e.target.value);
+                cancelEditing();
+              }}
+              className={dashboardFieldClass}
+            >
+              {venues.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block w-full sm:w-40">
+            <span className={dashboardLabelClass}>Τύπος</span>
+            <select
+              value={spotType}
+              onChange={(e) => setSpotType(e.target.value as VenueSpotType)}
+              className={dashboardFieldClass}
+            >
+              {VENUE_SPOT_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {venueSpotTypeLabel(t)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </DashboardToolbar>
 
         <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-5">
           <p className="text-sm font-semibold text-brand-navy">Μαζική προσθήκη</p>
@@ -339,7 +342,7 @@ export function VenueSpotsManager({
 
         <form
           onSubmit={addSpot}
-          className="mt-6 grid items-end gap-4 border-t border-slate-100 pt-6 sm:grid-cols-[minmax(0,1fr)_auto]"
+          className={`${dashboardFormGridClass} mt-6 items-end border-t border-slate-100 pt-6 sm:grid-cols-[minmax(0,1fr)_auto]`}
         >
           <label className="block">
             <span className={dashboardLabelClass}>Αριθμός / όνομα</span>
@@ -362,9 +365,9 @@ export function VenueSpotsManager({
             Προσθήκη
           </button>
         </form>
-      </Card>
+      </div>
 
-      <Card className="p-6 sm:p-8">
+      <div className={dashboardCardClass}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-semibold text-brand-navy">
             Οι θέσεις σου {spots.length > 0 ? `(${spots.length})` : ""}
@@ -470,7 +473,7 @@ export function VenueSpotsManager({
             ))}
           </ul>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

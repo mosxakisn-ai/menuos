@@ -85,7 +85,7 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
           />
         </label>
       </div>
-      <button type="submit" disabled={saving || !canSubmit} className={buttonClass("primary", "sm")}>
+      <button type="submit" disabled={saving || !canSubmit} className={`h-10 w-full sm:w-auto ${buttonClass("primary", "md")}`}>
         {saving ? DASHBOARD_EL.changePassword.saving : DASHBOARD_EL.changePassword.submit}
       </button>
     </form>

@@ -1,11 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import {
+  DashboardPage,
+  DashboardPageHeader,
+  dashboardCardClass,
+  dashboardFieldClass,
+  dashboardLabelClass,
+  dashboardTextareaClass,
+} from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { slugifyOrFallback } from "@/lib/utils";
 
 export default function NewVenuePage() {
@@ -42,40 +48,37 @@ export default function NewVenuePage() {
   }
 
   return (
-    <div className="max-w-lg space-y-4">
-      <Link href="/dashboard" className="text-sm text-primary hover:underline">
-        ← Πίσω
-      </Link>
+    <DashboardPage className="max-w-lg">
+      <DashboardPageHeader
+        title="Νέο κατάστημα"
+        description="Το εστιατόριο, bar ή ξενοδοχείο σου. Θα δημιουργηθεί αυτόματα ο πρώτος κατάλογος."
+      />
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
-      <Card>
-        <h1 className="font-serif text-xl font-bold text-primary">Νέο κατάστημα</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Το εστιατόριο, bar ή ξενοδοχείο σου. Θα δημιουργηθεί αυτόματα ο πρώτος κατάλογος.
-        </p>
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <label className="block text-sm">
-            <span className="font-medium text-primary">Όνομα καταστήματος *</span>
+      <div className={dashboardCardClass}>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <label className="block">
+            <span className={dashboardLabelClass}>Όνομα καταστήματος *</span>
             <input
               name="name"
               required
-              className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
+              className={dashboardFieldClass}
               placeholder="Marine Hotel"
             />
           </label>
-          <label className="block text-sm">
-            <span className="font-medium text-primary">Περιγραφή (προαιρετικό)</span>
+          <label className="block">
+            <span className={dashboardLabelClass}>Περιγραφή (προαιρετικό)</span>
             <textarea
               name="description"
               rows={3}
-              className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
+              className={dashboardTextareaClass}
               placeholder="Pool bar & restaurant στη Ρόδο"
             />
           </label>
-          <button type="submit" disabled={loading} className={buttonClass("primary")}>
+          <button type="submit" disabled={loading} className={`h-10 w-full sm:w-auto ${buttonClass("primary", "md")}`}>
             {loading ? "Δημιουργία..." : "Δημιουργία καταστήματος"}
           </button>
         </form>
-      </Card>
-    </div>
+      </div>
+    </DashboardPage>
   );
 }

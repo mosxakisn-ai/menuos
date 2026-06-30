@@ -95,8 +95,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {org ? <DashboardSidebarSubscription subscription={subscription} /> : null}
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex min-h-[5rem] items-center justify-between gap-4 border-b border-slate-200/80 bg-white px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3 py-3">
+        <header className="flex min-h-[4.5rem] items-center justify-between gap-4 border-b border-slate-200/80 bg-white px-4 sm:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-3 py-3">
             {business.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -139,12 +139,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
         </header>
         <main className="flex-1 bg-brand-surface/50 p-4 pb-24 sm:p-6 md:pb-8">
-          {showTrialBanner && trialEndsAtIso ? (
-            <div className="mx-auto mb-6 w-full max-w-5xl">
-              <TrialStatusBanner trialEndsAt={trialEndsAtIso} />
-            </div>
-          ) : null}
-          {children}
+          <div className="mx-auto w-full max-w-6xl">
+            {showTrialBanner && trialEndsAtIso ? (
+              <div className="mb-6">
+                <TrialStatusBanner trialEndsAt={trialEndsAtIso} />
+              </div>
+            ) : null}
+            {children}
+          </div>
         </main>
       </div>
       <DashboardMobileNav initialPendingCount={pendingWaiterCount} />

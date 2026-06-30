@@ -2,14 +2,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@menuos/db";
 import { WelcomeTrialCard } from "@/components/dashboard/welcome-trial-card";
-import { DashboardPage as DashboardPageShell, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
+import {
+  DashboardPage as DashboardPageShell,
+  DashboardPageHeader,
+  DashboardStatCard,
+  dashboardCardClass,
+  dashboardFormActionsClass,
+} from "@/components/dashboard/dashboard-page";
 import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
 import { TrialLimitsHint } from "@/components/dashboard/trial-limits-hint";
-import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { DASHBOARD_EL, planLabel } from "@/content/dashboard-el";
 import { getSession } from "@/lib/auth";
 import { buildPrivatePageMetadata } from "@/lib/seo";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = buildPrivatePageMetadata("Επισκόπηση", "/dashboard");
 
@@ -69,19 +75,27 @@ export default async function DashboardPage({ searchParams }: Props) {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label={DASHBOARD_EL.venues} value={venueCount} hint={venueCount === 0 ? "Πρόσθεσε το πρώτο" : undefined} />
-        <StatCard label="Πιάτα" value={itemCount} hint={itemCount === 0 ? "Πρόσθεσε στον κατάλογο" : undefined} />
-        <StatCard label={DASHBOARD_EL.trial.endsOn} value={formatTrial(org?.subscription?.trialEndsAt)} />
+        <DashboardStatCard
+          label={DASHBOARD_EL.venues}
+          value={venueCount}
+          hint={venueCount === 0 ? "Πρόσθεσε το πρώτο" : undefined}
+        />
+        <DashboardStatCard
+          label="Πιάτα"
+          value={itemCount}
+          hint={itemCount === 0 ? "Πρόσθεσε στον κατάλογο" : undefined}
+        />
+        <DashboardStatCard label={DASHBOARD_EL.trial.endsOn} value={formatTrial(org?.subscription?.trialEndsAt)} />
       </div>
 
-      <Card>
-        <h2 className="font-semibold text-primary">Γρήγορες ενέργειες</h2>
-        <p className="mt-2 text-sm text-slate-600">
+      <div className={dashboardCardClass}>
+        <h2 className="text-center font-semibold text-primary sm:text-left">Γρήγορες ενέργειες</h2>
+        <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-relaxed text-slate-600 sm:mx-0 sm:text-left">
           {itemCount === 0
             ? "Ξεκίνα προσθέτοντας κατηγορίες και πιάτα — μετά βγάλε QR για τα τραπέζια σου."
             : "Ο κατάλογος σου είναι online! Βγάλε QR ή δες τις κλήσεις από πελάτες."}
         </p>
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className={cn(dashboardFormActionsClass, "mt-5 justify-center sm:justify-start")}>
           {venueCount === 0 ? (
             <Link href="/dashboard/venues/new" className={buttonClass("primary")}>
               + {DASHBOARD_EL.addVenue}
@@ -119,18 +133,8 @@ export default async function DashboardPage({ searchParams }: Props) {
             {DASHBOARD_EL.subscription}
           </Link>
         </div>
-      </Card>
+      </div>
     </DashboardPageShell>
-  );
-}
-
-function StatCard({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
-  return (
-    <Card>
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="mt-1 font-serif text-2xl font-bold text-primary">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-brand-blue">{hint}</p> : null}
-    </Card>
   );
 }
 

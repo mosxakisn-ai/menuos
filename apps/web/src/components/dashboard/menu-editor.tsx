@@ -4,10 +4,18 @@ import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import {
+  dashboardCardClass,
+  dashboardFieldClass,
+  dashboardFormGridClass,
+  dashboardLabelClass,
+  DashboardToolbar,
+} from "@/components/dashboard/dashboard-page";
 import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { cn } from "@/lib/utils";
 
 type Translation = { language: string; name: string; description?: string | null };
 type Item = {
@@ -304,13 +312,13 @@ export function MenuEditor({
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
-      <div className="flex flex-wrap items-end gap-4">
-        <label className="block text-sm">
-          <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}</span>
+      <DashboardToolbar>
+        <label className="block min-w-[12rem] flex-1 sm:max-w-xs">
+          <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
           <select
             value={venueId}
             onChange={(e) => setVenueId(e.target.value)}
-            className="mt-1 block min-w-[200px] rounded-button border border-slate-200 px-3 py-2.5"
+            className={dashboardFieldClass}
           >
             {venues.map((v) => (
               <option key={v.id} value={v.id}>
@@ -324,14 +332,14 @@ export function MenuEditor({
             {canImportPdf ? (
               <a
                 href={`/dashboard/menus/import?venue=${venueId}`}
-                className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+                className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
               >
                 {DASHBOARD_EL.importPdf}
               </a>
             ) : (
               <a
                 href="/dashboard/billing?upgrade=pdf-import"
-                className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+                className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
               >
                 {DASHBOARD_EL.importPdfPro}
               </a>
@@ -340,14 +348,14 @@ export function MenuEditor({
               href={`/m/${venue.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+              className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
             >
               {DASHBOARD_EL.previewCatalog}
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </>
         ) : null}
-      </div>
+      </DashboardToolbar>
 
       {loading ? (
         <p className="text-sm text-slate-500">{DASHBOARD_EL.loadingCatalog}</p>
@@ -391,31 +399,31 @@ export function MenuEditor({
             <p className="mt-1 text-xs text-slate-500">
               Ελληνικά υποχρεωτικά · EN / DE / FR προαιρετικά για το QR menu
             </p>
-            <form onSubmit={addCategory} className="mt-4 grid gap-3 sm:grid-cols-2">
+            <form onSubmit={addCategory} className={cn(dashboardFormGridClass, "mt-4")}>
               <input
                 required
                 placeholder="Όνομα (Ελληνικά) *"
                 value={catNameGr}
                 onChange={(e) => setCatNameGr(e.target.value)}
-                className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                className={dashboardFieldClass}
               />
               <input
                 placeholder="Name (English)"
                 value={catNameEn}
                 onChange={(e) => setCatNameEn(e.target.value)}
-                className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                className={dashboardFieldClass}
               />
               <input
                 placeholder="Name (Deutsch)"
                 value={catNameDe}
                 onChange={(e) => setCatNameDe(e.target.value)}
-                className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                className={dashboardFieldClass}
               />
               <input
                 placeholder="Nom (Français)"
                 value={catNameFr}
                 onChange={(e) => setCatNameFr(e.target.value)}
-                className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                className={dashboardFieldClass}
               />
               <button
                 type="submit"

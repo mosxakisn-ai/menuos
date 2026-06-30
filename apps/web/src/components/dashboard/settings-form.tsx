@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
+  dashboardCardClass,
   dashboardFieldClass,
+  dashboardFormGridClass,
   dashboardLabelClass,
   dashboardTextareaClass,
 } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { cn } from "@/lib/utils";
 
 type Venue = {
   id: string;
@@ -73,9 +75,11 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
 
   if (venues.length === 0) {
     return (
-      <Card>
-        <p className="text-sm text-slate-600">Φτιάξε πρώτα κατάστημα για να ρυθμίσεις χρώματα και εμφάνιση.</p>
-      </Card>
+      <div className={dashboardCardClass}>
+        <p className="text-center text-sm text-slate-600 sm:text-left">
+          Φτιάξε πρώτα κατάστημα για να ρυθμίσεις χρώματα και εμφάνιση.
+        </p>
+      </div>
     );
   }
 
@@ -83,15 +87,15 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
     <div className="space-y-4">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
-      <Card className="p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className={dashboardCardClass}>
+        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-semibold text-brand-navy">Εμφάνιση καταλόγου</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm leading-relaxed text-slate-500">
               Logo, χρώματα και στοιχεία που βλέπουν οι πελάτες από το QR.
             </p>
           </div>
-          <label className="block w-full lg:max-w-xs">
+          <label className="block w-full sm:max-w-xs sm:shrink-0">
             <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
             <select
               value={venueId}
@@ -107,8 +111,8 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
           </label>
         </div>
 
-        <form onSubmit={onSubmit} className="mt-5 grid gap-4 lg:grid-cols-2 lg:gap-x-6">
-          <label className="block lg:col-span-2">
+        <form onSubmit={onSubmit} className={cn(dashboardFormGridClass, "mt-6")}>
+          <label className="block sm:col-span-2">
             <span className={dashboardLabelClass}>Όνομα καταστήματος</span>
             <input
               required
@@ -117,7 +121,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
               className={dashboardFieldClass}
             />
           </label>
-          <label className="block lg:col-span-2">
+          <label className="block sm:col-span-2">
             <span className={dashboardLabelClass}>Περιγραφή</span>
             <textarea
               rows={2}
@@ -127,13 +131,13 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
             />
           </label>
           <PhotoUploadField
-            className="lg:col-span-2"
+            className="sm:col-span-2"
             value={logoUrl}
             onChange={setLogoUrl}
             label={DASHBOARD_EL.photos.logoLabel}
             hint={DASHBOARD_EL.photos.logoHint}
           />
-          <p className="lg:col-span-2 text-xs text-slate-500">{DASHBOARD_EL.photos.logoSaveHint}</p>
+          <p className="sm:col-span-2 text-xs text-slate-500">{DASHBOARD_EL.photos.logoSaveHint}</p>
           <label className="block">
             <span className={dashboardLabelClass}>Κύριο χρώμα</span>
             <input
@@ -152,13 +156,13 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
               className="mt-1.5 h-10 w-full cursor-pointer rounded-button border border-slate-200 bg-white shadow-sm"
             />
           </label>
-          <div className="lg:col-span-2">
-            <button type="submit" disabled={saving} className={`h-10 ${buttonClass("primary", "md")}`}>
+          <div className="sm:col-span-2">
+            <button type="submit" disabled={saving} className={`h-10 w-full sm:w-auto ${buttonClass("primary", "md")}`}>
               {saving ? "Αποθήκευση..." : "Αποθήκευση ρυθμίσεων"}
             </button>
           </div>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }
