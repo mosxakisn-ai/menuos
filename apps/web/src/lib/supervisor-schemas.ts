@@ -18,11 +18,28 @@ export const supervisorOrganizationUpdateSchema = z
 
 export type SupervisorOrganizationUpdateInput = z.infer<typeof supervisorOrganizationUpdateSchema>;
 
-export const supervisorAddUserSchema = z.object({
+export const supervisorAddOperatorSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(2)
+    .max(64)
+    .regex(/^[a-zA-Z0-9._-]+$/, "Invalid username")
+    .transform((s) => s.toLowerCase()),
   name: z.string().trim().min(1).max(120),
-  email: z.string().email().max(254).transform((s) => s.trim().toLowerCase()),
   password: z.string().min(8).max(128),
-  role: z.enum(["ADMIN", "MANAGER", "STAFF"]).default("STAFF"),
 });
 
-export type SupervisorAddUserInput = z.infer<typeof supervisorAddUserSchema>;
+export type SupervisorAddOperatorInput = z.infer<typeof supervisorAddOperatorSchema>;
+
+export const supervisorUpdateOperatorSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    password: z.string().min(8).max(128).optional(),
+    active: z.boolean().optional(),
+  })
+  .refine((data) => data.name !== undefined || data.password !== undefined || data.active !== undefined, {
+    message: "Nothing to update",
+  });
+
+export type SupervisorUpdateOperatorInput = z.infer<typeof supervisorUpdateOperatorSchema>;

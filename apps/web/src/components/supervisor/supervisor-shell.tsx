@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, CreditCard, LayoutDashboard, LogOut } from "lucide-react";
+import { Building2, CreditCard, LayoutDashboard, LogOut, Users } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ const NAV = [
   { href: "/supervisor", label: "Αρχική", icon: LayoutDashboard, exact: true },
   { href: "/supervisor/organizations", label: "Πελάτες", icon: Building2 },
   { href: "/supervisor/subscriptions", label: "Συνδρομές", icon: CreditCard },
+  { href: "/supervisor/users", label: "Ομάδα", icon: Users },
 ] as const;
 
 function NavLink({

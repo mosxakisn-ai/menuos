@@ -49,11 +49,11 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!verifySupervisorCredentials(username, password)) {
+  if (!(await verifySupervisorCredentials(username, password))) {
     return NextResponse.json({ error: "Λάθος στοιχεία σύνδεσης." }, { status: 401 });
   }
 
-  const token = createSupervisorToken();
+  const token = createSupervisorToken(username);
   (await cookies()).set(SUPERVISOR_COOKIE, token, supervisorCookieOptions());
   return NextResponse.json({ ok: true });
 }

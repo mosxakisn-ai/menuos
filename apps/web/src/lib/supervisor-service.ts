@@ -1,7 +1,6 @@
-import bcrypt from "bcryptjs";
-import { prisma, type SubscriptionPlan, type SubscriptionStatus, type UserRole } from "@menuos/db";
+import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/db";
 import { DEMO_VENUE_SLUG, PLAN_DEFINITIONS, isPaidPlan, organizationHasPaidPlan } from "@menuos/shared";
-import type { SupervisorAddUserInput, SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
+import type { SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
 
 export type SupervisorOrganizationRow = {
   id: string;
@@ -20,14 +19,6 @@ export type SupervisorOrganizationRow = {
   venueCount: number;
   menuCount: number;
   itemCount: number;
-};
-
-export type SupervisorUserRow = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
 };
 
 export type SupervisorOverview = {
@@ -324,54 +315,4 @@ export async function updateOrganizationForSupervisor(
   const updated = await getOrganizationForSupervisor(id);
   if (!updated) throw new Error("not_found");
   return updated;
-}
-
-export async function listUsersForSupervisor(organizationId: string): Promise<SupervisorUserRow[]> {
-  const org = await prisma.organization.findUnique({ where: { id: organizationId } });
-  if (!org) throw new Error("not_found");
-
-  const users = await prisma.user.findMany({
-    where: { organizationId },
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
-    orderBy: [{ createdAt: "asc" }],
-  });
-
-  return users.map((user) => ({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    createdAt: user.createdAt.toISOString(),
-  }));
-}
-
-export async function addUserForSupervisor(
-  organizationId: string,
-  input: SupervisorAddUserInput,
-): Promise<SupervisorUserRow> {
-  const org = await prisma.organization.findUnique({ where: { id: organizationId } });
-  if (!org) throw new Error("not_found");
-
-  const existing = await prisma.user.findUnique({ where: { email: input.email } });
-  if (existing) throw new Error("email_taken");
-
-  const passwordHash = await bcrypt.hash(input.password, 12);
-  const user = await prisma.user.create({
-    data: {
-      organizationId,
-      name: input.name.trim(),
-      email: input.email,
-      passwordHash,
-      role: input.role as UserRole,
-    },
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
-  });
-
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    createdAt: user.createdAt.toISOString(),
-  };
 }
