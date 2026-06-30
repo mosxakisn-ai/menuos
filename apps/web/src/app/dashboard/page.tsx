@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@menuos/db";
+import { isTrialPlan } from "@menuos/shared";
 import { WelcomeTrialCard } from "@/components/dashboard/welcome-trial-card";
 import {
   DashboardPage as DashboardPageShell,
@@ -52,6 +53,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   const planId = org?.subscription?.plan ?? "TRIAL";
   const trialEndsAt = org?.subscription?.trialEndsAt?.toISOString() ?? null;
+  const renewalStat = subscriptionRenewalStat(org?.subscription);
 
   return (
     <DashboardPageShell>
@@ -85,7 +87,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           value={itemCount}
           hint={itemCount === 0 ? "Πρόσθεσε στον κατάλογο" : undefined}
         />
-        <DashboardStatCard label={DASHBOARD_EL.trial.endsOn} value={formatTrial(org?.subscription?.trialEndsAt)} />
+        <DashboardStatCard label={renewalStat.label} value={renewalStat.value} hint={renewalStat.hint} />
       </div>
 
       <div className={dashboardCardClass}>
@@ -138,7 +140,19 @@ export default async function DashboardPage({ searchParams }: Props) {
   );
 }
 
-function formatTrial(date?: Date | null) {
-  if (!date) return "—";
+function subscriptionRenewalStat(
+  sub: { plan: string; trialEndsAt: Date | null; currentPeriodEnd: Date | null } | null | undefined,
+): { label: string; value: string; hint?: string } {
+  if (!sub) return { label: "Συνδρομή", value: "—" };
+  if (isTrialPlan(sub.plan) && sub.trialEndsAt) {
+    return { label: DASHBOARD_EL.trial.endsOn, value: formatDateEl(sub.trialEndsAt) };
+  }
+  if (sub.currentPeriodEnd) {
+    return { label: "Ανανέωση έως", value: formatDateEl(sub.currentPeriodEnd) };
+  }
+  return { label: "Πλάνο", value: planLabel(sub.plan) };
+}
+
+function formatDateEl(date: Date) {
   return date.toLocaleDateString("el-GR");
 }

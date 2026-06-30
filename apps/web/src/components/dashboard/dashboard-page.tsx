@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 export const dashboardLabelClass = "block text-sm font-medium text-brand-navy";
 export const dashboardFieldClass =
   "mt-1.5 h-10 w-full rounded-button border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-brand-blue/40 focus:outline-none focus:ring-2 focus:ring-brand-blue/15";
+export const dashboardInputClass =
+  "h-10 w-full rounded-button border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-brand-blue/40 focus:outline-none focus:ring-2 focus:ring-brand-blue/15";
 export const dashboardTextareaClass =
   "mt-1.5 w-full rounded-button border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-brand-blue/40 focus:outline-none focus:ring-2 focus:ring-brand-blue/15";
 export const dashboardSelectClass = dashboardFieldClass;

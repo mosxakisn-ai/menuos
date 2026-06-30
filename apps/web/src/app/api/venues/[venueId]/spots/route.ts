@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { venueSpotBulkCreateSchema, venueSpotCreateSchema } from "@menuos/shared";
+import { venueSpotBulkCreateSchema, venueSpotCreateSchema, zodFirstErrorMessage } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ venueId: string }> };
+
+function isBulkBody(body: unknown): body is { from: unknown; to: unknown } {
+  return typeof body === "object" && body !== null && "from" in body && "to" in body;
+}
 
 export async function GET(_req: Request, { params }: Params) {
   const auth = await requireActiveSubscription();
@@ -41,20 +45,20 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
-  const bulk = venueSpotBulkCreateSchema.safeParse(body);
-  if (bulk.success) {
-    const prefix = bulk.data.prefix ?? "";
+  const bulkResult = venueSpotBulkCreateSchema.safeParse(body);
+  if (bulkResult.success) {
+    const prefix = bulkResult.data.prefix ?? "";
     const labels: string[] = [];
-    for (let n = bulk.data.from; n <= bulk.data.to; n++) {
+    for (let n = bulkResult.data.from; n <= bulkResult.data.to; n++) {
       labels.push(`${prefix}${n}`);
     }
     const created = await prisma.$transaction(
       labels.map((label, index) =>
         prisma.venueSpot.upsert({
           where: {
-            venueId_type_label: { venueId, type: bulk.data.type, label },
+            venueId_type_label: { venueId, type: bulkResult.data.type, label },
           },
-          create: { venueId, type: bulk.data.type, label, sortOrder: index },
+          create: { venueId, type: bulkResult.data.type, label, sortOrder: index },
           update: {},
         }),
       ),
@@ -65,28 +69,32 @@ export async function POST(request: Request, { params }: Params) {
     });
   }
 
-  const single = venueSpotCreateSchema.safeParse(body);
-  if (!single.success) {
-    return NextResponse.json({ error: "Μη έγκυρα στοιχεία." }, { status: 400 });
-  }
-
-  const label = single.data.label.trim();
-  const maxSort = await prisma.venueSpot.aggregate({
-    where: { venueId, type: single.data.type },
-    _max: { sortOrder: true },
-  });
-
-  try {
-    const spot = await prisma.venueSpot.create({
-      data: {
-        venueId,
-        type: single.data.type,
-        label,
-        sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
-      },
+  const singleResult = venueSpotCreateSchema.safeParse(body);
+  if (singleResult.success) {
+    const label = singleResult.data.label.trim();
+    const maxSort = await prisma.venueSpot.aggregate({
+      where: { venueId, type: singleResult.data.type },
+      _max: { sortOrder: true },
     });
-    return NextResponse.json({ spot, message: "Η θέση προστέθηκε." });
-  } catch {
-    return NextResponse.json({ error: "Η θέση υπάρχει ήδη." }, { status: 409 });
+
+    try {
+      const spot = await prisma.venueSpot.create({
+        data: {
+          venueId,
+          type: singleResult.data.type,
+          label,
+          sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
+        },
+      });
+      return NextResponse.json({ spot, message: "Η θέση προστέθηκε." });
+    } catch {
+      return NextResponse.json({ error: "Η θέση υπάρχει ήδη." }, { status: 409 });
+    }
   }
+
+  const message = isBulkBody(body)
+    ? zodFirstErrorMessage(bulkResult.error)
+    : zodFirstErrorMessage(singleResult.error);
+
+  return NextResponse.json({ error: message }, { status: 400 });
 }

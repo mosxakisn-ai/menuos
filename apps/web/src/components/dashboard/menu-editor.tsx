@@ -8,6 +8,7 @@ import {
   dashboardCardClass,
   dashboardFieldClass,
   dashboardFormGridClass,
+  dashboardInputClass,
   dashboardLabelClass,
   DashboardToolbar,
 } from "@/components/dashboard/dashboard-page";
@@ -385,7 +386,7 @@ export function MenuEditor({
                   placeholder={DASHBOARD_EL.newCatalogPlaceholder}
                   value={newMenuName}
                   onChange={(e) => setNewMenuName(e.target.value)}
-                  className="min-w-[200px] flex-1 rounded-button border border-slate-200 px-3 py-2 text-sm"
+                  className={`min-w-[200px] flex-1 ${dashboardInputClass}`}
                 />
                 <button type="submit" disabled={addingMenu} className={buttonClass("secondary", "sm")}>
                   {addingMenu ? "..." : DASHBOARD_EL.addCatalog}
@@ -628,33 +629,33 @@ export function MenuEditor({
               </ul>
 
               {itemCategoryId === cat.id ? (
-                <form onSubmit={addItem} className="mt-4 space-y-2 rounded-lg bg-brand-surface p-4">
+                <form onSubmit={addItem} className="mt-4 space-y-3 rounded-lg bg-brand-surface p-4">
                   <p className="text-sm font-semibold text-brand-navy">Νέο πιάτο</p>
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className={dashboardFormGridClass}>
                     <input
                       required
                       placeholder="Όνομα (Ελληνικά) *"
                       value={itemForm.nameGr}
                       onChange={(e) => setItemForm((f) => ({ ...f, nameGr: e.target.value }))}
-                      className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                      className={dashboardInputClass}
                     />
                     <input
                       placeholder="Name (English)"
                       value={itemForm.nameEn}
                       onChange={(e) => setItemForm((f) => ({ ...f, nameEn: e.target.value }))}
-                      className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                      className={dashboardInputClass}
                     />
                     <input
                       placeholder="Name (Deutsch)"
                       value={itemForm.nameDe}
                       onChange={(e) => setItemForm((f) => ({ ...f, nameDe: e.target.value }))}
-                      className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                      className={dashboardInputClass}
                     />
                     <input
                       placeholder="Nom (Français)"
                       value={itemForm.nameFr}
                       onChange={(e) => setItemForm((f) => ({ ...f, nameFr: e.target.value }))}
-                      className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                      className={dashboardInputClass}
                     />
                     <input
                       required
@@ -664,27 +665,27 @@ export function MenuEditor({
                       placeholder="Τιμή (€) *"
                       value={itemForm.price}
                       onChange={(e) => setItemForm((f) => ({ ...f, price: e.target.value }))}
-                      className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                      className={dashboardInputClass}
                     />
                     <input
                       placeholder="Περιγραφή (Ελληνικά)"
                       value={itemForm.descriptionGr}
                       onChange={(e) => setItemForm((f) => ({ ...f, descriptionGr: e.target.value }))}
-                      className="rounded-button border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
+                      className={`${dashboardInputClass} sm:col-span-2`}
                     />
                         <PhotoUploadField
                           value={itemForm.photoUrl}
                           onChange={(url) => setItemForm((f) => ({ ...f, photoUrl: url }))}
                           className="sm:col-span-2"
                         />
-                    <label className="block text-sm sm:col-span-2">
-                      <span className="font-medium text-brand-navy">Ετικέτα στο QR menu</span>
+                    <label className="block sm:col-span-2">
+                      <span className={dashboardLabelClass}>Ετικέτα στο QR menu</span>
                       <select
                         value={itemForm.label}
                         onChange={(e) =>
                           setItemForm((f) => ({ ...f, label: e.target.value as "" | ItemLabel }))
                         }
-                        className="mt-1 block w-full rounded-button border border-slate-200 px-3 py-2 text-sm"
+                        className={dashboardFieldClass}
                       >
                         <option value="">Χωρίς ετικέτα</option>
                         {ITEM_LABEL_OPTIONS.map((opt) => (

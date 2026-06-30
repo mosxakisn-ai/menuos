@@ -4,7 +4,9 @@ import { Check, Download, ExternalLink, Pencil, Plus, Trash2, X } from "lucide-r
 import { useCallback, useEffect, useState } from "react";
 import {
   formatVenueSpotLabel,
+  isValidVenueSpotLabel,
   spotToQueryParams,
+  VENUE_SPOT_LABEL_HINT,
   venueSpotTypeLabel,
   type VenueSpotType,
   VENUE_SPOT_TYPES,
@@ -69,6 +71,10 @@ export function VenueSpotsManager({
   async function addSpot(e: React.FormEvent) {
     e.preventDefault();
     if (!venueId || !label.trim()) return;
+    if (!isValidVenueSpotLabel(label)) {
+      setFlash({ type: "error", text: VENUE_SPOT_LABEL_HINT });
+      return;
+    }
     setBusy("add");
     try {
       const res = await fetch(`/api/venues/${venueId}/spots`, {
@@ -100,6 +106,11 @@ export function VenueSpotsManager({
         type: "error",
         text: "Μέγιστο 200 θέσεις ανά φορά. Για περισσότερες, κάνε δεύτερη προσθήκη (π.χ. 201–400).",
       });
+      return;
+    }
+    const prefix = bulkPrefix.trim();
+    if (prefix && !isValidVenueSpotLabel(`${prefix}1`)) {
+      setFlash({ type: "error", text: `Άκυρο πρόθεμα. ${VENUE_SPOT_LABEL_HINT}` });
       return;
     }
     setBusy("bulk");
@@ -161,6 +172,10 @@ export function VenueSpotsManager({
 
   async function saveSpotLabel(spotId: string) {
     if (!venueId || !editLabel.trim()) return;
+    if (!isValidVenueSpotLabel(editLabel)) {
+      setFlash({ type: "error", text: VENUE_SPOT_LABEL_HINT });
+      return;
+    }
     setBusy(`edit-${spotId}`);
     try {
       const res = await fetch(`/api/venues/${venueId}/spots/${spotId}`, {

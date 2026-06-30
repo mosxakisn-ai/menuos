@@ -18,6 +18,16 @@ export function formatVenueSpotLabel(type: VenueSpotType, label: string): string
   return trimmed;
 }
 
+const venueSpotLabelPattern = /^[a-zA-Z0-9\u0370-\u03FF\u1F00-\u1FFF_-]+$/;
+
+export function isValidVenueSpotLabel(label: string): boolean {
+  const trimmed = label.trim();
+  return trimmed.length >= 1 && trimmed.length <= 20 && venueSpotLabelPattern.test(trimmed);
+}
+
+export const VENUE_SPOT_LABEL_HINT =
+  "Μόνο γράμματα, αριθμοί, παύλα και κάτω παύλα (π.χ. 12, sala-1).";
+
 function formatLocationValue(typeLabel: string, value: string): string {
   const trimmed = value.trim();
   if (/^[0-9]+$/.test(trimmed)) return `${typeLabel} ${trimmed}`;

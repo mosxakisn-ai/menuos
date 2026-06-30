@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { venueSpotUpdateSchema } from "@menuos/shared";
+import { venueSpotUpdateSchema, zodFirstErrorMessage } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 

@@ -297,3 +297,7 @@ export type MenuImportApplyInput = z.infer<typeof menuImportApplySchema>;
 export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
 export type ItemCreateInput = z.infer<typeof itemCreateSchema>;
 export type VenueUpdateInput = z.infer<typeof venueUpdateSchema>;
+
+export function zodFirstErrorMessage(error: z.ZodError): string {
+  return error.issues[0]?.message ?? "Μη έγκυρα στοιχεία.";
+}
