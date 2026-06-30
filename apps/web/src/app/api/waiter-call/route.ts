@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma, prisma, WaiterCallStatus, WaiterCallType, type WaiterCall } from "@menuos/db";
-import { mergeOrderPayload, type OrderPayload, waiterCallSchema } from "@menuos/shared";
+import { mergeOrderPayload, type OrderPayload, waiterCallSchema, normalizeWaiterCallLocation } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
@@ -30,6 +30,7 @@ async function lockActiveCall(
   venueId: string,
   tableNumber: string | null | undefined,
   roomNumber: string | null | undefined,
+  sunbedNumber: string | null | undefined,
   type: WaiterCallType,
 ): Promise<WaiterCall | null> {
   const rows = await tx.$queryRaw<{ id: string }[]>`
@@ -37,6 +38,7 @@ async function lockActiveCall(
     WHERE "venueId" = ${venueId}
       AND "tableNumber" IS NOT DISTINCT FROM ${tableNumber ?? null}
       AND "roomNumber" IS NOT DISTINCT FROM ${roomNumber ?? null}
+      AND "sunbedNumber" IS NOT DISTINCT FROM ${sunbedNumber ?? null}
       AND type = ${type}::"WaiterCallType"
       AND status IN ('PENDING', 'ACKNOWLEDGED')
     ORDER BY "createdAt" DESC
@@ -52,10 +54,18 @@ async function runWaiterCallTransaction(
   callType: WaiterCallType,
   tableNumber: string | undefined,
   roomNumber: string | undefined,
+  sunbedNumber: string | undefined,
   validatedOrder: OrderPayload | null,
 ): Promise<TxResult> {
   return prisma.$transaction(async (tx): Promise<TxResult> => {
-    const existing = await lockActiveCall(tx, venue.id, tableNumber, roomNumber, callType);
+    const existing = await lockActiveCall(
+      tx,
+      venue.id,
+      tableNumber,
+      roomNumber,
+      sunbedNumber,
+      callType,
+    );
 
     if (existing) {
       if (callType === "ORDER" && validatedOrder) {
@@ -82,6 +92,7 @@ async function runWaiterCallTransaction(
         type: callType,
         tableNumber,
         roomNumber,
+        sunbedNumber,
         status: WaiterCallStatus.PENDING,
         orderItems: callType === "ORDER" && validatedOrder ? validatedOrder : undefined,
       },
@@ -160,12 +171,14 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!parsed.data.tableNumber && !parsed.data.roomNumber) {
+    if (!parsed.data.tableNumber && !parsed.data.roomNumber && !parsed.data.sunbedNumber) {
       return NextResponse.json(
-        { error: "Απαιτείται αριθμός τραπεζιού ή δωματίου.", code: "location_required" },
+        { error: "Απαιτείται τραπέζι, δωμάτιο ή ξαπλώστρα.", code: "location_required" },
         { status: 400 },
       );
     }
+
+    const location = normalizeWaiterCallLocation(parsed.data);
 
     const callType = parsed.data.type as WaiterCallType;
     let validatedOrder: OrderPayload | null = null;
@@ -187,8 +200,9 @@ export async function POST(request: Request) {
       result = await runWaiterCallTransaction(
         venue,
         callType,
-        parsed.data.tableNumber,
-        parsed.data.roomNumber,
+        location.tableNumber,
+        location.roomNumber,
+        location.sunbedNumber,
         validatedOrder,
       );
     } catch (err) {
@@ -196,8 +210,9 @@ export async function POST(request: Request) {
         result = await runWaiterCallTransaction(
           venue,
           callType,
-          parsed.data.tableNumber,
-          parsed.data.roomNumber,
+          location.tableNumber,
+          location.roomNumber,
+          location.sunbedNumber,
           validatedOrder,
         );
       } else {

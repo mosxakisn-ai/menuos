@@ -1,6 +1,7 @@
 import type { WaiterCall, WaiterCallType } from "@menuos/db";
 import { prisma } from "@menuos/db";
 import webpush from "web-push";
+import { formatWaiterCallLocation } from "@menuos/shared";
 import { APP_URL } from "@/lib/config";
 import { configureWebPush, isPushEnabled } from "@/lib/push-config";
 
@@ -10,14 +11,7 @@ export function fireStaffPushNotify(task: () => Promise<void>) {
   void task().catch((err) => console.error("[menuos-staff-push]", err));
 }
 
-function locationLabel(call: Pick<WaiterCall, "tableNumber" | "roomNumber">): string {
-  if (call.tableNumber) return `Τραπέζι ${call.tableNumber}`;
-  if (call.roomNumber) return `Δωμάτιο ${call.roomNumber}`;
-  return "—";
-}
-
-function typeTitle(type: WaiterCallType, reason: StaffWaiterNotifyReason): string {
-  if (reason === "order_updated") return "Ενημέρωση παραγγελίας";
+function typeTitle(type: WaiterCallType, reason: StaffWaiterNotifyReason): string {  if (reason === "order_updated") return "Ενημέρωση παραγγελίας";
   if (reason === "reopened" && type === "ORDER") return "Νέα παραγγελία";
   switch (type) {
     case "WAITER":
@@ -34,7 +28,7 @@ function typeTitle(type: WaiterCallType, reason: StaffWaiterNotifyReason): strin
 export async function notifyStaffWaiterCall(input: {
   organizationId: string;
   venue: { id: string; name: string };
-  call: Pick<WaiterCall, "id" | "type" | "tableNumber" | "roomNumber">;
+  call: Pick<WaiterCall, "id" | "type" | "tableNumber" | "roomNumber" | "sunbedNumber">;
   reason: StaffWaiterNotifyReason;
 }) {
   if (!isPushEnabled() || !configureWebPush()) return;
@@ -44,7 +38,7 @@ export async function notifyStaffWaiterCall(input: {
   });
   if (subscriptions.length === 0) return;
 
-  const loc = locationLabel(input.call);
+  const loc = formatWaiterCallLocation(input.call);
   const title = typeTitle(input.call.type, input.reason);
   const body = `${input.venue.name} · ${loc}`;
   const url = `${APP_URL.replace(/\/$/, "")}/dashboard/waiter?venue=${input.venue.id}`;

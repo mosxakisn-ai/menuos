@@ -57,6 +57,12 @@ enum ItemLabel {
   NEW
 }
 
+enum VenueSpotType {
+  TABLE
+  ROOM
+  SUNBED
+}
+
 enum SupportedLanguage {
   GR
   EN
@@ -139,6 +145,7 @@ model Venue {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   menus        Menu[]
   waiterCalls  WaiterCall[]
+  spots        VenueSpot[]
   settings     VenueSetting?
 
   @@unique([organizationId, slug])
@@ -154,6 +161,21 @@ model VenueSetting {
   updatedAt    DateTime @updatedAt
 
   venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+}
+
+model VenueSpot {
+  id        String        @id @default(cuid())
+  venueId   String
+  type      VenueSpotType
+  label     String
+  sortOrder Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, type, label])
+  @@index([venueId, sortOrder])
 }
 
 model Menu {
@@ -244,10 +266,11 @@ model Photo {
 model WaiterCall {
   id          String           @id @default(cuid())
   venueId     String
-  type        WaiterCallType   @default(WAITER)
-  tableNumber String?
-  roomNumber  String?
-  status      WaiterCallStatus @default(PENDING)
+  type         WaiterCallType   @default(WAITER)
+  tableNumber  String?
+  roomNumber   String?
+  sunbedNumber String?
+  status       WaiterCallStatus @default(PENDING)
   orderItems  Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt

@@ -23,7 +23,8 @@ export default async function WaiterPage({ searchParams }: Props) {
       <div>
         <h1 className="font-serif text-2xl font-bold text-primary">Κλήσεις σερβιτόρου</h1>
         <p className="text-sm text-slate-600">
-          Οι πελάτες καλούν από το QR menu. Ενημερώνεται αυτόματα — και μπορείς να λαμβάνεις ειδοποίηση στο κινητό.
+          Οι πελάτες καλούν από το QR menu. Ενημερώνεται αυτόματα. Στείλε το link στο κινητό του σερβιτόρου και
+          ενεργοποίησε ειδοποιήσεις εκεί — όχι μόνο σε αυτόν τον υπολογιστή.
         </p>
       </div>
       <PushNotificationsPrompt />

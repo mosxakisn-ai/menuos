@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
-import { QrGenerator } from "@/components/dashboard/qr-generator";
+import { VenueSpotsManager } from "@/components/dashboard/venue-spots-manager";
 import { MarkQrOnboarding } from "@/components/dashboard/mark-qr-onboarding";
 import { getSession } from "@/lib/auth";
 import { buildPrivatePageMetadata } from "@/lib/seo";
@@ -41,10 +41,11 @@ export default async function QrPage({ searchParams }: Props) {
       <div>
         <h1 className="font-serif text-2xl font-bold text-primary">QR Codes</h1>
         <p className="text-sm text-slate-600">
-          Κατέβασε QR για τραπέζια ή δωμάτια. Οι πελάτες σκανάρουν και βλέπουν το live menu.
+          Πρόσθεσε τραπέζια, δωμάτια ή ξαπλώστρες και κατέβασε QR για κάθε θέση. Ο σερβιτόρος βλέπει τον αριθμό στην
+          κλήση.
         </p>
       </div>
-      <QrGenerator venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />
+      <VenueSpotsManager venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />
     </div>
   );
 }

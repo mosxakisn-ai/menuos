@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
+import { parseOrderPayload } from "@menuos/shared";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
+function publicOrderItems(raw: unknown) {
+  const parsed = parseOrderPayload(raw);
+  if (!parsed) return null;
+  return { lines: parsed.lines, total: parsed.total };
+}
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const callId = searchParams.get("callId");
   const venueSlug = searchParams.get("venueSlug");
   const tableNumber = searchParams.get("tableNumber");
   const roomNumber = searchParams.get("roomNumber");
+  const sunbedNumber = searchParams.get("sunbedNumber");
 
   if (!venueSlug) {
     return NextResponse.json({ error: "Απαιτείται venueSlug." }, { status: 400 });
@@ -28,7 +35,7 @@ export async function GET(request: Request) {
   if (callId) {
     const call = await prisma.waiterCall.findFirst({
       where: { id: callId, venue: { slug: venueSlug } },
-      select: { status: true, type: true },
+      select: { status: true, type: true, orderItems: true },
     });
 
     if (!call) {
@@ -42,11 +49,12 @@ export async function GET(request: Request) {
       type: call.type,
       active,
       cancellable: call.status === "PENDING",
+      orderItems: call.type === "ORDER" ? publicOrderItems(call.orderItems) : null,
     });
   }
 
-  if (!tableNumber && !roomNumber) {
-    return NextResponse.json({ error: "Απαιτούνται callId ή tableNumber/roomNumber." }, { status: 400 });
+  if (!tableNumber && !roomNumber && !sunbedNumber) {
+    return NextResponse.json({ error: "Απαιτούνται callId ή tableNumber/roomNumber/sunbedNumber." }, { status: 400 });
   }
 
   const calls = await prisma.waiterCall.findMany({
@@ -54,10 +62,11 @@ export async function GET(request: Request) {
       venue: { slug: venueSlug },
       tableNumber: tableNumber ?? null,
       roomNumber: roomNumber ?? null,
+      sunbedNumber: sunbedNumber ?? null,
       status: { in: ["PENDING", "ACKNOWLEDGED"] },
     },
     orderBy: { createdAt: "desc" },
-    select: { id: true, status: true, type: true },
+    select: { id: true, status: true, type: true, orderItems: true },
   });
 
   return NextResponse.json({
@@ -67,6 +76,7 @@ export async function GET(request: Request) {
       type: call.type,
       active: true,
       cancellable: call.status === "PENDING",
+      orderItems: call.type === "ORDER" ? publicOrderItems(call.orderItems) : null,
     })),
   });
 }

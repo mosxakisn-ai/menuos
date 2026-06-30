@@ -25,3 +25,4 @@ export * from "./menu-languages";
 export * from "./menu-pdf-parser";
 export * from "./demo-venue";
 export * from "./menu-cart";
+export * from "./venue-spots";

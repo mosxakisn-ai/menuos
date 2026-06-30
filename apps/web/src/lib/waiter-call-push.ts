@@ -9,7 +9,7 @@ type VenueForPush = { id: string; name: string; organizationId: string };
 
 export function pushStaffWaiterCall(
   venue: VenueForPush,
-  call: Pick<WaiterCall, "id" | "type" | "tableNumber" | "roomNumber">,
+  call: Pick<WaiterCall, "id" | "type" | "tableNumber" | "roomNumber" | "sunbedNumber">,
   reason: StaffWaiterNotifyReason,
 ) {
   fireStaffPushNotify(() =>

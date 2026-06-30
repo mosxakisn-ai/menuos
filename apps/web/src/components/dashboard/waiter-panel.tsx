@@ -2,7 +2,9 @@
 
 import { Bell, Check, Clock } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { formatWaiterCallLocation } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
@@ -29,6 +31,7 @@ type WaiterCall = {
   type: string;
   tableNumber: string | null;
   roomNumber: string | null;
+  sunbedNumber: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -104,6 +107,8 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
+      <WaiterShareLink venueId={venueId} />
+
       <div className="flex flex-wrap items-center gap-4">
         <label className="block text-sm">
           <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}</span>
@@ -151,9 +156,7 @@ export function WaiterPanel({ venues, initialVenueId }: { venues: Venue[]; initi
                     <p className="font-bold text-brand-navy">
                       {TYPE_LABELS[call.type] ?? call.type}
                       {" · "}
-                      {call.tableNumber ? `Τραπέζι ${call.tableNumber}` : null}
-                      {call.roomNumber ? `Δωμάτιο ${call.roomNumber}` : null}
-                      {!call.tableNumber && !call.roomNumber ? "Χωρίς τραπέζι" : null}
+                      {formatWaiterCallLocation(call)}
                     </p>
                     <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                       <Clock className="h-3 w-3" />

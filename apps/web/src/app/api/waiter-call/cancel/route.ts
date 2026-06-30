@@ -58,9 +58,11 @@ export async function POST(request: Request) {
 
   const reqTable = parsed.data.tableNumber ?? null;
   const reqRoom = parsed.data.roomNumber ?? null;
+  const reqSunbed = parsed.data.sunbedNumber ?? null;
   const callTable = call.tableNumber ?? null;
   const callRoom = call.roomNumber ?? null;
-  if (callTable !== reqTable || callRoom !== reqRoom) {
+  const callSunbed = call.sunbedNumber ?? null;
+  if (callTable !== reqTable || callRoom !== reqRoom || callSunbed !== reqSunbed) {
     return NextResponse.json(
       { error: "Η κλήση δεν ανήκει σε αυτό το τραπέζι/δωμάτιο.", code: "wrong_location" },
       { status: 403 },

@@ -16,6 +16,7 @@ import {
   pickQrMenuTranslation,
   updateCartLineQty,
   type OrderLine,
+  type OrderPayload,
   type QrMenuLanguage,
 } from "@menuos/shared";
 import { LogoMark } from "@/components/brand/logo-mark";
@@ -70,10 +71,16 @@ type TableCall = {
   type: ActiveCallType;
   status: CallStatus;
   cancellable: boolean;
+  orderItems?: OrderPayload | null;
 };
 
-function callStorageKey(venueSlug: string, tableNumber?: string, roomNumber?: string) {
-  return `menuos-call:${venueSlug}:${tableNumber ?? ""}:${roomNumber ?? ""}`;
+function callStorageKey(
+  venueSlug: string,
+  tableNumber?: string,
+  roomNumber?: string,
+  sunbedNumber?: string,
+) {
+  return `menuos-call:${venueSlug}:${tableNumber ?? ""}:${roomNumber ?? ""}:${sunbedNumber ?? ""}`;
 }
 
 export function PublicMenuView({
@@ -81,12 +88,14 @@ export function PublicMenuView({
   language,
   tableNumber,
   roomNumber,
+  sunbedNumber,
   embedMode = false,
 }: {
   venue: Venue;
   language: QrMenuLanguage;
   tableNumber?: string;
   roomNumber?: string;
+  sunbedNumber?: string;
   embedMode?: boolean;
 }) {
   const [lang, setLang] = useState<QrMenuLanguage>(language);
@@ -95,6 +104,7 @@ export function PublicMenuView({
   const [itemQty, setItemQty] = useState(1);
   const [cartLines, setCartLines] = useState<OrderLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [sentOrderOpen, setSentOrderOpen] = useState(true);
   const [orderState, setOrderState] = useState<ActionState>("idle");
   const [addedFlash, setAddedFlash] = useState(false);
   const [activeCalls, setActiveCalls] = useState<TableCall[]>([]);
@@ -117,12 +127,12 @@ export function PublicMenuView({
   const ui = QR_MENU_UI[lang];
   const activeMenu = venue.menus.find((m) => m.id === activeMenuId) ?? venue.menus[0];
   const storageKey = useMemo(
-    () => callStorageKey(venue.slug, tableNumber, roomNumber),
-    [venue.slug, tableNumber, roomNumber],
+    () => callStorageKey(venue.slug, tableNumber, roomNumber, sunbedNumber),
+    [venue.slug, tableNumber, roomNumber, sunbedNumber],
   );
   const cartKey = useMemo(
-    () => cartStorageKey(venue.slug, tableNumber, roomNumber),
-    [venue.slug, tableNumber, roomNumber],
+    () => cartStorageKey(venue.slug, tableNumber, roomNumber, sunbedNumber),
+    [venue.slug, tableNumber, roomNumber, sunbedNumber],
   );
 
   const persistCart = useCallback(
@@ -154,21 +164,29 @@ export function PublicMenuView({
   }, [storageKey]);
 
   const syncTableStatus = useCallback(async () => {
-    if (!tableNumber && !roomNumber) return;
+    if (!tableNumber && !roomNumber && !sunbedNumber) return;
     try {
       const params = new URLSearchParams({ venueSlug: venue.slug });
       if (tableNumber) params.set("tableNumber", tableNumber);
       if (roomNumber) params.set("roomNumber", roomNumber);
+      if (sunbedNumber) params.set("sunbedNumber", sunbedNumber);
       const res = await fetch(`/api/waiter-call/status?${params}`);
       if (!res.ok) return;
       const data = (await res.json()) as {
-        calls?: Array<{ id: string; type: ActiveCallType; status?: CallStatus; cancellable?: boolean }>;
+        calls?: Array<{
+          id: string;
+          type: ActiveCallType;
+          status?: CallStatus;
+          cancellable?: boolean;
+          orderItems?: OrderPayload | null;
+        }>;
       };
       const calls = (data.calls ?? []).map((c) => ({
         id: c.id,
         type: c.type,
         status: c.status ?? "PENDING",
         cancellable: c.cancellable ?? false,
+        orderItems: c.orderItems ?? null,
       }));
       if (calls.length === 0) {
         clearActiveCall();
@@ -178,7 +196,7 @@ export function PublicMenuView({
     } catch {
       // keep local state on transient errors
     }
-  }, [applyTableCalls, clearActiveCall, roomNumber, tableNumber, venue.slug]);
+  }, [applyTableCalls, clearActiveCall, roomNumber, sunbedNumber, tableNumber, venue.slug]);
 
   const restoreActiveCall = useCallback(async () => {
     await syncTableStatus();
@@ -223,12 +241,12 @@ export function PublicMenuView({
   }, [isEmbedded]);
 
   useEffect(() => {
-    if (!tableNumber && !roomNumber) return;
+    if (!tableNumber && !roomNumber && !sunbedNumber) return;
     const poll = setInterval(() => {
       void syncTableStatus();
     }, 8000);
     return () => clearInterval(poll);
-  }, [roomNumber, syncTableStatus, tableNumber]);
+  }, [roomNumber, sunbedNumber, syncTableStatus, tableNumber]);
 
   useEffect(() => {
     return () => {
@@ -260,8 +278,9 @@ export function PublicMenuView({
   const locationLabel = useMemo(() => {
     if (tableNumber) return ui.table(tableNumber);
     if (roomNumber) return ui.room(roomNumber);
+    if (sunbedNumber) return ui.sunbed(sunbedNumber);
     return null;
-  }, [tableNumber, roomNumber, ui]);
+  }, [tableNumber, roomNumber, sunbedNumber, ui]);
 
   function handleBack() {
     if (selectedItem) {
@@ -304,6 +323,7 @@ export function PublicMenuView({
           type,
           tableNumber,
           roomNumber,
+          sunbedNumber,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
@@ -365,6 +385,7 @@ export function PublicMenuView({
           type: "ORDER",
           tableNumber,
           roomNumber,
+          sunbedNumber,
           orderItems: buildOrderPayload(cartLines, lang),
         }),
       });
@@ -410,6 +431,7 @@ export function PublicMenuView({
           callId: target.id,
           tableNumber,
           roomNumber,
+          sunbedNumber,
         }),
       });
       if (!res.ok) {
@@ -465,10 +487,12 @@ export function PublicMenuView({
   const cancelTarget = cancellableCalls[0] ?? null;
   const hasCancellableCall = cancellableCalls.length > 0;
   const multipleCancellable = cancellableCalls.length > 1;
-  const canUseCallActions = Boolean(tableNumber || roomNumber);
+  const canUseCallActions = Boolean(tableNumber || roomNumber || sunbedNumber);
   const cartCount = cartItemCount(cartLines);
   const cartTotalStr = cartTotal(cartLines);
   const hasCart = cartLines.length > 0;
+  const sentOrder = activeCalls.find((c) => c.type === "ORDER")?.orderItems ?? null;
+  const hasSentOrder = Boolean(sentOrder?.lines?.length);
 
   const categoryNav = activeMenu?.categories ?? [];
   const shell = isEmbedded ? "w-full max-w-full" : "mx-auto max-w-lg";
@@ -758,6 +782,53 @@ export function PublicMenuView({
       </footer>
       ) : null}
       </div>
+
+      {canUseCallActions && hasSentOrder && sentOrder ? (
+        <div
+          className={cn(
+            shell,
+            "relative z-40 rounded-card border border-brand-blue/20 bg-brand-blue/5 px-3 py-3",
+            isEmbedded
+              ? "mx-2 mb-2"
+              : cn(
+                  "fixed left-0 right-0 z-40 px-3",
+                  hasCart
+                    ? "bottom-[calc(8.25rem+env(safe-area-inset-bottom))]"
+                    : "bottom-[calc(4.75rem+env(safe-area-inset-bottom))]",
+                ),
+          )}
+        >
+          <button
+            type="button"
+            onClick={() => setSentOrderOpen((o) => !o)}
+            className="flex w-full items-center justify-between gap-2 text-left"
+          >
+            <span className="font-semibold text-primary">{ui.yourOrder}</span>
+            <span className="text-sm font-bold text-brand-blue">€{sentOrder.total}</span>
+          </button>
+          {sentOrderOpen ? (
+            <>
+              <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
+                {sentOrder.lines.map((line) => (
+                  <li key={`${line.itemId}-${line.name}`} className="flex justify-between gap-2">
+                    <span>
+                      {line.quantity}× {line.name}
+                    </span>
+                    <span className="font-medium">
+                      €{(Number(line.unitPrice) * line.quantity).toFixed(2)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-slate-500">{ui.yourOrderHint}</p>
+            </>
+          ) : (
+            <p className="mt-1 text-xs text-slate-500">
+              {ui.cartSummary(cartItemCount(sentOrder.lines), sentOrder.total)}
+            </p>
+          )}
+        </div>
+      ) : null}
 
       {canUseCallActions && hasCart ? (
         <div

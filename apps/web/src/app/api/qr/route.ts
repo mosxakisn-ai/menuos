@@ -15,6 +15,7 @@ export async function GET(request: Request) {
   const venueId = sp.get("venueId");
   const table = (sp.get("table") ?? "").slice(0, MAX_LOCATION_LEN);
   const room = (sp.get("room") ?? "").slice(0, MAX_LOCATION_LEN);
+  const sunbed = (sp.get("sunbed") ?? "").slice(0, MAX_LOCATION_LEN);
   const lang = parseQrMenuLanguage(sp.get("lang"));
 
   if (!venueId) {
@@ -30,6 +31,7 @@ export async function GET(request: Request) {
   if (lang !== "GR") params.set("lang", lang.toLowerCase());
   if (table) params.set("table", table);
   if (room) params.set("room", room);
+  if (sunbed) params.set("sunbed", sunbed);
   const qs = params.toString();
   const menuUrl = `${APP_URL}/m/${venue.slug}${qs ? `?${qs}` : ""}`;
 

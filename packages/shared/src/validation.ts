@@ -48,6 +48,7 @@ export const waiterCallSchema = z
     type: z.enum(["WAITER", "BILL", "ORDER"]).default("WAITER"),
     tableNumber: z.string().max(20).optional(),
     roomNumber: z.string().max(20).optional(),
+    sunbedNumber: z.string().max(20).optional(),
     orderItems: z
       .object({
         lines: z.array(
@@ -65,14 +66,38 @@ export const waiterCallSchema = z
   })
   .refine((d) => d.type !== "ORDER" || (d.orderItems?.lines?.length ?? 0) > 0, {
     message: "ORDER requires orderItems",
-  });
+  })
+  .refine(
+    (d) => {
+      const n = [d.tableNumber, d.roomNumber, d.sunbedNumber].filter((v) => v?.trim()).length;
+      return n <= 1;
+    },
+    { message: "Only one location field allowed" },
+  );
 
 export const waiterCallCancelSchema = z.object({
   venueSlug: z.string().min(1),
   callId: z.string().min(1),
   tableNumber: z.string().max(20).optional(),
   roomNumber: z.string().max(20).optional(),
+  sunbedNumber: z.string().max(20).optional(),
 });
+
+export const venueSpotTypeSchema = z.enum(["TABLE", "ROOM", "SUNBED"]);
+
+export const venueSpotCreateSchema = z.object({
+  type: venueSpotTypeSchema,
+  label: z.string().min(1).max(20).trim(),
+});
+
+export const venueSpotBulkCreateSchema = z
+  .object({
+    type: venueSpotTypeSchema,
+    from: z.number().int().min(1).max(999),
+    to: z.number().int().min(1).max(999),
+  })
+  .refine((d) => d.to >= d.from, { message: "Το 'έως' πρέπει να είναι ≥ 'από'." })
+  .refine((d) => d.to - d.from < 200, { message: "Μέγιστο 200 θέσεις ανά φορά." });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type RegisterOtpSendInput = z.infer<typeof registerOtpSendSchema>;

@@ -9,7 +9,7 @@ import { PublicMenuUnavailable } from "@/components/menu/public-menu-unavailable
 
 type Props = {
   params: Promise<{ venueSlug: string }>;
-  searchParams: Promise<{ table?: string; room?: string; lang?: string; embed?: string }>;
+  searchParams: Promise<{ table?: string; room?: string; sunbed?: string; lang?: string; embed?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -69,6 +69,7 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
       language={lang}
       tableNumber={sp.table}
       roomNumber={sp.room}
+      sunbedNumber={sp.sunbed}
       embedMode={sp.embed === "1"}
     />
   );

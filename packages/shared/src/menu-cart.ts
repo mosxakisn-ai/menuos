@@ -15,8 +15,13 @@ export type OrderPayload = {
   lang?: string;
 };
 
-export function cartStorageKey(venueSlug: string, tableNumber?: string, roomNumber?: string) {
-  return `menuos-cart:${venueSlug}:${tableNumber ?? ""}:${roomNumber ?? ""}`;
+export function cartStorageKey(
+  venueSlug: string,
+  tableNumber?: string,
+  roomNumber?: string,
+  sunbedNumber?: string,
+) {
+  return `menuos-cart:${venueSlug}:${tableNumber ?? ""}:${roomNumber ?? ""}:${sunbedNumber ?? ""}`;
 }
 
 export function parseCartJson(raw: string | null): OrderLine[] {
