@@ -8,6 +8,7 @@ import {
   type QrMenuLanguage,
 } from "@menuos/shared";
 import { ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function ItemLabelBadge({
@@ -96,6 +97,25 @@ export function MenuItemCard({
 }: MenuItemBaseProps & { photoUrl: string }) {
   const badge = isItemLabel(label) ? label : null;
   const Comp = onClick ? "button" : "div";
+  const [imgFailed, setImgFailed] = useState(false);
+
+  useEffect(() => {
+    setImgFailed(false);
+  }, [photoUrl]);
+
+  if (imgFailed) {
+    return (
+      <MenuItemRow
+        name={name}
+        description={description}
+        price={price}
+        label={label}
+        lang={lang}
+        onClick={onClick}
+        className={cn("rounded-card border border-slate-100 bg-white shadow-soft", className)}
+      />
+    );
+  }
 
   return (
     <Comp
@@ -110,7 +130,13 @@ export function MenuItemCard({
     >
       <div className="relative aspect-[4/3] w-full bg-slate-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photoUrl} alt={name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+        <img
+          src={photoUrl}
+          alt={name}
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
+          onError={() => setImgFailed(true)}
+        />
         {badge ? (
           <div className="absolute left-2 top-2">
             <ItemLabelBadge label={badge} lang={lang} />

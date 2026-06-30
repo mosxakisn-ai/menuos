@@ -189,7 +189,7 @@ export const PAGES_EN = {
     trustItems: [
       "Free 7-day trial — no card",
       "Monthly billing, cancel anytime",
-      "EU hosting · GDPR",
+      "Support in Greek",
       "Secure Stripe payments",
     ],
     demoCta: "View live demo menu",

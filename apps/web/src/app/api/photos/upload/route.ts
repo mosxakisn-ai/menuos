@@ -1,22 +1,13 @@
-import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { optimizeMenuPhoto } from "@/lib/image-optimize";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
-import { getR2PublicUrl, isR2Enabled } from "@/lib/r2-config";
-import { uploadToR2 } from "@/lib/r2-storage";
+import { saveMenuPhoto } from "@/lib/photo-storage";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(request: Request) {
-  if (!isR2Enabled()) {
-    return NextResponse.json(
-      { error: "Το ανέβασμα φωτογραφιών δεν είναι ενεργό ακόμα. Χρησιμοποίησε URL.", code: "upload_disabled" },
-      { status: 503 },
-    );
-  }
-
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
@@ -56,9 +47,8 @@ export async function POST(request: Request) {
   try {
     const raw = Buffer.from(await file.arrayBuffer());
     const optimized = await optimizeMenuPhoto(raw);
-    const key = `photos/${auth.session!.organizationId}/${randomUUID()}.webp`;
-    await uploadToR2(key, optimized, "image/webp");
-    return NextResponse.json({ url: getR2PublicUrl(key) });
+    const url = await saveMenuPhoto(auth.session!.organizationId, optimized);
+    return NextResponse.json({ url });
   } catch (err) {
     console.error("[menuos-photo-upload]", err);
     return NextResponse.json({ error: "Αποτυχία ανεβάσματος. Δοκίμασε ξανά." }, { status: 500 });

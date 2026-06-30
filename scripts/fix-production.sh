@@ -6,6 +6,9 @@ set -euo pipefail
 ROOT="${APP_DIR:-/opt/menuos}"
 cd "$ROOT"
 
+mkdir -p "$ROOT/data/uploads"
+chown -R 1001:1001 "$ROOT/data/uploads" 2>/dev/null || true
+
 bash "$ROOT/scripts/ensure-env.sh"
 
 # shellcheck source=scripts/load-env.sh

@@ -77,7 +77,10 @@ async function main() {
           skipped++;
           continue;
         }
-        if (item.photoUrl === photo) continue;
+        const brokenLegacy =
+          item.photoUrl?.includes("photo-1519708227418-c8fd9a32b2a2") ||
+          item.photoUrl?.includes("photo-1510812431400-a67206f3e72d");
+        if (item.photoUrl === photo && !brokenLegacy) continue;
         await prisma.item.update({
           where: { id: item.id },
           data: { photoUrl: photo },

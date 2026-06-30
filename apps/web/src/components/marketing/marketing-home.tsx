@@ -120,6 +120,7 @@ export function MarketingHome() {
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
           <SectionHeader title={h.whatWeDo.title} description={h.whatWeDo.body} />
           <p className="mt-6 text-lg leading-relaxed text-slate-600">{h.whatWeDo.body2}</p>
+          <p className="mt-4 text-lg leading-relaxed text-slate-600">{h.whatWeDo.body3}</p>
           <Link href="/ypiresies" className="mt-8 inline-flex text-sm font-semibold text-brand-blue hover:underline">
             {pages.common.servicesLink}
           </Link>

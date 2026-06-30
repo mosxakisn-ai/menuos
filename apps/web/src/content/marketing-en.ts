@@ -32,7 +32,7 @@ export const MARKETING_EN = {
       ctaTrial: "Start free 7-day trial",
       ctaPricing: "View pricing",
       ctaDemo: "See how it looks",
-      trust: ["No app for guests", "Multiple QR languages", "Setup ~60 min", "EU hosting"],
+      trust: ["No app for guests", "Multiple QR languages", "Setup ~60 min", "Waiter call & table orders"],
     },
     heroShowcase: {
       venueTypes: ["Restaurant", "Hotel", "Beach bar", "Pool bar", "Room service"],
@@ -59,6 +59,8 @@ export const MARKETING_EN = {
         "MenuOS is an online platform for restaurants, hotels, beach bars and any hospitality venue. Instead of printed menus, you give guests a modern digital menu that opens instantly on mobile — no app install.",
       body2:
         "You sign in to the dashboard, add categories and dishes, and download QR codes for tables or rooms. When you change a price or item, guests see it immediately.",
+      body3:
+        "When a guest calls the waiter, asks for the bill or orders from the menu, staff get a push notification on their phone — with table or room number. Open the waiter page on mobile, enable notifications once — and you never miss a call.",
     },
     audiences: {
       title: "Who is it for?",
@@ -113,8 +115,8 @@ export const MARKETING_EN = {
           text: "Support for many languages — one tap on the guest's phone.",
         },
         {
-          title: "Call waiter",
-          text: "One tap to call staff — with table or room number.",
+          title: "Call waiter & notifications",
+          text: "One tap for the guest — staff get a push alert on mobile, with table or room number.",
         },
         {
           title: "Management dashboard",

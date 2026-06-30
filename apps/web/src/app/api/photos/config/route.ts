@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { isR2Enabled } from "@/lib/r2-config";
+import { isPhotoUploadEnabled } from "@/lib/photo-storage";
 
 export async function GET() {
-  return NextResponse.json({ uploadEnabled: isR2Enabled() });
+  return NextResponse.json({ uploadEnabled: isPhotoUploadEnabled() });
 }

@@ -6,6 +6,9 @@ MARKER="# Append to /opt/matchwork/docker/Caddyfile — MenuOS (menuos.gr)"
 
 cd "$ROOT"
 
+mkdir -p "$ROOT/data/uploads"
+chown -R 1001:1001 "$ROOT/data/uploads" 2>/dev/null || true
+
 if [ ! -f .env ]; then
   echo "ERROR: missing $ROOT/.env"
   exit 1

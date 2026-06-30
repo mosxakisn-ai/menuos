@@ -15,7 +15,7 @@ export function PhotoUploadField({
   className?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploadEnabled, setUploadEnabled] = useState(false);
+  const [uploadEnabled, setUploadEnabled] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const p = DASHBOARD_EL.photos;
@@ -24,7 +24,7 @@ export function PhotoUploadField({
     void fetch("/api/photos/config")
       .then((res) => res.json())
       .then((data: { uploadEnabled?: boolean }) => setUploadEnabled(Boolean(data.uploadEnabled)))
-      .catch(() => setUploadEnabled(false));
+      .catch(() => setUploadEnabled(true));
   }, []);
 
   async function handleFile(file: File) {
@@ -61,6 +61,29 @@ export function PhotoUploadField({
           />
           <div className="min-w-0 flex-1 space-y-2">
             <input
+              ref={inputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleFile(file);
+              }}
+            />
+            <button
+              type="button"
+              disabled={uploading || !uploadEnabled}
+              onClick={() => inputRef.current?.click()}
+              className={`inline-flex items-center gap-2 ${buttonClass("secondary", "sm")}`}
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ImagePlus className="h-4 w-4" />
+              )}
+              {uploading ? p.uploading : p.uploadButton}
+            </button>
+            <input
               type="url"
               value={value}
               onChange={(e) => onChange(e.target.value)}
@@ -79,42 +102,37 @@ export function PhotoUploadField({
         </div>
       ) : (
         <div className="mt-2 space-y-2">
-          {uploadEnabled ? (
-            <>
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) void handleFile(file);
-                }}
-              />
-              <button
-                type="button"
-                disabled={uploading}
-                onClick={() => inputRef.current?.click()}
-                className={`inline-flex items-center gap-2 ${buttonClass("secondary", "sm")}`}
-              >
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ImagePlus className="h-4 w-4" />
-                )}
-                {uploading ? p.uploading : p.uploadButton}
-              </button>
-              <p className="text-xs text-slate-500">{p.uploadHint}</p>
-            </>
-          ) : null}
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void handleFile(file);
+            }}
+          />
+          <button
+            type="button"
+            disabled={uploading || !uploadEnabled}
+            onClick={() => inputRef.current?.click()}
+            className={`inline-flex items-center gap-2 ${buttonClass("secondary", "sm")}`}
+          >
+            {uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImagePlus className="h-4 w-4" />
+            )}
+            {uploading ? p.uploading : p.uploadButton}
+          </button>
+          <p className="text-xs text-slate-500">{p.uploadHint}</p>
           <input
             type="url"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={uploadEnabled ? p.urlOptional : p.urlPlaceholder}
+            placeholder={p.urlOptional}
             className="w-full rounded-button border border-slate-200 px-3 py-2 text-sm"
           />
-          {!uploadEnabled ? <p className="text-xs text-slate-500">{p.urlOnlyHint}</p> : null}
         </div>
       )}
       {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : null}

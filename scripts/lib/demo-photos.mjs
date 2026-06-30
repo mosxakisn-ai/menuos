@@ -7,9 +7,9 @@ export const DEMO_PHOTOS = {
   Ρόκα: U("photo-1546069901-ba9599a7e63c"),
   Μουσακάς: U("photo-1596797038530-2c107229654b"),
   "Σουβλάκι χοιρινό": U("photo-1559847844-5315695dadae"),
-  "Ψητή τσιπούρα": U("photo-1519708227418-c8fd9a32b2a2"),
+  "Ψητή τσιπούρα": U("photo-1751094069288-a2bcef5eb6c8"),
   Μπύρα: U("photo-1608270586620-248524c67de9"),
-  "Κρασί κόκκινο (ποτήρι)": U("photo-1510812431400-a67206f3e72d"),
+  "Κρασί κόκκινο (ποτήρι)": U("photo-1553361371-9b22f78e8b1d"),
 };
 
 /** Fuzzy match for PDF imports or slight name differences. */
