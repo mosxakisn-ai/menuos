@@ -1,11 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Download, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { SupervisorOrganizationEditor } from "@/components/supervisor/supervisor-organization-editor";
+import { downloadSupervisorOrganizationsCsv } from "@/lib/supervisor-export";
+import { stripeCustomerDashboardUrl } from "@/lib/stripe-dashboard-urls";
 import type { SupervisorOrganizationRow } from "@/lib/supervisor-service";
 
 function formatDate(iso: string | null) {
@@ -60,6 +63,23 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
             ? "Φόρτωση…"
             : `${rows.length} εγγραφές · επεξεργασία συνδρομής χωρίς διαγραφή δεδομένων`
         }
+        action={
+          rows.length > 0 ? (
+            <button
+              type="button"
+              className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
+              onClick={() =>
+                downloadSupervisorOrganizationsCsv(
+                  rows,
+                  mode === "subscriptions" ? "menuos-subscriptions.csv" : "menuos-organizations.csv",
+                )
+              }
+            >
+              <Download className="h-4 w-4" aria-hidden />
+              Export CSV
+            </button>
+          ) : undefined
+        }
       />
 
       <Card className="grid gap-4 border-brand-blue/10 p-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -109,8 +129,14 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
                   <th className="px-4 py-3">Πακέτο</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Trial / Λήξη</th>
-                  <th className="px-4 py-3">Venues</th>
-                  <th className="px-4 py-3">Πιάτα</th>
+                  {mode === "subscriptions" ? (
+                    <th className="px-4 py-3">Stripe</th>
+                  ) : (
+                    <>
+                      <th className="px-4 py-3">Venues</th>
+                      <th className="px-4 py-3">Πιάτα</th>
+                    </>
+                  )}
                   <th className="px-4 py-3 text-right">Ενέργειες</th>
                 </tr>
               </thead>
@@ -137,8 +163,28 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
                     <td className="px-4 py-3 text-slate-600">
                       {formatDate(row.trialEndsAt || row.currentPeriodEnd)}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{row.venueCount}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.itemCount}</td>
+                    {mode === "subscriptions" ? (
+                      <td className="px-4 py-3 text-slate-600">
+                        {row.stripeCustomerId ? (
+                          <a
+                            href={stripeCustomerDashboardUrl(row.stripeCustomerId)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-brand-blue hover:underline"
+                          >
+                            Stripe
+                            <ExternalLink className="h-3 w-3" aria-hidden />
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    ) : (
+                      <>
+                        <td className="px-4 py-3 text-slate-600">{row.venueCount}</td>
+                        <td className="px-4 py-3 text-slate-600">{row.itemCount}</td>
+                      </>
+                    )}
                     <td className="px-4 py-3 text-right">
                       <button
                         type="button"

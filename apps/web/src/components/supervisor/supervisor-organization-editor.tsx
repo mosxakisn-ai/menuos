@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { ExternalLink, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import type { SupervisorOrganizationRow } from "@/lib/supervisor-service";
+import {
+  stripeCustomerDashboardUrl,
+  stripeSubscriptionDashboardUrl,
+} from "@/lib/stripe-dashboard-urls";
 
 export function SupervisorOrganizationEditor({
   organization,
@@ -150,8 +154,31 @@ export function SupervisorOrganizationEditor({
           </div>
         </div>
 
-        {organization.stripeCustomerId ? (
-          <p className="mt-4 text-xs text-slate-500">Stripe customer: {organization.stripeCustomerId}</p>
+        {(organization.stripeCustomerId || organization.stripeSubId) ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {organization.stripeCustomerId ? (
+              <a
+                href={stripeCustomerDashboardUrl(organization.stripeCustomerId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
+              >
+                Stripe customer
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              </a>
+            ) : null}
+            {organization.stripeSubId ? (
+              <a
+                href={stripeSubscriptionDashboardUrl(organization.stripeSubId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
+              >
+                Stripe subscription
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              </a>
+            ) : null}
+          </div>
         ) : null}
 
         {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
