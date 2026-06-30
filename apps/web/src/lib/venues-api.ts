@@ -14,7 +14,7 @@ export async function createVenueHandler(request: Request, organizationId: strin
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
   let parsed = venueSchema.safeParse(body);

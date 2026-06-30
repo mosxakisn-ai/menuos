@@ -139,31 +139,36 @@ export async function POST(req: NextRequest) {
       const metadata = (subscription.metadata ?? {}) as Record<string, string>;
       const stripeSubId = typeof subscription.id === "string" ? subscription.id : null;
 
+      let shouldSync = true;
       if (!isMenuOsStripeMetadata(metadata)) {
         if (!stripeSubId) {
-          return NextResponse.json({ received: true });
-        }
-        const row = await prisma.subscription.findFirst({ where: { stripeSubId } });
-        if (!row) {
-          return NextResponse.json({ received: true });
+          shouldSync = false;
+        } else {
+          const row = await prisma.subscription.findFirst({ where: { stripeSubId } });
+          if (!row) shouldSync = false;
         }
       }
 
-      await syncSubscriptionFromStripe({
-        organizationId: metadata.organizationId,
-        stripeSubId,
-        status: "CANCELED",
-      });
+      if (shouldSync) {
+        await syncSubscriptionFromStripe({
+          organizationId: metadata.organizationId,
+          stripeSubId,
+          status: "CANCELED",
+        });
+      }
     }
 
     if (event.type === "invoice.payment_failed") {
       const invoice = event.data.object;
       const subId = stripeSubscriptionId(invoice);
       if (subId) {
-        await syncSubscriptionFromStripe({
-          stripeSubId: subId,
-          status: "PAST_DUE",
-        });
+        const local = await prisma.subscription.findFirst({ where: { stripeSubId: subId } });
+        if (local?.status !== "CANCELED") {
+          await syncSubscriptionFromStripe({
+            stripeSubId: subId,
+            status: "PAST_DUE",
+          });
+        }
       }
     }
 
@@ -187,7 +192,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (event.id) {
-      await prisma.stripeWebhookEvent.create({ data: { id: event.id } });
+      try {
+        await prisma.stripeWebhookEvent.create({ data: { id: event.id } });
+      } catch (err) {
+        const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
+        if (code === "P2002") {
+          return NextResponse.json({ received: true, duplicate: true });
+        }
+        throw err;
+      }
     }
 
     return NextResponse.json({ received: true });

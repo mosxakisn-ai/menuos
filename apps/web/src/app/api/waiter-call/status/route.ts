@@ -8,13 +8,13 @@ export async function GET(request: Request) {
   const venueSlug = searchParams.get("venueSlug");
 
   if (!callId || !venueSlug) {
-    return NextResponse.json({ error: "callId and venueSlug required" }, { status: 400 });
+    return NextResponse.json({ error: "Απαιτούνται callId και venueSlug." }, { status: 400 });
   }
 
   const ip = clientIp(request);
   if (!(await checkRateLimit(`waiter-status:${ip}:${venueSlug}`, 30, 60_000))) {
     return NextResponse.json(
-      { error: "Too many requests", code: "rate_limited" },
+      { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },
     );
   }
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
   });
 
   if (!call) {
-    return NextResponse.json({ error: "Call not found" }, { status: 404 });
+    return NextResponse.json({ error: "Η κλήση δεν βρέθηκε." }, { status: 404 });
   }
 
   const active = call.status === "PENDING" || call.status === "ACKNOWLEDGED";

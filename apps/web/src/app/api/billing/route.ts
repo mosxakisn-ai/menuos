@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
   const { planId, returnPath } = body;
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   const organizationId = auth.session!.organizationId;
   const user = await prisma.user.findUnique({ where: { id: auth.session!.userId } });
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json({ error: "Ο χρήστης δεν βρέθηκε." }, { status: 404 });
   }
 
   const existingSubscription = await getOrganizationSubscription(organizationId);

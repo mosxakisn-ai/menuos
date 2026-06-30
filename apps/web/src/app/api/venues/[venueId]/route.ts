@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: Params) {
   const { venueId } = await params;
   const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
   if (!venue) {
-    return NextResponse.json({ error: "Venue not found" }, { status: 404 });
+    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
   }
 
   return NextResponse.json({ venue });
@@ -26,14 +26,14 @@ export async function PATCH(request: Request, { params }: Params) {
   const { venueId } = await params;
   const existing = await getVenueForOrganization(venueId, auth.session!.organizationId);
   if (!existing) {
-    return NextResponse.json({ error: "Venue not found" }, { status: 404 });
+    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
   const parsed = venueUpdateSchema.safeParse(body);

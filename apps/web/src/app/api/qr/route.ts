@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
   const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
   if (!venue) {
-    return NextResponse.json({ error: "Venue not found" }, { status: 404 });
+    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
   }
 
   const params = new URLSearchParams();

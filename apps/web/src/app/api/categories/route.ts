@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
   const parsed = categoryCreateSchema.safeParse(body);
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
   const menu = await getMenuForOrganization(parsed.data.menuId, auth.session!.organizationId);
   if (!menu) {
-    return NextResponse.json({ error: "Menu not found" }, { status: 404 });
+    return NextResponse.json({ error: "Ο κατάλογος δεν βρέθηκε." }, { status: 404 });
   }
 
   const maxSort = await prisma.category.aggregate({

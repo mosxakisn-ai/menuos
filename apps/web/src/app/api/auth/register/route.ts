@@ -5,11 +5,7 @@ import { registerSchema, computeTrialEndsAt } from "@menuos/shared";
 import { fireAdminNotify, notifyAdminOrganizationRegistered } from "@/lib/admin-notify";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { sendWelcomeEmail } from "@/lib/mail";
-import {
-  consumeRegistrationOtp,
-  normalizeRegistrationEmail,
-  verifyRegistrationOtp,
-} from "@/lib/registration-otp";
+import { normalizeRegistrationEmail, verifyRegistrationOtp } from "@/lib/registration-otp";
 import { slugifyOrFallback } from "@/lib/utils";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
@@ -18,12 +14,12 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    return NextResponse.json({ error: "Μη έγκυρα στοιχεία." }, { status: 400 });
   }
 
   const { name, email, password, businessName, otp } = parsed.data;
@@ -108,13 +104,11 @@ export async function POST(request: Request) {
       }),
     );
 
-    await consumeRegistrationOtp(normalizedEmail);
-
     return NextResponse.json({ ok: true });
   } catch (err) {
     const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
     if (code === "P2002") {
-      return NextResponse.json({ error: "Email or organization already exists" }, { status: 409 });
+      return NextResponse.json({ error: "Το email ή ο οργανισμός υπάρχει ήδη." }, { status: 409 });
     }
     throw err;
   }

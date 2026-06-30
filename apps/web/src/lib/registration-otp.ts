@@ -116,8 +116,9 @@ export async function verifyRegistrationOtp(email: string, otp: string): Promise
       return { ok: false as const, error: "Λάθος κωδικός. Έλεγξε το email σου.", code: "otp_invalid" };
     }
 
+    await tx.registrationOtp.delete({ where: { email: normalized } });
     return { ok: true as const };
-  });
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function consumeRegistrationOtp(email: string): Promise<void> {

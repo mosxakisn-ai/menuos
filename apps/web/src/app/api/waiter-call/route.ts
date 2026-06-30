@@ -12,12 +12,12 @@ export async function GET(request: Request) {
 
   const venueId = new URL(request.url).searchParams.get("venueId");
   if (!venueId) {
-    return NextResponse.json({ error: "venueId required" }, { status: 400 });
+    return NextResponse.json({ error: "Απαιτείται venueId." }, { status: 400 });
   }
 
   const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
   if (!venue) {
-    return NextResponse.json({ error: "Venue not found" }, { status: 404 });
+    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
   }
 
   const calls = await prisma.waiterCall.findMany({
@@ -39,19 +39,19 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
   const parsed = waiterCallSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    return NextResponse.json({ error: "Μη έγκυρα στοιχεία." }, { status: 400 });
   }
 
   const ip = clientIp(request);
   const rateKey = `waiter:${ip}:${parsed.data.venueSlug}`;
   if (!(await checkRateLimit(rateKey, 5, 60_000))) {
     return NextResponse.json(
-      { error: "Too many requests", code: "rate_limited" },
+      { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },
     );
   }
@@ -61,19 +61,19 @@ export async function POST(request: Request) {
     include: { organization: { include: { subscription: true } } },
   });
   if (!venue) {
-    return NextResponse.json({ error: "Venue not found" }, { status: 404 });
+    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
   }
 
   if (!organizationIsPubliclyActive(venue.organization.subscription)) {
     return NextResponse.json(
-      { error: "Service unavailable", code: "subscription_inactive" },
+      { error: "Η υπηρεσία δεν είναι διαθέσιμη.", code: "subscription_inactive" },
       { status: 403 },
     );
   }
 
   if (!parsed.data.tableNumber && !parsed.data.roomNumber) {
     return NextResponse.json(
-      { error: "Table or room number required", code: "location_required" },
+      { error: "Απαιτείται αριθμός τραπεζιού ή δωματίου.", code: "location_required" },
       { status: 400 },
     );
   }
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
   if (existing) {
     if (existing.type !== parsed.data.type) {
       return NextResponse.json(
-        { error: "An active call already exists with a different type", code: "call_type_mismatch" },
+        { error: "Υπάρχει ήδη ενεργή κλήση διαφορετικού τύπου.", code: "call_type_mismatch" },
         { status: 409 },
       );
     }
@@ -119,6 +119,13 @@ export async function POST(request: Request) {
       },
     });
   });
+
+  if (call.type !== parsed.data.type) {
+    return NextResponse.json(
+      { error: "Υπάρχει ήδη ενεργή κλήση διαφορετικού τύπου.", code: "call_type_mismatch" },
+      { status: 409 },
+    );
+  }
 
   return NextResponse.json({ id: call.id, type: call.type });
 }

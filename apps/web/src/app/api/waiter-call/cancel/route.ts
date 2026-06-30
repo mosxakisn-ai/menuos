@@ -9,19 +9,19 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
   const parsed = waiterCallCancelSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    return NextResponse.json({ error: "Μη έγκυρα στοιχεία." }, { status: 400 });
   }
 
   const ip = clientIp(request);
   const rateKey = `waiter-cancel:${ip}:${parsed.data.venueSlug}`;
   if (!(await checkRateLimit(rateKey, 8, 60_000))) {
     return NextResponse.json(
-      { error: "Too many requests", code: "rate_limited" },
+      { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },
     );
   }
@@ -35,19 +35,19 @@ export async function POST(request: Request) {
   });
 
   if (!call) {
-    return NextResponse.json({ error: "Call not found", code: "not_found" }, { status: 404 });
+    return NextResponse.json({ error: "Η κλήση δεν βρέθηκε.", code: "not_found" }, { status: 404 });
   }
 
   if (!organizationIsPubliclyActive(call.venue.organization.subscription)) {
     return NextResponse.json(
-      { error: "Service unavailable", code: "subscription_inactive" },
+      { error: "Η υπηρεσία δεν είναι διαθέσιμη.", code: "subscription_inactive" },
       { status: 403 },
     );
   }
 
   if (call.status !== "PENDING") {
     return NextResponse.json(
-      { error: "Call cannot be cancelled", code: "not_cancellable" },
+      { error: "Η κλήση δεν μπορεί να ακυρωθεί.", code: "not_cancellable" },
       { status: 409 },
     );
   }

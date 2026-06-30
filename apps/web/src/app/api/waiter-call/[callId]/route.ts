@@ -18,19 +18,19 @@ export async function PATCH(request: Request, { params }: Params) {
     },
   });
   if (!existing) {
-    return NextResponse.json({ error: "Call not found" }, { status: 404 });
+    return NextResponse.json({ error: "Η κλήση δεν βρέθηκε." }, { status: 404 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
   const parsed = waiterCallUpdateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    return NextResponse.json({ error: "Μη έγκυρη κατάσταση." }, { status: 400 });
   }
 
   const call = await prisma.waiterCall.update({
