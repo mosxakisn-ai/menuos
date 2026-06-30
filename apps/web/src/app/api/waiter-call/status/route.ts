@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { normalizeWaiterCallLocation, parseOrderPayload } from "@menuos/shared";
+import { normalizeWaiterCallLocation, parseOrderPayload, waiterCallLocationMatches } from "@menuos/shared";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
 function publicOrderSummary(raw: unknown) {
@@ -41,7 +41,14 @@ export async function GET(request: Request) {
   if (callId) {
     const call = await prisma.waiterCall.findFirst({
       where: { id: callId, venue: { slug: venueSlug } },
-      select: { status: true, type: true, orderItems: true },
+      select: {
+        status: true,
+        type: true,
+        orderItems: true,
+        tableNumber: true,
+        roomNumber: true,
+        sunbedNumber: true,
+      },
     });
 
     if (!call) {
@@ -49,13 +56,27 @@ export async function GET(request: Request) {
     }
 
     const active = call.status === "PENDING" || call.status === "ACKNOWLEDGED";
+    let orderItems = null;
+    if (call.type === "ORDER") {
+      const hasLocation = Boolean(tableNumber || roomNumber || sunbedNumber);
+      if (hasLocation) {
+        const loc = normalizeWaiterCallLocation({
+          tableNumber: tableNumber ?? undefined,
+          roomNumber: roomNumber ?? undefined,
+          sunbedNumber: sunbedNumber ?? undefined,
+        });
+        if (waiterCallLocationMatches(call, loc)) {
+          orderItems = publicOrderItems(call.orderItems);
+        }
+      }
+    }
 
     return NextResponse.json({
       status: call.status,
       type: call.type,
       active,
       cancellable: call.status === "PENDING",
-      orderItems: call.type === "ORDER" ? publicOrderItems(call.orderItems) : null,
+      orderItems,
     });
   }
 

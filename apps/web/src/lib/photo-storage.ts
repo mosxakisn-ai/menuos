@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { APP_URL } from "@/lib/config";
 import { getR2PublicUrl, isR2Enabled } from "@/lib/r2-config";
+import { signedPhotoServeUrl } from "@/lib/photo-signing";
 import { uploadToR2 } from "@/lib/r2-storage";
 
 export function getPhotoUploadDir(): string {
@@ -15,8 +15,7 @@ export function isPhotoUploadEnabled(): boolean {
 }
 
 function publicLocalPhotoUrl(relativeKey: string): string {
-  const encoded = relativeKey.split("/").map(encodeURIComponent).join("/");
-  return `${APP_URL}/api/photos/serve/${encoded}`;
+  return signedPhotoServeUrl(relativeKey);
 }
 
 export async function saveMenuPhoto(organizationId: string, optimized: Buffer): Promise<string> {

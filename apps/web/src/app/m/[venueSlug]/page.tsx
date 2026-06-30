@@ -4,6 +4,7 @@ import { prisma } from "@menuos/db";
 import { parseQrMenuLanguage } from "@menuos/shared";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
+import { appendPhotoSignature } from "@/lib/photo-signing";
 import { PublicMenuView } from "@/components/menu/public-menu-view";
 import { PublicMenuUnavailable } from "@/components/menu/public-menu-unavailable";
 
@@ -60,11 +61,19 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
   const publicVenue = {
     name: venue.name,
     slug: venue.slug,
-    logoUrl: venue.logoUrl,
+    logoUrl: appendPhotoSignature(venue.logoUrl),
     primaryColor: venue.primaryColor,
     menus: venue.menus.map((menu) => ({
       ...menu,
-      categories: menu.categories.filter((category) => category.items.length > 0),
+      categories: menu.categories
+        .filter((category) => category.items.length > 0)
+        .map((category) => ({
+          ...category,
+          items: category.items.map((item) => ({
+            ...item,
+            photoUrl: appendPhotoSignature(item.photoUrl),
+          })),
+        })),
     })),
   };
 

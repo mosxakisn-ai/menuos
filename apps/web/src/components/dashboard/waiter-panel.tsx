@@ -48,11 +48,13 @@ export function WaiterPanel({
   venues,
   initialVenueId,
   staffKey,
+  staffViaCookie = false,
   showShareLink = true,
 }: {
   venues: Venue[];
   initialVenueId?: string;
   staffKey?: string;
+  staffViaCookie?: boolean;
   showShareLink?: boolean;
 }) {
   const resolvedInitial =
@@ -73,8 +75,10 @@ export function WaiterPanel({
   const load = useCallback(async () => {
     if (!venueId) return;
     const params = new URLSearchParams({ venueId });
-    if (staffKey) params.set("staffKey", staffKey);
-    const res = await fetch(`/api/waiter-call?${params}`);
+    if (staffKey && !staffViaCookie) params.set("staffKey", staffKey);
+    const res = await fetch(`/api/waiter-call?${params}`, {
+      credentials: staffViaCookie ? "include" : "same-origin",
+    });
     const data = await res.json();
     if (res.ok) {
       setCalls(data.calls ?? []);
@@ -92,7 +96,7 @@ export function WaiterPanel({
       }
       setPendingCount(0);
     }
-  }, [venueId, staffKey]);
+  }, [staffKey, staffViaCookie, venueId]);
 
   useEffect(() => {
     setCalls([]);
@@ -122,9 +126,10 @@ export function WaiterPanel({
       const res = await fetch(`/api/waiter-call/${callId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: staffViaCookie ? "include" : "same-origin",
         body: JSON.stringify({
           status,
-          ...(staffKey ? { staffKey } : {}),
+          ...(staffKey && !staffViaCookie ? { staffKey } : {}),
         }),
       });
       const data = await res.json();
@@ -167,7 +172,7 @@ export function WaiterPanel({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-4">
-        {staffKey || venues.length === 1 ? (
+        {staffViaCookie || staffKey || venues.length === 1 ? (
           <p className="text-sm">
             <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}: </span>
             <span className="text-slate-700">{activeVenue?.name ?? "—"}</span>

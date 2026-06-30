@@ -40,6 +40,11 @@ function verifyEnvSupervisorCredentials(username: string, password: string): boo
   );
 }
 
+function allowEnvSupervisorLogin(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  return Boolean(process.env.SUPERVISOR_USERNAME?.trim() && process.env.SUPERVISOR_PASSWORD);
+}
+
 export async function verifySupervisorCredentials(
   username: string,
   password: string,
@@ -54,9 +59,11 @@ export async function verifySupervisorCredentials(
       return bcrypt.compare(password, row.passwordHash);
     }
   } catch {
+    if (!allowEnvSupervisorLogin()) return false;
     return verifyEnvSupervisorCredentials(trimmed, password);
   }
 
+  if (!allowEnvSupervisorLogin()) return false;
   return verifyEnvSupervisorCredentials(trimmed, password);
 }
 
@@ -101,12 +108,7 @@ export async function getSupervisorSession(): Promise<{ username: string } | nul
   try {
     if (!(await isSupervisorOperatorSessionAllowed(username))) return null;
   } catch {
-    try {
-      const row = await findSupervisorOperatorByUsername(username);
-      if (row) return null;
-    } catch {
-      return null;
-    }
+    return null;
   }
 
   return { username };

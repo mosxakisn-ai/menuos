@@ -3,7 +3,7 @@ import { prisma } from "@menuos/db";
 import { pushSubscriptionSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { isPushEnabled } from "@/lib/push-config";
-import { resolveVenueByStaffKey } from "@/lib/staff-auth";
+import { resolveVenueByStaffKey, resolveStaffKey } from "@/lib/staff-auth";
 
 export async function POST(request: Request) {
   if (!isPushEnabled()) {
@@ -28,8 +28,12 @@ export async function POST(request: Request) {
   let userId: string | null = null;
   let venueId: string | null = null;
 
-  if (parsed.data.staffKey && parsed.data.venueId) {
-    const venue = await resolveVenueByStaffKey(parsed.data.venueId, parsed.data.staffKey);
+  if (parsed.data.venueId) {
+    const staffKey = parsed.data.staffKey ?? (await resolveStaffKey(request, parsed.data.venueId));
+    if (!staffKey) {
+      return NextResponse.json({ error: "Μη έγκυρο link σερβιτόρου." }, { status: 401 });
+    }
+    const venue = await resolveVenueByStaffKey(parsed.data.venueId, staffKey);
     if (!venue) {
       return NextResponse.json({ error: "Μη έγκυρο link σερβιτόρου." }, { status: 401 });
     }

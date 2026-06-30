@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
-import { resolveVenueByStaffSlug } from "@/lib/staff-auth";
+import { resolveVenueByStaffKey, resolveVenueByStaffSlug } from "@/lib/staff-auth";
+import { readStaffSessionFromCookies, setStaffSessionCookie } from "@/lib/staff-session";
 
 export const metadata: Metadata = {
   title: "Σερβιτόρος — MenuOS",
@@ -17,11 +18,20 @@ type Props = {
 export default async function StaffWaiterPage({ params, searchParams }: Props) {
   const { venueSlug } = await params;
   const { key } = await searchParams;
-  const staffKey = key?.trim();
-  if (!staffKey) notFound();
+  const incomingKey = key?.trim();
 
-  const venue = await resolveVenueByStaffSlug(venueSlug, staffKey);
-  if (!venue) notFound();
+  if (incomingKey) {
+    const venue = await resolveVenueByStaffSlug(venueSlug, incomingKey);
+    if (!venue) notFound();
+    await setStaffSessionCookie(venue.id, incomingKey);
+    redirect(`/s/${venueSlug}`);
+  }
+
+  const session = await readStaffSessionFromCookies();
+  if (!session) notFound();
+
+  const venue = await resolveVenueByStaffKey(session.venueId, session.staffToken);
+  if (!venue || venue.slug !== venueSlug) notFound();
 
   return (
     <div className="min-h-screen bg-brand-surface/40">
@@ -31,11 +41,11 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
         <p className="mt-1 text-sm text-slate-600">{venue.name}</p>
       </header>
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-6">
-        <PushNotificationsPrompt staffAuth={{ staffKey, venueId: venue.id }} />
+        <PushNotificationsPrompt staffAuth={{ venueId: venue.id }} />
         <WaiterPanel
-          venues={[{ id: venue.id, name: venue.name, slug: venue.slug, staffToken: staffKey }]}
+          venues={[{ id: venue.id, name: venue.name, slug: venue.slug }]}
           initialVenueId={venue.id}
-          staffKey={staffKey}
+          staffViaCookie
           showShareLink={false}
         />
       </main>

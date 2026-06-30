@@ -4,6 +4,7 @@ import type { SessionPayload } from "@/lib/auth";
 import { getSession } from "@/lib/auth";
 import { getOrganizationPlanContext } from "@/lib/billing";
 import { getVenueForOrganization } from "@/lib/venue-access";
+import { readStaffSessionFromCookies } from "@/lib/staff-session";
 
 export type StaffVenueContext = {
   id: string;
@@ -16,18 +17,23 @@ export type WaiterAccess =
   | { mode: "session"; session: SessionPayload; venue: StaffVenueContext }
   | { mode: "staff"; venue: StaffVenueContext };
 
-export function staffKeyFromRequest(request: Request): string | null {
-  const header = request.headers.get("x-menuos-staff-key")?.trim();
-  if (header) return header;
-  const url = new URL(request.url);
-  const query = url.searchParams.get("staffKey")?.trim();
-  return query || null;
-}
-
 export function staffKeyFromBody(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
   const key = (body as { staffKey?: unknown }).staffKey;
   return typeof key === "string" && key.trim() ? key.trim() : null;
+}
+
+/** Prefer header, then httpOnly staff session cookie, then legacy query/body. */
+export async function resolveStaffKey(request: Request, venueId: string): Promise<string | null> {
+  const header = request.headers.get("x-menuos-staff-key")?.trim();
+  if (header) return header;
+
+  const session = await readStaffSessionFromCookies();
+  if (session?.venueId === venueId) return session.staffToken;
+
+  const url = new URL(request.url);
+  const query = url.searchParams.get("staffKey")?.trim();
+  return query || null;
 }
 
 export async function resolveVenueByStaffKey(
@@ -94,7 +100,7 @@ export async function requireWaiterVenueAccess(
     };
   }
 
-  const staffKey = staffKeyFromRequest(request);
+  const staffKey = await resolveStaffKey(request, venueId);
   if (!staffKey) {
     return {
       access: null,
@@ -154,7 +160,10 @@ export async function requireWaiterCallAccess(
 
   const fakeRequest = staffKeyFromRequestBody
     ? new Request(request.url, {
-        headers: { "x-menuos-staff-key": staffKeyFromRequestBody },
+        headers: {
+          ...Object.fromEntries(request.headers.entries()),
+          "x-menuos-staff-key": staffKeyFromRequestBody,
+        },
       })
     : request;
 

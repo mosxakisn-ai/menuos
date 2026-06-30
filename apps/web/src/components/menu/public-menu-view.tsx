@@ -238,13 +238,16 @@ export function PublicMenuView({
   const fetchSentOrderForCall = useCallback(
     async (callId: string): Promise<OrderPayload | null> => {
       const params = new URLSearchParams({ venueSlug: venue.slug, callId });
+      if (menuLocation.tableNumber) params.set("tableNumber", menuLocation.tableNumber);
+      if (menuLocation.roomNumber) params.set("roomNumber", menuLocation.roomNumber);
+      if (menuLocation.sunbedNumber) params.set("sunbedNumber", menuLocation.sunbedNumber);
       const res = await fetch(`/api/waiter-call/status?${params}`);
       if (!res.ok) return null;
       const data = (await res.json()) as { type?: string; orderItems?: unknown };
       if (data.type !== "ORDER" || !data.orderItems) return null;
       return parseOrderPayload(data.orderItems);
     },
-    [venue.slug],
+    [menuLocation, venue.slug],
   );
 
   const syncTableStatus = useCallback(async () => {
