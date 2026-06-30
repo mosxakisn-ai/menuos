@@ -100,6 +100,8 @@ export function PublicMenuView({
   const resetTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const dialogRef = useRef<HTMLDivElement>(null);
   const pollFailuresRef = useRef(0);
+  const [isInIframe, setIsInIframe] = useState(false);
+  const isEmbedded = embedMode || isInIframe;
 
   const ui = QR_MENU_UI[lang];
   const activeMenu = venue.menus.find((m) => m.id === activeMenuId) ?? venue.menus[0];
@@ -168,10 +170,14 @@ export function PublicMenuView({
   }, [storageKey, syncCallStatus]);
 
   useEffect(() => {
-    if (!embedMode) return;
+    setIsInIframe(window.self !== window.top);
+  }, []);
+
+  useEffect(() => {
+    if (!isEmbedded) return;
     document.documentElement.classList.add("menu-embed");
     return () => document.documentElement.classList.remove("menu-embed");
-  }, [embedMode]);
+  }, [isEmbedded]);
 
   useEffect(() => {
     setLang(language);
@@ -190,8 +196,12 @@ export function PublicMenuView({
   }, [restoreActiveCall]);
 
   useEffect(() => {
+    if (isEmbedded) {
+      setCanGoBack(false);
+      return;
+    }
     setCanGoBack(window.history.length > 1 || Boolean(document.referrer));
-  }, []);
+  }, [isEmbedded]);
 
   useEffect(() => {
     if (!activeCallId) return;
@@ -238,7 +248,7 @@ export function PublicMenuView({
       setSelectedItem(null);
       return;
     }
-    if (canGoBack) {
+    if (!isEmbedded && canGoBack) {
       window.history.back();
       return;
     }
@@ -439,24 +449,24 @@ export function PublicMenuView({
   const hasCart = cartLines.length > 0;
 
   const categoryNav = activeMenu?.categories ?? [];
-  const shell = embedMode ? "w-full max-w-full" : "mx-auto max-w-lg";
+  const shell = isEmbedded ? "w-full max-w-full" : "mx-auto max-w-lg";
 
   return (
     <div
       className={cn(
-        embedMode
+        isEmbedded
           ? "flex h-full w-full max-w-full flex-col overflow-hidden bg-surface"
           : "min-h-screen bg-surface",
-        !embedMode && canUseCallActions && (hasCart ? "pb-52" : "pb-36"),
-        !embedMode && !canUseCallActions && "pb-8",
+        !isEmbedded && canUseCallActions && (hasCart ? "pb-52" : "pb-36"),
+        !isEmbedded && !canUseCallActions && "pb-8",
       )}
     >
       <div
         className={cn(
-          embedMode && "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain",
+          isEmbedded && "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain",
         )}
       >
-      {!embedMode ? (
+      {!isEmbedded ? (
       <div className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur">
         <div className={cn(shell, "flex items-center gap-2 px-3 py-2.5")}>
           <button
@@ -487,7 +497,7 @@ export function PublicMenuView({
       <header
         className={cn(
           "relative overflow-hidden text-white",
-          embedMode ? "px-3 pb-3 pt-2" : "px-4 pb-6 pt-5",
+          isEmbedded ? "px-3 pb-3 pt-2" : "px-4 pb-6 pt-5",
         )}
         style={{ background: `linear-gradient(135deg, ${venue.primaryColor}, #121d4a)` }}
       >
@@ -500,10 +510,10 @@ export function PublicMenuView({
           aria-hidden
         />
         <div className={cn("relative", shell)}>
-          {!embedMode ? (
+          {!isEmbedded ? (
             <p className="text-xs font-bold uppercase tracking-widest text-white/60">{ui.heroWelcome}</p>
           ) : null}
-          <div className={cn("flex gap-3", embedMode ? "flex-col" : "mt-3 items-start justify-between")}>
+          <div className={cn("flex gap-3", isEmbedded ? "flex-col" : "mt-3 items-start justify-between")}>
             <div className="flex min-w-0 items-start gap-2.5">
               {venue.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -512,18 +522,18 @@ export function PublicMenuView({
                   alt={venue.name}
                   className={cn(
                     "shrink-0 rounded-full border-2 border-white/30 object-cover shadow-lg",
-                    embedMode ? "mt-0.5 h-10 w-10" : "mt-0.5 h-14 w-14",
+                    isEmbedded ? "mt-0.5 h-10 w-10" : "mt-0.5 h-14 w-14",
                   )}
                 />
               ) : (
                 <div
                   className={cn(
                     "flex shrink-0 items-center justify-center rounded-full border-2 border-white/20 bg-white/15 shadow-lg",
-                    embedMode ? "h-10 w-10" : "h-14 w-14",
+                    isEmbedded ? "h-10 w-10" : "h-14 w-14",
                   )}
                 >
                   <UtensilsCrossed
-                    className={cn("text-white/90", embedMode ? "h-5 w-5" : "h-7 w-7")}
+                    className={cn("text-white/90", isEmbedded ? "h-5 w-5" : "h-7 w-7")}
                     aria-hidden
                   />
                 </div>
@@ -532,13 +542,13 @@ export function PublicMenuView({
                 <h1
                   className={cn(
                     "font-serif font-bold leading-tight",
-                    embedMode ? "text-lg" : "text-2xl",
+                    isEmbedded ? "text-lg" : "text-2xl",
                   )}
                 >
                   {venue.name}
                 </h1>
                 {activeMenu ? (
-                  <p className={cn("text-white/75", embedMode ? "mt-0.5 text-xs" : "mt-1 text-sm")}>
+                  <p className={cn("text-white/75", isEmbedded ? "mt-0.5 text-xs" : "mt-1 text-sm")}>
                     {activeMenu.name}
                   </p>
                 ) : null}
@@ -546,7 +556,7 @@ export function PublicMenuView({
                   <p
                     className={cn(
                       "inline-block rounded-full bg-white/20 font-semibold backdrop-blur-sm",
-                      embedMode ? "mt-1.5 px-2 py-0.5 text-[10px]" : "mt-2 px-3 py-1 text-xs",
+                      isEmbedded ? "mt-1.5 px-2 py-0.5 text-[10px]" : "mt-2 px-3 py-1 text-xs",
                     )}
                   >
                     {locationLabel}
@@ -557,7 +567,7 @@ export function PublicMenuView({
             <div
               className={cn(
                 "flex items-center gap-0.5 overflow-x-auto rounded-button bg-white/10 p-1 backdrop-blur-sm",
-                embedMode ? "w-full max-w-none self-start" : "max-w-[11rem] shrink-0",
+                isEmbedded ? "w-full max-w-none self-start" : "max-w-[11rem] shrink-0",
               )}
               role="group"
               aria-label={ui.language}
@@ -580,7 +590,7 @@ export function PublicMenuView({
               ))}
             </div>
           </div>
-          {!embedMode ? (
+          {!isEmbedded ? (
             <p className="mt-4 text-sm leading-relaxed text-white/80">{ui.heroHint}</p>
           ) : null}
         </div>
@@ -607,10 +617,10 @@ export function PublicMenuView({
         <nav
           className={cn(
             "sticky z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur",
-            embedMode ? "top-0" : "top-[53px]",
+            isEmbedded ? "top-0" : "top-[53px]",
           )}
         >
-          <div className={cn(shell, "flex gap-2 overflow-x-auto", embedMode ? "px-3 py-1.5" : "px-4 py-2")}>
+          <div className={cn(shell, "flex gap-2 overflow-x-auto", isEmbedded ? "px-3 py-1.5" : "px-4 py-2")}>
             {categoryNav.map((category) => {
               const id = `cat-${category.id}`;
               return (
@@ -627,7 +637,7 @@ export function PublicMenuView({
         </nav>
       ) : null}
 
-      <main className={cn(shell, "space-y-6", embedMode ? "px-3 py-4" : "px-4 py-6")}>
+      <main className={cn(shell, "space-y-6", isEmbedded ? "px-3 py-4" : "px-4 py-6")}>
         {!activeMenu || activeMenu.categories.length === 0 ? (
           <p className="text-center text-sm text-slate-500">{ui.menuSoon}</p>
         ) : (
@@ -656,7 +666,7 @@ export function PublicMenuView({
         )}
       </main>
 
-      {!embedMode ? (
+      {!isEmbedded ? (
       <footer
         className={cn(
           shell,
@@ -697,7 +707,7 @@ export function PublicMenuView({
         <div
           className={cn(
             "z-40 w-full max-w-full border-t border-slate-200/80 bg-white/95 backdrop-blur",
-            embedMode
+            isEmbedded
               ? "shrink-0 px-2 py-2"
               : "fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-0 right-0 px-3 py-2",
           )}
@@ -744,19 +754,19 @@ export function PublicMenuView({
       <div
         className={cn(
           "z-40 w-full max-w-full border-t border-slate-200/80 bg-white/95 backdrop-blur",
-          embedMode
+          isEmbedded
             ? "shrink-0 px-2 pb-2 pt-2"
             : "fixed bottom-0 left-0 right-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3",
         )}
       >
-        <div className={cn(shell, "grid grid-cols-3 gap-1.5", !embedMode && "gap-2")}>
+        <div className={cn(shell, "grid grid-cols-3 gap-1.5", !isEmbedded && "gap-2")}>
           <button
             type="button"
             onClick={() => sendCall("WAITER")}
             disabled={actionState.WAITER === "loading" || hasPendingCall}
             className={cn(
               "flex flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
-              embedMode ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
+              isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
               hasPendingCall
                 ? "bg-slate-100 text-slate-400"
                 : "bg-primary text-white shadow-glow",
@@ -764,9 +774,9 @@ export function PublicMenuView({
               actionState.WAITER === "error" && "bg-red-600 text-white",
             )}
           >
-            <Bell className={cn("shrink-0", embedMode ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
+            <Bell className={cn("shrink-0", isEmbedded ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
             <span className="text-center leading-tight">
-              {embedMode && actionState.WAITER === "idle" ? ui.callWaiterShort : buttonLabel("WAITER")}
+              {isEmbedded && actionState.WAITER === "idle" ? ui.callWaiterShort : buttonLabel("WAITER")}
             </span>
           </button>
           <button
@@ -775,7 +785,7 @@ export function PublicMenuView({
             disabled={actionState.BILL === "loading" || hasPendingCall}
             className={cn(
               "flex flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
-              embedMode ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
+              isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
               hasPendingCall
                 ? "bg-slate-100 text-slate-400"
                 : "bg-brand-blue text-white",
@@ -783,7 +793,7 @@ export function PublicMenuView({
               actionState.BILL === "error" && "bg-red-600 text-white",
             )}
           >
-            <Receipt className={cn("shrink-0", embedMode ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
+            <Receipt className={cn("shrink-0", isEmbedded ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
             <span className="text-center">{buttonLabel("BILL")}</span>
           </button>
           <button
@@ -792,7 +802,7 @@ export function PublicMenuView({
             disabled={!hasPendingCall || !callCancellable || actionState.CANCEL === "loading"}
             className={cn(
               "flex flex-col items-center justify-center gap-0.5 rounded-button border font-semibold leading-tight",
-              embedMode ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
+              isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
               hasPendingCall
                 ? "border-slate-300 bg-white text-slate-700"
                 : "border-slate-200 bg-slate-50 text-slate-400",
@@ -800,7 +810,7 @@ export function PublicMenuView({
               actionState.CANCEL === "error" && "border-red-300 bg-red-50 text-red-800",
             )}
           >
-            <X className={cn("shrink-0", embedMode ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
+            <X className={cn("shrink-0", isEmbedded ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
             <span className="text-center">{buttonLabel("CANCEL")}</span>
           </button>
         </div>
