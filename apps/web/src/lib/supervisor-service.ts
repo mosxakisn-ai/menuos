@@ -1,5 +1,5 @@
 import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/db";
-import { DEMO_VENUE_SLUG, isPaidPlan, organizationHasPaidPlan } from "@menuos/shared";
+import { DEMO_VENUE_SLUG, isPaidPlan, organizationHasPaidPlan, type OrganizationActivity } from "@menuos/shared";
 import { getPlanPriceMap, getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import type { SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
 
@@ -20,6 +20,9 @@ export type SupervisorOrganizationRow = {
   name: string;
   slug: string;
   phone: string | null;
+  mobile: string | null;
+  vatNumber: string | null;
+  activity: OrganizationActivity | null;
   city: string | null;
   notes: string | null;
   createdAt: string;
@@ -84,12 +87,22 @@ function countMenusAndItems(venues: {
   return { menuCount, itemCount };
 }
 
+function pickPrimaryOrgUser<T extends { role: string; createdAt: Date }>(users: T[]): T | undefined {
+  return (
+    users.find((u) => u.role === "ADMIN") ??
+    [...users].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0]
+  );
+}
+
 function mapOrganizationRow(
   org: {
     id: string;
     name: string;
     slug: string;
     phone: string | null;
+    mobile: string | null;
+    vatNumber: string | null;
+    activity: OrganizationActivity | null;
     city: string | null;
     notes: string | null;
     createdAt: Date;
@@ -111,9 +124,7 @@ function mapOrganizationRow(
   },
   isDemo: boolean,
 ): SupervisorOrganizationRow {
-  const admin =
-    org.users.find((u) => u.role === "ADMIN") ??
-    [...org.users].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
+  const admin = pickPrimaryOrgUser(org.users);
   const { menuCount, itemCount } = countMenusAndItems(org.venues);
 
   return {
@@ -121,6 +132,9 @@ function mapOrganizationRow(
     name: org.name,
     slug: org.slug,
     phone: org.phone,
+    mobile: org.mobile,
+    vatNumber: org.vatNumber,
+    activity: org.activity,
     city: org.city,
     notes: org.notes,
     createdAt: org.createdAt.toISOString(),
@@ -262,9 +276,16 @@ export async function listOrganizationsForSupervisor(input?: {
 
   if (search) {
     rows = rows.filter((row) =>
-      [row.name, row.slug, row.adminEmail, row.adminName, row.phone, row.city].some((v) =>
-        v?.toLowerCase().includes(search),
-      ),
+      [
+        row.name,
+        row.slug,
+        row.adminEmail,
+        row.adminName,
+        row.phone,
+        row.mobile,
+        row.vatNumber,
+        row.city,
+      ].some((v) => v?.toLowerCase().includes(search)),
     );
   }
   if (input?.plan) {
@@ -296,15 +317,40 @@ export async function updateOrganizationForSupervisor(
   const existing = await prisma.organization.findUnique({ where: { id } });
   if (!existing) throw new Error("not_found");
 
-  const profileData: { name?: string; phone?: string | null; city?: string | null; notes?: string | null } =
-    {};
+  const profileData: {
+    name?: string;
+    phone?: string | null;
+    mobile?: string | null;
+    vatNumber?: string | null;
+    activity?: OrganizationActivity | null;
+    city?: string | null;
+    notes?: string | null;
+  } = {};
   if (input.name !== undefined) profileData.name = input.name;
   if (input.phone !== undefined) profileData.phone = input.phone;
+  if (input.mobile !== undefined) profileData.mobile = input.mobile;
+  if (input.vatNumber !== undefined) profileData.vatNumber = input.vatNumber;
+  if (input.activity !== undefined) profileData.activity = input.activity;
   if (input.city !== undefined) profileData.city = input.city;
   if (input.notes !== undefined) profileData.notes = input.notes;
 
   if (Object.keys(profileData).length > 0) {
     await prisma.organization.update({ where: { id }, data: profileData });
+  }
+
+  if (input.adminEmail !== undefined) {
+    const normalizedEmail = input.adminEmail.trim().toLowerCase();
+    const users = await prisma.user.findMany({
+      where: { organizationId: id },
+      orderBy: { createdAt: "asc" },
+    });
+    const primary = pickPrimaryOrgUser(users);
+    if (!primary) throw new Error("no_user");
+    if (primary.email !== normalizedEmail) {
+      const taken = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+      if (taken) throw new Error("email_taken");
+      await prisma.user.update({ where: { id: primary.id }, data: { email: normalizedEmail } });
+    }
   }
 
   const hasSubscriptionPatch =

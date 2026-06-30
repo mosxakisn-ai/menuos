@@ -6,15 +6,10 @@ import {
   filterValidExtraIds,
   resolveExtraLabels,
   parseItemExtras,
+  computeItemUnitPrice,
   type OrderLine,
   type OrderPayload,
 } from "@menuos/shared";
-
-function formatMenuPrice(price: { toString(): string }): string {
-  const n = Number(price.toString());
-  if (!Number.isFinite(n) || n < 0) return "0";
-  return n.toFixed(n % 1 === 0 ? 0 : 2);
-}
 
 /** Validates cart lines against venue menu and returns server-trusted prices/names. */
 export async function validateOrderItemsForVenue(
@@ -54,7 +49,7 @@ export async function validateOrderItemsForVenue(
       itemId: line.itemId,
       name,
       quantity: line.quantity,
-      unitPrice: formatMenuPrice(item.price),
+      unitPrice: computeItemUnitPrice(item.price, itemExtras, extraIds),
       ...(extraIds.length ? { extraIds } : {}),
       ...(extras.length ? { extras } : {}),
       ...(note ? { note } : {}),

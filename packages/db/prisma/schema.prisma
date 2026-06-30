@@ -70,11 +70,22 @@ enum SupportedLanguage {
   FR
 }
 
+enum OrganizationActivity {
+  RESTAURANT
+  HOTEL
+  CAFE_BAR
+  BEACH_BAR
+  OTHER
+}
+
 model Organization {
   id        String   @id @default(cuid())
   name      String
   slug      String   @unique
   phone     String?
+  mobile    String?
+  vatNumber String?
+  activity  OrganizationActivity?
   city      String?
   notes     String?
   createdAt DateTime @default(now())

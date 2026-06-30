@@ -30,6 +30,11 @@ export const DASHBOARD_EL = {
   previewCatalog: "Προεπισκόπηση",
   newCatalogPlaceholder: "Νέος κατάλογος (π.χ. Pool Bar)",
   addCatalog: "+ Κατάλογος",
+  deleteCatalog: "Διαγραφή καταλόγου",
+  deleteCatalogHasData: "Δεν μπορείς να διαγράψεις κατάλογο που έχει κατηγορίες ή πιάτα.",
+  deleteCatalogLast: "Πρέπει να υπάρχει τουλάχιστον ένας κατάλογος στο κατάστημα.",
+  deleteCatalogConfirm: (name: string) =>
+    `Διαγραφή του καταλόγου «${name}»;\n\nΕίσαι σίγουρος; Η ενέργεια δεν αναιρείται.`,
   roleLabels: {
     ADMIN: "Διαχειριστής",
     MANAGER: "Υπεύθυνος",

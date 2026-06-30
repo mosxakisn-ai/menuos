@@ -25,7 +25,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const parsed = venueSpotUpdateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Μη έγκυρα στοιχεία." }, { status: 400 });
+    return NextResponse.json({ error: zodFirstErrorMessage(parsed.error) }, { status: 400 });
   }
 
   const existing = await prisma.venueSpot.findFirst({

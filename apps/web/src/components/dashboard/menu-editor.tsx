@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -93,6 +93,7 @@ export function MenuEditor({
   const [activeMenuId, setActiveMenuId] = useState<string>("");
   const [newMenuName, setNewMenuName] = useState("");
   const [addingMenu, setAddingMenu] = useState(false);
+  const [deletingMenuId, setDeletingMenuId] = useState<string | null>(null);
 
   const loadMenus = useCallback(async () => {
     if (!venueId) return;
@@ -210,6 +211,42 @@ export function MenuEditor({
     }
   }
 
+  function menuHasData(menu: Menu) {
+    return menu.categories.length > 0;
+  }
+
+  function canDeleteMenu(menu: Menu) {
+    return menus.length > 1 && !menuHasData(menu);
+  }
+
+  async function deleteMenu(menu: Menu) {
+    if (menuHasData(menu)) {
+      setFlash({ type: "error", text: DASHBOARD_EL.deleteCatalogHasData });
+      return;
+    }
+    if (menus.length <= 1) {
+      setFlash({ type: "error", text: DASHBOARD_EL.deleteCatalogLast });
+      return;
+    }
+    if (!window.confirm(DASHBOARD_EL.deleteCatalogConfirm(menu.name))) return;
+
+    setDeletingMenuId(menu.id);
+    try {
+      const res = await fetch(`/api/menus/${menu.id}`, { method: "DELETE" });
+      const data = await res.json();
+      showFromResponse(data, res.ok);
+      if (res.ok) {
+        if (activeMenuId === menu.id) {
+          const next = menus.find((m) => m.id !== menu.id);
+          setActiveMenuId(next?.id ?? "");
+        }
+        await loadMenus();
+      }
+    } finally {
+      setDeletingMenuId(null);
+    }
+  }
+
   async function setItemLabel(itemId: string, label: ItemLabel | null) {
     const res = await fetch(`/api/items/${itemId}`, {
       method: "PATCH",
@@ -230,7 +267,14 @@ export function MenuEditor({
     }
     const extras = editExtras
       .map((e) => ({ ...e, labels: { ...e.labels, GR: e.labels.GR.trim() } }))
-      .filter((e) => e.labels.GR);
+      .filter((e) => e.labels.GR)
+      .map((e) => {
+        const out: ItemExtra = { id: e.id, labels: e.labels };
+        if (e.price != null && Number.isFinite(e.price) && e.price > 0) {
+          out.price = Math.round(e.price * 100) / 100;
+        }
+        return out;
+      });
     setSavingName(true);
     try {
       const res = await fetch(`/api/items/${itemId}`, {
@@ -266,7 +310,7 @@ export function MenuEditor({
   }
 
   async function deleteItem(id: string) {
-    if (!confirm("Διαγραφή πιάτου;")) return;
+    if (!window.confirm("Διαγραφή του πιάτου;\n\nΕίσαι σίγουρος; Η ενέργεια δεν αναιρείται.")) return;
     const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
     const data = await res.json();
     showFromResponse(data, res.ok);
@@ -274,7 +318,13 @@ export function MenuEditor({
   }
 
   async function deleteCategory(id: string) {
-    if (!confirm("Διαγραφή κατηγορίας και όλων των πιάτων;")) return;
+    if (
+      !window.confirm(
+        "Διαγραφή της κατηγορίας και όλων των πιάτων της;\n\nΕίσαι σίγουρος; Η ενέργεια δεν αναιρείται.",
+      )
+    ) {
+      return;
+    }
     const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
     const data = await res.json();
     showFromResponse(data, res.ok);
@@ -366,20 +416,46 @@ export function MenuEditor({
             <Card>
               <h2 className="font-semibold text-brand-navy">{DASHBOARD_EL.menus}</h2>
               <div className="mt-3 flex flex-wrap gap-2">
-                {menus.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setActiveMenuId(m.id)}
-                    className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-                      activeMenu?.id === m.id
-                        ? "bg-brand-gradient text-white"
-                        : "bg-brand-surface text-brand-navy ring-1 ring-slate-200"
-                    }`}
-                  >
-                    {m.name}
-                  </button>
-                ))}
+                {menus.map((m) => {
+                  const isActive = activeMenu?.id === m.id;
+                  const deletable = canDeleteMenu(m);
+                  return (
+                    <div
+                      key={m.id}
+                      className={cn(
+                        "inline-flex items-stretch overflow-hidden rounded-full text-sm font-semibold",
+                        isActive
+                          ? "bg-brand-gradient text-white"
+                          : "bg-brand-surface text-brand-navy ring-1 ring-slate-200",
+                      )}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setActiveMenuId(m.id)}
+                        className="px-4 py-1.5"
+                      >
+                        {m.name}
+                      </button>
+                      {deletable ? (
+                        <button
+                          type="button"
+                          disabled={deletingMenuId === m.id}
+                          onClick={() => void deleteMenu(m)}
+                          className={cn(
+                            "inline-flex items-center border-l px-2 py-1.5 transition",
+                            isActive
+                              ? "border-white/30 hover:bg-white/15"
+                              : "border-slate-200 hover:bg-slate-100",
+                          )}
+                          aria-label={DASHBOARD_EL.deleteCatalog}
+                          title={DASHBOARD_EL.deleteCatalog}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
               <form onSubmit={addMenu} className="mt-4 flex flex-wrap items-end gap-2">
                 <input
@@ -505,7 +581,7 @@ export function MenuEditor({
                             <div className="space-y-2 rounded-lg border border-slate-100 bg-slate-50/80 p-3">
                               <p className="text-xs font-semibold text-brand-navy">Επιλογές πελάτη</p>
                               <p className="text-[11px] leading-snug text-slate-500">
-                                Ο πελάτης τις επιλέγει στο QR menu (π.χ. χωρίς αλάτι, λίγη ζάχαρη).
+                                Ο πελάτης τις επιλέγει στο QR menu. Προαιρετικά βάλε extra χρέωση (π.χ. +€1,50).
                               </p>
                               {editExtras.map((ex, i) => (
                                 <div key={ex.id} className="flex items-center gap-2">
@@ -518,6 +594,32 @@ export function MenuEditor({
                                     }}
                                     placeholder="π.χ. Χωρίς αλάτι"
                                     className="min-w-0 flex-1 rounded border border-slate-200 px-2 py-1.5 text-sm"
+                                  />
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={
+                                      ex.price != null && ex.price > 0
+                                        ? String(ex.price).replace(".", ",")
+                                        : ""
+                                    }
+                                    onChange={(e) => {
+                                      const raw = e.target.value;
+                                      const next = [...editExtras];
+                                      if (raw.trim() === "") {
+                                        next[i] = { ...ex, price: undefined };
+                                      } else {
+                                        const parsed = parseMenuPrice(raw);
+                                        next[i] = {
+                                          ...ex,
+                                          price: Number.isFinite(parsed) && parsed >= 0 ? parsed : ex.price,
+                                        };
+                                      }
+                                      setEditExtras(next);
+                                    }}
+                                    placeholder="+ €"
+                                    className="w-[4.5rem] shrink-0 rounded border border-slate-200 px-2 py-1.5 text-sm"
+                                    title="Extra χρέωση (προαιρετικό)"
                                   />
                                   <button
                                     type="button"

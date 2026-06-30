@@ -20,6 +20,8 @@ import {
   pickItemExtraLabel,
   pickQrMenuTranslation,
   resolveExtraLabels,
+  computeItemUnitPrice,
+  formatExtraPriceSuffix,
   updateCartLineQty,
   type OrderLine,
   type OrderPayload,
@@ -439,7 +441,7 @@ export function PublicMenuView({
       itemId: selectedItem.id,
       name: tr?.name ?? "—",
       quantity: itemQty,
-      unitPrice: selectedItem.price.toString(),
+      unitPrice: computeItemUnitPrice(selectedItem.price, itemExtras, extraIds),
       ...(extraIds.length ? { extraIds } : {}),
       ...(extras.length ? { extras } : {}),
       ...(note ? { note } : {}),
@@ -1155,7 +1157,16 @@ export function PublicMenuView({
                   <h3 id="menu-item-dialog-title" className="font-serif text-2xl font-bold text-primary">
                     {tr?.name}
                   </h3>
-                  <p className="mt-2 text-lg font-semibold text-primary">€{selectedItem.price.toString()}</p>
+                  <p className="mt-2 text-lg font-semibold text-primary">
+                    €
+                    {computeItemUnitPrice(
+                      selectedItem.price,
+                      parseItemExtras(selectedItem.extras),
+                      selectedExtraIds.filter((id) =>
+                        parseItemExtras(selectedItem.extras).some((e) => e.id === id),
+                      ),
+                    )}
+                  </p>
                   {tr?.description ? (
                     <p className="mt-4 text-sm leading-relaxed text-slate-600">{tr.description}</p>
                   ) : null}
@@ -1179,6 +1190,7 @@ export function PublicMenuView({
                         <ul className="mt-2 space-y-2">
                           {itemExtras.map((extra) => {
                             const checked = selectedExtraIds.includes(extra.id);
+                            const priceSuffix = formatExtraPriceSuffix(extra);
                             return (
                               <li key={extra.id}>
                                 <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-slate-200 bg-surface px-3 py-2.5 text-sm has-[:checked]:border-brand-blue has-[:checked]:bg-blue-50/60">
@@ -1192,8 +1204,15 @@ export function PublicMenuView({
                                     }}
                                     className="h-4 w-4 rounded border-slate-300 text-brand-blue"
                                   />
-                                  <span className="font-medium text-slate-800">
-                                    {pickItemExtraLabel(extra, lang)}
+                                  <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                                    <span className="font-medium text-slate-800">
+                                      {pickItemExtraLabel(extra, lang)}
+                                    </span>
+                                    {priceSuffix ? (
+                                      <span className="shrink-0 text-sm font-semibold text-slate-600">
+                                        {priceSuffix}
+                                      </span>
+                                    ) : null}
                                   </span>
                                 </label>
                               </li>

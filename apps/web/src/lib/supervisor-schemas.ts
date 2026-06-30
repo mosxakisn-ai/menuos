@@ -1,35 +1,32 @@
 import { z } from "zod";
+import { ORGANIZATION_ACTIVITIES } from "@menuos/shared";
+
+const nullableTrimmedString = (max: number) =>
+  z
+    .union([z.string().max(max), z.null()])
+    .optional()
+    .transform((v) => {
+      if (v === undefined) return undefined;
+      if (v === null) return null;
+      const trimmed = v.trim();
+      return trimmed === "" ? null : trimmed;
+    });
 
 export const supervisorOrganizationUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(200).optional(),
-    phone: z
-      .union([z.string().max(40), z.null()])
-      .optional()
-      .transform((v) => {
-        if (v === undefined) return undefined;
-        if (v === null) return null;
-        const trimmed = v.trim();
-        return trimmed === "" ? null : trimmed;
-      }),
-    city: z
-      .union([z.string().max(120), z.null()])
-      .optional()
-      .transform((v) => {
-        if (v === undefined) return undefined;
-        if (v === null) return null;
-        const trimmed = v.trim();
-        return trimmed === "" ? null : trimmed;
-      }),
-    notes: z
-      .union([z.string().max(2000), z.null()])
-      .optional()
-      .transform((v) => {
-        if (v === undefined) return undefined;
-        if (v === null) return null;
-        const trimmed = v.trim();
-        return trimmed === "" ? null : trimmed;
-      }),
+    adminEmail: z.string().trim().email().max(254).optional(),
+    phone: nullableTrimmedString(40),
+    mobile: nullableTrimmedString(40),
+    vatNumber: nullableTrimmedString(20).refine(
+      (v) => v === undefined || v === null || /^\d{9}$/.test(v),
+      { message: "Ο ΑΦΜ πρέπει να είναι 9 ψηφία." },
+    ),
+    activity: z
+      .union([z.enum(ORGANIZATION_ACTIVITIES), z.null()])
+      .optional(),
+    city: nullableTrimmedString(120),
+    notes: nullableTrimmedString(2000),
     plan: z.enum(["TRIAL", "BASIC", "PRO", "ENTERPRISE"]).optional(),
     status: z.enum(["ACTIVE", "TRIALING", "PAST_DUE", "CANCELED"]).optional(),
     extendTrialDays: z.number().int().min(1).max(90).optional(),
@@ -38,7 +35,11 @@ export const supervisorOrganizationUpdateSchema = z
   .refine(
     (data) =>
       data.name !== undefined ||
+      data.adminEmail !== undefined ||
       data.phone !== undefined ||
+      data.mobile !== undefined ||
+      data.vatNumber !== undefined ||
+      data.activity !== undefined ||
       data.city !== undefined ||
       data.notes !== undefined ||
       data.plan !== undefined ||

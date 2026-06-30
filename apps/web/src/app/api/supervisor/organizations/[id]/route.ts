@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { zodFirstErrorMessage } from "@menuos/shared";
 import { requireSupervisor } from "@/lib/api-auth";
 import { supervisorOrganizationUpdateSchema } from "@/lib/supervisor-schemas";
 import {
@@ -34,7 +35,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const parsed = supervisorOrganizationUpdateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Έλεγξε τα πεδία." }, { status: 400 });
+    return NextResponse.json({ error: zodFirstErrorMessage(parsed.error) }, { status: 400 });
   }
 
   try {
@@ -50,6 +51,12 @@ export async function PATCH(request: Request, { params }: Params) {
   } catch (err) {
     if (err instanceof Error && err.message === "not_found") {
       return NextResponse.json({ error: "Δεν βρέθηκε." }, { status: 404 });
+    }
+    if (err instanceof Error && err.message === "email_taken") {
+      return NextResponse.json({ error: "Το email χρησιμοποιείται ήδη." }, { status: 409 });
+    }
+    if (err instanceof Error && err.message === "no_user") {
+      return NextResponse.json({ error: "Δεν βρέθηκε χρήστης για ενημέρωση email." }, { status: 400 });
     }
     if (err instanceof Error && err.message === "extend_trial_not_allowed") {
       return NextResponse.json(

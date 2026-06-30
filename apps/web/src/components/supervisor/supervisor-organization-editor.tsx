@@ -10,6 +10,7 @@ import {
   stripeCustomerDashboardUrl,
   stripeSubscriptionDashboardUrl,
 } from "@/lib/stripe-dashboard-urls";
+import { ORGANIZATION_ACTIVITIES, ORGANIZATION_ACTIVITY_LABELS } from "@menuos/shared";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -56,7 +57,11 @@ export function SupervisorOrganizationEditor({
   const [loading, setLoading] = useState(true);
 
   const [businessName, setBusinessName] = useState(initial.name);
+  const [adminEmail, setAdminEmail] = useState(initial.adminEmail);
   const [phone, setPhone] = useState(initial.phone ?? "");
+  const [mobile, setMobile] = useState(initial.mobile ?? "");
+  const [vatNumber, setVatNumber] = useState(initial.vatNumber ?? "");
+  const [activity, setActivity] = useState(initial.activity ?? "");
   const [city, setCity] = useState(initial.city ?? "");
   const [notes, setNotes] = useState(initial.notes ?? "");
 
@@ -75,7 +80,11 @@ export function SupervisorOrganizationEditor({
       const data = (await res.json()) as { organization: SupervisorOrganizationRow };
       setOrganization(data.organization);
       setBusinessName(data.organization.name);
+      setAdminEmail(data.organization.adminEmail);
       setPhone(data.organization.phone ?? "");
+      setMobile(data.organization.mobile ?? "");
+      setVatNumber(data.organization.vatNumber ?? "");
+      setActivity(data.organization.activity ?? "");
       setCity(data.organization.city ?? "");
       setNotes(data.organization.notes ?? "");
       setPlan(data.organization.plan);
@@ -109,7 +118,11 @@ export function SupervisorOrganizationEditor({
       if (data.organization) {
         setOrganization(data.organization);
         setBusinessName(data.organization.name);
+        setAdminEmail(data.organization.adminEmail);
         setPhone(data.organization.phone ?? "");
+        setMobile(data.organization.mobile ?? "");
+        setVatNumber(data.organization.vatNumber ?? "");
+        setActivity(data.organization.activity ?? "");
         setCity(data.organization.city ?? "");
         setNotes(data.organization.notes ?? "");
         setPlan(data.organization.plan);
@@ -126,11 +139,18 @@ export function SupervisorOrganizationEditor({
 
   const profileDirty =
     businessName.trim() !== organization.name ||
+    adminEmail.trim().toLowerCase() !== organization.adminEmail.toLowerCase() ||
     phone !== (organization.phone ?? "") ||
+    mobile !== (organization.mobile ?? "") ||
+    vatNumber !== (organization.vatNumber ?? "") ||
+    activity !== (organization.activity ?? "") ||
     city !== (organization.city ?? "") ||
     notes !== (organization.notes ?? "");
 
-  const profileValid = businessName.trim().length > 0;
+  const profileValid =
+    businessName.trim().length > 0 &&
+    adminEmail.trim().length > 0 &&
+    (vatNumber === "" || /^\d{9}$/.test(vatNumber));
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-brand-navy/40 p-4 sm:items-center">
@@ -186,6 +206,17 @@ export function SupervisorOrganizationEditor({
                   required
                 />
               </label>
+              <label className="block text-sm sm:col-span-2">
+                <span className={dashboardLabelClass}>Email</span>
+                <input
+                  className={dashboardFieldClass}
+                  type="email"
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                  placeholder="π.χ. owner@example.gr"
+                  required
+                />
+              </label>
               <label className="block text-sm">
                 <span className={dashboardLabelClass}>Τηλέφωνο</span>
                 <input
@@ -195,6 +226,41 @@ export function SupervisorOrganizationEditor({
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="π.χ. 210 1234567"
                 />
+              </label>
+              <label className="block text-sm">
+                <span className={dashboardLabelClass}>Κινητό</span>
+                <input
+                  className={dashboardFieldClass}
+                  type="tel"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  placeholder="π.χ. 694 1234567"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className={dashboardLabelClass}>ΑΦΜ</span>
+                <input
+                  className={dashboardFieldClass}
+                  inputMode="numeric"
+                  value={vatNumber}
+                  onChange={(e) => setVatNumber(e.target.value.replace(/\D/g, "").slice(0, 9))}
+                  placeholder="9 ψηφία"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className={dashboardLabelClass}>Δραστηριότητα</span>
+                <select
+                  className={dashboardFieldClass}
+                  value={activity}
+                  onChange={(e) => setActivity(e.target.value)}
+                >
+                  <option value="">— Επιλογή —</option>
+                  {ORGANIZATION_ACTIVITIES.map((key) => (
+                    <option key={key} value={key}>
+                      {ORGANIZATION_ACTIVITY_LABELS[key]}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label className="block text-sm">
                 <span className={dashboardLabelClass}>Πόλη</span>
@@ -217,7 +283,6 @@ export function SupervisorOrganizationEditor({
             </div>
 
             <dl className="grid gap-3 rounded-xl border border-slate-200 bg-brand-surface/40 p-4 sm:grid-cols-2">
-              <DetailRow label="Email">{organization.adminEmail}</DetailRow>
               <DetailRow label="Υπεύθυνος">{organization.adminName}</DetailRow>
               <DetailRow label="Slug">{organization.slug}</DetailRow>
               <DetailRow label="Εγγραφή">{formatDate(organization.createdAt)}</DetailRow>
@@ -260,7 +325,16 @@ export function SupervisorOrganizationEditor({
               className={buttonClass("primary", "sm")}
               onClick={() =>
                 void save(
-                  { name: businessName.trim(), phone, city, notes },
+                  {
+                    name: businessName.trim(),
+                    adminEmail: adminEmail.trim(),
+                    phone,
+                    mobile,
+                    vatNumber: vatNumber === "" ? null : vatNumber,
+                    activity: activity === "" ? null : activity,
+                    city,
+                    notes,
+                  },
                   "Αποθήκευση στοιχείων.",
                 )
               }
