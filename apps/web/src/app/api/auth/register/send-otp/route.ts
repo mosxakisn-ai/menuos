@@ -5,6 +5,7 @@ import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { normalizeRegistrationEmail, sendRegistrationOtp } from "@/lib/registration-otp";
 
 export async function POST(request: Request) {
+  try {
   let body: unknown;
   try {
     body = await request.json();
@@ -61,4 +62,14 @@ export async function POST(request: Request) {
     expiresInSeconds: result.expiresInSeconds,
     message: "Στείλαμε 6ψήφιο κωδικό στο email σου.",
   });
+} catch (err) {
+  console.error("[menuos] send-otp failed", err);
+  return NextResponse.json(
+    {
+      error: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr.",
+      code: "server_error",
+    },
+    { status: 503 },
+  );
+  }
 }

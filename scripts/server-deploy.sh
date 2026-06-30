@@ -29,8 +29,11 @@ if [ "$RUN_DB_PUSH" = "1" ]; then
     bash "$ROOT/scripts/apply-sql-migrations.sh"
   fi
 else
-  echo "==> Skipping DB schema sync (RUN_DB_PUSH=0)"
+  echo "==> Skipping prisma db push (RUN_DB_PUSH=0)"
 fi
+
+echo "==> SQL migrations (idempotent)..."
+bash "$ROOT/scripts/apply-sql-migrations.sh"
 
 echo "==> Start MenuOS web..."
 docker compose -f docker-compose.prod.yml up -d menuos-web

@@ -36,11 +36,17 @@ export default function RegisterPageClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      const data = (await res.json()) as {
-        error?: string;
-        message?: string;
-        retryAfterSeconds?: number;
-      };
+      let data: { error?: string; message?: string; retryAfterSeconds?: number; code?: string } = {};
+      try {
+        data = (await res.json()) as typeof data;
+      } catch {
+        setError(
+          res.status >= 500
+            ? "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr."
+            : "Αποτυχία αποστολής κωδικού.",
+        );
+        return;
+      }
       if (!res.ok) {
         setError(data.error ?? "Αποτυχία αποστολής κωδικού.");
         if (data.retryAfterSeconds) setResendIn(data.retryAfterSeconds);
@@ -50,7 +56,7 @@ export default function RegisterPageClient() {
       setResendIn(60);
       setInfo(data.message ?? "Στείλαμε κωδικό στο email σου.");
     } catch {
-      setError("Σφάλμα δικτύου. Δοκίμασε ξανά.");
+      setError("Σφάλμα σύνδεσης. Έλεγξε το internet και δοκίμασε ξανά.");
     } finally {
       setSendingOtp(false);
     }
