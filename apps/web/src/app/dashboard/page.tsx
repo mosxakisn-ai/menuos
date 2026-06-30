@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@menuos/db";
+import { DashboardWelcome } from "@/components/dashboard/dashboard-welcome";
 import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
@@ -9,8 +10,11 @@ import { buildPrivatePageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPrivatePageMetadata("Dashboard", "/dashboard");
 
-export default async function DashboardPage() {
+type Props = { searchParams: Promise<{ welcome?: string }> };
+
+export default async function DashboardPage({ searchParams }: Props) {
   const session = await getSession();
+  const sp = await searchParams;
   const org = await prisma.organization.findUnique({
     where: { id: session!.organizationId },
     include: {
@@ -39,6 +43,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <DashboardWelcome show={sp.welcome === "1"} />
       <div>
         <h1 className="font-serif text-2xl font-bold text-primary">{org?.name}</h1>
         <p className="text-sm text-slate-600">
@@ -58,8 +63,8 @@ export default async function DashboardPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Venues" value={venueCount} hint={venueCount === 0 ? "Πρόσθεσε το πρώτο" : undefined} />
-        <StatCard label="Πιάτα" value={itemCount} hint={itemCount === 0 ? "Πρόσθεσε στο Menus" : undefined} />
+        <StatCard label="Μαγαζιά" value={venueCount} hint={venueCount === 0 ? "Πρόσθεσε το πρώτο" : undefined} />
+        <StatCard label="Πιάτα" value={itemCount} hint={itemCount === 0 ? "Πρόσθεσε στον κατάλογο" : undefined} />
         <StatCard label="Δοκιμή έως" value={formatTrial(org?.subscription?.trialEndsAt)} />
       </div>
 
@@ -96,7 +101,7 @@ export default async function DashboardPage() {
                   rel="noopener noreferrer"
                   className={buttonClass("secondary")}
                 >
-                  Live preview
+                Live προεπισκόπηση
                 </a>
               ) : null}
             </>

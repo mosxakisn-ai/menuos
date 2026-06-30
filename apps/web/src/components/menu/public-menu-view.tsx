@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Globe, Receipt, X } from "lucide-react";
+import { Bell, Globe, Receipt, UtensilsCrossed, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SupportedLanguage } from "@menuos/db";
 import {
@@ -80,6 +80,7 @@ export function PublicMenuView({
   });
   const [callErrorCode, setCallErrorCode] = useState<CallErrorCode | null>(null);
   const resetTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const ui = QR_MENU_UI[lang];
   const activeMenu = venue.menus.find((m) => m.id === activeMenuId) ?? venue.menus[0];
@@ -139,6 +140,24 @@ export function PublicMenuView({
       timers.length = 0;
     };
   }, []);
+
+  function setLanguage(next: QrMenuLanguage) {
+    setLang(next);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", next.toLowerCase());
+    window.history.replaceState({}, "", url);
+  }
+
+  useEffect(() => {
+    if (!selectedItem) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedItem(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    dialogRef.current?.focus();
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedItem]);
 
   const locationLabel = useMemo(() => {
     if (tableNumber) return ui.table(tableNumber);
@@ -245,6 +264,8 @@ export function PublicMenuView({
 
   const hasPendingCall = Boolean(activeCallId);
 
+  const categoryNav = activeMenu?.categories ?? [];
+
   return (
     <div className="min-h-screen bg-surface pb-32">
       <header
@@ -252,14 +273,28 @@ export function PublicMenuView({
         style={{ background: `linear-gradient(135deg, ${venue.primaryColor}, #121d4a)` }}
       >
         <div className="mx-auto flex max-w-lg items-start justify-between gap-4">
-          <div>
-            <p className="font-serif text-2xl font-bold">{venue.name}</p>
-            {activeMenu ? <p className="mt-1 text-sm text-white/70">{activeMenu.name}</p> : null}
-            {locationLabel ? (
-              <p className="mt-2 inline-block rounded-full bg-white/15 px-3 py-0.5 text-xs">
-                {locationLabel}
-              </p>
-            ) : null}
+          <div className="flex min-w-0 items-start gap-3">
+            {venue.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={venue.logoUrl}
+                alt={venue.name}
+                className="mt-0.5 h-12 w-12 shrink-0 rounded-full border-2 border-white/30 object-cover"
+              />
+            ) : (
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15">
+                <UtensilsCrossed className="h-6 w-6 text-white/90" aria-hidden />
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="font-serif text-2xl font-bold leading-tight">{venue.name}</p>
+              {activeMenu ? <p className="mt-1 text-sm text-white/70">{activeMenu.name}</p> : null}
+              {locationLabel ? (
+                <p className="mt-2 inline-block rounded-full bg-white/15 px-3 py-0.5 text-xs">
+                  {locationLabel}
+                </p>
+              ) : null}
+            </div>
           </div>
           <div
             className="flex max-w-[11rem] shrink-0 items-center gap-0.5 overflow-x-auto rounded-button bg-white/10 p-1"
@@ -271,7 +306,7 @@ export function PublicMenuView({
               <button
                 key={code}
                 type="button"
-                onClick={() => setLang(code)}
+                onClick={() => setLanguage(code)}
                 aria-label={QR_MENU_LANGUAGE_LABELS[code].ariaLabel}
                 aria-pressed={lang === code}
                 className={cn(
@@ -303,12 +338,31 @@ export function PublicMenuView({
         ) : null}
       </header>
 
+      {categoryNav.length > 1 ? (
+        <nav className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+          <div className="mx-auto flex max-w-lg gap-2 overflow-x-auto px-4 py-2">
+            {categoryNav.map((category) => {
+              const id = `cat-${category.id}`;
+              return (
+                <a
+                  key={category.id}
+                  href={`#${id}`}
+                  className="shrink-0 rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-primary hover:bg-brand-blue/10"
+                >
+                  {tName(category.translations)}
+                </a>
+              );
+            })}
+          </div>
+        </nav>
+      ) : null}
+
       <main className="mx-auto max-w-lg space-y-6 px-4 py-6">
         {!activeMenu || activeMenu.categories.length === 0 ? (
           <p className="text-center text-sm text-slate-500">{ui.menuSoon}</p>
         ) : (
           activeMenu.categories.map((category) => (
-            <section key={category.id}>
+            <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-16">
               <h2 className="font-serif text-xl font-bold text-primary">{tName(category.translations)}</h2>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {category.items.map((item) => {
@@ -331,6 +385,13 @@ export function PublicMenuView({
           ))
         )}
       </main>
+
+      <p className="pb-28 text-center text-[10px] text-slate-400">
+        {ui.poweredBy}{" "}
+        <a href="https://menuos.gr" className="font-medium text-slate-500 hover:text-brand-blue">
+          MenuOS
+        </a>
+      </p>
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200/80 bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div className="mx-auto grid max-w-lg grid-cols-3 gap-2">
@@ -389,8 +450,14 @@ export function PublicMenuView({
         <div
           className="fixed inset-0 z-50 flex items-end bg-black/50 sm:items-center sm:justify-center"
           onClick={() => setSelectedItem(null)}
+          role="presentation"
         >
           <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="menu-item-dialog-title"
+            tabIndex={-1}
             className="max-h-[85vh] w-full overflow-y-auto rounded-t-card bg-white p-6 sm:max-w-md sm:rounded-card"
             onClick={(e) => e.stopPropagation()}
           >
@@ -415,7 +482,9 @@ export function PublicMenuView({
                       ) : null}
                     </div>
                   ) : null}
-                  <h3 className="font-serif text-2xl font-bold text-primary">{tr?.name}</h3>
+                  <h3 id="menu-item-dialog-title" className="font-serif text-2xl font-bold text-primary">
+                    {tr?.name}
+                  </h3>
                   <p className="mt-2 text-lg font-semibold text-primary">€{selectedItem.price.toString()}</p>
                   {tr?.description ? (
                     <p className="mt-4 text-sm leading-relaxed text-slate-600">{tr.description}</p>

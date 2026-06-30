@@ -12,7 +12,9 @@ import {
   Sparkles,
   UtensilsCrossed,
 } from "lucide-react";
+import { useDemoMenuUrl } from "@/lib/demo-menu-url";
 import { HeroShowcase } from "@/components/marketing/hero-showcase";
+import { MarketingTestimonials } from "@/components/marketing/marketing-testimonials";
 import {
   FaqBlock,
   FeatureCard,
@@ -31,6 +33,7 @@ export function MarketingHome() {
   const marketing = m.marketing;
   const pages = m.pages;
   const h = marketing.home;
+  const demoUrl = useDemoMenuUrl();
   return (
     <>
       {/* ── Hero ── */}
@@ -76,18 +79,21 @@ export function MarketingHome() {
                 <Link href="/register" className={`${buttonClass("primary", "lg")} shadow-glow`}>
                   {h.hero.ctaTrial}
                 </Link>
-                <Link href="/pricing" className={buttonClass("secondary", "lg")}>
+                <Link href={demoUrl} className={buttonClass("secondary", "lg")}>
+                  {h.hero.ctaDemo}
+                </Link>
+                <Link href="/pricing" className={`hidden sm:inline-flex ${buttonClass("ghost", "lg")}`}>
                   {h.hero.ctaPricing}
                 </Link>
               </div>
 
-              <a
-                href="#pos-leitourgei"
-                className="animate-fade-up-delay-2 mt-8 inline-flex items-center gap-2 text-sm font-semibold text-brand-blue opacity-0 hover:underline"
+              <Link
+                href="/pos-leitourgei"
+                className="animate-fade-up-delay-2 mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-blue opacity-0 hover:underline sm:hidden"
               >
-                {h.hero.ctaDemo}
-                <ArrowDown className="h-4 w-4 animate-bounce" />
-              </a>
+                {pages.common.howItWorksLink}
+                <ArrowDown className="h-4 w-4" />
+              </Link>
             </div>
 
             {/* Visual */}
@@ -120,6 +126,8 @@ export function MarketingHome() {
           </div>
         </div>
       </section>
+
+      <MarketingTestimonials />
 
       <section className="border-b border-slate-100 bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">

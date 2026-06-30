@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
+import { Manrope, Playfair_Display } from "next/font/google";
 import { RootJsonLd } from "@/components/seo/json-ld";
 import { I18nProvider } from "@/i18n/context";
 import { getMessages } from "@/i18n/get-messages";
@@ -13,6 +13,12 @@ const manrope = Manrope({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+const playfair = Playfair_Display({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-playfair",
+  weight: ["600", "700", "800"],
+});
+
 export const metadata: Metadata = buildRootMetadata();
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const messages = getMessages(locale);
 
   return (
-    <html lang={locale} className={manrope.variable}>
+    <html lang={locale} className={`${manrope.variable} ${playfair.variable}`}>
       <body className="min-h-screen font-sans">
         <RootJsonLd />
         <I18nProvider initialLocale={locale} initialMessages={messages}>

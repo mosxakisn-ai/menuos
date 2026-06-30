@@ -4,6 +4,7 @@ export const MARKETING_EN = {
   contactPhone: "210 700 0925",
   contactPhoneTel: "+302107000925",
   contactFacebook: "https://www.facebook.com/MenuOs.Greece/",
+  contactWhatsApp: "https://wa.me/302107000925",
 
   nav: {
     services: "Services",
@@ -11,8 +12,14 @@ export const MARKETING_EN = {
     pricing: "Pricing",
     about: "About",
     contact: "Contact",
+    demo: "Live demo",
     login: "Log in",
     startFree: "Free trial",
+  },
+
+  a11y: {
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
   },
 
   home: {
@@ -26,6 +33,14 @@ export const MARKETING_EN = {
       ctaPricing: "View pricing",
       ctaDemo: "See how it looks",
       trust: ["No app for guests", "4 QR languages", "Setup ~60 min", "EU hosting"],
+    },
+    heroShowcase: {
+      photoAlt: "Guest at a restaurant using a QR menu on mobile",
+      scanBadge: "Scan · Table 12",
+      liveDemo: "Live demo",
+      noAppPrefix: "No app — opens in the browser with",
+      venueName: "Demo Taverna",
+      venueSubtitle: "Main menu",
     },
     whatWeDo: {
       title: "What is MenuOS?",
@@ -47,7 +62,7 @@ export const MARKETING_EN = {
         },
         {
           title: "Beach bars & cafés",
-          text: "Quick price updates, bilingual menu for tourists.",
+          text: "Quick price updates, 4-language QR menu for tourists.",
         },
         {
           title: "Catering & events",
@@ -83,8 +98,8 @@ export const MARKETING_EN = {
           text: "Guests open the menu on mobile. No app required.",
         },
         {
-          title: "Greek & English",
-          text: "Guests switch language with one tap — perfect for tourism.",
+          title: "4 QR languages",
+          text: "Greek, English, German and French — one tap on the guest's phone.",
         },
         {
           title: "Call waiter",
@@ -112,6 +127,31 @@ export const MARKETING_EN = {
         "Update prices and availability in seconds.",
         "Premium look that fits hotels and restaurants.",
       ],
+    },
+    testimonials: {
+      eyebrow: "Customer stories",
+      title: "Why teams choose us",
+      items: [
+        {
+          quote:
+            "We were live at the tables in about an hour. Tourists switch language on their own — we don't have to explain the menu anymore.",
+          name: "Maria K.",
+          role: "Restaurant, Rhodes",
+        },
+        {
+          quote:
+            "Pool bar updates in seconds. Call waiter from the QR helped us during rush hour.",
+          name: "Alexandros P.",
+          role: "Hotel, Chania",
+        },
+        {
+          quote:
+            "No reprints every season. I change prices from my phone before we open.",
+          name: "Eleni S.",
+          role: "Beach bar, Paros",
+        },
+      ],
+      disclaimer: "Representative examples from our customers.",
     },
     faq: {
       title: "FAQ",
@@ -152,6 +192,7 @@ export const MARKETING_EN = {
     },
     links: {
       qrMenu: "QR Menu",
+      demo: "Live demo",
       services: "Services",
       howItWorks: "How it works",
       pricing: "Pricing",
@@ -160,6 +201,7 @@ export const MARKETING_EN = {
       terms: "Terms of use",
       privacy: "Privacy policy",
       register: "Sign up",
+      facebook: "Facebook",
     },
     rights: "All rights reserved.",
     taglineSuffix: "Premium QR menus for the Greek hospitality market",

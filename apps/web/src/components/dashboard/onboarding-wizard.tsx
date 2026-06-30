@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, Check, Circle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { hasQrOnboardingVisit } from "@/components/dashboard/mark-qr-onboarding";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 
@@ -13,6 +17,12 @@ export type OnboardingState = {
 };
 
 export function OnboardingWizard({ state }: { state: OnboardingState }) {
+  const [qrVisited, setQrVisited] = useState(false);
+
+  useEffect(() => {
+    setQrVisited(hasQrOnboardingVisit());
+  }, []);
+
   const steps = [
     {
       id: "venue",
@@ -38,7 +48,7 @@ export function OnboardingWizard({ state }: { state: OnboardingState }) {
       id: "qr",
       title: "Βγάλε QR codes",
       desc: "Κατέβασε QR για τραπέζια και δοκίμασε το live menu.",
-      done: state.hasItem,
+      done: qrVisited && state.hasItem,
       href: state.venueId ? `/dashboard/qr?venue=${state.venueId}` : "/dashboard/qr",
       cta: "QR codes",
     },

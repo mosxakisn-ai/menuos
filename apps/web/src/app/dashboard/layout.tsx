@@ -17,12 +17,16 @@ import { organizationHasActiveSubscription } from "@/lib/billing";
 
 const nav = [
   { href: "/dashboard", label: "Επισκόπηση", icon: LayoutGrid },
-  { href: "/dashboard/menus", label: "Menu", icon: UtensilsCrossed },
+  { href: "/dashboard/menus", label: "Κατάλογος", icon: UtensilsCrossed },
   { href: "/dashboard/qr", label: "QR Codes", icon: QrCode },
   { href: "/dashboard/waiter", label: "Σερβιτόρος", icon: Bell },
   { href: "/dashboard/billing", label: "Συνδρομή", icon: CreditCard },
   { href: "/dashboard/settings", label: "Ρυθμίσεις", icon: Settings },
 ];
+
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: "Διαχειριστής",
+};
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -40,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex min-h-screen bg-brand-surface">
       <aside className="hidden w-64 shrink-0 bg-sidebar-gradient p-6 text-white md:block">
         <Logo href="/dashboard" dark showTagline markSize={36} />
-        <p className="mt-2 text-xs text-slate-400">Dashboard</p>
+        <p className="mt-2 text-xs text-slate-400">Διαχείριση</p>
         <nav className="mt-8 space-y-1">
           {nav.map(({ href, label, icon: Icon }) => (
             <Link
@@ -64,7 +68,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <p className="font-semibold text-primary">{session.name}</p>
           </div>
           <span className="rounded-full bg-brand-blue/10 px-3 py-1 text-xs font-semibold text-brand-blue">
-            {session.role}
+            {ROLE_LABELS[session.role] ?? session.role}
           </span>
         </header>
         <main className="flex-1 p-4 pb-24 sm:p-6 md:pb-6">{children}</main>

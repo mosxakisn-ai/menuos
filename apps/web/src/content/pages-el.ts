@@ -185,12 +185,20 @@ export const PAGES_EL = {
   },
   pricing: {
     heroTitle: "Απλές, διαφανείς τιμές",
+    enterpriseBadge: "Enterprise",
     enterpriseTitle: "Custom για αλυσίδες",
     enterpriseDesc:
       "White-label, custom domain, πολλαπλά venues, προτεραιότητα υποστήριξης — επικοινωνήστε για προσφορά.",
     enterpriseCta: "Ζήτησε προσφορά",
     faqTitle: "Ερωτήσεις για τιμές",
     faqDesc: "Ό,τι χρειάζεστε να ξέρετε πριν ξεκινήσετε.",
+    trustItems: [
+      "Δωρεάν δοκιμή 7 ημερών — χωρίς κάρτα",
+      "Μηνιαία συνδρομή, χωρίς δέσμευση",
+      "Hosting ΕΕ · GDPR",
+      "Ασφαλείς πληρωμές Stripe",
+    ],
+    demoCta: "Δες live demo menu",
     cta: {
       title: "Ξεκίνα δωρεάν σήμερα",
       description: "7 ημέρες trial. Χωρίς κάρτα.",
@@ -235,6 +243,7 @@ export const PAGES_EL = {
       { title: "Τηλέφωνο", description: "Για άμεση ενημέρωση, demo ή ραντεβού:" },
       { title: "Email", description: "Γενικές ερωτήσεις, Enterprise, τεχνική υποστήριξη:" },
       { title: "Facebook", description: "Νέα, tips και ενημερώσεις:", label: "MenuOS Greece" },
+      { title: "WhatsApp", description: "Γρήγορο μήνυμα — ιδανικό για μικρές επιχειρήσεις:", label: "Στείλε μήνυμα" },
     ],
     newCustomerTitle: "Νέος πελάτης;",
     newCustomerBody:

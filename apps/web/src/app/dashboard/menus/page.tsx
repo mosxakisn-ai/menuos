@@ -7,7 +7,7 @@ import { getSession } from "@/lib/auth";
 import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = buildPrivatePageMetadata("Menus", "/dashboard/menus");
+export const metadata: Metadata = buildPrivatePageMetadata("Κατάλογος", "/dashboard/menus");
 
 type Props = { searchParams: Promise<{ venue?: string; welcome?: string }> };
 
@@ -26,9 +26,9 @@ export default async function MenusPage({ searchParams }: Props) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-serif text-2xl font-bold text-primary">Menus</h1>
+          <h1 className="font-serif text-2xl font-bold text-primary">Κατάλογος</h1>
           <p className="text-sm text-slate-600">
-            Πρόσθεσε κατηγορίες και πιάτα στα Ελληνικά — και προαιρετικά Αγγλικά για τουρίστες.
+            Πρόσθεσε κατηγορίες και πιάτα — υποστηρίζονται 4 γλώσσες στο QR menu (ΕΛ, EN, DE, FR).
           </p>
         </div>
         {canImportPdf ? (

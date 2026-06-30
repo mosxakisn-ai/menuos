@@ -12,7 +12,7 @@ export async function generateMetadata() {
   return generateMarketingMetadata("contact");
 }
 
-const cardIcons = [Phone, Mail, Facebook];
+const cardIcons = [Phone, Mail, Facebook, MessageCircle];
 
 export default async function ContactPage() {
   const locale = await getServerLocale();
@@ -28,14 +28,16 @@ export default async function ContactPage() {
         ? `tel:${marketing.contactPhoneTel}`
         : i === 1
           ? `mailto:${marketing.contactEmail}`
-          : marketing.contactFacebook,
+          : i === 2
+            ? marketing.contactFacebook
+            : marketing.contactWhatsApp,
     label:
       i === 0
         ? marketing.contactPhone
         : i === 1
           ? marketing.contactEmail
-          : (card as { label?: string }).label ?? "MenuOS Greece",
-    external: i === 2,
+          : (card as { label?: string }).label ?? (i === 2 ? "MenuOS Greece" : "WhatsApp"),
+    external: i === 2 || i === 3,
   }));
 
   return (
@@ -43,7 +45,7 @@ export default async function ContactPage() {
       <MarketingPageJsonLd pageKey="contact" />
       <MarketingPageHero title={ui.heroTitle} subtitle={ui.heroSubtitle} badge={ui.badge} />
       <MarketingSection>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map(({ icon: Icon, title, description, href, label, external }) => (
             <article
               key={title}

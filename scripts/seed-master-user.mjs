@@ -51,29 +51,95 @@ const DEMO_CATEGORIES = [
   {
     nameGr: "Σαλάτες",
     nameEn: "Salads",
+    nameDe: "Salate",
+    nameFr: "Salades",
     items: [
-      { nameGr: "Χωριάτικη", nameEn: "Greek salad", price: 9.5, descriptionGr: "Ντομάτα, αγγούρι, φέτα" },
-      { nameGr: "Ρόκα", nameEn: "Rocket salad", price: 8.0 },
+      {
+        nameGr: "Χωριάτικη",
+        nameEn: "Greek salad",
+        nameDe: "Griechischer Salat",
+        nameFr: "Salade grecque",
+        price: 9.5,
+        descriptionGr: "Ντομάτα, αγγούρι, φέτα",
+      },
+      {
+        nameGr: "Ρόκα",
+        nameEn: "Rocket salad",
+        nameDe: "Rucolasalat",
+        nameFr: "Salade de roquette",
+        price: 8.0,
+      },
     ],
   },
   {
     nameGr: "Κυρίως πιάτα",
     nameEn: "Mains",
+    nameDe: "Hauptgerichte",
+    nameFr: "Plats",
     items: [
-      { nameGr: "Μουσακάς", nameEn: "Moussaka", price: 12.0, descriptionGr: "Κλασική συνταγή" },
-      { nameGr: "Σουβλάκι χοιρινό", nameEn: "Pork souvlaki", price: 10.5 },
-      { nameGr: "Ψητή τσιπούρα", nameEn: "Grilled sea bream", price: 18.0 },
+      {
+        nameGr: "Μουσακάς",
+        nameEn: "Moussaka",
+        nameDe: "Moussaka",
+        nameFr: "Moussaka",
+        price: 12.0,
+        descriptionGr: "Κλασική συνταγή",
+      },
+      {
+        nameGr: "Σουβλάκι χοιρινό",
+        nameEn: "Pork souvlaki",
+        nameDe: "Schweine-Souvlaki",
+        nameFr: "Souvlaki porc",
+        price: 10.5,
+      },
+      {
+        nameGr: "Ψητή τσιπούρα",
+        nameEn: "Grilled sea bream",
+        nameDe: "Gebratene Dorade",
+        nameFr: "Daurade grillée",
+        price: 18.0,
+      },
     ],
   },
   {
     nameGr: "Ποτά",
     nameEn: "Drinks",
+    nameDe: "Getränke",
+    nameFr: "Boissons",
     items: [
-      { nameGr: "Μπύρα", nameEn: "Beer", price: 4.5 },
-      { nameGr: "Κρασί κόκκινο (ποτήρι)", nameEn: "Red wine (glass)", price: 5.0 },
+      {
+        nameGr: "Μπύρα",
+        nameEn: "Beer",
+        nameDe: "Bier",
+        nameFr: "Bière",
+        price: 4.5,
+      },
+      {
+        nameGr: "Κρασί κόκκινο (ποτήρι)",
+        nameEn: "Red wine (glass)",
+        nameDe: "Rotwein (Glas)",
+        nameFr: "Vin rouge (verre)",
+        price: 5.0,
+      },
     ],
   },
 ];
+
+function translationRows(
+  gr: string,
+  en: string,
+  de?: string,
+  fr?: string,
+  descriptionGr?: string,
+) {
+  const rows = [
+    { language: "GR", name: gr, description: descriptionGr ?? null },
+    { language: "EN", name: en, description: null },
+  ];
+  if (de) rows.push({ language: "DE", name: de, description: null });
+  if (fr) rows.push({ language: "FR", name: fr, description: null });
+  return rows;
+}
 
 async function ensureDemoMenu(venueId, menuId) {
   const existing = await prisma.category.count({ where: { menuId } });
@@ -89,6 +155,8 @@ async function ensureDemoMenu(venueId, menuId) {
           create: [
             { language: "GR", name: cat.nameGr },
             { language: "EN", name: cat.nameEn },
+            ...(cat.nameDe ? [{ language: "DE", name: cat.nameDe }] : []),
+            ...(cat.nameFr ? [{ language: "FR", name: cat.nameFr }] : []),
           ],
         },
       },
@@ -103,14 +171,13 @@ async function ensureDemoMenu(venueId, menuId) {
           sortOrder: itemSort++,
           available: true,
           translations: {
-            create: [
-              {
-                language: "GR",
-                name: item.nameGr,
-                description: item.descriptionGr ?? null,
-              },
-              { language: "EN", name: item.nameEn },
-            ],
+            create: translationRows(
+              item.nameGr,
+              item.nameEn,
+              item.nameDe,
+              item.nameFr,
+              item.descriptionGr,
+            ),
           },
         },
       });

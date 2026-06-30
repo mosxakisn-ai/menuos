@@ -7,6 +7,7 @@ import {
   type ItemLabel,
   type QrMenuLanguage,
 } from "@menuos/shared";
+import { UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ItemLabelBadge({
@@ -59,6 +60,7 @@ export function MenuItemCard({
     <Comp
       type={onClick ? "button" : undefined}
       onClick={onClick}
+      aria-label={onClick ? `${name}, €${price}` : undefined}
       className={cn(
         "w-full overflow-hidden rounded-card bg-white text-left shadow-soft transition hover:shadow-card",
         onClick && "cursor-pointer",
@@ -70,8 +72,8 @@ export function MenuItemCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photoUrl} alt={name} className="absolute inset-0 h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full items-center justify-center">
-            <span className="font-serif text-3xl text-slate-300/80">MenuOS</span>
+          <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-slate-200">
+            <UtensilsCrossed className="h-10 w-10 text-slate-300" aria-hidden />
           </div>
         )}
         {badge ? (

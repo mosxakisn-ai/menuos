@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useDemoMenuUrl } from "@/lib/demo-menu-url";
 import { Logo } from "@/components/brand/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { buttonClass } from "@/components/ui/button";
@@ -17,12 +18,14 @@ const NAV_LINKS = [
   { href: "/pos-leitourgei", key: "howItWorks" as const },
   { href: "/pricing", key: "pricing" as const },
   { href: "/epikoinonia", key: "contact" as const },
-];
+] as const;
 
 export function SiteHeader() {
   const { m } = useI18n();
   const marketing = m.marketing;
+  const demoUrl = useDemoMenuUrl();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const a11y = marketing.a11y;
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/85 backdrop-blur-xl">
@@ -34,6 +37,9 @@ export function SiteHeader() {
               {marketing.nav[key]}
             </Link>
           ))}
+          <Link href={demoUrl} className={navLinkClass}>
+            {marketing.nav.demo}
+          </Link>
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           <button
@@ -41,7 +47,7 @@ export function SiteHeader() {
             onClick={() => setMobileOpen((o) => !o)}
             className="inline-flex rounded-button p-2 text-slate-600 hover:bg-slate-100 md:hidden"
             aria-expanded={mobileOpen}
-            aria-label={mobileOpen ? "Κλείσιμο menu" : "Menu"}
+            aria-label={mobileOpen ? a11y.closeMenu : a11y.openMenu}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -69,6 +75,18 @@ export function SiteHeader() {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link
+                href={demoUrl}
+                onClick={() => setMobileOpen(false)}
+                className="block rounded-button px-3 py-2.5 text-sm font-medium text-brand-blue hover:bg-brand-surface"
+              >
+                {marketing.nav.demo}
+              </Link>
+            </li>
+            <li className="border-t border-slate-100 pt-3">
+              <LanguageSwitcher mini compact className="px-3" />
+            </li>
             <li className="border-t border-slate-100 pt-2">
               <Link
                 href="/login"
@@ -76,6 +94,15 @@ export function SiteHeader() {
                 className="block rounded-button px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-brand-surface"
               >
                 {marketing.nav.login}
+              </Link>
+            </li>
+            <li className="pt-2">
+              <Link
+                href="/register"
+                onClick={() => setMobileOpen(false)}
+                className={`block w-full text-center ${buttonClass("primary")}`}
+              >
+                {marketing.nav.startFree}
               </Link>
             </li>
           </ul>
@@ -89,6 +116,7 @@ export function SiteFooter() {
   const { m } = useI18n();
   const marketing = m.marketing;
   const f = marketing.footer;
+  const demoUrl = useDemoMenuUrl();
   const taglineSuffix =
     "taglineSuffix" in f ? (f as { taglineSuffix: string }).taglineSuffix : null;
 
@@ -106,6 +134,7 @@ export function SiteFooter() {
             <p className="text-sm font-semibold text-white">{f.columns.product}</p>
             <ul className="mt-4 space-y-2.5 text-sm text-slate-300">
               <li><Link href="/qr-menu" className="hover:text-brand-cyan">{f.links.qrMenu}</Link></li>
+              <li><Link href={demoUrl} className="hover:text-brand-cyan">{f.links.demo}</Link></li>
               <li><Link href="/ypiresies" className="hover:text-brand-cyan">{f.links.services}</Link></li>
               <li><Link href="/pos-leitourgei" className="hover:text-brand-cyan">{f.links.howItWorks}</Link></li>
               <li><Link href="/pricing" className="hover:text-brand-cyan">{f.links.pricing}</Link></li>
@@ -145,7 +174,7 @@ export function SiteFooter() {
                 rel="noopener noreferrer"
                 className="hover:text-brand-cyan"
               >
-                Facebook
+                {f.links.facebook}
               </a>
             </p>
           </div>

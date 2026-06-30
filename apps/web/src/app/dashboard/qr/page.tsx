@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
 import { QrGenerator } from "@/components/dashboard/qr-generator";
+import { MarkQrOnboarding } from "@/components/dashboard/mark-qr-onboarding";
 import { getSession } from "@/lib/auth";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 
@@ -36,6 +37,7 @@ export default async function QrPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-4">
+      <MarkQrOnboarding />
       <div>
         <h1 className="font-serif text-2xl font-bold text-primary">QR Codes</h1>
         <p className="text-sm text-slate-600">

@@ -83,7 +83,7 @@ export default function RegisterPageClient() {
       setError(data.error ?? "Η εγγραφή απέτυχε.");
       return;
     }
-    router.push("/dashboard");
+    router.push("/dashboard?welcome=1");
     router.refresh();
   }
 

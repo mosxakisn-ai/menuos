@@ -1,12 +1,12 @@
 "use client";
 
 import { Bell, Check, Globe, QrCode, Receipt, Sparkles, X } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { ItemLabel, QrMenuLanguage } from "@menuos/shared";
 import { QR_MENU_UI } from "@menuos/shared";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { ItemLabelBadge } from "@/components/menu/menu-item-card";
+import { useI18n } from "@/i18n/context";
 import { cn } from "@/lib/utils";
 
 type DemoStep = "menu" | "detail" | "waiter";
@@ -199,11 +199,15 @@ function PhoneScreen({
   lang,
   menuScroll,
   waiterSuccess,
+  venueName,
+  venueSubtitle,
 }: {
   step: DemoStep;
   lang: QrMenuLanguage;
   menuScroll: number;
   waiterSuccess: boolean;
+  venueName: string;
+  venueSubtitle: string;
 }) {
   const ui = QR_MENU_UI[lang];
   const detailName = demoText(DETAIL_ITEM, lang, "name");
@@ -215,8 +219,8 @@ function PhoneScreen({
       <header className="shrink-0 bg-brand-gradient px-3 pb-3 pt-7 text-white">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-serif text-[15px] font-bold leading-tight">Marine Hotel</p>
-            <p className="mt-0.5 text-[10px] text-white/75">Pool Bar</p>
+            <p className="font-serif text-[15px] font-bold leading-tight">{venueName}</p>
+            <p className="mt-0.5 text-[10px] text-white/75">{venueSubtitle}</p>
             <p className="mt-1.5 inline-block rounded-full bg-white/15 px-2 py-0.5 text-[9px]">
               {ui.table("12")}
             </p>
@@ -318,7 +322,7 @@ function PhoneScreen({
             )}
           >
             {waiterSuccess ? <Check className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
-            <span>{waiterSuccess ? ui.called.split(" ")[0] + "!" : ui.callWaiter.split(" ")[0]}</span>
+            <span>{waiterSuccess ? ui.calledShort : ui.callWaiterShort}</span>
           </div>
           <div className="flex flex-col items-center justify-center gap-0.5 rounded-[8px] border border-slate-200 bg-white py-2 text-[8px] font-semibold text-slate-600">
             <Receipt className="h-3.5 w-3.5" />
@@ -334,6 +338,8 @@ function PhoneScreen({
 }
 
 export function HeroShowcase() {
+  const { m } = useI18n();
+  const hs = m.marketing.home.heroShowcase;
   const [step, setStep] = useState<DemoStep>("menu");
   const [lang, setLang] = useState<QrMenuLanguage>("GR");
   const [menuScroll, setMenuScroll] = useState(0);
@@ -344,11 +350,19 @@ export function HeroShowcase() {
   const stepLabels = STEP_LABELS[lang];
 
   useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      setScanning(false);
+      return;
+    }
     const scanTimer = setInterval(() => setScanning((s) => !s), 2800);
     return () => clearInterval(scanTimer);
   }, []);
 
   useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) return;
+
     let cancelled = false;
     const timers: ReturnType<typeof setTimeout>[] = [];
 
@@ -414,13 +428,14 @@ export function HeroShowcase() {
         <div className="relative w-full max-w-[420px] lg:max-w-[440px] lg:flex-1">
           <div className="relative overflow-hidden rounded-[1.75rem] border border-white/60 shadow-glow ring-1 ring-slate-200/50">
             <div className="relative aspect-[4/5] sm:aspect-[5/6]">
-              <Image
-                src="/marketing/hero-scan-menu.jpg"
-                alt="Πελάτισσα σαρώνει QR code στο τραπέζι και βλέπει το ψηφιακό menu στο κινητό"
-                fill
-                priority
-                className="object-cover object-center"
-                sizes="(max-width: 1024px) 100vw, 440px"
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(135deg, rgba(37,99,235,0.15), rgba(6,182,212,0.2)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80')",
+                }}
+                role="img"
+                aria-label={hs.photoAlt}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/70 via-brand-navy/10 to-transparent" />
 
@@ -438,14 +453,14 @@ export function HeroShowcase() {
                   </div>
                   <div className="mb-1 hidden rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-brand-navy shadow-lg backdrop-blur sm:inline-flex sm:items-center sm:gap-1.5">
                     <Sparkles className="h-3.5 w-3.5 text-brand-cyan" />
-                    Scan · Τραπέζι 12
+                    {hs.scanBadge}
                   </div>
                 </div>
               </div>
 
               <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 shadow-md backdrop-blur">
                 <LogoMark size={18} />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-navy">Live demo</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-navy">{hs.liveDemo}</span>
               </div>
             </div>
           </div>
@@ -481,14 +496,20 @@ export function HeroShowcase() {
             <div className="relative rounded-[2.75rem] border-[5px] border-slate-900 bg-slate-900 p-2 shadow-[0_32px_80px_-20px_rgba(15,23,42,0.55)] ring-1 ring-white/10">
               <div className="absolute left-1/2 top-3 z-20 h-[22px] w-[88px] -translate-x-1/2 rounded-full bg-slate-900" />
               <div className="relative aspect-[9/19.5] overflow-hidden rounded-[2.2rem] bg-white">
-                <PhoneScreen step={step} lang={lang} menuScroll={menuScroll} waiterSuccess={waiterSuccess} />
+                <PhoneScreen
+                  step={step}
+                  lang={lang}
+                  menuScroll={menuScroll}
+                  waiterSuccess={waiterSuccess}
+                  venueName={hs.venueName}
+                  venueSubtitle={hs.venueSubtitle} />
               </div>
             </div>
 
             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
               <LogoMark size={20} />
               <span>
-                Χωρίς app — ανοίγει στο browser με{" "}
+                {hs.noAppPrefix}{" "}
                 <span className="font-extrabold text-brand-navy">Menu</span>
                 <span className="font-extrabold text-brand-blue">Os</span>
               </span>

@@ -180,11 +180,19 @@ export const PAGES_EN = {
   },
   pricing: {
     heroTitle: "Simple, transparent pricing",
+    enterpriseBadge: "Enterprise",
     enterpriseTitle: "Custom for chains",
     enterpriseDesc: "White-label, custom domain, multiple venues, priority support — contact for a quote.",
     enterpriseCta: "Request quote",
     faqTitle: "Pricing questions",
     faqDesc: "What you need to know before you start.",
+    trustItems: [
+      "Free 7-day trial — no card",
+      "Monthly billing, cancel anytime",
+      "EU hosting · GDPR",
+      "Secure Stripe payments",
+    ],
+    demoCta: "View live demo menu",
     cta: {
       title: "Start free today",
       description: "7-day trial. No credit card.",
@@ -228,6 +236,7 @@ export const PAGES_EN = {
       { title: "Phone", description: "For quick info, demo or appointment:" },
       { title: "Email", description: "General questions, Enterprise, technical support:" },
       { title: "Facebook", description: "News, tips and updates:", label: "MenuOS Greece" },
+      { title: "WhatsApp", description: "Quick message — great for small businesses:", label: "Send message" },
     ],
     newCustomerTitle: "New customer?",
     newCustomerBody: "Free sign-up is fastest — 7 days without card. Create a venue and test QR.",

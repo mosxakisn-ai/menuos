@@ -6,8 +6,8 @@ import { Bell, CreditCard, LayoutGrid, QrCode, Settings, UtensilsCrossed } from 
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/dashboard", label: "Αρχική", icon: LayoutGrid, exact: true },
-  { href: "/dashboard/menus", label: "Menu", icon: UtensilsCrossed },
+  { href: "/dashboard", label: "Επισκόπηση", icon: LayoutGrid, exact: true },
+  { href: "/dashboard/menus", label: "Κατάλογος", icon: UtensilsCrossed },
   { href: "/dashboard/qr", label: "QR", icon: QrCode },
   { href: "/dashboard/waiter", label: "Κλήσεις", icon: Bell },
   { href: "/dashboard/billing", label: "Συνδρομή", icon: CreditCard },

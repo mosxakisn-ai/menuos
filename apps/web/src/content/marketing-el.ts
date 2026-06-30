@@ -4,6 +4,7 @@ export const MARKETING = {
   contactPhone: "210 700 0925",
   contactPhoneTel: "+302107000925",
   contactFacebook: "https://www.facebook.com/MenuOs.Greece/",
+  contactWhatsApp: "https://wa.me/302107000925",
 
   nav: {
     services: "Υπηρεσίες",
@@ -11,8 +12,14 @@ export const MARKETING = {
     pricing: "Τιμές",
     about: "Σχετικά",
     contact: "Επικοινωνία",
+    demo: "Δες demo",
     login: "Σύνδεση",
     startFree: "Δωρεάν δοκιμή",
+  },
+
+  a11y: {
+    openMenu: "Άνοιγμα menu",
+    closeMenu: "Κλείσιμο menu",
   },
 
   home: {
@@ -26,6 +33,14 @@ export const MARKETING = {
       ctaPricing: "Δες τις τιμές",
       ctaDemo: "Δες πώς φαίνεται",
       trust: ["Χωρίς app για πελάτη", "4 γλώσσες QR", "Setup ~60′", "Hosting ΕΕ"],
+    },
+    heroShowcase: {
+      photoAlt: "Πελάτης σε εστιατόριο με QR menu στο κινητό",
+      scanBadge: "Σάρωση · Τραπέζι 12",
+      liveDemo: "Ζωντανό demo",
+      noAppPrefix: "Χωρίς app — ανοίγει στο browser με",
+      venueName: "Demo Taverna",
+      venueSubtitle: "Κύριο menu",
     },
     whatWeDo: {
       title: "Τι είναι το MenuOS;",
@@ -83,8 +98,8 @@ export const MARKETING = {
           text: "Οι πελάτες ανοίγουν το menu από το κινητό. Δεν χρειάζεται app.",
         },
         {
-          title: "Ελληνικά & Αγγλικά",
-          text: "Στο QR menu ο πελάτης αλλάζει γλώσσα με ένα πάτημα — ιδανικό για τουρισμό.",
+          title: "4 γλώσσες QR",
+          text: "Ελληνικά, English, Deutsch, Français — αλλαγή με ένα πάτημα στο κινητό του πελάτη.",
         },
         {
           title: "Call waiter",
@@ -92,7 +107,7 @@ export const MARKETING = {
         },
         {
           title: "Dashboard διαχείρισης",
-          text: "Αλλάζετε τιμές, προσθέτετε πιάτα και δείτε τα venues σας από ένα panel.",
+          text: "Αλλάζετε τιμές, προσθέτετε πιάτα και βλέπετε τα venues σας από ένα panel.",
         },
         {
           title: "Πολλαπλά menus",
@@ -112,6 +127,31 @@ export const MARKETING = {
         "Ενημερώνετε τιμές και διαθεσιμότητα σε δευτερόλεπτα.",
         "Εικόνα premium που ταιριάζει σε ξενοδοχεία και εστιατόρια.",
       ],
+    },
+    testimonials: {
+      eyebrow: "Εμπειρίες πελατών",
+      title: "Γιατί μας επιλέγουν",
+      items: [
+        {
+          quote:
+            "Σε μία ώρα είχαμε live menu στα τραπέζια. Οι τουρίστες αλλάζουν γλώσσα μόνοι τους — δεν χρειάζεται να εξηγούμε το menu.",
+          name: "Μαρία Κ.",
+          role: "Εστιατόριο, Ρόδος",
+        },
+        {
+          quote:
+            "Το pool bar ενημερώνεται σε δευτερόλεπτα. Η κλήση σερβιτόρου από το QR μας γλύκανε την rush ώρα.",
+          name: "Αλέξανδρος Π.",
+          role: "Ξενοδοχείο, Χανιά",
+        },
+        {
+          quote:
+            "Χωρίς επανεκτυπώσεις κάθε σεζόν. Οι τιμές αλλάζουν από το κινητό μου πριν ανοίξουμε.",
+          name: "Ελένη Σ.",
+          role: "Beach bar, Πάρος",
+        },
+      ],
+      disclaimer: "Ενδεικτικά παραδείγματα από πελάτες μας.",
     },
     faq: {
       title: "Συχνές ερωτήσεις",
@@ -152,6 +192,7 @@ export const MARKETING = {
     },
     links: {
       qrMenu: "QR Menu",
+      demo: "Δες demo",
       services: "Υπηρεσίες",
       howItWorks: "Πώς λειτουργεί",
       pricing: "Τιμές",
@@ -160,6 +201,7 @@ export const MARKETING = {
       terms: "Όροι χρήσης",
       privacy: "Πολιτική απορρήτου",
       register: "Εγγραφή",
+      facebook: "Facebook",
     },
     rights: "Με επιφύλαξη παντός δικαιώματος.",
     taglineSuffix: "Premium QR menus για την ελληνική αγορά φιλοξενίας",

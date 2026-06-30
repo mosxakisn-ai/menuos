@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { demoMenuUrl } from "@menuos/shared";
 import {
   FaqBlock,
   MarketingCtaBand,
@@ -7,6 +8,7 @@ import {
   StatStrip,
 } from "@/components/marketing/marketing-blocks";
 import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
+import { PricingTrustStrip } from "@/components/marketing/pricing-trust-strip";
 import { MarketingPageJsonLd, PricingOffersJsonLd } from "@/components/seo/marketing-json-ld";
 import { buttonClass } from "@/components/ui/button";
 import { getMessages } from "@/i18n/get-messages";
@@ -48,8 +50,17 @@ export default async function PricingPage() {
             />
           ))}
         </div>
+        <PricingTrustStrip />
+        <p className="mt-8 text-center">
+          <Link
+            href={demoMenuUrl({ table: "12", siteLocale: locale })}
+            className="text-sm font-semibold text-brand-blue hover:underline"
+          >
+            {ui.demoCta} →
+          </Link>
+        </p>
         <div className="mx-auto mt-14 max-w-2xl rounded-card border border-slate-200/80 bg-gradient-to-br from-brand-surface to-white p-8 text-center shadow-card">
-          <p className="text-sm font-bold uppercase tracking-wide text-brand-blue">Enterprise</p>
+          <p className="text-sm font-bold uppercase tracking-wide text-brand-blue">{ui.enterpriseBadge}</p>
           <h2 className="mt-2 text-2xl font-extrabold text-brand-navy">{ui.enterpriseTitle}</h2>
           <p className="mt-4 text-sm leading-relaxed text-slate-600">{ui.enterpriseDesc}</p>
           <Link href="/epikoinonia" className={`mt-6 inline-flex ${buttonClass("secondary")}`}>
