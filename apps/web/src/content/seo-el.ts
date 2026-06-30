@@ -70,9 +70,9 @@ export const SEO_PAGES = {
     keywords: ["υπηρεσίες QR menu", "ψηφιακό menu SaaS", "menu platform εστιατόριο"],
   },
   howItWorks: {
-    title: "Πώς λειτουργεί — από εγγραφή σε live menu",
+    title: "Πώς λειτουργεί — από εγγραφή σε έτοιμο menu",
     description:
-      "Πώς ξεκινάτε με MenuOS: εγγραφή, δημιουργία menu, QR codes στα τραπέζια. Απλά βήματα για εστιατόρια και ξενοδοχεία.",
+      "Πώς ξεκινάτε με MenuOS: εγγραφή, φτιάξιμο menu, QR στα τραπέζια. Απλά βήματα για εστιατόρια και ξενοδοχεία.",
     path: "/pos-leitourgei",
     breadcrumbLabel: "Πώς λειτουργεί",
     keywords: ["πώς φτιάχνω QR menu", "QR menu βήματα", "ψηφιακό menu οδηγός"],
