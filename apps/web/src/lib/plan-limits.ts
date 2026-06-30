@@ -1,5 +1,6 @@
 import { Prisma } from "@menuos/db";
-import { getPlan, organizationHasPaidPlan, type PlanDefinition } from "@menuos/shared";
+import { organizationHasPaidPlan, type PlanDefinition } from "@menuos/shared";
+import { getPlanFromCatalog } from "@/lib/plan-catalog-service";
 
 export const serializableTransaction = {
   isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -34,7 +35,7 @@ async function planContextInTransaction(
 
   const sub = org.subscription;
   if (!sub) {
-    return { active: false, plan: getPlan("TRIAL") };
+    return { active: false, plan: await getPlanFromCatalog("TRIAL") };
   }
 
   const active = organizationHasPaidPlan({
@@ -45,7 +46,7 @@ async function planContextInTransaction(
 
   return {
     active,
-    plan: getPlan(sub.plan),
+    plan: await getPlanFromCatalog(sub.plan),
   };
 }
 

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { getPlan, type PaidSubscriptionPlanId } from "@menuos/shared";
+import { type PaidSubscriptionPlanId } from "@menuos/shared";
+import { getPlanFromCatalog } from "@/lib/plan-catalog-service";
 import { APP_URL } from "@/lib/config";
 import {
   appendStripeCheckoutPresentation,
@@ -86,7 +87,7 @@ export async function createPlanCheckoutSession(input: {
   returnPath?: string;
   locale?: string;
 }): Promise<{ url: string; sessionId: string }> {
-  const plan = getPlan(input.planId);
+  const plan = await getPlanFromCatalog(input.planId);
   if (plan.priceMonthly === 0) {
     throw new Error("This plan does not require Stripe checkout");
   }

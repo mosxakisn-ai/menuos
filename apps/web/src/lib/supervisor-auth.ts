@@ -32,10 +32,12 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 function verifyEnvSupervisorCredentials(username: string, password: string): boolean {
-  const expectedUser = process.env.SUPERVISOR_USERNAME?.trim();
+  const expectedUser = process.env.SUPERVISOR_USERNAME?.trim().toLowerCase();
   const expectedPass = process.env.SUPERVISOR_PASSWORD ?? "";
   if (!expectedUser || !expectedPass) return false;
-  return safeEqual(username.trim(), expectedUser) && safeEqual(password, expectedPass);
+  return (
+    safeEqual(username.trim().toLowerCase(), expectedUser) && safeEqual(password, expectedPass)
+  );
 }
 
 export async function verifySupervisorCredentials(
@@ -59,7 +61,7 @@ export async function verifySupervisorCredentials(
 }
 
 export function createSupervisorToken(username: string): string {
-  const normalized = username.trim();
+  const normalized = username.trim().toLowerCase();
   const exp = Date.now() + TOKEN_TTL_MS;
   const payload = `${normalized}:${exp}`;
   const sig = createHmac("sha256", supervisorSecret()).update(payload).digest("base64url");

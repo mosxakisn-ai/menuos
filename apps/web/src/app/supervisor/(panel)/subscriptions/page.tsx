@@ -1,5 +1,5 @@
-import { SupervisorOrganizationsClient } from "@/components/supervisor/supervisor-organizations-client";
+import { SupervisorPlansClient } from "@/components/supervisor/supervisor-plans-client";
 
 export default function SupervisorSubscriptionsPage() {
-  return <SupervisorOrganizationsClient mode="subscriptions" />;
+  return <SupervisorPlansClient />;
 }

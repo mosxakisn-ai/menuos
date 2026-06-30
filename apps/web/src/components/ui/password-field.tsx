@@ -5,19 +5,30 @@ import { useState } from "react";
 
 type PasswordFieldProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> & {
   label: string;
+  labelClassName?: string;
+  wrapperClassName?: string;
 };
 
-export function PasswordField({ label, className, ...inputProps }: PasswordFieldProps) {
+export function PasswordField({
+  label,
+  labelClassName = "font-medium text-primary",
+  wrapperClassName,
+  className,
+  ...inputProps
+}: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
 
   return (
     <label className="block text-sm">
-      <span className="font-medium text-primary">{label}</span>
-      <div className="relative mt-1">
+      <span className={labelClassName}>{label}</span>
+      <div className={wrapperClassName ?? "relative mt-1"}>
         <input
           {...inputProps}
           type={visible ? "text" : "password"}
-          className={`w-full rounded-button border border-slate-200 py-2.5 pl-3 pr-10 outline-none focus:border-primary ${className ?? ""}`}
+          className={
+            className ??
+            "w-full rounded-button border border-slate-200 py-2.5 pl-3 pr-10 outline-none focus:border-primary"
+          }
         />
         <button
           type="button"

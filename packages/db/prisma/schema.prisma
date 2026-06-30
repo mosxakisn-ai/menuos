@@ -322,6 +322,26 @@ model SupervisorOperator {
   updatedAt    DateTime @updatedAt
 }
 
+model PlanCatalog {
+  plan               SubscriptionPlan @id
+  sortOrder          Int              @default(0)
+  name               String
+  priceMonthly       Decimal          @db.Decimal(10, 2)
+  priceDisplay       String?
+  periodLabel        String           @default("/μήνα")
+  description        String?
+  features           Json             @default("[]")
+  maxVenues          Int
+  maxMenusPerVenue   Int?
+  maxItems           Int?
+  ctaLabel           String?
+  badge              String?
+  highlighted        Boolean          @default(false)
+  visibleOnPricing   Boolean          @default(true)
+  trialDays          Int?
+  updatedAt          DateTime         @updatedAt
+}
+
 model StripeWebhookEvent {
   id        String   @id
   createdAt DateTime @default(now())

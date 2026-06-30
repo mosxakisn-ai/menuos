@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { prisma, UserRole } from "@menuos/db";
-import { registerSchema, computeTrialEndsAt } from "@menuos/shared";
+import { registerSchema } from "@menuos/shared";
+import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { fireAdminNotify, notifyAdminOrganizationRegistered } from "@/lib/admin-notify";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { sendWelcomeEmail } from "@/lib/mail";
@@ -55,7 +56,8 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
-  const trialEndsAt = computeTrialEndsAt();
+  const trialDays = await getTrialDaysFromCatalog();
+  const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
 
   try {
     const organization = await prisma.organization.create({

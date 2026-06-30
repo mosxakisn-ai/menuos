@@ -7,7 +7,7 @@ import {
   subscribeOrganizationMock,
 } from "@/lib/billing";
 import { fireAdminNotify, notifyAdminStripePayment } from "@/lib/admin-notify";
-import { getPlan } from "@menuos/shared";
+import { getPlanFromCatalog } from "@/lib/plan-catalog-service";
 import { isBillingMockAllowed } from "@/lib/stripe-config";
 import { createPlanCheckoutSession, isStripeEnabled } from "@/lib/stripe-client";
 import type { PaidSubscriptionPlanId } from "@menuos/shared";
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   if (isBillingMockAllowed() && !isStripeEnabled()) {
     await subscribeOrganizationMock(organizationId, planId as PaidSubscriptionPlanId);
     const subscription = await getOrganizationSubscription(organizationId);
-    const plan = getPlan(planId);
+    const plan = await getPlanFromCatalog(planId);
     fireAdminNotify(() =>
       notifyAdminStripePayment({
         paymentType: "subscription",

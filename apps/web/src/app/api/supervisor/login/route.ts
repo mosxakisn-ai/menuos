@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
-  const username = body.username?.trim() ?? "";
+  const username = body.username?.trim().toLowerCase() ?? "";
   const password = body.password ?? "";
   if (!username || !password) {
     return NextResponse.json({ error: "Συμπλήρωσε username και password." }, { status: 400 });

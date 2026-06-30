@@ -1,5 +1,6 @@
 import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/db";
-import { DEMO_VENUE_SLUG, PLAN_DEFINITIONS, isPaidPlan, organizationHasPaidPlan } from "@menuos/shared";
+import { DEMO_VENUE_SLUG, isPaidPlan, organizationHasPaidPlan } from "@menuos/shared";
+import { getPlanPriceMap } from "@/lib/plan-catalog-service";
 import type { SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
 
 export type SupervisorOrganizationUser = {
@@ -196,6 +197,7 @@ export async function getSupervisorOverview(): Promise<SupervisorOverview> {
   let pastDue = 0;
   let canceled = 0;
   let trialsExpiring7Days = 0;
+  const planPrices = await getPlanPriceMap();
 
   for (const sub of realSubs) {
     const active = organizationHasPaidPlan({
@@ -209,7 +211,7 @@ export async function getSupervisorOverview(): Promise<SupervisorOverview> {
     else if (sub.plan === "TRIAL" && active) trialActive += 1;
     else if (active && sub.plan !== "TRIAL") {
       paidActive += 1;
-      const price = PLAN_DEFINITIONS[sub.plan as keyof typeof PLAN_DEFINITIONS]?.priceMonthly ?? 0;
+      const price = planPrices[sub.plan] ?? 0;
       estimatedMrr += price;
     }
 

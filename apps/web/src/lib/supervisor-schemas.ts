@@ -92,3 +92,81 @@ export const supervisorChangeOwnPasswordSchema = z
   });
 
 export type SupervisorChangeOwnPasswordInput = z.infer<typeof supervisorChangeOwnPasswordSchema>;
+
+export const supervisorPlanUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    priceMonthly: z.number().min(0).max(99999).optional(),
+    priceDisplay: z
+      .union([z.string().max(40), z.null()])
+      .optional()
+      .transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === null) return null;
+        const trimmed = v.trim();
+        return trimmed === "" ? null : trimmed;
+      }),
+    periodLabel: z.string().trim().min(1).max(40).optional(),
+    description: z
+      .union([z.string().max(500), z.null()])
+      .optional()
+      .transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === null) return null;
+        const trimmed = v.trim();
+        return trimmed === "" ? null : trimmed;
+      }),
+    features: z.array(z.string().trim().min(1).max(200)).min(1).max(30).optional(),
+    maxVenues: z.number().int().min(1).max(9999).optional(),
+    maxMenusPerVenue: z
+      .union([z.number().int().min(1).max(9999), z.null()])
+      .optional(),
+    maxItems: z
+      .union([z.number().int().min(1).max(999999), z.null()])
+      .optional(),
+    ctaLabel: z
+      .union([z.string().max(80), z.null()])
+      .optional()
+      .transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === null) return null;
+        const trimmed = v.trim();
+        return trimmed === "" ? null : trimmed;
+      }),
+    badge: z
+      .union([z.string().max(40), z.null()])
+      .optional()
+      .transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === null) return null;
+        const trimmed = v.trim();
+        return trimmed === "" ? null : trimmed;
+      }),
+    highlighted: z.boolean().optional(),
+    visibleOnPricing: z.boolean().optional(),
+    trialDays: z
+      .union([z.number().int().min(1).max(365), z.null()])
+      .optional(),
+    sortOrder: z.number().int().min(0).max(99).optional(),
+  })
+  .refine(
+    (data) =>
+      data.name !== undefined ||
+      data.priceMonthly !== undefined ||
+      data.priceDisplay !== undefined ||
+      data.periodLabel !== undefined ||
+      data.description !== undefined ||
+      data.features !== undefined ||
+      data.maxVenues !== undefined ||
+      data.maxMenusPerVenue !== undefined ||
+      data.maxItems !== undefined ||
+      data.ctaLabel !== undefined ||
+      data.badge !== undefined ||
+      data.highlighted !== undefined ||
+      data.visibleOnPricing !== undefined ||
+      data.trialDays !== undefined ||
+      data.sortOrder !== undefined,
+    { message: "Nothing to update" },
+  );
+
+export type SupervisorPlanUpdateInput = z.infer<typeof supervisorPlanUpdateSchema>;

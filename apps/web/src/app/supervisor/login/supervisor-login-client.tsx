@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
+import { PasswordField } from "@/components/ui/password-field";
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 
 export function SupervisorLoginClient() {
@@ -23,7 +24,7 @@ export function SupervisorLoginClient() {
       const res = await fetch("/api/supervisor/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: username.trim().toLowerCase(), password }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -55,20 +56,21 @@ export function SupervisorLoginClient() {
             <input
               className={dashboardFieldClass}
               autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
           </label>
-          <label className="block text-sm">
-            <span className={dashboardLabelClass}>Password</span>
-            <input
-              className={dashboardFieldClass}
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </label>
+          <PasswordField
+            label="Password"
+            labelClassName={dashboardLabelClass}
+            wrapperClassName="relative mt-1.5"
+            className={`${dashboardFieldClass} pr-10`}
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <button type="submit" disabled={loading} className={`w-full ${buttonClass("primary")}`}>
             {loading ? "Σύνδεση…" : "Είσοδος"}

@@ -1,5 +1,5 @@
 import { prisma } from "@menuos/db";
-import { getPlan } from "@menuos/shared";
+import { getPlanFromCatalog } from "@/lib/plan-catalog-service";
 import {
   buildAdminNotificationEmailHtml,
   buildAdminNotificationEmailText,
@@ -119,7 +119,7 @@ export async function notifyAdminStripePayment(input: {
   }
 
   if (input.planId) {
-    const plan = getPlan(input.planId);
+    const plan = await getPlanFromCatalog(input.planId);
     fields.push({ label: "Πλάνο", value: plan.name });
   }
 

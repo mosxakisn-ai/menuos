@@ -1,11 +1,11 @@
 import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/db";
 import {
-  getPlan,
   isPaidPlan,
   organizationHasPaidPlan,
   type PaidSubscriptionPlanId,
   type PlanDefinition,
 } from "@menuos/shared";
+import { getPlanFromCatalog } from "@/lib/plan-catalog-service";
 import { sendSubscriptionActivatedEmail } from "@/lib/mail";
 
 export type OrganizationPlanContext = {
@@ -36,7 +36,7 @@ export async function getOrganizationPlanContext(
       planId: "TRIAL",
       status: "TRIALING",
       trialEndsAt: null,
-      plan: getPlan("TRIAL"),
+      plan: await getPlanFromCatalog("TRIAL"),
     };
   }
 
@@ -51,7 +51,7 @@ export async function getOrganizationPlanContext(
     planId: sub.plan,
     status: sub.status,
     trialEndsAt: sub.trialEndsAt,
-    plan: getPlan(sub.plan),
+    plan: await getPlanFromCatalog(sub.plan),
   };
 }
 
@@ -68,7 +68,7 @@ export async function activateSubscriptionFromCheckout(input: {
   currentPeriodEnd?: Date | null;
   sendActivationEmail?: boolean;
 }) {
-  const plan = getPlan(input.planId);
+  const plan = await getPlanFromCatalog(input.planId);
   const existing = await prisma.subscription.findUnique({
     where: { organizationId: input.organizationId },
   });

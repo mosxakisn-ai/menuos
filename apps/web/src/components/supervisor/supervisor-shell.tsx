@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/supervisor", label: "Αρχική", icon: LayoutDashboard, exact: true },
   { href: "/supervisor/organizations", label: "Πελάτες", icon: Building2 },
-  { href: "/supervisor/subscriptions", label: "Συνδρομές", icon: CreditCard },
+  { href: "/supervisor/subscriptions", label: "Πακέτα", icon: CreditCard },
   { href: "/supervisor/users", label: "Ομάδα", icon: Users },
 ] as const;
 

@@ -13,6 +13,7 @@ import { MarketingPageJsonLd, PricingOffersJsonLd } from "@/components/seo/marke
 import { buttonClass } from "@/components/ui/button";
 import { getMessages } from "@/i18n/get-messages";
 import { getServerLocale } from "@/i18n/server";
+import { getEnterprisePlanEntry, getPricingPlanCards } from "@/lib/plan-catalog-service";
 import { generateMarketingMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
@@ -24,6 +25,33 @@ export default async function PricingPage() {
   const { marketing, pages } = getMessages(locale);
   const p = marketing.pages.pricing;
   const ui = pages.pricing;
+  const catalogPlans =
+    locale === "el"
+      ? await getPricingPlanCards().catch((err) => {
+          console.error("[menuos-pricing] plan catalog unavailable", err);
+          return null;
+        })
+      : null;
+  const enterprisePlan =
+    locale === "el"
+      ? await getEnterprisePlanEntry().catch((err) => {
+          console.error("[menuos-pricing] enterprise plan unavailable", err);
+          return null;
+        })
+      : null;
+  const displayPlans =
+    catalogPlans ??
+    ui.plans.map((plan) => ({
+      planId: plan.name,
+      name: plan.name,
+      price: plan.price,
+      period: plan.period,
+      description: plan.description,
+      features: [...plan.features],
+      cta: plan.cta,
+      ...("badge" in plan && plan.badge ? { badge: plan.badge } : {}),
+      ...("highlighted" in plan && plan.highlighted ? { highlighted: true } : {}),
+    }));
 
   return (
     <MarketingLayout>
@@ -36,9 +64,9 @@ export default async function PricingPage() {
       </MarketingSection>
       <MarketingSection>
         <div className="grid gap-8 lg:grid-cols-3 lg:items-stretch">
-          {ui.plans.map((plan) => (
+          {displayPlans.map((plan) => (
             <PricingCard
-              key={plan.name}
+              key={plan.planId}
               name={plan.name}
               price={plan.price}
               period={plan.period}
@@ -61,9 +89,13 @@ export default async function PricingPage() {
           </Link>
         </p>
         <div className="mx-auto mt-14 max-w-2xl rounded-card border border-slate-200/80 bg-gradient-to-br from-brand-surface to-white p-8 text-center shadow-card">
-          <p className="text-sm font-bold uppercase tracking-wide text-brand-blue">{ui.enterpriseBadge}</p>
+          <p className="text-sm font-bold uppercase tracking-wide text-brand-blue">
+            {enterprisePlan?.name ?? ui.enterpriseBadge}
+          </p>
           <h2 className="mt-2 text-2xl font-extrabold text-brand-navy">{ui.enterpriseTitle}</h2>
-          <p className="mt-4 text-sm leading-relaxed text-slate-600">{ui.enterpriseDesc}</p>
+          <p className="mt-4 text-sm leading-relaxed text-slate-600">
+            {enterprisePlan?.description ?? ui.enterpriseDesc}
+          </p>
           <Link href="/epikoinonia" className={`mt-6 inline-flex ${buttonClass("secondary")}`}>
             {ui.enterpriseCta}
           </Link>

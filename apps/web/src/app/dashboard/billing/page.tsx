@@ -9,6 +9,7 @@ import { SubscriptionInactiveBanner } from "@/components/dashboard/subscription-
 import { UpgradeReasonBanner } from "@/components/dashboard/upgrade-reason-banner";
 import { getSession } from "@/lib/auth";
 import { organizationHasActiveSubscription } from "@/lib/billing";
+import { getEnterprisePlanEntrySafe, listPlanCatalogEntriesSafe } from "@/lib/plan-catalog-service";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPrivatePageMetadata("Συνδρομή", "/dashboard/billing");
@@ -22,7 +23,11 @@ export default async function BillingPage({ searchParams: _searchParams }: Props
   const subscription = await prisma.subscription.findUnique({
     where: { organizationId: session.organizationId },
   });
-  const hasActiveSubscription = await organizationHasActiveSubscription(session.organizationId);
+  const [hasActiveSubscription, plans, enterprisePlan] = await Promise.all([
+    organizationHasActiveSubscription(session.organizationId),
+    listPlanCatalogEntriesSafe(),
+    getEnterprisePlanEntrySafe(),
+  ]);
   const showInactive = !hasActiveSubscription;
 
   return (
@@ -46,6 +51,8 @@ export default async function BillingPage({ searchParams: _searchParams }: Props
         <BillingPlans
           organizationId={session.organizationId}
           userRole={session.role}
+          plans={plans}
+          enterprisePlan={enterprisePlan}
           subscription={
             subscription
               ? {
