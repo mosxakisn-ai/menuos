@@ -151,7 +151,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
       "Χωρίς κάρτα: εγγραφή με email, κωδικό επιβεβαίωσης, δημιουργία καταλόγου και QR. Τι περιλαμβάνει η δοκιμή και τι γίνεται μετά.",
     publishedAt: "2026-06-28",
     readingMinutes: 3,
-    relatedPaths: ["/pricing", "/register", "/pws-ftiaxno-qr-menu"],
+    relatedPaths: ["/pricing", "/register", "/blog/pws-ftiaxno-qr-menu"],
     sections: [
       {
         paragraphs: [
@@ -171,6 +171,160 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
         paragraphs: [
           "Επιλέγετε Basic (€9.99/μήνα) ή Pro (€19.99/μήνα) — ή επικοινωνείτε για Enterprise.",
           "Τα δεδομένα σας μένουν — συνεχίζετε από εκεί που σταματήσατε.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "qr-menu-xenodocheio",
+    title: "QR menu για ξενοδοχεία — pool bar, breakfast, room service",
+    description:
+      "Πώς οργανώνετε ψηφιακό menu σε ξενοδοχείο: ξεχωριστός κατάλογος ανά χώρο, πολυγλωσσικό QR, room service από το δωμάτιο.",
+    publishedAt: "2026-06-29",
+    readingMinutes: 5,
+    relatedPaths: ["/xenodocheio/digital-menu", "/room-service/qr-menu", "/santorini/xenodocheio/digital-menu"],
+    sections: [
+      {
+        paragraphs: [
+          "Σε ξενοδοχείο δεν έχετε ένα menu — έχετε εστιατόριο, pool bar, breakfast, spa και room service. Το MenuOS σας επιτρέπει ξεχωριστούς καταλόγους ανά χώρο, όλοι με QR.",
+          "Οι τουρίστες αλλάζουν γλώσσα με ένα πάτημα. Εσείς ενημερώνετε τιμές και πιάτα online.",
+        ],
+      },
+      {
+        heading: "QR ανά χώρο",
+        paragraphs: [
+          "Εστιατόριο: QR ανά τραπέζι με ?table=. Pool bar: QR σε ξαπλώστρες ή τραπέζια bar.",
+          "Room service: QR στο δωμάτιο με ?room= — ο πελάτης παραγγέλνει χωρίς τηλεφώνημα.",
+        ],
+      },
+      {
+        heading: "Panel σερβιτόρου",
+        paragraphs: [
+          "Οι κλήσεις από τραπέζι ή δωμάτιο εμφανίζονται live στο dashboard — ιδανικό για μεγάλα ξενοδοχεία.",
+          "Μπορείτε να λαμβάνετε και push ειδοποίηση στο κινητό του προσωπικού.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "qr-menu-estiatorio",
+    title: "QR menu για εστιατόριο — τι χρειάζεστε πραγματικά",
+    description:
+      "Από το πρώτο QR στο τραπέζι μέχρι πολυγλωσσικό menu και κλήση σερβιτόρου. Οδηγός για εστιατόρια στην Ελλάδα.",
+    publishedAt: "2026-06-29",
+    readingMinutes: 4,
+    relatedPaths: ["/estiatorio/qr-menu", "/qr-menu", "/thessaloniki/estiatorio/qr-menu"],
+    sections: [
+      {
+        paragraphs: [
+          "Ένα καλό QR menu για εστιατόριο δεν είναι PDF στο κινητό. Είναι καθαρή εμφάνιση, φωτογραφίες πιάτων, τιμές που ενημερώνονται αμέσως και γλώσσες για τουρίστες.",
+          "Με MenuOS ξεκινάτε δωρεάν δοκιμή — χωρίς κάρτα.",
+        ],
+      },
+      {
+        heading: "Τι να βάλετε στο menu",
+        paragraphs: [
+          "Κατηγορίες (ορεκτικά, κυρίως, ποτά), τιμή, περιγραφή και προαιρετικά φωτό.",
+          "Allergens και ετικέτες (vegan, gluten free) βοηθούν τους πελάτες να επιλέξουν γρήγορα.",
+        ],
+      },
+      {
+        heading: "QR ανά τραπέζι",
+        paragraphs: [
+          "Κάθε τραπέζι με δικό του QR (?table=12) — ο σερβιτόρος βλέπει από πού καλούν.",
+          "Ο πελάτης μπορεί να ζητήσει λογαριασμό ή κλήση σερβιτόρου από το menu.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "beach-bar-qr-menu",
+    title: "QR menu για beach bar — ξαπλώστρα, τουρίστες, γρήγορη εξυπηρέτηση",
+    description:
+      "Πώς λειτουργεί QR menu σε beach bar: QR στην ξαπλώστρα, πολυγλωσσικό menu, κλήση σερβιτόρου με αριθμό ξαπλώστρας.",
+    publishedAt: "2026-06-30",
+    readingMinutes: 4,
+    relatedPaths: ["/beach-bar/qr-menu", "/mykonos/beach-bar/qr-menu", "/zakynthos/beach-bar/qr-menu"],
+    sections: [
+      {
+        paragraphs: [
+          "Σε beach bar ο πελάτης δεν θέλει να σηκώνεται για να δει τιμές. Σκανάρει QR από την ξαπλώστρα ή το τραπέζι και παραγγέλνει.",
+          "Το MenuOS υποστηρίζει κλήση σερβιτόρου με αριθμό ξαπλώστρας — όχι «δωμάτιο».",
+        ],
+      },
+      {
+        heading: "Πολυγλωσσικό για τουρίστες",
+        paragraphs: [
+          "Σε νησιά και παραλίες, το menu στα Ελληνικά μόνο δυσκολεύει. Προσθέστε English, Deutsch, Français.",
+          "Οι αλλαγές τιμών (happy hour, εποχικό menu) γίνονται online χωρίς επανεκτύπωση.",
+        ],
+      },
+      {
+        heading: "Tips εγκατάστασης",
+        paragraphs: [
+          "Ανθεκτικό QR σε κάθε ξαπλώστρα ή τραπέζι — μικρό, ευανάγνωστο.",
+          "Δοκιμάστε το demo: menuos.gr/m/demo-taverna?table=12",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "enimerosi-times-menu-xoris-ektupwsi",
+    title: "Πώς ενημερώνω τιμές στο menu χωρίς επανεκτύπωση",
+    description:
+      "Αλλαγή τιμών, εποχικό menu και sold out πιάτα — online σε δευτερόλεπτα. Γιατί το ψηφιακό menu κερδίζει το printed.",
+    publishedAt: "2026-06-30",
+    readingMinutes: 3,
+    relatedPaths: ["/digital-menu", "/pricing", "/blog/digital-menu-vs-printed"],
+    sections: [
+      {
+        paragraphs: [
+          "Κάθε αλλαγή τιμής στο printed menu σημαίνει νέα εκτύπωση, καθυστέρηση και κόστος. Με ψηφιακό menu αλλάζετε από το κινητό σας και οι πελάτες βλέπουν αμέσως την ενημέρωση.",
+        ],
+      },
+      {
+        heading: "Τι μπορείτε να αλλάξετε online",
+        paragraphs: [
+          "Τιμές, διαθεσιμότητα πιάτων (sold out), νέες κατηγορίες και πιάτα, φωτογραφίες.",
+          "Πολλαπλοί κατάλογοι — π.χ. μεσημεριανό και βραδινό menu.",
+        ],
+      },
+      {
+        heading: "Πότε αξίζει",
+        paragraphs: [
+          "Εστιατόρια και bars με εποχικότητα, ξενοδοχεία με room service, beach bars με τουριστική κίνηση.",
+          "Η δοκιμή 7 ημερών του MenuOS είναι δωρεάν — δοκιμάστε πριν δεσμευτείτε.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "allergens-sto-qr-menu",
+    title: "Allergens και διατροφικές ετικέτες στο QR menu",
+    description:
+      "Πώς εμφανίζετε gluten free, vegan και allergens στα πιάτα — για ασφάλεια πελατών και καλύτερη εμπειρία.",
+    publishedAt: "2026-06-30",
+    readingMinutes: 3,
+    relatedPaths: ["/qr-menu", "/estiatorio/qr-menu", "/ypiresies"],
+    sections: [
+      {
+        paragraphs: [
+          "Οι πελάτες ρωτούν συχνά για allergens — gluten, γαλακτοκομικά, ξηρούς καρπούς. Στο QR menu μπορούν να τα δουν πριν παραγγείλουν.",
+          "Το MenuOS υποστηρίζει ετικέτες πιάτων (vegan, vegetarian, gluten free κ.ά.).",
+        ],
+      },
+      {
+        heading: "Γιατί βοηθά στο SEO και στην εμπειρία",
+        paragraphs: [
+          "Ξεκάθαρο menu μειώνει λάθη και ερωτήσεις στο προσωπικό.",
+          "Τουρίστες εκτιμούν menu με αλλεργιογόνα στα Αγγλικά ή στη γλώσσα τους.",
+        ],
+      },
+      {
+        heading: "Πρακτικά βήματα",
+        paragraphs: [
+          "Συμπληρώνετε περιγραφή και ετικέτα σε κάθε πιάτο στη διαχείριση.",
+          "Ενημερώνετε sold out πιάτα αμέσως — ο πελάτης δεν παραγγέλνει κάτι που δεν υπάρχει.",
         ],
       },
     ],

@@ -18,6 +18,23 @@ const CITY_LABELS: Record<SeoCitySlug, { el: string; en: string; inEl: string; i
   kriti: { el: "Κρήτη", en: "Crete", inEl: "στην Κρήτη", inEn: "in Crete" },
   mykonos: { el: "Μύκονος", en: "Mykonos", inEl: "στη Μύκονο", inEn: "in Mykonos" },
   paros: { el: "Πάρος", en: "Paros", inEl: "στην Πάρο", inEn: "in Paros" },
+  naxos: { el: "Νάξος", en: "Naxos", inEl: "στη Νάξο", inEn: "in Naxos" },
+  zakynthos: { el: "Ζάκυνθος", en: "Zakynthos", inEl: "στη Ζάκυνθο", inEn: "in Zakynthos" },
+  chania: { el: "Χανιά", en: "Chania", inEl: "στα Χανιά", inEn: "in Chania" },
+  kos: { el: "Κως", en: "Kos", inEl: "στην Κω", inEn: "on Kos" },
+  lefkada: { el: "Λευκάδα", en: "Lefkada", inEl: "στη Λευκάδα", inEn: "in Lefkada" },
+  halkidiki: {
+    el: "Χαλκιδική",
+    en: "Halkidiki",
+    inEl: "στη Χαλκιδική",
+    inEn: "in Halkidiki",
+  },
+  ios: { el: "Ίος", en: "Ios", inEl: "στην Ίο", inEn: "in Ios" },
+  skiathos: { el: "Σκιάθος", en: "Skiathos", inEl: "στη Σκιάθο", inEn: "in Skiathos" },
+  kalamata: { el: "Καλαμάτα", en: "Kalamata", inEl: "στην Καλαμάτα", inEn: "in Kalamata" },
+  patra: { el: "Πάτρα", en: "Patras", inEl: "στην Πάτρα", inEn: "in Patras" },
+  ioannina: { el: "Ιωάννινα", en: "Ioannina", inEl: "στα Ιωάννινα", inEn: "in Ioannina" },
+  kavala: { el: "Καβάλα", en: "Kavala", inEl: "στην Καβάλα", inEn: "in Kavala" },
 };
 
 const VERTICAL_LABELS: Record<
