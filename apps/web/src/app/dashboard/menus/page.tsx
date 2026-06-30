@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { prisma } from "@menuos/db";
 import { MenuEditor } from "@/components/dashboard/menu-editor";
 import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
-import { buttonClass } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
 import { buildPrivatePageMetadata } from "@/lib/seo";
@@ -28,20 +26,6 @@ export default async function MenusPage({ searchParams }: Props) {
       <DashboardPageHeader
         title="Κατάλογος"
         description="Πρόσθεσε κατηγορίες και πιάτα — υποστηρίζονται πολλαπλές γλώσσες στο QR menu."
-        action={
-          canImportPdf ? (
-            <Link
-              href={`/dashboard/menus/import${sp.venue ? `?venue=${sp.venue}` : ""}`}
-              className={buttonClass("secondary", "sm")}
-            >
-              Εισαγωγή από PDF
-            </Link>
-          ) : (
-            <Link href="/dashboard/billing?upgrade=pdf-import" className={buttonClass("secondary", "sm")}>
-              Εισαγωγή PDF (μόνο Pro)
-            </Link>
-          )
-        }
       />
       <MenuEditor
         venues={venues}
