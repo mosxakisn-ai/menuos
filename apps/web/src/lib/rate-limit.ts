@@ -57,7 +57,10 @@ export async function checkRateLimit(key: string, limit: number, windowMs: numbe
   try {
     return await checkRateLimitDb(key, limit, windowMs);
   } catch (err) {
-    console.warn("[menuos-rate-limit] Postgres unavailable, using in-memory fallback", err);
+    console.warn("[menuos-rate-limit] Postgres unavailable", err);
+    if (process.env.NODE_ENV === "production") {
+      return false;
+    }
     return checkRateLimitMemory(key, limit, windowMs);
   }
 }

@@ -44,17 +44,6 @@ export async function sendRegistrationOtp(email: string): Promise<
   const codeHash = await bcrypt.hash(code, 10);
   const expiresAt = new Date(Date.now() + OTP_TTL_MS);
 
-  try {
-    await sendRegistrationOtpEmail({ to: normalized, code });
-  } catch (err) {
-    console.error("[menuos-mail] OTP send failed", err);
-    return {
-      ok: false,
-      error: "Δεν ήταν δυνατή η αποστολή email. Δοκίμασε ξανά σε λίγο.",
-      code: "mail_failed",
-    };
-  }
-
   await prisma.registrationOtp.upsert({
     where: { email: normalized },
     create: {
@@ -71,6 +60,18 @@ export async function sendRegistrationOtp(email: string): Promise<
       lastSentAt: new Date(),
     },
   });
+
+  try {
+    await sendRegistrationOtpEmail({ to: normalized, code });
+  } catch (err) {
+    console.error("[menuos-mail] OTP send failed", err);
+    await prisma.registrationOtp.delete({ where: { email: normalized } }).catch(() => undefined);
+    return {
+      ok: false,
+      error: "Δεν ήταν δυνατή η αποστολή email. Δοκίμασε ξανά σε λίγο.",
+      code: "mail_failed",
+    };
+  }
 
   return { ok: true, expiresInSeconds: OTP_TTL_MS / 1000 };
 }

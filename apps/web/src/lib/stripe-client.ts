@@ -175,6 +175,7 @@ export async function stripeGetSubscription(subscriptionId: string) {
     headers: { Authorization: `Bearer ${key}` },
   });
   const subscription = (await res.json()) as {
+    status?: string;
     current_period_end?: number;
     error?: { message?: string };
   };

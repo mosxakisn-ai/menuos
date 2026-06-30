@@ -287,11 +287,12 @@ export function PublicMenuView({
   }
 
   const hasPendingCall = Boolean(activeCallId);
+  const canUseCallActions = Boolean(tableNumber || roomNumber);
 
   const categoryNav = activeMenu?.categories ?? [];
 
   return (
-    <div className="min-h-screen bg-surface pb-32">
+    <div className={cn("min-h-screen bg-surface", canUseCallActions ? "pb-32" : "pb-8")}>
       <header
         className="px-4 py-6 text-white"
         style={{ background: `linear-gradient(135deg, ${venue.primaryColor}, #121d4a)` }}
@@ -410,13 +411,14 @@ export function PublicMenuView({
         )}
       </main>
 
-      <p className="pb-28 text-center text-[10px] text-slate-400">
+      <p className={cn("text-center text-[10px] text-slate-400", canUseCallActions ? "pb-28" : "pb-4")}>
         {ui.poweredBy}{" "}
         <a href="https://menuos.gr" className="font-medium text-slate-500 hover:text-brand-blue">
           MenuOS
         </a>
       </p>
 
+      {canUseCallActions ? (
       <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200/80 bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div className="mx-auto grid max-w-lg grid-cols-3 gap-2">
           <button
@@ -469,6 +471,7 @@ export function PublicMenuView({
           </button>
         </div>
       </div>
+      ) : null}
 
       {selectedItem ? (
         <div

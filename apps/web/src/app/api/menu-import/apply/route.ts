@@ -5,6 +5,7 @@ import { requirePdfImportPlan } from "@/lib/api-auth";
 import {
   assertCanAddItemsInTransaction,
   planLimitErrorResponse,
+  serializableTransaction,
 } from "@/lib/plan-limits";
 import { getMenuForOrganization } from "@/lib/venue-access";
 
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
         createdItems += 1;
       }
     }
-    });
+    }, serializableTransaction);
   } catch (err) {
     const limit = planLimitErrorResponse(err);
     if (limit) {

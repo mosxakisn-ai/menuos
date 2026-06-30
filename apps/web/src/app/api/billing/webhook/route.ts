@@ -33,6 +33,14 @@ function stripeSubscriptionId(obj: Record<string, unknown>): string | null {
   return null;
 }
 
+async function resolveSubscriptionPeriodEnd(stripeSubId: string): Promise<Date> {
+  const sub = await stripeGetSubscription(stripeSubId);
+  if (typeof sub.current_period_end !== "number") {
+    throw new Error(`Stripe subscription ${stripeSubId} missing current_period_end`);
+  }
+  return new Date(sub.current_period_end * 1000);
+}
+
 export async function POST(req: NextRequest) {
   if (!isStripeEnabled()) {
     return NextResponse.json({ error: "Stripe not configured" }, { status: 503 });
@@ -52,14 +60,9 @@ export async function POST(req: NextRequest) {
   }
 
   if (event.id) {
-    try {
-      await prisma.stripeWebhookEvent.create({ data: { id: event.id } });
-    } catch (err) {
-      const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
-      if (code === "P2002") {
-        return NextResponse.json({ received: true, duplicate: true });
-      }
-      throw err;
+    const existing = await prisma.stripeWebhookEvent.findUnique({ where: { id: event.id } });
+    if (existing) {
+      return NextResponse.json({ received: true, duplicate: true });
     }
   }
 
@@ -79,39 +82,33 @@ export async function POST(req: NextRequest) {
           isCheckoutPlan(metadata.planId) &&
           (paymentStatus === "paid" || paymentStatus === "no_payment_required")
         ) {
-          let currentPeriodEnd: Date | undefined;
           const stripeSubId =
             typeof session.subscription === "string" ? session.subscription : null;
-          if (stripeSubId) {
-            const sub = await stripeGetSubscription(stripeSubId);
-            if (typeof sub.current_period_end === "number") {
-              currentPeriodEnd = new Date(sub.current_period_end * 1000);
-            }
+          if (!stripeSubId) {
+            throw new Error("checkout.session.completed missing subscription id");
           }
 
-          if (!currentPeriodEnd) {
-            console.error("[menuos-billing] webhook: missing subscription period end", stripeSubId);
-          } else {
-            await activateSubscriptionFromCheckoutSession({
+          const currentPeriodEnd = await resolveSubscriptionPeriodEnd(stripeSubId);
+
+          await activateSubscriptionFromCheckoutSession({
+            organizationId: metadata.organizationId,
+            planId: metadata.planId,
+            stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
+            stripeSubId,
+            currentPeriodEnd,
+          });
+
+          fireAdminNotify(() =>
+            notifyAdminStripePayment({
+              paymentType: "subscription",
+              amountEur: sessionAmountEur(session),
               organizationId: metadata.organizationId,
+              customerEmail:
+                typeof session.customer_email === "string" ? session.customer_email : undefined,
+              sessionId: typeof session.id === "string" ? session.id : undefined,
               planId: metadata.planId,
-              stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
-              stripeSubId,
-              currentPeriodEnd,
-            });
-
-            fireAdminNotify(() =>
-              notifyAdminStripePayment({
-                paymentType: "subscription",
-                amountEur: sessionAmountEur(session),
-                organizationId: metadata.organizationId,
-                customerEmail:
-                  typeof session.customer_email === "string" ? session.customer_email : undefined,
-                sessionId: typeof session.id === "string" ? session.id : undefined,
-                planId: metadata.planId,
-              }),
-            );
-          }
+            }),
+          );
         }
       }
     }
@@ -174,12 +171,23 @@ export async function POST(req: NextRequest) {
       const invoice = event.data.object;
       const subId = stripeSubscriptionId(invoice);
       if (subId) {
-        await syncSubscriptionFromStripe({
-          stripeSubId: subId,
-          status: "ACTIVE",
-          currentPeriodEnd: stripePeriodEnd(invoice),
-        });
+        const local = await prisma.subscription.findFirst({ where: { stripeSubId: subId } });
+        if (local?.status !== "CANCELED") {
+          const stripeSub = await stripeGetSubscription(subId);
+          const stripeStatus = String(stripeSub.status ?? "canceled");
+          if (stripeStatus === "active" || stripeStatus === "trialing") {
+            await syncSubscriptionFromStripe({
+              stripeSubId: subId,
+              status: mapStripeSubscriptionStatus(stripeStatus),
+              currentPeriodEnd: stripePeriodEnd(stripeSub as Record<string, unknown>),
+            });
+          }
+        }
       }
+    }
+
+    if (event.id) {
+      await prisma.stripeWebhookEvent.create({ data: { id: event.id } });
     }
 
     return NextResponse.json({ received: true });

@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     if (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") {
       return NextResponse.json({ error: "Payment not completed" }, { status: 400 });
     }
-    if (session.metadata?.organizationId && session.metadata.organizationId !== organizationId) {
+    if (session.metadata?.organizationId !== organizationId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
