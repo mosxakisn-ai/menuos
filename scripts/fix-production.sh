@@ -6,22 +6,18 @@ set -euo pipefail
 ROOT="${APP_DIR:-/opt/menuos}"
 cd "$ROOT"
 
-echo "==> MenuOS production fix (APP_DIR=$ROOT)"
-echo ""
+bash "$ROOT/scripts/ensure-env.sh"
 
-if [ ! -f .env ]; then
-  echo "ERROR: Missing $ROOT/.env"
-  exit 1
-fi
+# shellcheck source=scripts/load-env.sh
+source "$ROOT/scripts/load-env.sh"
+load_env "$ROOT"
 
-# shellcheck disable=SC1091
-set -a
-source .env
-set +a
+PG_USER="${POSTGRES_USER:-menuos}"
+PG_DB="${POSTGRES_DB:-menuos}"
 
 echo "==> Env check"
 missing=0
-for key in NEXTAUTH_SECRET; do
+for key in NEXTAUTH_SECRET APP_URL NEXTAUTH_URL DATABASE_URL; do
   if [ -z "${!key:-}" ]; then
     echo "  MISSING: $key"
     missing=1
@@ -46,14 +42,14 @@ echo ""
 echo "==> Postgres probe"
 docker compose -f docker-compose.prod.yml up -d postgres
 for i in $(seq 1 20); do
-  if docker compose -f docker-compose.prod.yml exec -T postgres pg_isready -U menuos -d menuos >/dev/null 2>&1; then
+  if docker compose -f docker-compose.prod.yml exec -T postgres pg_isready -U "$PG_USER" -d "$PG_DB" >/dev/null 2>&1; then
     break
   fi
   sleep 2
 done
 
 if docker compose -f docker-compose.prod.yml exec -T postgres \
-  psql -v ON_ERROR_STOP=1 -U menuos -d menuos -c "SELECT 1" >/dev/null 2>&1; then
+  psql -v ON_ERROR_STOP=1 -U "$PG_USER" -d "$PG_DB" -c "SELECT 1" >/dev/null 2>&1; then
   echo "  Postgres: OK"
 else
   echo "  Postgres: FAIL — password in .env does not match the database volume."

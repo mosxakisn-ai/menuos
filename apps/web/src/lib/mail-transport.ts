@@ -18,8 +18,8 @@ export function createMailTransporter() {
       throw new Error("MAILBOX_USER required when MAILBOX_PASSWORD is set");
     }
     return nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.office365.com",
-      port: Number(process.env.SMTP_PORT ?? 587),
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
       secure: process.env.SMTP_SECURE === "true",
       auth: {
         user,
@@ -34,7 +34,7 @@ export function createMailTransporter() {
 
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT ?? 587),
+    port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_SECURE === "true",
     auth: {
       user: process.env.SMTP_USER,

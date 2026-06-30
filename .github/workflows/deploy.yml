@@ -77,11 +77,11 @@ jobs:
             git reset --hard origin/main
             echo "Deployed commit: $(git rev-parse --short HEAD)"
 
-            chmod +x scripts/sync-all.sh scripts/server-deploy.sh scripts/fix-production.sh scripts/health-check.sh
+            chmod +x scripts/sync-all.sh scripts/server-deploy.sh scripts/fix-production.sh scripts/health-check.sh scripts/ensure-env.sh scripts/load-env.sh
 
             if [ ! -f .env ]; then
-              echo "::error::Missing $APP_DIR/.env — create it on the server before deploy."
-              exit 1
+              cp .env.example .env
             fi
+            APP_DIR="$APP_DIR" bash scripts/ensure-env.sh
 
             APP_DIR="$APP_DIR" RUN_DB_PUSH=1 STRICT=0 bash scripts/fix-production.sh

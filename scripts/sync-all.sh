@@ -5,6 +5,12 @@ set -euo pipefail
 ROOT="${APP_DIR:-/opt/menuos}"
 export APP_DIR="$ROOT"
 export RUN_DB_PUSH="${RUN_DB_PUSH:-1}"
+export STRICT="${STRICT:-1}"
+
+# shellcheck source=scripts/load-env.sh
+source "$ROOT/scripts/load-env.sh"
+load_env "$ROOT" 2>/dev/null || true
+RUN_DB_PUSH="${RUN_DB_PUSH:-1}"
 STRICT="${STRICT:-1}"
 
 echo "==> MenuOS sync-all (APP_DIR=$ROOT, STRICT=$STRICT)"

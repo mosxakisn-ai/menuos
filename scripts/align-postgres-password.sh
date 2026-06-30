@@ -3,50 +3,55 @@
 set -euo pipefail
 ROOT="${APP_DIR:-/opt/menuos}"
 cd "$ROOT"
-sed -i 's/\r$//' .env
 
-set -a
-# shellcheck disable=SC1091
-source .env
-set +a
+# shellcheck source=scripts/load-env.sh
+source "$ROOT/scripts/load-env.sh"
+load_env "$ROOT"
 
-# Ensure POSTGRES_PASSWORD matches DATABASE_URL if only one is set
+POSTGRES_USER="${POSTGRES_USER:-menuos}"
+POSTGRES_DB="${POSTGRES_DB:-menuos}"
+DATABASE_HOST="${DATABASE_HOST:-menuos-db}"
+DATABASE_PORT="${DATABASE_PORT:-5432}"
+
 if [ -z "${POSTGRES_PASSWORD:-}" ] && [ -n "${DATABASE_URL:-}" ]; then
-  POSTGRES_PASSWORD="$(echo "$DATABASE_URL" | sed -n 's|.*://menuos:\([^@]*\)@.*|\1|p')"
-  export POSTGRES_PASSWORD
+  POSTGRES_PASSWORD="$(echo "$DATABASE_URL" | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')"
 fi
 
 if [ -z "${POSTGRES_PASSWORD:-}" ]; then
   POSTGRES_PASSWORD="$(openssl rand -hex 16)"
-  export POSTGRES_PASSWORD
   echo "Generated new POSTGRES_PASSWORD"
 fi
 
 echo "POSTGRES_PASSWORD length: ${#POSTGRES_PASSWORD}"
 
-# Update .env consistently (LF only)
+URL="$(build_database_url)"
+export POSTGRES_PASSWORD POSTGRES_USER POSTGRES_DB DATABASE_HOST DATABASE_PORT
+
 if grep -q '^POSTGRES_PASSWORD=' .env; then
   sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$POSTGRES_PASSWORD|" .env
 else
   echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> .env
 fi
 
-URL="postgresql://menuos:${POSTGRES_PASSWORD}@menuos-db:5432/menuos"
-if grep -q '^DATABASE_URL=' .env; then
-  sed -i "s|^DATABASE_URL=.*|DATABASE_URL=$URL|" .env
-else
-  echo "DATABASE_URL=$URL" >> .env
-fi
+for pair in \
+  "POSTGRES_USER=$POSTGRES_USER" \
+  "POSTGRES_DB=$POSTGRES_DB" \
+  "DATABASE_HOST=$DATABASE_HOST" \
+  "DATABASE_PORT=$DATABASE_PORT" \
+  "DATABASE_URL=$URL"; do
+  key="${pair%%=*}"
+  if grep -q "^${key}=" .env; then
+    sed -i "s|^${key}=.*|${pair}|" .env
+  else
+    echo "$pair" >> .env
+  fi
+done
 
-# Test TCP auth; if fail, reset password inside Postgres (local trust via socket)
 if ! docker compose -f docker-compose.prod.yml exec -T postgres \
-  psql "postgresql://menuos:${POSTGRES_PASSWORD}@127.0.0.1:5432/menuos" -c "SELECT 1" >/dev/null 2>&1; then
-  echo "Resetting menuos DB password to match .env..."
+  psql "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/${POSTGRES_DB}" -c "SELECT 1" >/dev/null 2>&1; then
+  echo "Resetting Postgres password to match .env..."
   docker compose -f docker-compose.prod.yml exec -T postgres \
-    psql -U menuos -d menuos -v pw="$POSTGRES_PASSWORD" \
-    -c "ALTER USER menuos WITH PASSWORD :'pw';" 2>/dev/null \
-    || docker compose -f docker-compose.prod.yml exec -T postgres \
-    psql -U menuos -d menuos -c "ALTER USER menuos WITH PASSWORD '$POSTGRES_PASSWORD';"
+    psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "ALTER USER ${POSTGRES_USER} WITH PASSWORD '$POSTGRES_PASSWORD';"
 fi
 
 echo "Postgres password aligned."

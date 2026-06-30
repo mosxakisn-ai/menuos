@@ -3,7 +3,6 @@ set -euo pipefail
 ROOT="${APP_DIR:-/opt/menuos}"
 CADDY_FILE="/opt/matchwork/docker/Caddyfile"
 MARKER="# Append to /opt/matchwork/docker/Caddyfile — MenuOS (menuos.gr)"
-RUN_DB_PUSH="${RUN_DB_PUSH:-1}"
 
 cd "$ROOT"
 
@@ -12,11 +11,19 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
+# shellcheck source=scripts/load-env.sh
+source "$ROOT/scripts/load-env.sh"
+load_env "$ROOT"
+
+PG_USER="${POSTGRES_USER:-menuos}"
+PG_DB="${POSTGRES_DB:-menuos}"
+RUN_DB_PUSH="${RUN_DB_PUSH:-1}"
+
 echo "==> Start Postgres..."
 docker compose -f docker-compose.prod.yml up -d postgres
 echo "    Waiting for Postgres..."
 for i in $(seq 1 30); do
-  if docker compose -f docker-compose.prod.yml exec -T postgres pg_isready -U menuos -d menuos >/dev/null 2>&1; then
+  if docker compose -f docker-compose.prod.yml exec -T postgres pg_isready -U "$PG_USER" -d "$PG_DB" >/dev/null 2>&1; then
     echo "    Postgres ready."
     break
   fi
@@ -28,7 +35,7 @@ for i in $(seq 1 30); do
 done
 
 if ! docker compose -f docker-compose.prod.yml exec -T postgres \
-  psql -v ON_ERROR_STOP=1 -U menuos -d menuos -c "SELECT 1" >/dev/null 2>&1; then
+  psql -v ON_ERROR_STOP=1 -U "$PG_USER" -d "$PG_DB" -c "SELECT 1" >/dev/null 2>&1; then
   echo "WARN: Cannot query Postgres. Check POSTGRES_PASSWORD in .env matches the database volume."
   echo "      Continuing deploy — web will start but API calls need a working database."
 fi
@@ -82,9 +89,5 @@ docker compose -f docker-compose.prod.yml exec -T menuos-web node -e \
 
 if [ "${RUN_INDEXNOW:-0}" = "1" ] && [ -f "$ROOT/scripts/submit-indexnow.mjs" ]; then
   echo "==> IndexNow ping..."
-  set -a
-  # shellcheck disable=SC1091
-  source "$ROOT/.env" 2>/dev/null || true
-  set +a
   RUN_INDEXNOW=1 node "$ROOT/scripts/submit-indexnow.mjs" || echo "    IndexNow failed (non-fatal)"
 fi

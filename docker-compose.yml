@@ -1,12 +1,14 @@
 services:
   postgres:
     image: postgres:16-alpine
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: menuos
-      POSTGRES_PASSWORD: menuos
-      POSTGRES_DB: menuos
+      POSTGRES_USER: ${POSTGRES_USER:-menuos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-menuos}
+      POSTGRES_DB: ${POSTGRES_DB:-menuos}
     ports:
-      - "5433:5432"
+      - "${DATABASE_PORT:-5433}:5432"
     volumes:
       - menuos_pg_data:/var/lib/postgresql/data
 

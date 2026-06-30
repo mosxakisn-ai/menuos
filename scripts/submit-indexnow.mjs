@@ -1,15 +1,40 @@
 #!/usr/bin/env node
 /**
  * Submit sitemap URLs to IndexNow (Bing, Yandex, etc.) after deploy.
- *
- * Required env: INDEXNOW_KEY
- * Optional: APP_URL (default https://menuos.gr), INDEXNOW_HOST (default from APP_URL)
- * Set RUN_INDEXNOW=1 to enable (server-deploy.sh checks this).
+ * Reads config from .env (APP_URL, INDEXNOW_KEY, INDEXNOW_HOST, RUN_INDEXNOW).
  */
 
-const APP_URL = (process.env.APP_URL ?? "https://menuos.gr").replace(/\/$/, "");
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+function loadDotEnv() {
+  try {
+    const envPath = resolve(process.cwd(), ".env");
+    for (const line of readFileSync(envPath, "utf8").split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq <= 0) continue;
+      const key = trimmed.slice(0, eq).trim();
+      let value = trimmed.slice(eq + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      if (process.env[key] === undefined) process.env[key] = value;
+    }
+  } catch {
+    // optional .env
+  }
+}
+
+loadDotEnv();
+
+const APP_URL = process.env.APP_URL?.replace(/\/$/, "");
 const KEY = process.env.INDEXNOW_KEY;
-const HOST = process.env.INDEXNOW_HOST ?? new URL(APP_URL).host;
+const HOST = process.env.INDEXNOW_HOST ?? (APP_URL ? new URL(APP_URL).host : undefined);
 
 const INDEXNOW_ENDPOINTS = [
   "https://api.indexnow.org/indexnow",
@@ -44,6 +69,11 @@ async function fetchSitemapUrls() {
 async function main() {
   if (process.env.RUN_INDEXNOW !== "1") {
     console.log("RUN_INDEXNOW is not 1 — skipping IndexNow");
+    return;
+  }
+
+  if (!APP_URL) {
+    console.log("APP_URL not set in .env — skipping IndexNow");
     return;
   }
 

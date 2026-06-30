@@ -8,7 +8,8 @@ import {
 import { createMailTransporter, isMailConfigured, mailFromAddress } from "@/lib/mail-transport";
 
 export function adminNotifyRecipients(): string[] {
-  const raw = process.env.MENUOS_NOTIFY_EMAIL ?? "info@b-os.gr";
+  const raw = process.env.MENUOS_NOTIFY_EMAIL?.trim();
+  if (!raw) return [];
   return raw
     .split(",")
     .map((s) => s.trim())
