@@ -47,12 +47,16 @@ export function MenuEditor({
 
   const [catNameGr, setCatNameGr] = useState("");
   const [catNameEn, setCatNameEn] = useState("");
+  const [catNameDe, setCatNameDe] = useState("");
+  const [catNameFr, setCatNameFr] = useState("");
   const [addingCat, setAddingCat] = useState(false);
 
   const [itemCategoryId, setItemCategoryId] = useState<string | null>(null);
   const [itemForm, setItemForm] = useState({
     nameGr: "",
     nameEn: "",
+    nameDe: "",
+    nameFr: "",
     price: "",
     descriptionGr: "",
   });
@@ -92,6 +96,8 @@ export function MenuEditor({
           menuId,
           nameGr: catNameGr.trim(),
           nameEn: catNameEn.trim() || undefined,
+          nameDe: catNameDe.trim() || undefined,
+          nameFr: catNameFr.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -99,6 +105,8 @@ export function MenuEditor({
       if (res.ok) {
         setCatNameGr("");
         setCatNameEn("");
+        setCatNameDe("");
+        setCatNameFr("");
         await loadMenus();
       }
     } finally {
@@ -118,6 +126,8 @@ export function MenuEditor({
           categoryId: itemCategoryId,
           nameGr: itemForm.nameGr.trim(),
           nameEn: itemForm.nameEn.trim() || undefined,
+          nameDe: itemForm.nameDe.trim() || undefined,
+          nameFr: itemForm.nameFr.trim() || undefined,
           price: parseFloat(itemForm.price),
           descriptionGr: itemForm.descriptionGr.trim() || undefined,
         }),
@@ -125,7 +135,7 @@ export function MenuEditor({
       const data = await res.json();
       showFromResponse(data, res.ok);
       if (res.ok) {
-        setItemForm({ nameGr: "", nameEn: "", price: "", descriptionGr: "" });
+        setItemForm({ nameGr: "", nameEn: "", nameDe: "", nameFr: "", price: "", descriptionGr: "" });
         setItemCategoryId(null);
         await loadMenus();
       }
@@ -225,7 +235,9 @@ export function MenuEditor({
         <>
           <Card>
             <h2 className="font-semibold text-brand-navy">Νέα κατηγορία</h2>
-            <p className="mt-1 text-xs text-slate-500">π.χ. Σαλάτες, Κυρίως πιάτα, Ποτά</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Ελληνικά υποχρεωτικά · EN / DE / FR προαιρετικά για το QR menu
+            </p>
             <form onSubmit={addCategory} className="mt-4 grid gap-3 sm:grid-cols-2">
               <input
                 required
@@ -235,9 +247,21 @@ export function MenuEditor({
                 className="rounded-button border border-slate-200 px-3 py-2 text-sm"
               />
               <input
-                placeholder="Name (English, optional)"
+                placeholder="Name (English)"
                 value={catNameEn}
                 onChange={(e) => setCatNameEn(e.target.value)}
+                className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+              />
+              <input
+                placeholder="Name (Deutsch)"
+                value={catNameDe}
+                onChange={(e) => setCatNameDe(e.target.value)}
+                className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+              />
+              <input
+                placeholder="Nom (Français)"
+                value={catNameFr}
+                onChange={(e) => setCatNameFr(e.target.value)}
                 className="rounded-button border border-slate-200 px-3 py-2 text-sm"
               />
               <button
@@ -318,6 +342,18 @@ export function MenuEditor({
                       placeholder="Name (English)"
                       value={itemForm.nameEn}
                       onChange={(e) => setItemForm((f) => ({ ...f, nameEn: e.target.value }))}
+                      className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                    />
+                    <input
+                      placeholder="Name (Deutsch)"
+                      value={itemForm.nameDe}
+                      onChange={(e) => setItemForm((f) => ({ ...f, nameDe: e.target.value }))}
+                      className="rounded-button border border-slate-200 px-3 py-2 text-sm"
+                    />
+                    <input
+                      placeholder="Nom (Français)"
+                      value={itemForm.nameFr}
+                      onChange={(e) => setItemForm((f) => ({ ...f, nameFr: e.target.value }))}
                       className="rounded-button border border-slate-200 px-3 py-2 text-sm"
                     />
                     <input

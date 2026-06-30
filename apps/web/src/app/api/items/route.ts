@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { itemCreateSchema } from "@menuos/shared";
+import { itemCreateSchema, buildMenuNameTranslations } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { canOrganizationAddItem } from "@/lib/billing";
 import { getCategoryForOrganization } from "@/lib/venue-access";
@@ -36,23 +36,7 @@ export async function POST(request: Request) {
     _max: { sortOrder: true },
   });
 
-  const grTranslation = {
-    language: "GR" as const,
-    name: parsed.data.nameGr.trim(),
-    description: parsed.data.descriptionGr?.trim() || null,
-    ingredients: parsed.data.ingredientsGr?.trim() || null,
-    allergens: parsed.data.allergensGr?.trim() || null,
-  };
-
-  const enTranslation = parsed.data.nameEn?.trim()
-    ? {
-        language: "EN" as const,
-        name: parsed.data.nameEn.trim(),
-        description: parsed.data.descriptionEn?.trim() || null,
-        ingredients: null as string | null,
-        allergens: null as string | null,
-      }
-    : null;
+  const nameTranslations = buildMenuNameTranslations(parsed.data);
 
   const item = await prisma.item.create({
     data: {
@@ -61,7 +45,18 @@ export async function POST(request: Request) {
       available: parsed.data.available ?? true,
       sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
       translations: {
-        create: enTranslation ? [grTranslation, enTranslation] : [grTranslation],
+        create: nameTranslations.map((row) => ({
+          language: row.language,
+          name: row.name,
+          description:
+            row.language === "GR"
+              ? parsed.data.descriptionGr?.trim() || null
+              : row.language === "EN"
+                ? parsed.data.descriptionEn?.trim() || null
+                : null,
+          ingredients: row.language === "GR" ? parsed.data.ingredientsGr?.trim() || null : null,
+          allergens: row.language === "GR" ? parsed.data.allergensGr?.trim() || null : null,
+        })),
       },
     },
     include: { translations: true },

@@ -166,7 +166,7 @@ export const MARKETING = {
   },
 
   stats: [
-    { value: "ΕΛ+EN", label: "Γλώσσες QR" },
+    { value: "4", label: "Γλώσσες QR" },
     { value: "7", label: "Ημέρες δοκιμή" },
     { value: "60′", label: "Μέσος χρόνος setup" },
     { value: "0", label: "App για πελάτη" },

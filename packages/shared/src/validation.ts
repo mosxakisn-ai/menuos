@@ -64,6 +64,8 @@ export const categoryCreateSchema = z.object({
   menuId: z.string().min(1),
   nameGr: z.string().min(1).max(120),
   nameEn: z.string().max(120).optional(),
+  nameDe: z.string().max(120).optional(),
+  nameFr: z.string().max(120).optional(),
 });
 
 export const itemCreateSchema = z.object({
@@ -71,6 +73,8 @@ export const itemCreateSchema = z.object({
   price: z.number().min(0).max(99999),
   nameGr: z.string().min(1).max(120),
   nameEn: z.string().max(120).optional(),
+  nameDe: z.string().max(120).optional(),
+  nameFr: z.string().max(120).optional(),
   descriptionGr: z.string().max(1000).optional(),
   descriptionEn: z.string().max(1000).optional(),
   ingredientsGr: z.string().max(500).optional(),

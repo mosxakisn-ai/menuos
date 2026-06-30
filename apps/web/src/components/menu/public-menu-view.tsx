@@ -223,11 +223,11 @@ export function PublicMenuView({
             ) : null}
           </div>
           <div
-            className="flex items-center gap-1 rounded-button bg-white/10 p-1"
+            className="flex max-w-[11rem] shrink-0 items-center gap-0.5 overflow-x-auto rounded-button bg-white/10 p-1"
             role="group"
             aria-label={ui.language}
           >
-            <Globe className="ml-1 h-4 w-4 text-white/70" aria-hidden />
+            <Globe className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/70" aria-hidden />
             {QR_MENU_LANGUAGES.map((code) => (
               <button
                 key={code}
@@ -236,7 +236,7 @@ export function PublicMenuView({
                 aria-label={QR_MENU_LANGUAGE_LABELS[code].ariaLabel}
                 aria-pressed={lang === code}
                 className={cn(
-                  "min-w-[2.25rem] rounded px-2 py-1 text-xs font-bold tracking-wide",
+                  "min-w-[2rem] shrink-0 rounded px-1.5 py-1 text-[10px] font-bold tracking-wide",
                   lang === code ? "bg-white text-primary" : "text-white/80 hover:text-white",
                 )}
               >

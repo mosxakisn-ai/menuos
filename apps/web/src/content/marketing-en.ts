@@ -66,7 +66,7 @@ export const MARKETING_EN = {
         {
           step: "2",
           title: "Build your menu",
-          text: "Add categories, dishes, photos and prices. Greek and English on the QR menu.",
+          text: "Add categories, dishes, photos and prices. Four languages on the QR menu.",
         },
         {
           step: "3",
@@ -166,7 +166,7 @@ export const MARKETING_EN = {
   },
 
   stats: [
-    { value: "GR+EN", label: "QR languages" },
+    { value: "4", label: "QR languages" },
     { value: "7", label: "Day trial" },
     { value: "60′", label: "Avg. setup time" },
     { value: "0", label: "Guest app" },

@@ -26,7 +26,7 @@ export function buildOrganizationSchema() {
       contactType: "customer service",
       email: SEO_SITE.contactEmail,
       telephone: SEO_SITE.contactPhoneTel,
-      availableLanguage: ["Greek", "English"],
+      availableLanguage: ["Greek", "English", "German", "French"],
     },
   };
 }

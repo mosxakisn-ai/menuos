@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { categoryCreateSchema } from "@menuos/shared";
+import { categoryCreateSchema, buildMenuNameTranslations } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { getMenuForOrganization } from "@/lib/venue-access";
 
@@ -30,12 +30,7 @@ export async function POST(request: Request) {
     _max: { sortOrder: true },
   });
 
-  const translations = [
-    { language: "GR" as const, name: parsed.data.nameGr.trim() },
-    ...(parsed.data.nameEn?.trim()
-      ? [{ language: "EN" as const, name: parsed.data.nameEn.trim() }]
-      : []),
-  ];
+  const translations = buildMenuNameTranslations(parsed.data);
 
   const category = await prisma.category.create({
     data: {
