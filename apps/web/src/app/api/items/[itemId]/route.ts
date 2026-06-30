@@ -32,7 +32,7 @@ export async function PATCH(request: Request, { params }: Params) {
   const { itemId } = await params;
   const existing = await getItemForOrganization(itemId, auth.session!.organizationId);
   if (!existing) {
-    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    return NextResponse.json({ error: "Το πιάτο δεν βρέθηκε." }, { status: 404 });
   }
 
   let body: unknown;
@@ -85,7 +85,7 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { itemId } = await params;
   const existing = await getItemForOrganization(itemId, auth.session!.organizationId);
   if (!existing) {
-    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    return NextResponse.json({ error: "Το πιάτο δεν βρέθηκε." }, { status: 404 });
   }
 
   await prisma.item.delete({ where: { id: itemId } });

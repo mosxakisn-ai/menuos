@@ -94,6 +94,27 @@ const LANDINGS: SeoLandingConfig[] = [
     city: "kriti",
     vertical: "xenodocheio",
   }),
+  landing({
+    kind: "city-vertical",
+    path: "/mykonos/beach-bar/qr-menu",
+    product: "qr-menu",
+    city: "mykonos",
+    vertical: "beach-bar",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/thessaloniki/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "thessaloniki",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/paros/xenodocheio/digital-menu",
+    product: "digital-menu",
+    city: "paros",
+    vertical: "xenodocheio",
+  }),
 ];
 
 const LANDING_BY_PATH = new Map(LANDINGS.map((entry) => [entry.path, entry]));
@@ -121,6 +142,8 @@ export const SEO_FOOTER_HUB = {
     { href: "/thessaloniki/qr-menu", labelEl: "QR menu Θεσσαλονίκη", labelEn: "QR menu Thessaloniki" },
     { href: "/korfu/digital-menu", labelEl: "Digital menu Κέρκυρα", labelEn: "Digital menu Corfu" },
     { href: "/kriti/qr-menu", labelEl: "QR menu Κρήτη", labelEn: "QR menu Crete" },
+    { href: "/mykonos/qr-menu", labelEl: "QR menu Μύκονος", labelEn: "QR menu Mykonos" },
+    { href: "/paros/qr-menu", labelEl: "QR menu Πάρος", labelEn: "QR menu Paros" },
   ] as const,
   verticals: [
     { href: "/estiatorio/qr-menu", labelEl: "QR menu εστιατόριο", labelEn: "Restaurant QR menu" },

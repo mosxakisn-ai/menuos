@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
   const venueId = new URL(request.url).searchParams.get("venueId");
   if (!venueId) {
-    return NextResponse.json({ error: "venueId required" }, { status: 400 });
+    return NextResponse.json({ error: "Απαιτείται venueId." }, { status: 400 });
   }
 
   const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);

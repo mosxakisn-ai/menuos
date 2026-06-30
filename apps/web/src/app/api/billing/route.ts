@@ -34,16 +34,16 @@ export async function POST(request: Request) {
 
   const { planId, returnPath } = body;
   if (!planId) {
-    return NextResponse.json({ error: "planId required" }, { status: 400 });
+    return NextResponse.json({ error: "Απαιτείται planId." }, { status: 400 });
   }
   if (!isCheckoutPlan(planId)) {
     if (planId === "ENTERPRISE") {
       return NextResponse.json(
-        { error: "Contact us for Enterprise pricing", code: "enterprise_contact" },
+        { error: "Επικοινώνησε μαζί μας για τιμολόγηση Enterprise.", code: "enterprise_contact" },
         { status: 400 },
       );
     }
-    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    return NextResponse.json({ error: "Μη έγκυρο πλάνο." }, { status: 400 });
   }
 
   const organizationId = auth.session!.organizationId;
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
   if (!isStripeEnabled()) {
     return NextResponse.json(
-      { error: "Payment system not configured. Contact support.", code: "stripe_not_configured" },
+      { error: "Το σύστημα πληρωμών δεν είναι ρυθμισμένο. Επικοινώνησε με την υποστήριξη.", code: "stripe_not_configured" },
       { status: 503 },
     );
   }
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Billing error" },
+      { error: err instanceof Error ? err.message : "Σφάλμα χρέωσης." },
       { status: 500 },
     );
   }

@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   const category = await getCategoryForOrganization(parsed.data.categoryId, auth.session!.organizationId);
   if (!category) {
-    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    return NextResponse.json({ error: "Η κατηγορία δεν βρέθηκε." }, { status: 404 });
   }
 
   try {

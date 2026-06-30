@@ -12,7 +12,7 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { categoryId } = await params;
   const category = await getCategoryForOrganization(categoryId, auth.session!.organizationId);
   if (!category) {
-    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    return NextResponse.json({ error: "Η κατηγορία δεν βρέθηκε." }, { status: 404 });
   }
 
   await prisma.category.delete({ where: { id: categoryId } });

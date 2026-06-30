@@ -113,6 +113,68 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
       },
     ],
   },
+  {
+    slug: "kliisi-serveritou-apo-qr-menu",
+    title: "Κλήση σερβιτόρου από QR menu — πώς λειτουργεί",
+    description:
+      "QR ανά τραπέζι ή δωμάτιο: ο πελάτης καλεί σερβιτόρο ή ζητά λογαριασμό χωρίς app. Οδηγός για εστιατόρια και ξενοδοχεία.",
+    publishedAt: "2026-06-25",
+    readingMinutes: 4,
+    relatedPaths: ["/pos-leitourgei", "/room-service/qr-menu", "/estiatorio/qr-menu"],
+    sections: [
+      {
+        paragraphs: [
+          "Με QR menu δεν χρειάζεται ο πελάτης να ψάχνει μάτι με μάτι τον σερβιτόρο. Πατάει «Κλήση σερβιτόρου» ή «Λογαριασμός» και εσείς βλέπετε από ποιο τραπέζι ή δωμάτιο καλούν.",
+          "Λειτουργεί μόνο όταν το QR έχει ?table= ή ?room= — αλλιώς δεν εμφανίζονται τα κουμπιά (για ασφάλεια).",
+        ],
+      },
+      {
+        heading: "Panel σερβιτόρου",
+        paragraphs: [
+          "Από το dashboard βλέπετε live τις κλήσεις: αναμονή, σε εξέλιξη, ολοκληρωμένες.",
+          "Ιδανικό για μεγάλους χώρους, beach bars και room service σε ξενοδοχεία.",
+        ],
+      },
+      {
+        heading: "Tips εγκατάστασης",
+        paragraphs: [
+          "Τυπώστε ξεχωριστό QR για κάθε τραπέζι — το link περιλαμβάνει τον αριθμό.",
+          "Για ξενοδοχεία: ?room=101 στο QR του δωματίου για room service.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "pos-energopoiw-dokimastiki-periodo",
+    title: "Πώς ξεκινάω δωρεάν δοκιμή 7 ημερών στο MenuOS",
+    description:
+      "Χωρίς κάρτα: εγγραφή με email, OTP, δημιουργία καταλόγου και QR. Τι περιλαμβάνει η δοκιμή και τι γίνεται μετά.",
+    publishedAt: "2026-06-28",
+    readingMinutes: 3,
+    relatedPaths: ["/pricing", "/register", "/pws-ftiaxno-qr-menu"],
+    sections: [
+      {
+        paragraphs: [
+          "Η δοκιμή 7 ημερών σας δίνει πρόσβαση στο panel: 1 κατάστημα, 1 κατάλογος, έως 50 πιάτα.",
+          "Δεν χρειάζεται πιστωτική κάρτα — μόνο email και κωδικός OTP για επιβεβαίωση.",
+        ],
+      },
+      {
+        heading: "Τι μπορείτε να δοκιμάσετε",
+        paragraphs: [
+          "Πολυγλωσσικό menu (GR, EN, DE, FR), QR codes, κλήση σερβιτόρου από τραπέζι.",
+          "Δείτε live πώς φαίνεται το menu στους πελάτες με το demo: /m/demo-taverna?table=12",
+        ],
+      },
+      {
+        heading: "Μετά τη δοκιμή",
+        paragraphs: [
+          "Επιλέγετε Basic (€9.99/μήνα) ή Pro (€19.99/μήνα) — ή επικοινωνείτε για Enterprise.",
+          "Τα δεδομένα σας μένουν — συνεχίζετε από εκεί που σταματήσατε.",
+        ],
+      },
+    ],
+  },
 ];
 
 export const SEO_BLOG_INDEX = {

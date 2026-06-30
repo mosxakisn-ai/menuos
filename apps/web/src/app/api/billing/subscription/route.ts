@@ -8,15 +8,15 @@ export async function GET(req: NextRequest) {
 
   const organizationId = req.nextUrl.searchParams.get("organizationId");
   if (!organizationId) {
-    return NextResponse.json({ error: "organizationId required" }, { status: 400 });
+    return NextResponse.json({ error: "Απαιτείται organizationId." }, { status: 400 });
   }
   if (auth.session!.organizationId !== organizationId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Δεν έχεις δικαίωμα." }, { status: 403 });
   }
 
   const subscription = await getOrganizationSubscription(organizationId);
   if (!subscription) {
-    return NextResponse.json({ error: "Subscription not found" }, { status: 404 });
+    return NextResponse.json({ error: "Η συνδρομή δεν βρέθηκε." }, { status: 404 });
   }
   return NextResponse.json(subscription);
 }

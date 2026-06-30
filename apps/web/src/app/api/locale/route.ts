@@ -15,6 +15,6 @@ export async function POST(req: NextRequest) {
     });
     return res;
   } catch {
-    return NextResponse.json({ error: "Invalid locale" }, { status: 400 });
+    return NextResponse.json({ error: "Μη έγκυρη γλώσσα." }, { status: 400 });
   }
 }
