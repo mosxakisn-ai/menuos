@@ -75,3 +75,20 @@ export const supervisorUpdateOperatorSchema = z
   });
 
 export type SupervisorUpdateOperatorInput = z.infer<typeof supervisorUpdateOperatorSchema>;
+
+export const supervisorChangeOwnPasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1).max(128),
+    newPassword: z.string().min(8).max(128),
+    confirmPassword: z.string().min(8).max(128),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: "New password must differ",
+    path: ["newPassword"],
+  });
+
+export type SupervisorChangeOwnPasswordInput = z.infer<typeof supervisorChangeOwnPasswordSchema>;

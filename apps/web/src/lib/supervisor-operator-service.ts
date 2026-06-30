@@ -108,3 +108,22 @@ export function envSupervisorUsername(): string | null {
   const value = process.env.SUPERVISOR_USERNAME?.trim();
   return value ? value.toLowerCase() : null;
 }
+
+export async function changeSupervisorOperatorOwnPassword(
+  username: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const row = await findSupervisorOperatorByUsername(username);
+  if (!row) throw new Error("env_only");
+  if (!row.active) throw new Error("inactive");
+
+  const valid = await bcrypt.compare(currentPassword, row.passwordHash);
+  if (!valid) throw new Error("wrong_password");
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  await prisma.supervisorOperator.update({
+    where: { id: row.id },
+    data: { passwordHash },
+  });
+}

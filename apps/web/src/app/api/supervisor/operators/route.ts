@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSupervisor } from "@/lib/api-auth";
-import { addSupervisorOperator, listSupervisorOperators } from "@/lib/supervisor-operator-service";
+import { addSupervisorOperator, findSupervisorOperatorByUsername, listSupervisorOperators } from "@/lib/supervisor-operator-service";
 import { supervisorAddOperatorSchema } from "@/lib/supervisor-schemas";
 
 export async function GET() {
@@ -9,7 +9,13 @@ export async function GET() {
 
   try {
     const operators = await listSupervisorOperators();
-    return NextResponse.json({ operators, currentUsername: auth.supervisor!.username });
+    const current = auth.supervisor!.username;
+    const self = await findSupervisorOperatorByUsername(current);
+    return NextResponse.json({
+      operators,
+      currentUsername: current,
+      canChangeOwnPassword: Boolean(self?.active),
+    });
   } catch (err) {
     console.error("[menuos-supervisor] list operators", err);
     return NextResponse.json({ error: "Αποτυχία φόρτωσης." }, { status: 500 });

@@ -14,6 +14,7 @@ function formatDate(iso: string) {
 export function SupervisorUsersClient() {
   const [operators, setOperators] = useState<SupervisorOperatorRow[]>([]);
   const [currentUsername, setCurrentUsername] = useState("");
+  const [canChangeOwnPassword, setCanChangeOwnPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -28,6 +29,13 @@ export function SupervisorUsersClient() {
   const [resetPassword, setResetPassword] = useState("");
   const [resetting, setResetting] = useState(false);
 
+  const [ownCurrentPassword, setOwnCurrentPassword] = useState("");
+  const [ownNewPassword, setOwnNewPassword] = useState("");
+  const [ownConfirmPassword, setOwnConfirmPassword] = useState("");
+  const [changingOwnPassword, setChangingOwnPassword] = useState(false);
+  const [ownPasswordError, setOwnPasswordError] = useState<string | null>(null);
+  const [ownPasswordMessage, setOwnPasswordMessage] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
@@ -37,9 +45,11 @@ export function SupervisorUsersClient() {
       const data = (await res.json()) as {
         operators: SupervisorOperatorRow[];
         currentUsername: string;
+        canChangeOwnPassword: boolean;
       };
       setOperators(data.operators);
       setCurrentUsername(data.currentUsername);
+      setCanChangeOwnPassword(data.canChangeOwnPassword);
     } catch {
       setError(true);
     } finally {
@@ -116,7 +126,45 @@ export function SupervisorUsersClient() {
     setResetting(false);
   }
 
+  async function submitOwnPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setChangingOwnPassword(true);
+    setOwnPasswordError(null);
+    setOwnPasswordMessage(null);
+    try {
+      const res = await fetch("/api/supervisor/operators/me/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: ownCurrentPassword,
+          newPassword: ownNewPassword,
+          confirmPassword: ownConfirmPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setOwnPasswordError(data.error ?? "Αποτυχία.");
+        return;
+      }
+      setOwnPasswordMessage(data.message ?? "Ο κωδικός άλλαξε.");
+      setOwnCurrentPassword("");
+      setOwnNewPassword("");
+      setOwnConfirmPassword("");
+    } catch {
+      setOwnPasswordError("Σφάλμα δικτύου.");
+    } finally {
+      setChangingOwnPassword(false);
+    }
+  }
+
+  const ownPasswordValid =
+    ownCurrentPassword.length > 0 &&
+    ownNewPassword.length >= 8 &&
+    ownConfirmPassword.length >= 8 &&
+    ownNewPassword === ownConfirmPassword;
+
   const envOnly = operators.length === 0 && currentUsername;
+  const currentUsernameLower = currentUsername.toLowerCase();
 
   return (
     <DashboardPage wide>
@@ -137,7 +185,68 @@ export function SupervisorUsersClient() {
           {envOnly ? (
             <Card className="mb-6 border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-900">
               Συνδεδεμένος ως <strong>{currentUsername}</strong> (λογαριασμός από .env). Πρόσθεσε
-              μέλη ομάδας παρακάτω για διαχείριση από τη βάση.
+              μέλη ομάδας παρακάτω για διαχείριση από τη βάση — ή άλλαξε τον κωδικό στο server .env.
+            </Card>
+          ) : null}
+
+          {canChangeOwnPassword ? (
+            <Card className="mb-6 border-brand-blue/15 bg-brand-surface/40 p-4">
+              <p className="text-sm font-semibold text-brand-navy">Αλλαγή δικού σου κωδικού</p>
+              {ownPasswordMessage ? (
+                <p className="mt-2 text-sm text-emerald-700">{ownPasswordMessage}</p>
+              ) : null}
+              {ownPasswordError ? (
+                <p className="mt-2 text-sm text-red-600">{ownPasswordError}</p>
+              ) : null}
+              <form
+                onSubmit={(e) => void submitOwnPassword(e)}
+                className="mt-3 grid gap-3 sm:grid-cols-3"
+              >
+                <label className="block text-sm">
+                  <span className={dashboardLabelClass}>Τρέχων κωδικός</span>
+                  <input
+                    className={dashboardFieldClass}
+                    type="password"
+                    value={ownCurrentPassword}
+                    onChange={(e) => setOwnCurrentPassword(e.target.value)}
+                    autoComplete="current-password"
+                    required
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className={dashboardLabelClass}>Νέος κωδικός (min 8)</span>
+                  <input
+                    className={dashboardFieldClass}
+                    type="password"
+                    value={ownNewPassword}
+                    onChange={(e) => setOwnNewPassword(e.target.value)}
+                    minLength={8}
+                    autoComplete="new-password"
+                    required
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className={dashboardLabelClass}>Επιβεβαίωση</span>
+                  <input
+                    className={dashboardFieldClass}
+                    type="password"
+                    value={ownConfirmPassword}
+                    onChange={(e) => setOwnConfirmPassword(e.target.value)}
+                    minLength={8}
+                    autoComplete="new-password"
+                    required
+                  />
+                </label>
+                <div className="sm:col-span-3">
+                  <button
+                    type="submit"
+                    disabled={changingOwnPassword || !ownPasswordValid}
+                    className={buttonClass("primary", "sm")}
+                  >
+                    {changingOwnPassword ? "Αποθήκευση…" : "Αποθήκευση κωδικού"}
+                  </button>
+                </div>
+              </form>
             </Card>
           ) : null}
 
@@ -157,7 +266,7 @@ export function SupervisorUsersClient() {
                   <tr key={op.id} className="border-t border-slate-100">
                     <td className="px-3 py-2 font-medium text-brand-navy">
                       {op.username}
-                      {op.username === currentUsername.toLowerCase() ? (
+                      {op.username === currentUsernameLower ? (
                         <span className="ml-2 text-xs text-brand-blue">(εσύ)</span>
                       ) : null}
                     </td>
@@ -174,24 +283,26 @@ export function SupervisorUsersClient() {
                     <td className="px-3 py-2 text-slate-500">{formatDate(op.createdAt)}</td>
                     <td className="px-3 py-2">
                       <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          className={buttonClass("ghost", "sm")}
-                          onClick={() => {
-                            setResetId(op.id);
-                            setResetPassword("");
-                            setFormError(null);
-                          }}
-                        >
-                          Νέο password
-                        </button>
+                        {op.username !== currentUsernameLower ? (
+                          <button
+                            type="button"
+                            className={buttonClass("ghost", "sm")}
+                            onClick={() => {
+                              setResetId(op.id);
+                              setResetPassword("");
+                              setFormError(null);
+                            }}
+                          >
+                            Νέο password
+                          </button>
+                        ) : null}
                         {op.active ? (
                           <button
                             type="button"
                             className={buttonClass("ghost", "sm")}
-                            disabled={op.username === currentUsername.toLowerCase()}
+                            disabled={op.username === currentUsernameLower}
                             title={
-                              op.username === currentUsername.toLowerCase()
+                              op.username === currentUsernameLower
                                 ? "Δεν μπορείς να απενεργοποιήσεις τον εαυτό σου"
                                 : undefined
                             }
@@ -271,7 +382,7 @@ export function SupervisorUsersClient() {
       {resetId ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-navy/40 p-4">
           <Card className="w-full max-w-md border-brand-blue/20 p-5 shadow-xl">
-            <p className="font-semibold text-brand-navy">Νέο password</p>
+            <p className="font-semibold text-brand-navy">Reset password (άλλου μέλους)</p>
             <form onSubmit={(e) => void submitReset(e)} className="mt-4 space-y-3">
               <label className="block text-sm">
                 <span className={dashboardLabelClass}>Password (min 8)</span>
