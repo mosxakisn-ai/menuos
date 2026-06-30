@@ -18,34 +18,39 @@ export default async function SettingsPage() {
   });
 
   return (
-    <DashboardPage>
+    <DashboardPage wide className="space-y-4">
       <DashboardPageHeader
         title="Ρυθμίσεις"
-        description="Χρώματα και εμφάνιση — αυτά βλέπουν οι πελάτες όταν ανοίγουν τον κατάλογο από το QR."
+        description="Λογαριασμός, κωδικός και εμφάνιση καταλόγου."
       />
-      <Card className="p-6 sm:p-8">
-        <h2 className="font-semibold text-primary">{DASHBOARD_EL.account}</h2>
-        <dl className="mt-3 space-y-2 text-sm">
-          <div>
-            <dt className="text-slate-500">{DASHBOARD_EL.accountEmail}</dt>
-            <dd className="font-medium text-primary">{session!.email}</dd>
+
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+        <Card className="p-5">
+          <h2 className="text-sm font-semibold text-primary">{DASHBOARD_EL.account}</h2>
+          <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            <div>
+              <dt className="text-slate-500">{DASHBOARD_EL.accountEmail}</dt>
+              <dd className="mt-0.5 font-medium text-primary">{session!.email}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Όνομα</dt>
+              <dd className="mt-0.5 text-slate-700">{session!.name}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Ρόλος</dt>
+              <dd className="mt-0.5 text-slate-700">{roleLabel(session!.role)}</dd>
+            </div>
+          </dl>
+        </Card>
+
+        <Card className="p-5">
+          <h2 className="text-sm font-semibold text-primary">{DASHBOARD_EL.changePassword.title}</h2>
+          <div className="mt-3">
+            <ChangePasswordForm compact />
           </div>
-          <div>
-            <dt className="text-slate-500">Όνομα</dt>
-            <dd className="text-slate-700">{session!.name}</dd>
-          </div>
-          <div>
-            <dt className="text-slate-500">Ρόλος</dt>
-            <dd className="text-slate-700">{roleLabel(session!.role)}</dd>
-          </div>
-        </dl>
-      </Card>
-      <Card className="p-6 sm:p-8">
-        <h2 className="font-semibold text-primary">{DASHBOARD_EL.changePassword.title}</h2>
-        <div className="mt-4 max-w-md">
-          <ChangePasswordForm />
-        </div>
-      </Card>
+        </Card>
+      </div>
+
       <SettingsForm venues={venues} />
     </DashboardPage>
   );

@@ -6,7 +6,7 @@ import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard
 import { buttonClass } from "@/components/ui/button";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
 
-export function ChangePasswordForm() {
+export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -45,44 +45,46 @@ export function ChangePasswordForm() {
     newPassword === confirmPassword;
 
   return (
-    <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
+    <form onSubmit={(e) => void onSubmit(e)} className={compact ? "space-y-3" : "space-y-4"}>
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
-      <label className="block text-sm">
-        <span className={dashboardLabelClass}>{DASHBOARD_EL.changePassword.current}</span>
-        <input
-          className={dashboardFieldClass}
-          type="password"
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          autoComplete="current-password"
-          required
-        />
-      </label>
-      <label className="block text-sm">
-        <span className={dashboardLabelClass}>{DASHBOARD_EL.changePassword.new}</span>
-        <input
-          className={dashboardFieldClass}
-          type="password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          minLength={8}
-          autoComplete="new-password"
-          required
-        />
-      </label>
-      <label className="block text-sm">
-        <span className={dashboardLabelClass}>{DASHBOARD_EL.changePassword.confirm}</span>
-        <input
-          className={dashboardFieldClass}
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          minLength={8}
-          autoComplete="new-password"
-          required
-        />
-      </label>
+      <div className={compact ? "space-y-3" : "space-y-4"}>
+        <label className="block text-sm">
+          <span className={dashboardLabelClass}>{DASHBOARD_EL.changePassword.current}</span>
+          <input
+            className={dashboardFieldClass}
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
+        </label>
+        <label className="block text-sm">
+          <span className={dashboardLabelClass}>{DASHBOARD_EL.changePassword.new}</span>
+          <input
+            className={dashboardFieldClass}
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            minLength={8}
+            autoComplete="new-password"
+            required
+          />
+        </label>
+        <label className="block text-sm">
+          <span className={dashboardLabelClass}>{DASHBOARD_EL.changePassword.confirm}</span>
+          <input
+            className={dashboardFieldClass}
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            minLength={8}
+            autoComplete="new-password"
+            required
+          />
+        </label>
+      </div>
       <button type="submit" disabled={saving || !canSubmit} className={buttonClass("primary", "sm")}>
         {saving ? DASHBOARD_EL.changePassword.saving : DASHBOARD_EL.changePassword.submit}
       </button>

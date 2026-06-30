@@ -67,29 +67,35 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-4">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
-      <label className="block">
-        <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
-        <select
-          value={venueId}
-          onChange={(e) => selectVenue(e.target.value)}
-          className={dashboardFieldClass}
-        >
-          {venues.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Card className="p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold text-brand-navy">Εμφάνιση καταλόγου</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Χρώματα και στοιχεία που βλέπουν οι πελάτες από το QR.
+            </p>
+          </div>
+          <label className="block w-full lg:max-w-xs">
+            <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
+            <select
+              value={venueId}
+              onChange={(e) => selectVenue(e.target.value)}
+              className={dashboardFieldClass}
+            >
+              {venues.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-      <Card className="p-6 sm:p-8">
-        <h2 className="font-semibold text-brand-navy">Εμφάνιση καταλόγου</h2>
-        <p className="mt-1 text-sm text-slate-500">Τα χρώματα φαίνονται όταν ο πελάτης ανοίγει το menu από το QR.</p>
-        <form onSubmit={onSubmit} className="mt-6 space-y-5">
-          <label className="block">
+        <form onSubmit={onSubmit} className="mt-5 grid gap-4 lg:grid-cols-2 lg:gap-x-6">
+          <label className="block lg:col-span-2">
             <span className={dashboardLabelClass}>Όνομα καταστήματος</span>
             <input
               required
@@ -98,7 +104,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
               className={dashboardFieldClass}
             />
           </label>
-          <label className="block">
+          <label className="block lg:col-span-2">
             <span className={dashboardLabelClass}>Περιγραφή</span>
             <textarea
               rows={2}
@@ -107,29 +113,29 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
               className={dashboardTextareaClass}
             />
           </label>
-          <div className="grid grid-cols-2 gap-4">
-            <label className="block">
-              <span className={dashboardLabelClass}>Κύριο χρώμα</span>
-              <input
-                type="color"
-                value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-                className="mt-1.5 h-10 w-full cursor-pointer rounded-button border border-slate-200 bg-white shadow-sm"
-              />
-            </label>
-            <label className="block">
-              <span className={dashboardLabelClass}>Δευτερεύον</span>
-              <input
-                type="color"
-                value={secondaryColor}
-                onChange={(e) => setSecondaryColor(e.target.value)}
-                className="mt-1.5 h-10 w-full cursor-pointer rounded-button border border-slate-200 bg-white shadow-sm"
-              />
-            </label>
+          <label className="block">
+            <span className={dashboardLabelClass}>Κύριο χρώμα</span>
+            <input
+              type="color"
+              value={primaryColor}
+              onChange={(e) => setPrimaryColor(e.target.value)}
+              className="mt-1.5 h-10 w-full cursor-pointer rounded-button border border-slate-200 bg-white shadow-sm"
+            />
+          </label>
+          <label className="block">
+            <span className={dashboardLabelClass}>Δευτερεύον</span>
+            <input
+              type="color"
+              value={secondaryColor}
+              onChange={(e) => setSecondaryColor(e.target.value)}
+              className="mt-1.5 h-10 w-full cursor-pointer rounded-button border border-slate-200 bg-white shadow-sm"
+            />
+          </label>
+          <div className="lg:col-span-2">
+            <button type="submit" disabled={saving} className={`h-10 ${buttonClass("primary", "md")}`}>
+              {saving ? "Αποθήκευση..." : "Αποθήκευση ρυθμίσεων"}
+            </button>
           </div>
-          <button type="submit" disabled={saving} className={`h-10 ${buttonClass("primary", "md")}`}>
-            {saving ? "Αποθήκευση..." : "Αποθήκευση ρυθμίσεων"}
-          </button>
         </form>
       </Card>
     </div>
