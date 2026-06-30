@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@menuos/db";
 import { sendRegistrationOtpEmail } from "@/lib/mail";
 
-const OTP_TTL_MS = 10 * 60 * 1000;
+const OTP_TTL_MS = 30 * 60 * 1000;
+const OTP_TTL_MINUTES = OTP_TTL_MS / 60_000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_VERIFY_ATTEMPTS = 5;
 
@@ -28,15 +29,18 @@ export async function sendRegistrationOtp(email: string): Promise<
 
   const existing = await prisma.registrationOtp.findUnique({ where: { email: normalized } });
   if (existing) {
-    const sinceLastSend = Date.now() - existing.lastSentAt.getTime();
-    if (sinceLastSend < RESEND_COOLDOWN_MS) {
-      const retryAfterSeconds = Math.ceil((RESEND_COOLDOWN_MS - sinceLastSend) / 1000);
-      return {
-        ok: false,
-        error: `Περίμενε ${retryAfterSeconds} δευτ. πριν ξαναστείλεις κωδικό.`,
-        code: "cooldown",
-        retryAfterSeconds,
-      };
+    const isExpired = existing.expiresAt.getTime() < Date.now();
+    if (!isExpired) {
+      const sinceLastSend = Date.now() - existing.lastSentAt.getTime();
+      if (sinceLastSend < RESEND_COOLDOWN_MS) {
+        const retryAfterSeconds = Math.ceil((RESEND_COOLDOWN_MS - sinceLastSend) / 1000);
+        return {
+          ok: false,
+          error: `Περίμενε ${retryAfterSeconds} δευτ. πριν ξαναστείλεις κωδικό.`,
+          code: "cooldown",
+          retryAfterSeconds,
+        };
+      }
     }
   }
 
@@ -62,7 +66,7 @@ export async function sendRegistrationOtp(email: string): Promise<
   });
 
   try {
-    await sendRegistrationOtpEmail({ to: normalized, code });
+    await sendRegistrationOtpEmail({ to: normalized, code, ttlMinutes: OTP_TTL_MINUTES });
   } catch (err) {
     console.error("[menuos-mail] OTP send failed", err);
     await prisma.registrationOtp.delete({ where: { email: normalized } }).catch(() => undefined);

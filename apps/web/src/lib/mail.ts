@@ -10,10 +10,15 @@ import { createMailTransporter, isMailConfigured, mailFromAddress } from "@/lib/
 
 export { isMailConfigured };
 
-export async function sendRegistrationOtpEmail(input: { to: string; code: string }): Promise<void> {
+export async function sendRegistrationOtpEmail(input: {
+  to: string;
+  code: string;
+  ttlMinutes?: number;
+}): Promise<void> {
+  const ttlMinutes = input.ttlMinutes ?? 30;
   const subject = "MenuOS — κωδικός επιβεβαίωσης εγγραφής";
-  const text = buildRegistrationOtpEmailText({ code: input.code });
-  const html = buildRegistrationOtpEmailHtml({ code: input.code });
+  const text = buildRegistrationOtpEmailText({ code: input.code, ttlMinutes });
+  const html = buildRegistrationOtpEmailHtml({ code: input.code, ttlMinutes });
 
   if (!isMailConfigured()) {
     if (process.env.NODE_ENV === "production") {

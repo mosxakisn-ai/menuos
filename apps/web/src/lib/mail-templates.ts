@@ -164,12 +164,13 @@ Dashboard: ${mailAppBaseUrl()}/dashboard
 MenuOS — https://menuos.gr`;
 }
 
-export function buildRegistrationOtpEmailHtml(input: { code: string }): string {
+export function buildRegistrationOtpEmailHtml(input: { code: string; ttlMinutes?: number }): string {
+  const ttl = input.ttlMinutes ?? 30;
   const bodyHtml = `
     <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#0f172a;">Κωδικός επιβεβαίωσης</p>
     <p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:#475569;">
       Χρησιμοποίησε τον παρακάτω κωδικό για να ολοκληρώσεις την εγγραφή σου στο MenuOS.
-      Ισχύει για <strong>10 λεπτά</strong>.
+      Ισχύει για <strong>${ttl} λεπτά</strong> — μετά μπορείς να ζητήσεις νέο κωδικό.
     </p>
     <p style="margin:0 0 8px;font-size:32px;font-weight:800;letter-spacing:0.35em;color:#2563EB;text-align:center;">${escapeHtml(input.code)}</p>
     <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#64748b;text-align:center;">
@@ -184,12 +185,15 @@ export function buildRegistrationOtpEmailHtml(input: { code: string }): string {
   });
 }
 
-export function buildRegistrationOtpEmailText(input: { code: string }): string {
+export function buildRegistrationOtpEmailText(input: { code: string; ttlMinutes?: number }): string {
+  const ttl = input.ttlMinutes ?? 30;
   return `MenuOS — κωδικός επιβεβαίωσης εγγραφής
 
 Ο κωδικός σου: ${input.code}
 
-Ισχύει για 10 λεπτά. Μην τον μοιράζεσαι με κανέναν.
+Ισχύει για ${ttl} λεπτά. Μετά τη λήξη μπορείς να ζητήσεις νέο κωδικό από τη σελίδα εγγραφής.
+
+Μην τον μοιράζεσαι με κανέναν.
 
 Αν δεν ζήτησες εγγραφή, αγνόησε αυτό το email.
 
