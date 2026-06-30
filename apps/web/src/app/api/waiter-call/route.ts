@@ -88,17 +88,12 @@ export async function POST(request: Request) {
       venueId: venue.id,
       tableNumber: parsed.data.tableNumber ?? null,
       roomNumber: parsed.data.roomNumber ?? null,
+      type: parsed.data.type as WaiterCallType,
       status: { in: ["PENDING", "ACKNOWLEDGED"] },
     },
     orderBy: { createdAt: "desc" },
   });
   if (existing) {
-    if (existing.type !== parsed.data.type) {
-      return NextResponse.json(
-        { error: "Υπάρχει ήδη ενεργή κλήση διαφορετικού τύπου.", code: "call_type_mismatch" },
-        { status: 409 },
-      );
-    }
     if (
       parsed.data.type === "ORDER" &&
       parsed.data.orderItems &&
@@ -120,6 +115,7 @@ export async function POST(request: Request) {
         venueId: venue.id,
         tableNumber: parsed.data.tableNumber ?? null,
         roomNumber: parsed.data.roomNumber ?? null,
+        type: parsed.data.type as WaiterCallType,
         status: { in: ["PENDING", "ACKNOWLEDGED"] },
       },
       orderBy: { createdAt: "desc" },
@@ -154,13 +150,6 @@ export async function POST(request: Request) {
       },
     });
   });
-
-  if (call.type !== parsed.data.type) {
-    return NextResponse.json(
-      { error: "Υπάρχει ήδη ενεργή κλήση διαφορετικού τύπου.", code: "call_type_mismatch" },
-      { status: 409 },
-    );
-  }
 
   return NextResponse.json({ id: call.id, type: call.type });
   } catch (err) {

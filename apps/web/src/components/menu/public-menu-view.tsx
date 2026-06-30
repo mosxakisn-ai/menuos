@@ -62,6 +62,13 @@ type Venue = {
 type ActionKind = "WAITER" | "BILL" | "CANCEL";
 type ActionState = "idle" | "loading" | "success" | "error";
 type CallErrorCode = "rate_limited" | "generic";
+type ActiveCallType = "WAITER" | "BILL" | "ORDER";
+
+type TableCall = {
+  id: string;
+  type: ActiveCallType;
+  cancellable: boolean;
+};
 
 function callStorageKey(venueSlug: string, tableNumber?: string, roomNumber?: string) {
   return `menuos-call:${venueSlug}:${tableNumber ?? ""}:${roomNumber ?? ""}`;
@@ -89,6 +96,7 @@ export function PublicMenuView({
   const [orderState, setOrderState] = useState<ActionState>("idle");
   const [addedFlash, setAddedFlash] = useState(false);
   const [activeCallId, setActiveCallId] = useState<string | null>(null);
+  const [activeCalls, setActiveCalls] = useState<TableCall[]>([]);
   const [actionState, setActionState] = useState<Record<ActionKind, ActionState>>({
     WAITER: "idle",
     BILL: "idle",
@@ -125,8 +133,50 @@ export function PublicMenuView({
   const clearActiveCall = useCallback(() => {
     sessionStorage.removeItem(storageKey);
     setActiveCallId(null);
+    setActiveCalls([]);
     setCallCancellable(false);
   }, [storageKey]);
+
+  const applyTableCalls = useCallback((calls: TableCall[]) => {
+    setActiveCalls(calls);
+    const cancellable = calls.find((c) => c.cancellable);
+    const primary = cancellable ?? calls[0];
+    if (primary) {
+      setActiveCallId(primary.id);
+      setCallCancellable(primary.cancellable);
+      sessionStorage.setItem(storageKey, primary.id);
+    } else {
+      setActiveCallId(null);
+      setCallCancellable(false);
+      sessionStorage.removeItem(storageKey);
+    }
+  }, [storageKey]);
+
+  const syncTableStatus = useCallback(async () => {
+    if (!tableNumber && !roomNumber) return;
+    try {
+      const params = new URLSearchParams({ venueSlug: venue.slug });
+      if (tableNumber) params.set("tableNumber", tableNumber);
+      if (roomNumber) params.set("roomNumber", roomNumber);
+      const res = await fetch(`/api/waiter-call/status?${params}`);
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        calls?: Array<{ id: string; type: ActiveCallType; cancellable?: boolean }>;
+      };
+      const calls = (data.calls ?? []).map((c) => ({
+        id: c.id,
+        type: c.type,
+        cancellable: c.cancellable ?? false,
+      }));
+      if (calls.length === 0) {
+        clearActiveCall();
+        return;
+      }
+      applyTableCalls(calls);
+    } catch {
+      // keep local state on transient errors
+    }
+  }, [applyTableCalls, clearActiveCall, roomNumber, tableNumber, venue.slug]);
 
   const syncCallStatus = useCallback(
     async (callId: string) => {
@@ -141,26 +191,41 @@ export function PublicMenuView({
         if (!res.ok) {
           return false;
         }
-        const data = (await res.json()) as { active?: boolean; cancellable?: boolean };
-        setCallCancellable(data.cancellable ?? false);
-        if (data.active) {
-          setActiveCallId(callId);
-          return true;
+        const data = (await res.json()) as {
+          active?: boolean;
+          cancellable?: boolean;
+          type?: ActiveCallType;
+        };
+        if (!data.active) {
+          clearActiveCall();
+          void syncTableStatus();
+          return false;
         }
-        clearActiveCall();
-        return false;
+        setCallCancellable(data.cancellable ?? false);
+        setActiveCallId(callId);
+        if (data.type) {
+          setActiveCalls((prev) => {
+            const rest = prev.filter((c) => c.id !== callId);
+            return [
+              ...rest,
+              { id: callId, type: data.type!, cancellable: data.cancellable ?? false },
+            ];
+          });
+        }
+        void syncTableStatus();
+        return true;
       } catch {
         return false;
       }
     },
-    [clearActiveCall, venue.slug],
+    [clearActiveCall, syncTableStatus, venue.slug],
   );
 
   const restoreActiveCall = useCallback(async () => {
+    await syncTableStatus();
     const stored = sessionStorage.getItem(storageKey);
-    if (!stored) return;
-    await syncCallStatus(stored);
-  }, [storageKey, syncCallStatus]);
+    if (stored) await syncCallStatus(stored);
+  }, [storageKey, syncCallStatus, syncTableStatus]);
 
   useEffect(() => {
     setIsInIframe(window.self !== window.top);
@@ -201,12 +266,12 @@ export function PublicMenuView({
   }, [isEmbedded]);
 
   useEffect(() => {
-    if (!activeCallId) return;
+    if (!tableNumber && !roomNumber) return;
     const poll = setInterval(() => {
-      void syncCallStatus(activeCallId);
+      void syncTableStatus();
     }, 8000);
     return () => clearInterval(poll);
-  }, [activeCallId, syncCallStatus]);
+  }, [roomNumber, syncTableStatus, tableNumber]);
 
   useEffect(() => {
     const timers = resetTimersRef.current;
@@ -267,7 +332,7 @@ export function PublicMenuView({
   }
 
   async function sendCall(type: "WAITER" | "BILL") {
-    if (activeCallId) return;
+    if (hasActiveType(type)) return;
     setCallErrorCode(null);
     setActionState((s) => ({ ...s, [type]: "loading", CANCEL: "idle" }));
     try {
@@ -310,9 +375,14 @@ export function PublicMenuView({
         setActiveCallId(data.id);
         setCallCancellable(true);
         sessionStorage.setItem(storageKey, data.id);
+        setActiveCalls((prev) => [
+          ...prev.filter((c) => c.type !== type),
+          { id: data.id!, type, cancellable: true },
+        ]);
       }
       setActionState((s) => ({ ...s, [type]: "success" }));
       resetActionState(type);
+      void syncTableStatus();
     } catch {
       setActionState((s) => ({ ...s, [type]: "error" }));
       resetActionState(type, 4000);
@@ -339,7 +409,6 @@ export function PublicMenuView({
 
   async function sendOrder() {
     if (!canUseCallActions || cartLines.length === 0) return;
-    if (activeCallId) return;
     setOrderState("loading");
     setCartOpen(false);
     try {
@@ -374,9 +443,14 @@ export function PublicMenuView({
         setActiveCallId(data.id);
         setCallCancellable(true);
         sessionStorage.setItem(storageKey, data.id);
+        setActiveCalls((prev) => [
+          ...prev.filter((c) => c.type !== "ORDER"),
+          { id: data.id!, type: "ORDER", cancellable: true },
+        ]);
       }
       setOrderState("success");
       setTimeout(() => setOrderState("idle"), 3000);
+      void syncTableStatus();
     } catch {
       setOrderState("error");
       setTimeout(() => setOrderState("idle"), 4000);
@@ -384,7 +458,10 @@ export function PublicMenuView({
   }
 
   async function cancelCall() {
-    if (!activeCallId) return;
+    const target =
+      activeCalls.find((c) => c.cancellable) ??
+      (activeCallId && callCancellable ? activeCalls.find((c) => c.id === activeCallId) : null);
+    if (!target) return;
     setActionState((s) => ({ ...s, CANCEL: "loading" }));
     try {
       const res = await fetch("/api/waiter-call/cancel", {
@@ -392,24 +469,20 @@ export function PublicMenuView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           venueSlug: venue.slug,
-          callId: activeCallId,
+          callId: target.id,
         }),
       });
       if (!res.ok) {
         setActionState((s) => ({ ...s, CANCEL: "error" }));
         resetActionState("CANCEL", 4000);
-        if (res.status === 404) {
-          setActiveCallId(null);
-          setCallCancellable(false);
-          sessionStorage.removeItem(storageKey);
+        if (res.status === 404 || res.status === 409) {
+          void syncTableStatus();
         }
         return;
       }
-      setActiveCallId(null);
-      setCallCancellable(false);
-      sessionStorage.removeItem(storageKey);
       setActionState((s) => ({ ...s, CANCEL: "success", WAITER: "idle", BILL: "idle" }));
       resetActionState("CANCEL");
+      void syncTableStatus();
     } catch {
       setActionState((s) => ({ ...s, CANCEL: "error" }));
       resetActionState("CANCEL", 4000);
@@ -440,7 +513,9 @@ export function PublicMenuView({
     return pickQrMenuTranslation(translations, lang)?.name ?? "—";
   }
 
-  const hasPendingCall = Boolean(activeCallId);
+  const hasActiveType = (type: ActiveCallType) => activeCalls.some((c) => c.type === type);
+  const hasCancellableCall = activeCalls.some((c) => c.cancellable);
+  const hasActiveOrder = hasActiveType("ORDER");
   const canUseCallActions = Boolean(tableNumber || roomNumber);
   const cartCount = cartItemCount(cartLines);
   const cartTotalStr = cartTotal(cartLines);
@@ -730,16 +805,14 @@ export function PublicMenuView({
             <button
               type="button"
               onClick={() => void sendOrder()}
-              disabled={orderState === "loading" || hasPendingCall}
+              disabled={orderState === "loading"}
               className={cn(
                 "shrink-0 rounded-button px-4 py-2.5 text-sm font-bold text-white",
                 orderState === "success"
                   ? "bg-emerald-600"
                   : orderState === "error"
                     ? "bg-red-600"
-                    : hasPendingCall
-                      ? "bg-slate-300"
-                      : "bg-brand-blue",
+                    : "bg-brand-blue",
               )}
             >
               {orderState === "loading"
@@ -767,11 +840,11 @@ export function PublicMenuView({
           <button
             type="button"
             onClick={() => void sendCall("WAITER")}
-            disabled={actionState.WAITER === "loading" || hasPendingCall}
+            disabled={actionState.WAITER === "loading" || hasActiveType("WAITER")}
             className={cn(
               "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
-              hasPendingCall
+              hasActiveType("WAITER")
                 ? "bg-slate-100 text-slate-400"
                 : "bg-primary text-white shadow-glow",
               actionState.WAITER === "success" && "bg-emerald-600 text-white",
@@ -786,11 +859,11 @@ export function PublicMenuView({
           <button
             type="button"
             onClick={() => void sendCall("BILL")}
-            disabled={actionState.BILL === "loading" || hasPendingCall}
+            disabled={actionState.BILL === "loading" || hasActiveType("BILL")}
             className={cn(
               "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
-              hasPendingCall
+              hasActiveType("BILL")
                 ? "bg-slate-100 text-slate-400"
                 : "bg-brand-blue text-white",
               actionState.BILL === "success" && "bg-emerald-600 text-white",
@@ -803,11 +876,11 @@ export function PublicMenuView({
           <button
             type="button"
             onClick={() => void cancelCall()}
-            disabled={!hasPendingCall || !callCancellable || actionState.CANCEL === "loading"}
+            disabled={!hasCancellableCall || actionState.CANCEL === "loading"}
             className={cn(
               "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button border font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
-              hasPendingCall
+              hasCancellableCall
                 ? "border-slate-300 bg-white text-slate-700"
                 : "border-slate-200 bg-slate-50 text-slate-400",
               actionState.CANCEL === "success" && "border-emerald-300 bg-emerald-50 text-emerald-800",
@@ -1021,16 +1094,16 @@ export function PublicMenuView({
                   <button
                     type="button"
                     onClick={() => void sendOrder()}
-                    disabled={orderState === "loading" || hasPendingCall}
+                    disabled={orderState === "loading"}
                     className={cn(
                       "mt-4 w-full rounded-button py-3 text-sm font-bold text-white",
-                      hasPendingCall ? "bg-slate-300" : "bg-brand-blue",
+                      "bg-brand-blue",
                     )}
                   >
                     {orderState === "loading" ? ui.orderSending : ui.sendOrder}
                   </button>
-                  {hasPendingCall ? (
-                    <p className="mt-2 text-center text-xs text-slate-500">{ui.orderTypeMismatch}</p>
+                  {hasActiveOrder ? (
+                    <p className="mt-2 text-center text-xs text-slate-500">{ui.orderInProgress}</p>
                   ) : null}
                 </div>
               ) : null}
