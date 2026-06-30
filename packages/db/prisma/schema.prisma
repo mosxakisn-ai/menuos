@@ -50,6 +50,12 @@ enum SubscriptionStatus {
   CANCELED
 }
 
+enum ItemLabel {
+  OFFER
+  BEST
+  NEW
+}
+
 enum SupportedLanguage {
   GR
   EN
@@ -173,14 +179,15 @@ model CategoryTranslation {
 }
 
 model Item {
-  id        String   @id @default(cuid())
+  id         String     @id @default(cuid())
   categoryId String
-  price     Decimal  @db.Decimal(10, 2)
-  photoUrl  String?
-  available Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  price      Decimal    @db.Decimal(10, 2)
+  photoUrl   String?
+  label      ItemLabel?
+  available  Boolean    @default(true)
+  sortOrder  Int        @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   category     Category          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   translations ItemTranslation[]

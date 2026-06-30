@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -8,6 +9,14 @@ export async function GET(request: Request) {
 
   if (!callId || !venueSlug) {
     return NextResponse.json({ error: "callId and venueSlug required" }, { status: 400 });
+  }
+
+  const ip = clientIp(request);
+  if (!checkRateLimit(`waiter-status:${ip}:${venueSlug}`, 30, 60_000)) {
+    return NextResponse.json(
+      { error: "Too many requests", code: "rate_limited" },
+      { status: 429 },
+    );
   }
 
   const call = await prisma.waiterCall.findFirst({
@@ -19,9 +28,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Call not found" }, { status: 404 });
   }
 
+  const active = call.status === "PENDING" || call.status === "ACKNOWLEDGED";
+
   return NextResponse.json({
     status: call.status,
     type: call.type,
+    active,
     cancellable: call.status === "PENDING",
   });
 }

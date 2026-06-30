@@ -52,9 +52,17 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
     return <PublicMenuUnavailable venueName={venue.name} />;
   }
 
+  const publicVenue = {
+    name: venue.name,
+    slug: venue.slug,
+    logoUrl: venue.logoUrl,
+    primaryColor: venue.primaryColor,
+    menus: venue.menus,
+  };
+
   return (
     <PublicMenuView
-      venue={venue}
+      venue={publicVenue}
       language={lang}
       tableNumber={sp.table}
       roomNumber={sp.room}

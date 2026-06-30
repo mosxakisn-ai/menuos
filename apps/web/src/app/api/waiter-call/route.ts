@@ -71,6 +71,19 @@ export async function POST(request: Request) {
     );
   }
 
+  const existing = await prisma.waiterCall.findFirst({
+    where: {
+      venueId: venue.id,
+      tableNumber: parsed.data.tableNumber ?? null,
+      roomNumber: parsed.data.roomNumber ?? null,
+      status: { in: ["PENDING", "ACKNOWLEDGED"] },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  if (existing) {
+    return NextResponse.json({ id: existing.id, type: existing.type });
+  }
+
   const call = await prisma.waiterCall.create({
     data: {
       venueId: venue.id,

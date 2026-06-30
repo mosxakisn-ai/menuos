@@ -25,7 +25,7 @@ export const MARKETING_EN = {
       ctaTrial: "Start free 7-day trial",
       ctaPricing: "View pricing",
       ctaDemo: "See how it looks",
-      trust: ["No app for guests", "Greek & English", "Setup ~60 min", "EU hosting"],
+      trust: ["No app for guests", "4 QR languages", "Setup ~60 min", "EU hosting"],
     },
     whatWeDo: {
       title: "What is MenuOS?",

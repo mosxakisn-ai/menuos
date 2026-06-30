@@ -68,6 +68,8 @@ export const categoryCreateSchema = z.object({
   nameFr: z.string().max(120).optional(),
 });
 
+export const itemLabelSchema = z.enum(["OFFER", "BEST", "NEW"]).nullable();
+
 export const itemCreateSchema = z.object({
   categoryId: z.string().min(1),
   price: z.number().min(0).max(99999),
@@ -75,6 +77,7 @@ export const itemCreateSchema = z.object({
   nameEn: z.string().max(120).optional(),
   nameDe: z.string().max(120).optional(),
   nameFr: z.string().max(120).optional(),
+  label: itemLabelSchema.optional(),
   descriptionGr: z.string().max(1000).optional(),
   descriptionEn: z.string().max(1000).optional(),
   ingredientsGr: z.string().max(500).optional(),
@@ -117,8 +120,9 @@ export const itemPatchSchema = z
   .object({
     available: z.boolean().optional(),
     price: z.number().finite().min(0).max(99999).optional(),
+    label: itemLabelSchema.optional(),
   })
-  .refine((d) => d.available !== undefined || d.price !== undefined, {
+  .refine((d) => d.available !== undefined || d.price !== undefined || d.label !== undefined, {
     message: "Nothing to update",
   });
 

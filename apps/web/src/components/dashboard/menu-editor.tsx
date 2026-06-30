@@ -2,6 +2,7 @@
 
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, type ItemLabel } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,7 @@ type Item = {
   id: string;
   price: { toString(): string };
   available: boolean;
+  label: string | null;
   translations: Translation[];
 };
 type Category = {
@@ -59,6 +61,7 @@ export function MenuEditor({
     nameFr: "",
     price: "",
     descriptionGr: "",
+    label: "" as "" | ItemLabel,
   });
   const [addingItem, setAddingItem] = useState(false);
 
@@ -130,18 +133,30 @@ export function MenuEditor({
           nameFr: itemForm.nameFr.trim() || undefined,
           price: parseFloat(itemForm.price),
           descriptionGr: itemForm.descriptionGr.trim() || undefined,
+          label: itemForm.label || undefined,
         }),
       });
       const data = await res.json();
       showFromResponse(data, res.ok);
       if (res.ok) {
-        setItemForm({ nameGr: "", nameEn: "", nameDe: "", nameFr: "", price: "", descriptionGr: "" });
+        setItemForm({ nameGr: "", nameEn: "", nameDe: "", nameFr: "", price: "", descriptionGr: "", label: "" });
         setItemCategoryId(null);
         await loadMenus();
       }
     } finally {
       setAddingItem(false);
     }
+  }
+
+  async function setItemLabel(itemId: string, label: ItemLabel | null) {
+    const res = await fetch(`/api/items/${itemId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label }),
+    });
+    const data = await res.json();
+    showFromResponse(data, res.ok);
+    if (res.ok) await loadMenus();
   }
 
   async function toggleItem(item: Item) {
@@ -297,14 +312,39 @@ export function MenuEditor({
                   <li className="py-3 text-sm text-slate-500">Δεν υπάρχουν πιάτα — πρόσθεσε το πρώτο.</li>
                 ) : (
                   cat.items.map((item) => (
-                    <li key={item.id} className="flex items-center justify-between gap-2 py-3">
+                    <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
                       <div className="min-w-0">
-                        <p className={`font-medium ${item.available ? "text-brand-navy" : "text-slate-400 line-through"}`}>
-                          {tName(item.translations)}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className={`font-medium ${item.available ? "text-brand-navy" : "text-slate-400 line-through"}`}>
+                            {tName(item.translations)}
+                          </p>
+                          {isItemLabel(item.label) ? (
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${ITEM_LABEL_STYLES[item.label]}`}
+                            >
+                              {ITEM_LABEL_OPTIONS.find((o) => o.value === item.label)?.dashboardGr}
+                            </span>
+                          ) : null}
+                        </div>
                         <p className="text-sm text-brand-blue">€{item.price.toString()}</p>
                       </div>
-                      <div className="flex shrink-0 gap-1">
+                      <div className="flex shrink-0 flex-wrap items-center gap-1">
+                        <select
+                          value={item.label ?? ""}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            void setItemLabel(item.id, v ? (v as ItemLabel) : null);
+                          }}
+                          className="max-w-[8.5rem] rounded border border-slate-200 px-2 py-1 text-xs text-brand-navy"
+                          title="Ετικέτα στο QR menu"
+                        >
+                          <option value="">Χωρίς ετικέτα</option>
+                          {ITEM_LABEL_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.dashboardGr}
+                            </option>
+                          ))}
+                        </select>
                         <button
                           type="button"
                           onClick={() => toggleItem(item)}
@@ -372,6 +412,23 @@ export function MenuEditor({
                       onChange={(e) => setItemForm((f) => ({ ...f, descriptionGr: e.target.value }))}
                       className="rounded-button border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
                     />
+                    <label className="block text-sm sm:col-span-2">
+                      <span className="font-medium text-brand-navy">Ετικέτα στο QR menu</span>
+                      <select
+                        value={itemForm.label}
+                        onChange={(e) =>
+                          setItemForm((f) => ({ ...f, label: e.target.value as "" | ItemLabel }))
+                        }
+                        className="mt-1 block w-full rounded-button border border-slate-200 px-3 py-2 text-sm"
+                      >
+                        <option value="">Χωρίς ετικέτα</option>
+                        {ITEM_LABEL_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.dashboardGr}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                   </div>
                   <div className="flex gap-2">
                     <button type="submit" disabled={addingItem} className={buttonClass("primary", "sm")}>

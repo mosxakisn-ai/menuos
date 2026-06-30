@@ -25,7 +25,7 @@ export const MARKETING = {
       ctaTrial: "Ξεκίνα δωρεάν 7 ημέρες",
       ctaPricing: "Δες τις τιμές",
       ctaDemo: "Δες πώς φαίνεται",
-      trust: ["Χωρίς app για πελάτη", "Ελληνικά & Αγγλικά", "Setup ~60′", "Hosting ΕΕ"],
+      trust: ["Χωρίς app για πελάτη", "4 γλώσσες QR", "Setup ~60′", "Hosting ΕΕ"],
     },
     whatWeDo: {
       title: "Τι είναι το MenuOS;",

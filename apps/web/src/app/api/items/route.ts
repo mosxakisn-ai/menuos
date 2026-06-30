@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     data: {
       categoryId: parsed.data.categoryId,
       price: parsed.data.price,
+      label: parsed.data.label ?? null,
       available: parsed.data.available ?? true,
       sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
       translations: {

@@ -25,7 +25,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const parsed = itemPatchSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Μη έγκυρη τιμή ή διαθεσιμότητα." }, { status: 400 });
+    return NextResponse.json({ error: "Μη έγκυρα δεδομένα πιάτου." }, { status: 400 });
   }
 
   const item = await prisma.item.update({
@@ -33,14 +33,14 @@ export async function PATCH(request: Request, { params }: Params) {
     data: {
       ...(parsed.data.available !== undefined ? { available: parsed.data.available } : {}),
       ...(parsed.data.price !== undefined ? { price: parsed.data.price } : {}),
+      ...(parsed.data.label !== undefined ? { label: parsed.data.label } : {}),
     },
     include: { translations: true },
   });
 
   return NextResponse.json({
     item,
-    message:
-      parsed.data.available === false ? "Το πιάτο απενεργοποιήθηκε." : "Το πιάτο ενημερώθηκε.",
+    message: parsed.data.available === false ? "Το πιάτο απενεργοποιήθηκε." : "Το πιάτο ενημερώθηκε.",
   });
 }
 

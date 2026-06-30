@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, Globe, Receipt, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SupportedLanguage } from "@menuos/db";
 import {
   QR_MENU_LANGUAGE_LABELS,
@@ -11,6 +11,8 @@ import {
   type QrMenuLanguage,
 } from "@menuos/shared";
 import { cn } from "@/lib/utils";
+import { ItemLabelBadge, MenuItemCard } from "@/components/menu/menu-item-card";
+import { isItemLabel } from "@menuos/shared";
 
 type Translation = {
   language: SupportedLanguage;
@@ -24,6 +26,7 @@ type Item = {
   id: string;
   price: { toString(): string };
   photoUrl: string | null;
+  label: string | null;
   translations: Translation[];
 };
 
@@ -49,6 +52,7 @@ type Venue = {
 
 type ActionKind = "WAITER" | "BILL" | "CANCEL";
 type ActionState = "idle" | "loading" | "success" | "error";
+type CallErrorCode = "rate_limited" | "generic";
 
 function callStorageKey(venueSlug: string, tableNumber?: string, roomNumber?: string) {
   return `menuos-call:${venueSlug}:${tableNumber ?? ""}:${roomNumber ?? ""}`;
@@ -74,6 +78,8 @@ export function PublicMenuView({
     BILL: "idle",
     CANCEL: "idle",
   });
+  const [callErrorCode, setCallErrorCode] = useState<CallErrorCode | null>(null);
+  const resetTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const ui = QR_MENU_UI[lang];
   const activeMenu = venue.menus.find((m) => m.id === activeMenuId) ?? venue.menus[0];
@@ -82,28 +88,57 @@ export function PublicMenuView({
     [venue.slug, tableNumber, roomNumber],
   );
 
+  const syncCallStatus = useCallback(
+    async (callId: string) => {
+      try {
+        const res = await fetch(
+          `/api/waiter-call/status?callId=${encodeURIComponent(callId)}&venueSlug=${encodeURIComponent(venue.slug)}`,
+        );
+        if (!res.ok) {
+          sessionStorage.removeItem(storageKey);
+          setActiveCallId(null);
+          return false;
+        }
+        const data = (await res.json()) as { active?: boolean };
+        if (data.active) {
+          setActiveCallId(callId);
+          return true;
+        }
+        sessionStorage.removeItem(storageKey);
+        setActiveCallId(null);
+        return false;
+      } catch {
+        return false;
+      }
+    },
+    [storageKey, venue.slug],
+  );
+
   const restoreActiveCall = useCallback(async () => {
     const stored = sessionStorage.getItem(storageKey);
     if (!stored) return;
-    try {
-      const res = await fetch(
-        `/api/waiter-call/status?callId=${encodeURIComponent(stored)}&venueSlug=${encodeURIComponent(venue.slug)}`,
-      );
-      if (!res.ok) {
-        sessionStorage.removeItem(storageKey);
-        return;
-      }
-      const data = (await res.json()) as { cancellable?: boolean };
-      if (data.cancellable) setActiveCallId(stored);
-      else sessionStorage.removeItem(storageKey);
-    } catch {
-      sessionStorage.removeItem(storageKey);
-    }
-  }, [storageKey, venue.slug]);
+    await syncCallStatus(stored);
+  }, [storageKey, syncCallStatus]);
 
   useEffect(() => {
     void restoreActiveCall();
   }, [restoreActiveCall]);
+
+  useEffect(() => {
+    if (!activeCallId) return;
+    const poll = setInterval(() => {
+      void syncCallStatus(activeCallId);
+    }, 8000);
+    return () => clearInterval(poll);
+  }, [activeCallId, syncCallStatus]);
+
+  useEffect(() => {
+    const timers = resetTimersRef.current;
+    return () => {
+      timers.forEach(clearTimeout);
+      timers.length = 0;
+    };
+  }, []);
 
   const locationLabel = useMemo(() => {
     if (tableNumber) return ui.table(tableNumber);
@@ -112,13 +147,16 @@ export function PublicMenuView({
   }, [tableNumber, roomNumber, ui]);
 
   function resetActionState(kind: ActionKind, delayMs = 3000) {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setActionState((s) => ({ ...s, [kind]: "idle" }));
+      if (kind === "WAITER" || kind === "BILL") setCallErrorCode(null);
     }, delayMs);
+    resetTimersRef.current.push(timer);
   }
 
   async function sendCall(type: "WAITER" | "BILL") {
     if (activeCallId) return;
+    setCallErrorCode(null);
     setActionState((s) => ({ ...s, [type]: "loading", CANCEL: "idle" }));
     try {
       const res = await fetch("/api/waiter-call", {
@@ -131,12 +169,13 @@ export function PublicMenuView({
           roomNumber,
         }),
       });
+      const data = (await res.json().catch(() => ({}))) as { id?: string; code?: string };
       if (!res.ok) {
+        setCallErrorCode(data.code === "rate_limited" ? "rate_limited" : "generic");
         setActionState((s) => ({ ...s, [type]: "error" }));
         resetActionState(type, 4000);
         return;
       }
-      const data = (await res.json()) as { id?: string };
       if (data.id) {
         setActiveCallId(data.id);
         sessionStorage.setItem(storageKey, data.id);
@@ -184,13 +223,13 @@ export function PublicMenuView({
     const state = actionState[kind];
     if (kind === "WAITER") {
       if (state === "success") return ui.called;
-      if (state === "error") return ui.callFailed;
+      if (state === "error") return callErrorCode === "rate_limited" ? ui.rateLimited : ui.callFailed;
       if (state === "loading") return ui.calling;
       return ui.callWaiter;
     }
     if (kind === "BILL") {
       if (state === "success") return ui.billSent;
-      if (state === "error") return ui.callFailed;
+      if (state === "error") return callErrorCode === "rate_limited" ? ui.rateLimited : ui.callFailed;
       if (state === "loading") return ui.calling;
       return ui.requestBill;
     }
@@ -271,24 +310,20 @@ export function PublicMenuView({
           activeMenu.categories.map((category) => (
             <section key={category.id}>
               <h2 className="font-serif text-xl font-bold text-primary">{tName(category.translations)}</h2>
-              <div className="mt-3 space-y-3">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {category.items.map((item) => {
                   const tr = pickQrMenuTranslation(item.translations, lang);
                   return (
-                    <button
+                    <MenuItemCard
                       key={item.id}
-                      type="button"
+                      name={tr?.name ?? "—"}
+                      description={tr?.description}
+                      price={item.price.toString()}
+                      photoUrl={item.photoUrl}
+                      label={item.label}
+                      lang={lang}
                       onClick={() => setSelectedItem(item)}
-                      className="flex w-full items-center gap-3 rounded-card bg-white p-3 text-left shadow-soft transition hover:shadow-card"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-primary">{tr?.name}</p>
-                        {tr?.description ? (
-                          <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{tr.description}</p>
-                        ) : null}
-                      </div>
-                      <p className="shrink-0 font-semibold text-primary">€{item.price.toString()}</p>
-                    </button>
+                    />
                   );
                 })}
               </div>
@@ -363,6 +398,23 @@ export function PublicMenuView({
               const tr = pickQrMenuTranslation(selectedItem.translations, lang);
               return (
                 <>
+                  {selectedItem.photoUrl || isItemLabel(selectedItem.label) ? (
+                    <div className="relative -mx-6 -mt-6 mb-4 aspect-[16/10] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
+                      {selectedItem.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={selectedItem.photoUrl}
+                          alt={tr?.name ?? ""}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : null}
+                      {isItemLabel(selectedItem.label) ? (
+                        <div className="absolute left-3 top-3">
+                          <ItemLabelBadge label={selectedItem.label} lang={lang} />
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <h3 className="font-serif text-2xl font-bold text-primary">{tr?.name}</h3>
                   <p className="mt-2 text-lg font-semibold text-primary">€{selectedItem.price.toString()}</p>
                   {tr?.description ? (
