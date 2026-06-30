@@ -32,15 +32,23 @@ export const MARKETING_EN = {
       ctaTrial: "Start free 7-day trial",
       ctaPricing: "View pricing",
       ctaDemo: "See how it looks",
-      trust: ["No app for guests", "4 QR languages", "Setup ~60 min", "EU hosting"],
+      trust: ["No app for guests", "Multiple QR languages", "Setup ~60 min", "EU hosting"],
     },
     heroShowcase: {
-      photoAlt: "Guest at a restaurant using a QR menu on mobile",
+      photoAlt: "Mediterranean taverna — tables with a view",
+      foodAlt: "Mediterranean dish close-up",
+      guestAlt: "Guest scanning a QR menu on their phone",
+      qrAlt: "QR code for Demo Taverna digital menu",
       scanBadge: "Scan · Table 12",
       liveDemo: "Live demo",
+      liveDemoHint: "Try the menu — scroll inside the phone",
       noAppPrefix: "No app — opens in the browser with",
       venueName: "Demo Taverna",
+      venueTagline: "Mediterranean cuisine",
       venueSubtitle: "Main menu",
+      tableTentTitle: "Scan for the menu",
+      tableTentBody: "See dishes, prices and allergens — no app needed.",
+      poweredBy: "Powered by",
     },
     whatWeDo: {
       title: "What is MenuOS?",
@@ -81,7 +89,7 @@ export const MARKETING_EN = {
         {
           step: "2",
           title: "Build your menu",
-          text: "Add categories, dishes, photos and prices. Four languages on the QR menu.",
+          text: "Add categories, dishes, photos and prices. Multiple languages on the QR menu.",
         },
         {
           step: "3",
@@ -98,8 +106,8 @@ export const MARKETING_EN = {
           text: "Guests open the menu on mobile. No app required.",
         },
         {
-          title: "4 QR languages",
-          text: "Greek, English, German and French — one tap on the guest's phone.",
+          title: "Multiple QR languages",
+          text: "Support for many languages — one tap on the guest's phone.",
         },
         {
           title: "Call waiter",
@@ -208,10 +216,10 @@ export const MARKETING_EN = {
   },
 
   stats: [
-    { value: "4", label: "QR languages" },
+    { value: "Many", label: "QR languages" },
     { value: "7", label: "Day trial" },
     { value: "60′", label: "Avg. setup time" },
-    { value: "0", label: "Guest app" },
+    { value: "No", label: "App — browser only" },
   ],
 
   pages: {
@@ -220,7 +228,7 @@ export const MARKETING_EN = {
       hero:
         "From table QR to dashboard — every tool for a modern digital menu, without complexity.",
       intro:
-        "MenuOS is not just «PDF with QR». It's a live menu with photos, bilingual support, call waiter and instant price updates — built for the Greek hospitality market.",
+        "MenuOS is not just «PDF with QR». It's a live menu with photos, multiple languages, call waiter and instant price updates — built for the Greek hospitality market.",
     },
     howItWorks: {
       badge: "Step by step",
@@ -235,7 +243,7 @@ export const MARKETING_EN = {
       hero: "We build digital tools that respect your time and improve the guest experience.",
       values: [
         { title: "Simplicity", text: "What the guest sees must be easy. What you see in the dashboard too." },
-        { title: "Greek market", text: "Seasonality, tourism, bilingual needs — not a generic foreign template." },
+        { title: "Greek market", text: "Seasonality, tourism, multilingual needs — not a generic foreign template." },
         { title: "Transparency", text: "Clear pricing, honest communication, no hidden fees or jargon." },
       ],
     },

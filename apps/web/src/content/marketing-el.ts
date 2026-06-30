@@ -32,15 +32,23 @@ export const MARKETING = {
       ctaTrial: "Ξεκίνα δωρεάν 7 ημέρες",
       ctaPricing: "Δες τις τιμές",
       ctaDemo: "Δες πώς φαίνεται",
-      trust: ["Χωρίς app για πελάτη", "4 γλώσσες QR", "Setup ~60′", "Hosting ΕΕ"],
+      trust: ["Χωρίς app για πελάτη", "Πολλαπλές γλώσσες QR", "Setup ~60′", "Hosting ΕΕ"],
     },
     heroShowcase: {
-      photoAlt: "Πελάτης σε εστιατόριο με QR menu στο κινητό",
+      photoAlt: "Μεσογειακή ταβέρνα — τραπέζια με θέα",
+      foodAlt: "Πιάτο μεσογειακής κουζίνας",
+      guestAlt: "Πελάτης που σκανάρει QR menu στο κινητό",
+      qrAlt: "QR code για το ψηφιακό menu της Demo Taverna",
       scanBadge: "Σάρωση · Τραπέζι 12",
       liveDemo: "Ζωντανό demo",
+      liveDemoHint: "Δοκιμάστε το menu — κάντε scroll μέσα στο κινητό",
       noAppPrefix: "Χωρίς app — ανοίγει στο browser με",
       venueName: "Demo Taverna",
+      venueTagline: "Μεσογειακή κουζίνα",
       venueSubtitle: "Κύριος κατάλογος",
+      tableTentTitle: "Σαρώστε για το menu",
+      tableTentBody: "Δείτε πιάτα, τιμές και allergens — χωρίς εφαρμογή.",
+      poweredBy: "Powered by",
     },
     whatWeDo: {
       title: "Τι είναι το MenuOS;",
@@ -81,7 +89,7 @@ export const MARKETING = {
         {
           step: "2",
           title: "Φτιάχνετε το menu",
-          text: "Προσθέτετε κατηγορίες, πιάτα, φωτογραφίες και τιμές. 4 γλώσσες στο QR menu.",
+          text: "Προσθέτετε κατηγορίες, πιάτα, φωτογραφίες και τιμές. Πολλαπλές γλώσσες στο QR menu.",
         },
         {
           step: "3",
@@ -98,8 +106,8 @@ export const MARKETING = {
           text: "Οι πελάτες ανοίγουν το menu από το κινητό. Δεν χρειάζεται app.",
         },
         {
-          title: "4 γλώσσες QR",
-          text: "Ελληνικά, English, Deutsch, Français — αλλαγή με ένα πάτημα στο κινητό του πελάτη.",
+          title: "Πολλαπλές γλώσσες QR",
+          text: "Υποστήριξη πολλαπλών γλωσσών — αλλαγή με ένα πάτημα στο κινητό του πελάτη.",
         },
         {
           title: "Κλήση σερβιτόρου",
@@ -140,15 +148,15 @@ export const MARKETING = {
         },
         {
           quote:
-            "Το pool bar ενημερώνεται σε δευτερόλεπτα. Η κλήση σερβιτόρου από το QR μας γλύκανε την rush ώρα.",
+            "Η λειτουργία κλήσης σερβιτόρου από το QR μείωσε τον χρόνο αναμονής στο pool bar. Το προσωπικό ενημερώνεται άμεσα και η ροή δουλειάς είναι πιο οργανωμένη.",
           name: "Αλέξανδρος Π.",
-          role: "Ξενοδοχείο, Χανιά",
+          role: "Ξενοδοχείο Χανιά",
         },
         {
           quote:
-            "Χωρίς επανεκτυπώσεις κάθε σεζόν. Οι τιμές αλλάζουν από το κινητό μου πριν ανοίξουμε.",
+            "Αλλάζουμε τιμές από το κινητό πριν ανοίξουμε. Χωρίς επανεκτυπώσεις, χωρίς καθυστερήσεις — το QR menu ενημερώνεται άμεσα.",
           name: "Ελένη Σ.",
-          role: "Beach bar, Πάρος",
+          role: "Beach Bar Πάρος",
         },
       ],
       disclaimer: "Ενδεικτικά παραδείγματα από πελάτες μας.",
@@ -208,10 +216,10 @@ export const MARKETING = {
   },
 
   stats: [
-    { value: "4", label: "Γλώσσες QR" },
+    { value: "Πολλές", label: "Γλώσσες QR" },
     { value: "7", label: "Ημέρες δοκιμή" },
     { value: "60′", label: "Μέσος χρόνος setup" },
-    { value: "0", label: "App για πελάτη" },
+    { value: "Χωρίς", label: "App — μόνο browser" },
   ],
 
   pages: {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { waiterCallCancelSchema } from "@menuos/shared";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -19,7 +19,11 @@ export async function POST(request: Request) {
 
   const ip = clientIp(request);
   const rateKey = `waiter-cancel:${ip}:${parsed.data.venueSlug}`;
-  if (!(await checkRateLimit(rateKey, 8, 60_000))) {
+  const rateLimit = await checkRateLimitOutcome(rateKey, 8, 60_000);
+  if (rateLimit === "unavailable") {
+    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
+  }
+  if (rateLimit === "limited") {
     return NextResponse.json(
       { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },

@@ -3,7 +3,7 @@ import { prisma, WaiterCallStatus, WaiterCallType } from "@menuos/db";
 import { waiterCallSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 export async function GET(request: Request) {
@@ -49,13 +49,18 @@ export async function POST(request: Request) {
 
   const ip = clientIp(request);
   const rateKey = `waiter:${ip}:${parsed.data.venueSlug}`;
-  if (!(await checkRateLimit(rateKey, 5, 60_000))) {
+  const rateLimit = await checkRateLimitOutcome(rateKey, 5, 60_000);
+  if (rateLimit === "unavailable") {
+    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
+  }
+  if (rateLimit === "limited") {
     return NextResponse.json(
       { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },
     );
   }
 
+  try {
   const venue = await prisma.venue.findUnique({
     where: { slug: parsed.data.venueSlug },
     include: { organization: { include: { subscription: true } } },
@@ -128,4 +133,8 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ id: call.id, type: call.type });
+  } catch (err) {
+    console.error("[menuos] waiter-call POST failed", err);
+    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
+  }
 }

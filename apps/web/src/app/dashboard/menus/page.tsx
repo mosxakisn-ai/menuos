@@ -28,7 +28,7 @@ export default async function MenusPage({ searchParams }: Props) {
         <div>
           <h1 className="font-serif text-2xl font-bold text-primary">Κατάλογος</h1>
           <p className="text-sm text-slate-600">
-            Πρόσθεσε κατηγορίες και πιάτα — υποστηρίζονται 4 γλώσσες στο QR menu (ΕΛ, EN, DE, FR).
+            Πρόσθεσε κατηγορίες και πιάτα — υποστηρίζονται πολλαπλές γλώσσες στο QR menu.
           </p>
         </div>
         {canImportPdf ? (

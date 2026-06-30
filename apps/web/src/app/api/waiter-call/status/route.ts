@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -12,7 +12,11 @@ export async function GET(request: Request) {
   }
 
   const ip = clientIp(request);
-  if (!(await checkRateLimit(`waiter-status:${ip}:${venueSlug}`, 30, 60_000))) {
+  const rateLimit = await checkRateLimitOutcome(`waiter-status:${ip}:${venueSlug}`, 30, 60_000);
+  if (rateLimit === "unavailable") {
+    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
+  }
+  if (rateLimit === "limited") {
     return NextResponse.json(
       { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },

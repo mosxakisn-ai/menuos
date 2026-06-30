@@ -31,4 +31,14 @@
   .premium-card {
     @apply rounded-card border border-slate-200/80 bg-white shadow-card transition duration-300 hover:-translate-y-0.5 hover:shadow-cardHover;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-up,
+    .animate-fade-up-delay,
+    .animate-fade-up-delay-2 {
+      opacity: 1 !important;
+      animation: none !important;
+      transform: none !important;
+    }
+  }
 }

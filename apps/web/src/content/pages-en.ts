@@ -35,9 +35,9 @@ export const PAGES_EN = {
         bullets: ["Ideal for hotels", "Branding per menu", "Easy categories"],
       },
       {
-        title: "4 QR languages",
-        description: "Guests choose Greek, English, German or French on the QR menu — one tap.",
-        bullets: ["4 QR languages", "Great for tourism", "Allergens & ingredients"],
+        title: "Multiple QR languages",
+        description: "Guests choose their language on the QR menu — one tap.",
+        bullets: ["Multiple QR languages", "Great for tourism", "Allergens & ingredients"],
       },
       {
         title: "Call waiter",
@@ -125,7 +125,7 @@ export const PAGES_EN = {
     faq: [
       { q: "What is a QR menu?", a: "A digital menu that opens when the guest scans a QR code. No app needed." },
       { q: "Does it fit hotels?", a: "Yes — pool bar, breakfast, room service. Separate menu per area." },
-      { q: "How many languages?", a: "4 languages on the QR menu: Greek, English, German, French — one tap to switch." },
+      { q: "How many languages?", a: "Multiple languages on the QR menu — one tap to switch." },
       { q: "Can I change prices quickly?", a: "Yes. From the dashboard — changes appear instantly." },
     ],
     cta: {
@@ -143,7 +143,7 @@ export const PAGES_EN = {
       {
         title: "Tourists & bilingual",
         description: "Guests read the menu in their language — ideal for islands and cities.",
-        bullets: ["GR / EN / DE / FR", "Better experience", "4 QR languages"],
+        bullets: ["Multiple languages", "Better experience", "For tourists"],
       },
       {
         title: "Visual menu",
@@ -161,7 +161,7 @@ export const PAGES_EN = {
     heroTitle: "About us",
     paragraphs: [
       "MenuOS is a Greek digital QR menu platform. Our goal: every restaurant, hotel or bar offers a modern mobile menu — without building their own app.",
-      "We know Greek hospitality: seasonality, tourists, 4 QR languages, fast price changes.",
+      "We know Greek hospitality: seasonality, tourists, multiple QR languages, fast price changes.",
       "We don't sell hardware. We give you an online service: build menu, print QR, guests scan.",
     ],
     valuesTitle: "Our values",
@@ -205,7 +205,7 @@ export const PAGES_EN = {
         price: "€0",
         period: " / 7 days",
         description: "Try the platform before choosing a plan.",
-        features: ["1 venue", "1 menu", "50 dishes", "QR codes", "4 QR languages", "No card"],
+        features: ["1 venue", "1 menu", "50 dishes", "QR codes", "Multiple languages", "No card"],
         cta: "Sign up",
       },
       {
@@ -213,7 +213,7 @@ export const PAGES_EN = {
         price: "€9.99",
         period: "/month",
         description: "Ideal for restaurant, café or single venue.",
-        features: ["1 venue", "3 menus", "Unlimited dishes", "QR codes", "Call waiter", "4 QR languages"],
+        features: ["1 venue", "3 menus", "Unlimited dishes", "QR codes", "Call waiter", "Multiple languages"],
         cta: "Start Basic",
         badge: "Popular",
         highlighted: true,
@@ -223,7 +223,7 @@ export const PAGES_EN = {
         price: "€19.99",
         period: "/month",
         description: "For hotels and businesses with multiple areas.",
-        features: ["3 venues", "Unlimited menus", "Call waiter", "4 QR languages", "Priority support", "PDF import"],
+        features: ["3 venues", "Unlimited menus", "Call waiter", "Multiple languages", "Priority support", "PDF import"],
         cta: "Start Pro",
       },
     ],

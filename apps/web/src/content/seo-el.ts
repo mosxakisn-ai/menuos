@@ -64,7 +64,7 @@ export const SEO_PAGES = {
   services: {
     title: "Υπηρεσίες — Ψηφιακό menu & QR codes",
     description:
-      "Υπηρεσίες MenuOS: ψηφιακό menu, QR codes, 4 γλώσσες (ΕΛ/EN/DE/FR), κλήση σερβιτόρου, online panel για εστιατόρια και ξενοδοχεία.",
+      "Υπηρεσίες MenuOS: ψηφιακό menu, QR codes, πολλαπλές γλώσσες, κλήση σερβιτόρου, online panel για εστιατόρια και ξενοδοχεία.",
     path: "/ypiresies",
     breadcrumbLabel: "Υπηρεσίες",
     keywords: ["υπηρεσίες QR menu", "ψηφιακό menu SaaS", "menu platform εστιατόριο"],
@@ -146,7 +146,7 @@ export const SEO_QR_MENU_FAQ = [
   },
   {
     q: "Πόσες γλώσσες υποστηρίζονται;",
-    a: "4 γλώσσες στο QR menu: Ελληνικά, English, Deutsch, Français — αλλαγή με ένα πάτημα.",
+    a: "Πολλαπλές γλώσσες στο QR menu — αλλαγή με ένα πάτημα.",
   },
   {
     q: "Μπορώ να αλλάξω τιμές γρήγορα;",

@@ -69,7 +69,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
         heading: "Πλεονεκτήματα ψηφιακού",
         paragraphs: [
           "Άμεσες αλλαγές τιμών και πιάτων χωρίς επανεκτύπωση.",
-          "4 γλώσσες QR — ιδανικό για τουριστικές περιοχές.",
+          "Πολλαπλές γλώσσες QR — ιδανικό για τουριστικές περιοχές.",
           "Φωτογραφίες πιάτων και allergens online.",
           "Κλήση σερβιτόρου από το menu (με QR ανά τραπέζι).",
         ],
@@ -86,7 +86,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
     slug: "poliglosso-menu-touristes",
     title: "Πολυγλωσσικό menu για τουρίστες — GR, EN, DE, FR",
     description:
-      "Γιατί οι τουρίστες θέλουν menu στη γλώσσα τους και πώς το λύνει το QR menu με 4 γλώσσες.",
+      "Γιατί οι τουρίστες θέλουν menu στη γλώσσα τους και πώς το λύνει το QR menu με πολλαπλές γλώσσες.",
     publishedAt: "2026-06-22",
     readingMinutes: 4,
     relatedPaths: ["/rodos/qr-menu", "/santorini/digital-menu", "/ypiresies"],
@@ -98,7 +98,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
         ],
       },
       {
-        heading: "4 γλώσσες QR",
+        heading: "Πολλαπλές γλώσσες QR",
         paragraphs: [
           "Ελληνικά, English, Deutsch, Français — καλύπτουν το μεγαλύτερο μέρος των επισκεπτών στην Ελλάδα.",
           "Συμπληρώνετε τα κείμενα μία φορά στο panel — ο πελάτης επιλέγει γλώσσα στο κινητό.",

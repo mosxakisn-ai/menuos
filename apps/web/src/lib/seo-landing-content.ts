@@ -128,26 +128,26 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
         `Το MenuOS σας βοηθά να αντικαταστήσετε το printed menu με ένα σύγχρονο ${product}. Οι πελάτες σκανάρουν QR, βλέπουν φωτογραφίες και τιμές — εσείς ενημερώνετε από το panel σας σε λεπτά.`,
         config.city
           ? `Ιδανικό για επιχειρήσεις ${context}: τουρίστες, εποχικότητα, γρήγορες αλλαγές τιμών χωρίς επανεκτύπωση.`
-          : `Ιδανικό για ${context} που θέλουν premium εμφάνιση, 4 γλώσσες QR και απλή διαχείριση χωρίς τεχνικές γνώσεις.`,
+          : `Ιδανικό για ${context} που θέλουν premium εμφάνιση, πολλαπλές γλώσσες QR και απλή διαχείριση χωρίς τεχνικές γνώσεις.`,
         "Ξεκινήστε με δωρεάν δοκιμή 7 ημερών — χωρίς κάρτα. Κατεβάζετε QR codes και είστε live την ίδια μέρα.",
       ]
     : [
         `MenuOS helps you replace printed menus with a modern ${product}. Guests scan a QR code, browse photos and prices — you update everything from your panel in minutes.`,
         config.city
           ? `Built for businesses ${context}: tourists, seasonal menus, and instant price updates without reprinting.`
-          : `Built for ${context} that want a premium look, 4 QR languages, and simple management without technical skills.`,
+          : `Built for ${context} that want a premium look, multiple QR languages, and simple management without technical skills.`,
         "Start with a free 7-day trial — no credit card. Download QR codes and go live the same day.",
       ];
 
   const bullets = isEl
     ? [
-        "4 γλώσσες QR (ΕΛ / EN / DE / FR)",
+        "Πολλαπλές γλώσσες QR",
         "Κλήση σερβιτόρου από το menu",
         "QR codes ανά τραπέζι ή δωμάτιο",
         "Ενημέρωση τιμών σε δευτερόλεπτα",
       ]
     : [
-        "4 QR languages (GR / EN / DE / FR)",
+        "Multiple QR languages",
         "Call waiter from the menu",
         "QR codes per table or room",
         "Update prices in seconds",
@@ -165,7 +165,7 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
         },
         {
           q: "Ταιριάζει για τουρίστες;",
-          a: "Ναι — 4 γλώσσες QR με ένα πάτημα στο κινητό.",
+          a: "Ναι — πολλαπλές γλώσσες QR με ένα πάτημα στο κινητό.",
         },
         {
           q: "Υπάρχει δοκιμή;",
@@ -183,7 +183,7 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
         },
         {
           q: "Is it good for tourists?",
-          a: "Yes — 4 QR languages with one tap on mobile.",
+          a: "Yes — multiple QR languages with one tap on mobile.",
         },
         {
           q: "Is there a trial?",

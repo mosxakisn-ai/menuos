@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Globe, Receipt, UtensilsCrossed, X } from "lucide-react";
+import { Bell, ChevronLeft, Globe, Receipt, UtensilsCrossed, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SupportedLanguage } from "@menuos/db";
 import {
@@ -10,6 +10,7 @@ import {
   pickQrMenuTranslation,
   type QrMenuLanguage,
 } from "@menuos/shared";
+import { LogoMark } from "@/components/brand/logo-mark";
 import { cn } from "@/lib/utils";
 import { ItemLabelBadge, MenuItemCard } from "@/components/menu/menu-item-card";
 import { isItemLabel } from "@menuos/shared";
@@ -80,6 +81,7 @@ export function PublicMenuView({
   });
   const [callErrorCode, setCallErrorCode] = useState<CallErrorCode | null>(null);
   const [callCancellable, setCallCancellable] = useState(false);
+  const [canGoBack, setCanGoBack] = useState(false);
   const resetTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -131,6 +133,10 @@ export function PublicMenuView({
   }, [restoreActiveCall]);
 
   useEffect(() => {
+    setCanGoBack(window.history.length > 1 || Boolean(document.referrer));
+  }, []);
+
+  useEffect(() => {
     if (!activeCallId) return;
     const poll = setInterval(() => {
       void syncCallStatus(activeCallId);
@@ -169,6 +175,24 @@ export function PublicMenuView({
     if (roomNumber) return ui.room(roomNumber);
     return null;
   }, [tableNumber, roomNumber, ui]);
+
+  function handleBack() {
+    if (selectedItem) {
+      setSelectedItem(null);
+      return;
+    }
+    if (canGoBack) {
+      window.history.back();
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function backLabel(): string {
+    if (selectedItem) return ui.backToMenu;
+    if (canGoBack) return ui.back;
+    return ui.menuTop;
+  }
 
   function resetActionState(kind: ActionKind, delayMs = 3000) {
     const timer = setTimeout(() => {
@@ -292,60 +316,99 @@ export function PublicMenuView({
   const categoryNav = activeMenu?.categories ?? [];
 
   return (
-    <div className={cn("min-h-screen bg-surface", canUseCallActions ? "pb-32" : "pb-8")}>
+    <div className={cn("min-h-screen bg-surface", canUseCallActions ? "pb-36" : "pb-8")}>
+      {/* Sticky top nav — πίσω / πάνω */}
+      <div className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-lg items-center gap-2 px-3 py-2.5">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center gap-1 rounded-button px-2 text-sm font-semibold text-primary hover:bg-surface"
+            aria-label={backLabel()}
+          >
+            <ChevronLeft className="h-5 w-5 shrink-0" aria-hidden />
+            <span className="max-w-[7rem] truncate sm:max-w-none">{backLabel()}</span>
+          </button>
+          <p className="min-w-0 flex-1 truncate text-center text-xs font-medium text-slate-500">
+            {venue.name}
+            {locationLabel ? ` · ${locationLabel}` : ""}
+          </p>
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="shrink-0 rounded-button px-2 py-1.5 text-xs font-semibold text-brand-blue hover:bg-brand-blue/5"
+          >
+            {ui.footerHome}
+          </button>
+        </div>
+      </div>
+
+      {/* Hero — καλωσόρισμα + branding καταστήματος */}
       <header
-        className="px-4 py-6 text-white"
+        className="relative overflow-hidden px-4 pb-6 pt-5 text-white"
         style={{ background: `linear-gradient(135deg, ${venue.primaryColor}, #121d4a)` }}
       >
-        <div className="mx-auto flex max-w-lg items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3">
-            {venue.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={venue.logoUrl}
-                alt={venue.name}
-                className="mt-0.5 h-12 w-12 shrink-0 rounded-full border-2 border-white/30 object-cover"
-              />
-            ) : (
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15">
-                <UtensilsCrossed className="h-6 w-6 text-white/90" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-20"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 20%, white 0%, transparent 45%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.15) 0%, transparent 40%)",
+          }}
+          aria-hidden
+        />
+        <div className="relative mx-auto max-w-lg">
+          <p className="text-xs font-bold uppercase tracking-widest text-white/60">{ui.heroWelcome}</p>
+          <div className="mt-3 flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-3">
+              {venue.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={venue.logoUrl}
+                  alt={venue.name}
+                  className="mt-0.5 h-14 w-14 shrink-0 rounded-full border-2 border-white/30 object-cover shadow-lg"
+                />
+              ) : (
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-white/20 bg-white/15 shadow-lg">
+                  <UtensilsCrossed className="h-7 w-7 text-white/90" aria-hidden />
+                </div>
+              )}
+              <div className="min-w-0">
+                <h1 className="font-serif text-2xl font-bold leading-tight">{venue.name}</h1>
+                {activeMenu ? <p className="mt-1 text-sm text-white/75">{activeMenu.name}</p> : null}
+                {locationLabel ? (
+                  <p className="mt-2 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                    {locationLabel}
+                  </p>
+                ) : null}
               </div>
-            )}
-            <div className="min-w-0">
-              <p className="font-serif text-2xl font-bold leading-tight">{venue.name}</p>
-              {activeMenu ? <p className="mt-1 text-sm text-white/70">{activeMenu.name}</p> : null}
-              {locationLabel ? (
-                <p className="mt-2 inline-block rounded-full bg-white/15 px-3 py-0.5 text-xs">
-                  {locationLabel}
-                </p>
-              ) : null}
+            </div>
+            <div
+              className="flex max-w-[11rem] shrink-0 items-center gap-0.5 overflow-x-auto rounded-button bg-white/10 p-1 backdrop-blur-sm"
+              role="group"
+              aria-label={ui.language}
+            >
+              <Globe className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/70" aria-hidden />
+              {QR_MENU_LANGUAGES.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLanguage(code)}
+                  aria-label={QR_MENU_LANGUAGE_LABELS[code].ariaLabel}
+                  aria-pressed={lang === code}
+                  className={cn(
+                    "min-w-[2rem] shrink-0 rounded px-1.5 py-1 text-[10px] font-bold tracking-wide",
+                    lang === code ? "bg-white text-primary" : "text-white/80 hover:text-white",
+                  )}
+                >
+                  {QR_MENU_LANGUAGE_LABELS[code].short}
+                </button>
+              ))}
             </div>
           </div>
-          <div
-            className="flex max-w-[11rem] shrink-0 items-center gap-0.5 overflow-x-auto rounded-button bg-white/10 p-1"
-            role="group"
-            aria-label={ui.language}
-          >
-            <Globe className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/70" aria-hidden />
-            {QR_MENU_LANGUAGES.map((code) => (
-              <button
-                key={code}
-                type="button"
-                onClick={() => setLanguage(code)}
-                aria-label={QR_MENU_LANGUAGE_LABELS[code].ariaLabel}
-                aria-pressed={lang === code}
-                className={cn(
-                  "min-w-[2rem] shrink-0 rounded px-1.5 py-1 text-[10px] font-bold tracking-wide",
-                  lang === code ? "bg-white text-primary" : "text-white/80 hover:text-white",
-                )}
-              >
-                {QR_MENU_LANGUAGE_LABELS[code].short}
-              </button>
-            ))}
-          </div>
+          <p className="mt-4 text-sm leading-relaxed text-white/80">{ui.heroHint}</p>
         </div>
         {venue.menus.length > 1 ? (
-          <div className="mx-auto mt-4 flex max-w-lg gap-2 overflow-x-auto">
+          <div className="relative mx-auto mt-5 flex max-w-lg gap-2 overflow-x-auto">
             {venue.menus.map((menu) => (
               <button
                 key={menu.id}
@@ -364,7 +427,7 @@ export function PublicMenuView({
       </header>
 
       {categoryNav.length > 1 ? (
-        <nav className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+        <nav className="sticky top-[53px] z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur">
           <div className="mx-auto flex max-w-lg gap-2 overflow-x-auto px-4 py-2">
             {categoryNav.map((category) => {
               const id = `cat-${category.id}`;
@@ -387,7 +450,7 @@ export function PublicMenuView({
           <p className="text-center text-sm text-slate-500">{ui.menuSoon}</p>
         ) : (
           activeMenu.categories.map((category) => (
-            <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-16">
+            <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-24">
               <h2 className="font-serif text-xl font-bold text-primary">{tName(category.translations)}</h2>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {category.items.map((item) => {
@@ -411,12 +474,38 @@ export function PublicMenuView({
         )}
       </main>
 
-      <p className={cn("text-center text-[10px] text-slate-400", canUseCallActions ? "pb-28" : "pb-4")}>
-        {ui.poweredBy}{" "}
-        <a href="https://menuos.gr" className="font-medium text-slate-500 hover:text-brand-blue">
-          MenuOS
-        </a>
-      </p>
+      <footer
+        className={cn(
+          "mx-auto max-w-lg border-t border-slate-200/80 bg-white px-4 py-8 text-center",
+          canUseCallActions ? "mb-2" : "",
+        )}
+      >
+        <p className="font-serif text-lg font-bold text-primary">{venue.name}</p>
+        <p className="mt-1 text-xs text-slate-500">{ui.footerDigitalMenu}</p>
+        {locationLabel ? (
+          <p className="mt-2 text-sm font-medium text-slate-600">{locationLabel}</p>
+        ) : null}
+        <div className="mt-5 flex flex-col items-center gap-2">
+          <a
+            href="https://menuos.gr"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-surface px-4 py-2 text-xs font-medium text-slate-600 transition hover:border-brand-blue/30 hover:text-brand-blue"
+          >
+            <LogoMark size={18} />
+            <span>
+              {ui.poweredBy}{" "}
+              <span className="font-extrabold text-brand-navy">Menu</span>
+              <span className="font-extrabold text-brand-blue">Os</span>
+            </span>
+          </a>
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="text-xs font-semibold text-brand-blue hover:underline"
+          >
+            ↑ {ui.footerHome}
+          </button>
+        </div>
+      </footer>
 
       {canUseCallActions ? (
       <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200/80 bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
@@ -485,15 +574,26 @@ export function PublicMenuView({
             aria-modal="true"
             aria-labelledby="menu-item-dialog-title"
             tabIndex={-1}
-            className="max-h-[85vh] w-full overflow-y-auto rounded-t-card bg-white p-6 sm:max-w-md sm:rounded-card"
+            className="max-h-[85vh] w-full overflow-y-auto rounded-t-card bg-white sm:max-w-md sm:rounded-card"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="sticky top-0 z-10 flex items-center border-b border-slate-100 bg-white px-4 py-3">
+              <button
+                type="button"
+                onClick={() => setSelectedItem(null)}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-primary"
+              >
+                <ChevronLeft className="h-5 w-5" aria-hidden />
+                {ui.backToMenu}
+              </button>
+            </div>
+            <div className="p-6 pt-4">
             {(() => {
               const tr = pickQrMenuTranslation(selectedItem.translations, lang);
               return (
                 <>
                   {selectedItem.photoUrl || isItemLabel(selectedItem.label) ? (
-                    <div className="relative -mx-6 -mt-6 mb-4 aspect-[16/10] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
+                    <div className="relative -mx-6 mb-4 aspect-[16/10] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
                       {selectedItem.photoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -536,6 +636,7 @@ export function PublicMenuView({
                 </>
               );
             })()}
+            </div>
           </div>
         </div>
       ) : null}

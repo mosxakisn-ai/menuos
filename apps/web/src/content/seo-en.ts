@@ -26,7 +26,7 @@ export const SEO_PAGES_EN = {
   services: {
     title: "Services — Digital menu & QR codes",
     description:
-      "MenuOS services: digital menu, QR codes, 4 languages (EL/EN/DE/FR), call waiter, online panel for restaurants and hotels.",
+      "MenuOS services: digital menu, QR codes, multiple languages, call waiter, online panel for restaurants and hotels.",
     path: "/ypiresies",
     breadcrumbLabel: "Services",
   },
@@ -102,7 +102,7 @@ export const SEO_QR_MENU_FAQ_EN = [
   },
   {
     q: "How many languages are supported?",
-    a: "4 languages on the QR menu: Greek, English, German, French — switch with one tap.",
+    a: "Multiple languages on the QR menu — switch with one tap.",
   },
   {
     q: "Can I change prices quickly?",

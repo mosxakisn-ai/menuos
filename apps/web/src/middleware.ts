@@ -6,7 +6,13 @@ import { verifySessionToken } from "@/lib/auth";
 
 const TRIAL_EXEMPT_PREFIXES = ["/dashboard/billing"];
 
+/** QR menu uses ?lang= for dish UI — not marketing site locale. */
+function isPublicMenuPath(pathname: string): boolean {
+  return pathname.startsWith("/m/");
+}
+
 function applyLocale(request: NextRequest, response: NextResponse): NextResponse {
+  if (isPublicMenuPath(request.nextUrl.pathname)) return response;
   const langParam = request.nextUrl.searchParams.get("lang");
   if (!langParam) return response;
   const locale = resolveLocale(langParam);
@@ -42,7 +48,7 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set("x-menuos-pathname", pathname);
 
   const langParam = request.nextUrl.searchParams.get("lang");
-  if (langParam) {
+  if (langParam && !isPublicMenuPath(pathname)) {
     requestHeaders.set(LOCALE_REQUEST_HEADER, resolveLocale(langParam));
   }
 
