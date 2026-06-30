@@ -14,7 +14,8 @@
     "db:push": "npm run push -w @menuos/db",
     "db:studio": "npm run studio -w @menuos/db",
     "seed:master": "node scripts/seed-master-user.mjs",
-    "indexnow": "node scripts/submit-indexnow.mjs"
+    "indexnow": "node scripts/submit-indexnow.mjs",
+    "sync:check": "npm run db:generate && npm run build"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

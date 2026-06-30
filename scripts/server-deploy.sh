@@ -14,7 +14,24 @@ fi
 
 echo "==> Start Postgres..."
 docker compose -f docker-compose.prod.yml up -d postgres
-sleep 5
+echo "    Waiting for Postgres..."
+for i in $(seq 1 30); do
+  if docker compose -f docker-compose.prod.yml exec -T postgres pg_isready -U menuos -d menuos >/dev/null 2>&1; then
+    echo "    Postgres ready."
+    break
+  fi
+  if [ "$i" -eq 30 ]; then
+    echo "ERROR: Postgres did not become ready."
+    exit 1
+  fi
+  sleep 2
+done
+
+if ! docker compose -f docker-compose.prod.yml exec -T postgres \
+  psql -v ON_ERROR_STOP=1 -U menuos -d menuos -c "SELECT 1" >/dev/null 2>&1; then
+  echo "ERROR: Cannot query Postgres. Check POSTGRES_PASSWORD in .env matches the database volume."
+  exit 1
+fi
 
 echo "==> Build MenuOS web..."
 docker compose -f docker-compose.prod.yml build menuos-web
@@ -36,7 +53,20 @@ echo "==> SQL migrations (idempotent)..."
 bash "$ROOT/scripts/apply-sql-migrations.sh"
 
 echo "==> Start MenuOS web..."
-docker compose -f docker-compose.prod.yml up -d menuos-web
+docker compose -f docker-compose.prod.yml up -d --force-recreate menuos-web
+
+echo "==> In-container health check..."
+sleep 4
+if HEALTH="$(docker compose -f docker-compose.prod.yml exec -T menuos-web \
+  wget -qO- http://127.0.0.1:3000/api/health 2>/dev/null)"; then
+  echo "$HEALTH"
+  if ! echo "$HEALTH" | grep -q '"database":"ok"'; then
+    echo "WARN: Web is up but database check failed — verify POSTGRES_PASSWORD / DATABASE_URL in .env"
+  fi
+else
+  echo "WARN: /api/health not reachable yet — check logs:"
+  docker compose -f docker-compose.prod.yml logs menuos-web --tail 20 || true
+fi
 
 if ! grep -q "$MARKER" "$CADDY_FILE" 2>/dev/null; then
   echo "==> Adding MenuOS to Caddy..."

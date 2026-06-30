@@ -32,10 +32,8 @@ jobs:
             else
               git remote set-url origin https://github.com/mosxakisn-ai/menuos.git
             fi
-            PREV="$(git rev-parse HEAD)"
             git fetch origin main
             git reset --hard origin/main
-            RUN_DB_PUSH=1
-            echo "DB sync enabled on every deploy"
-            chmod +x scripts/server-deploy.sh
-            APP_DIR="$APP_DIR" RUN_DB_PUSH="$RUN_DB_PUSH" bash scripts/server-deploy.sh
+            echo "Deployed commit: $(git rev-parse --short HEAD)"
+            chmod +x scripts/sync-all.sh scripts/server-deploy.sh
+            APP_DIR="$APP_DIR" RUN_DB_PUSH=1 bash scripts/sync-all.sh
