@@ -104,6 +104,7 @@ export function PublicMenuView({
     BILL: "idle",
     CANCEL: "idle",
   });
+  const [cancellingCallId, setCancellingCallId] = useState<string | null>(null);
   const [callErrorCode, setCallErrorCode] = useState<CallErrorCode | null>(null);
   const [callCancellable, setCallCancellable] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
@@ -389,9 +390,10 @@ export function PublicMenuView({
     }
   }
 
-  async function cancelCall() {
-    const target = cancelTarget;
+  async function cancelCall(callId: string) {
+    const target = activeCalls.find((c) => c.id === callId && c.cancellable);
     if (!target) return;
+    setCancellingCallId(callId);
     setActionState((s) => ({ ...s, CANCEL: "loading" }));
     try {
       const res = await fetch("/api/waiter-call/cancel", {
@@ -416,6 +418,8 @@ export function PublicMenuView({
     } catch {
       setActionState((s) => ({ ...s, CANCEL: "error" }));
       resetActionState("CANCEL", 4000);
+    } finally {
+      setCancellingCallId(null);
     }
   }
 
@@ -447,8 +451,10 @@ export function PublicMenuView({
   const hasPendingType = (type: ActiveCallType) =>
     activeCalls.some((c) => c.type === type && c.status === "PENDING");
   const hasActiveOrder = activeCalls.some((c) => c.type === "ORDER");
-  const cancelTarget = activeCalls.find((c) => c.cancellable) ?? null;
-  const hasCancellableCall = cancelTarget !== null;
+  const cancellableCalls = activeCalls.filter((c) => c.cancellable);
+  const cancelTarget = cancellableCalls[0] ?? null;
+  const hasCancellableCall = cancellableCalls.length > 0;
+  const multipleCancellable = cancellableCalls.length > 1;
   const canUseCallActions = Boolean(tableNumber || roomNumber);
   const cartCount = cartItemCount(cartLines);
   const cartTotalStr = cartTotal(cartLines);
@@ -769,7 +775,37 @@ export function PublicMenuView({
             : "fixed bottom-0 left-0 right-0 z-50 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3",
         )}
       >
-        <div className={cn(shell, "grid grid-cols-3 gap-1.5", !isEmbedded && "gap-2")}>
+        <div className={cn(shell, !isEmbedded && "gap-2")}>
+          {multipleCancellable ? (
+            <div
+              className={cn(
+                "grid gap-1.5",
+                cancellableCalls.length === 2 ? "grid-cols-2" : "grid-cols-3",
+                isEmbedded ? "mb-1" : "mb-1.5",
+              )}
+            >
+              {cancellableCalls.map((call) => {
+                const loading = cancellingCallId === call.id;
+                return (
+                  <button
+                    key={call.id}
+                    type="button"
+                    onClick={() => void cancelCall(call.id)}
+                    disabled={actionState.CANCEL === "loading" && !loading}
+                    className={cn(
+                      "touch-manipulation flex min-h-9 items-center justify-center gap-1 rounded-button border border-slate-300 bg-white px-1 font-semibold text-slate-700",
+                      isEmbedded ? "py-1.5 text-[8px]" : "py-2 text-[10px]",
+                      loading && "opacity-70",
+                    )}
+                  >
+                    <X className={cn("shrink-0", isEmbedded ? "h-3 w-3" : "h-3.5 w-3.5")} aria-hidden />
+                    <span className="text-center leading-tight">{ui.cancelCallType(call.type)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          <div className={cn("grid grid-cols-3 gap-1.5", !isEmbedded && "gap-2")}>
           <button
             type="button"
             onClick={() => void sendCall("WAITER")}
@@ -808,8 +844,8 @@ export function PublicMenuView({
           </button>
           <button
             type="button"
-            onClick={() => void cancelCall()}
-            disabled={!hasCancellableCall || actionState.CANCEL === "loading"}
+            onClick={() => cancelTarget && void cancelCall(cancelTarget.id)}
+            disabled={!hasCancellableCall || multipleCancellable || actionState.CANCEL === "loading"}
             className={cn(
               "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button border font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
@@ -823,6 +859,7 @@ export function PublicMenuView({
             <X className={cn("shrink-0", isEmbedded ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
             <span className="text-center">{buttonLabel("CANCEL")}</span>
           </button>
+          </div>
         </div>
       </div>
       ) : null}

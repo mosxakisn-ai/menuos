@@ -218,8 +218,8 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
   const paragraphs = isEl
     ? [
         verticalSeo
-          ? `${verticalSeo.sceneEl}. Το MenuOS αντικαθιστά το printed menu με σύγχρονο ${product} — φωτογραφίες, τιμές και πολλαπλές γλώσσες. Εσείς ενημερώνετε από το panel σε λεπτά.`
-          : `Το MenuOS σας βοηθά να αντικαταστήσετε το printed menu με ένα σύγχρονο ${product}. Οι πελάτες σκανάρουν QR, βλέπουν φωτογραφίες και τιμές — εσείς ενημερώνετε από το panel σας σε λεπτά.`,
+          ? `${verticalSeo.sceneEl}. Το MenuOS αντικαθιστά το έντυπο menu με σύγχρονο ${product} — φωτογραφίες, τιμές και πολλαπλές γλώσσες. Εσείς ενημερώνετε από τη διαχείριση σε λεπτά.`
+          : `Το MenuOS σας βοηθά να αντικαταστήσετε το έντυπο menu με ένα σύγχρονο ${product}. Οι πελάτες σκανάρουν QR, βλέπουν φωτογραφίες και τιμές — εσείς ενημερώνετε από τη διαχείριση σε λεπτά.`,
         config.city
           ? `Ιδανικό για επιχειρήσεις ${context}: τουρίστες, εποχικότητα, γρήγορες αλλαγές τιμών χωρίς επανεκτύπωση.`
           : verticalSeo
@@ -263,7 +263,7 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
     ? [
         {
           q: "Χρειάζεται app ο πελάτης;",
-          a: "Όχι. Σκανάρει το QR και ανοίγει το menu στο browser — χωρίς κατέβασμα.",
+          a: "Όχι. Σκανάρει το QR και ανοίγει το menu στο κινητό — χωρίς κατέβασμα.",
         },
         ...(verticalSeo
           ? [

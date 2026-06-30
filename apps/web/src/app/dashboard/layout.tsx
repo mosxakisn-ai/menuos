@@ -1,30 +1,15 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import {
-  Bell,
-  CreditCard,
-  LayoutGrid,
-  QrCode,
-  Settings,
-  UtensilsCrossed,
-} from "lucide-react";
 import { prisma } from "@menuos/db";
 import { Logo } from "@/components/brand/logo";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { DashboardMobileNav } from "@/components/dashboard/dashboard-mobile-nav";
+import { DashboardSidebarNav } from "@/components/dashboard/dashboard-sidebar-nav";
 import { getSession } from "@/lib/auth";
 import { organizationHasActiveSubscription } from "@/lib/billing";
 import { roleLabel } from "@/content/dashboard-el";
 
-const nav = [
-  { href: "/dashboard", label: "Επισκόπηση", icon: LayoutGrid },
-  { href: "/dashboard/menus", label: "Κατάλογος", icon: UtensilsCrossed },
-  { href: "/dashboard/qr", label: "QR Codes", icon: QrCode },
-  { href: "/dashboard/waiter", label: "Σερβιτόρος", icon: Bell },
-  { href: "/dashboard/billing", label: "Συνδρομή", icon: CreditCard },
-  { href: "/dashboard/settings", label: "Ρυθμίσεις", icon: Settings },
-];
+export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -49,24 +34,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex min-h-screen bg-brand-surface">
       <aside className="hidden w-64 shrink-0 bg-sidebar-gradient p-6 text-white md:block">
         <Logo href="/dashboard" dark showTagline markSize={36} />
-        <p className="mt-2 text-xs text-slate-400">Panel διαχείρισης</p>
-        <nav className="mt-8 space-y-1">
-          {nav.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-3 rounded-button px-3 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white"
-            >
-              <Icon className="h-4 w-4 text-brand-cyan" />
-              {label}
-              {href === "/dashboard/waiter" && pendingWaiterCount > 0 ? (
-                <span className="ml-auto rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-950">
-                  {pendingWaiterCount}
-                </span>
-              ) : null}
-            </Link>
-          ))}
-        </nav>
+        <p className="mt-2 text-xs text-slate-400">Διαχείριση menu</p>
+        <DashboardSidebarNav initialPendingCount={pendingWaiterCount} />
         <div className="mt-auto pt-8">
           <LogoutButton />
         </div>
@@ -83,7 +52,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </header>
         <main className="flex-1 p-4 pb-24 sm:p-6 md:pb-6">{children}</main>
       </div>
-      <DashboardMobileNav pendingCount={pendingWaiterCount} />
+      <DashboardMobileNav initialPendingCount={pendingWaiterCount} />
     </div>
   );
 }

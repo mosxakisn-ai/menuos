@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, CreditCard, LayoutGrid, QrCode, Settings, UtensilsCrossed } from "lucide-react";
+import { usePendingWaiterCount } from "@/hooks/use-pending-waiter-count";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -14,8 +15,9 @@ const links = [
   { href: "/dashboard/settings", label: "Ρυθμίσεις", icon: Settings },
 ];
 
-export function DashboardMobileNav({ pendingCount = 0 }: { pendingCount?: number }) {
+export function DashboardMobileNav({ initialPendingCount = 0 }: { initialPendingCount?: number }) {
   const pathname = usePathname();
+  const pendingCount = usePendingWaiterCount(initialPendingCount);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white px-1 pb-[env(safe-area-inset-bottom)] md:hidden">

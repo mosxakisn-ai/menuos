@@ -24,7 +24,7 @@ export default async function BillingPage() {
       <div>
         <h1 className="font-serif text-2xl font-bold text-primary">Συνδρομή</h1>
         <p className="text-sm text-slate-600">
-          Διαχείριση συνδρομής MenuOS. Οι πληρωμές γίνονται με ασφάλεια μέσω Stripe.
+          Διαχείριση συνδρομής MenuOS. Οι πληρωμές γίνονται με ασφάλεια online.
         </p>
       </div>
 
