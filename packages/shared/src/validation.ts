@@ -83,6 +83,27 @@ export const waiterCallUpdateSchema = z.object({
   status: z.enum(["PENDING", "ACKNOWLEDGED", "COMPLETED"]),
 });
 
+export const menuImportItemSchema = z.object({
+  nameGr: z.string().min(1).max(120),
+  nameEn: z.string().max(120).optional(),
+  price: z.number().min(0).max(99999),
+  descriptionGr: z.string().max(1000).optional(),
+  selected: z.boolean().optional(),
+});
+
+export const menuImportCategorySchema = z.object({
+  nameGr: z.string().min(1).max(120),
+  nameEn: z.string().max(120).optional(),
+  selected: z.boolean().optional(),
+  items: z.array(menuImportItemSchema),
+});
+
+export const menuImportApplySchema = z.object({
+  menuId: z.string().min(1),
+  categories: z.array(menuImportCategorySchema).min(1),
+});
+
+export type MenuImportApplyInput = z.infer<typeof menuImportApplySchema>;
 export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
 export type ItemCreateInput = z.infer<typeof itemCreateSchema>;
 export type VenueUpdateInput = z.infer<typeof venueUpdateSchema>;

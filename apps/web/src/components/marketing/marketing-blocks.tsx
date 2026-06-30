@@ -59,13 +59,15 @@ export function FeatureCard({
   bullets,
   href,
   className,
+  learnMoreLabel = "Μάθε περισσότερα",
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
-  bullets?: string[];
+  bullets?: readonly string[];
   href?: string;
   className?: string;
+  learnMoreLabel?: string;
 }) {
   return (
     <article
@@ -94,7 +96,7 @@ export function FeatureCard({
           href={href}
           className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-blue hover:underline"
         >
-          Μάθε περισσότερα
+          {learnMoreLabel}
           <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
         </Link>
       ) : null}

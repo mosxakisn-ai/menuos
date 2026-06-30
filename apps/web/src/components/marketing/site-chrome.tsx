@@ -1,42 +1,46 @@
+"use client";
+
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { buttonClass } from "@/components/ui/button";
-import { MARKETING } from "@/content/marketing-el";
-
-const m = MARKETING;
-const f = m.footer;
+import { useI18n } from "@/i18n/context";
 
 const navLinkClass =
   "text-sm font-medium text-slate-600 transition hover:text-brand-blue";
 
 export function SiteHeader() {
+  const { m } = useI18n();
+  const marketing = m.marketing;
+
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:h-[4.25rem]">
         <Logo showTagline={false} markSize={36} />
         <nav className="hidden items-center gap-7 md:flex">
           <Link href="/ypiresies" className={navLinkClass}>
-            {m.nav.services}
+            {marketing.nav.services}
           </Link>
           <Link href="/pos-leitourgei" className={navLinkClass}>
-            {m.nav.howItWorks}
+            {marketing.nav.howItWorks}
           </Link>
           <Link href="/pricing" className={navLinkClass}>
-            {m.nav.pricing}
+            {marketing.nav.pricing}
           </Link>
           <Link href="/sxetika" className={navLinkClass}>
-            {m.nav.about}
+            {marketing.nav.about}
           </Link>
           <Link href="/epikoinonia" className={navLinkClass}>
-            {m.nav.contact}
+            {marketing.nav.contact}
           </Link>
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSwitcher mini compact className="hidden sm:inline-flex" />
           <Link href="/login" className={`hidden sm:inline-flex ${navLinkClass}`}>
-            {m.nav.login}
+            {marketing.nav.login}
           </Link>
           <Link href="/register" className={buttonClass("primary", "sm")}>
-            {m.nav.startFree}
+            {marketing.nav.startFree}
           </Link>
         </div>
       </div>
@@ -45,6 +49,12 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
+  const { m } = useI18n();
+  const marketing = m.marketing;
+  const f = marketing.footer;
+  const taglineSuffix =
+    "taglineSuffix" in f ? (f as { taglineSuffix: string }).taglineSuffix : null;
+
   return (
     <footer className="border-t border-slate-200 bg-brand-navy text-white">
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
@@ -52,7 +62,7 @@ export function SiteFooter() {
           <div className="lg:col-span-2">
             <Logo href="/" dark markSize={36} showTagline />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-300">{f.about}</p>
-            <p className="mt-4 text-xs text-slate-400">{m.tagline}</p>
+            <p className="mt-4 text-xs text-slate-400">{marketing.tagline}</p>
           </div>
 
           <div>
@@ -82,18 +92,18 @@ export function SiteFooter() {
             </ul>
             <p className="mt-6 text-sm font-semibold text-white">{f.columns.contact}</p>
             <p className="mt-2 text-sm text-slate-300">
-              <a href={`tel:${m.contactPhoneTel}`} className="hover:text-brand-cyan">
-                {m.contactPhone}
+              <a href={`tel:${marketing.contactPhoneTel}`} className="hover:text-brand-cyan">
+                {marketing.contactPhone}
               </a>
             </p>
             <p className="mt-1 text-sm text-slate-300">
-              <a href={`mailto:${m.contactEmail}`} className="hover:text-brand-cyan">
-                {m.contactEmail}
+              <a href={`mailto:${marketing.contactEmail}`} className="hover:text-brand-cyan">
+                {marketing.contactEmail}
               </a>
             </p>
             <p className="mt-1 text-sm text-slate-300">
               <a
-                href={m.contactFacebook}
+                href={marketing.contactFacebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-brand-cyan"
@@ -108,9 +118,9 @@ export function SiteFooter() {
           <p className="text-xs text-slate-400">
             © {new Date().getFullYear()} MenuOS. {f.rights}
           </p>
-          <p className="text-xs text-slate-500">
-            Premium QR menus για την ελληνική αγορά φιλοξενίας
-          </p>
+          {taglineSuffix ? (
+            <p className="text-xs text-slate-500">{taglineSuffix}</p>
+          ) : null}
         </div>
       </div>
     </footer>

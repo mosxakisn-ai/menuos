@@ -17,12 +17,15 @@ export const MARKETING = {
 
   home: {
     hero: {
-      title: "Το ψηφιακό menu",
-      titleAccent: "για την επιχείρησή σας",
+      badge: "Premium QR menus για hospitality",
+      title: "Το menu σας,",
+      titleAccent: "στο κινητό του πελάτη",
       subtitle:
-        "Οι πελάτες σας σαρώνουν ένα QR code και βλέπουν το menu στο κινητό τους — με φωτογραφίες, τιμές και περιγραφές. Εσείς το αλλάζετε όποτε θέλετε, χωρίς να ξανατυπώνετε χαρτιά.",
+        "Σαρώνει QR → βλέπει πιάτα, τιμές και φωτογραφίες. Εσείς ενημερώνετε live από το dashboard — χωρίς επανεκτύπωση, χωρίς app.",
       ctaTrial: "Ξεκίνα δωρεάν 7 ημέρες",
       ctaPricing: "Δες τις τιμές",
+      ctaDemo: "Δες πώς φαίνεται",
+      trust: ["Χωρίς app για πελάτη", "Ελληνικά & Αγγλικά", "Setup ~60′", "Hosting ΕΕ"],
     },
     whatWeDo: {
       title: "Τι είναι το MenuOS;",
@@ -81,7 +84,7 @@ export const MARKETING = {
         },
         {
           title: "Ελληνικά & Αγγλικά",
-          text: "Στο QR menu ο πελάτης αλλάζει γλώσσα με ένα πάτημα — ιδανικό για τουρισμό. Περισσότερες γλώσσες σύντομα.",
+          text: "Στο QR menu ο πελάτης αλλάζει γλώσσα με ένα πάτημα — ιδανικό για τουρισμό.",
         },
         {
           title: "Call waiter",
@@ -159,6 +162,7 @@ export const MARKETING = {
       register: "Εγγραφή",
     },
     rights: "Με επιφύλαξη παντός δικαιώματος.",
+    taglineSuffix: "Premium QR menus για την ελληνική αγορά φιλοξενίας",
   },
 
   stats: [

@@ -5,53 +5,46 @@ import { MarketingCtaBand, SectionHeader } from "@/components/marketing/marketin
 import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { buttonClass } from "@/components/ui/button";
-import { MARKETING } from "@/content/marketing-el";
 import { SEO_PAGES } from "@/content/seo-el";
+import { getMessages } from "@/i18n/get-messages";
+import { getServerLocale } from "@/i18n/server";
 import { seoPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = seoPageMetadata(SEO_PAGES.contact);
 
-const contactCards = [
-  {
-    icon: Phone,
-    title: "Τηλέφωνο",
-    description: "Για άμεση ενημέρωση, demo ή ραντεβού:",
-    href: (m: typeof MARKETING) => `tel:${m.contactPhoneTel}`,
-    label: (m: typeof MARKETING) => m.contactPhone,
-    external: false,
-  },
-  {
-    icon: Mail,
-    title: "Email",
-    description: "Γενικές ερωτήσεις, Enterprise τιμολόγηση, τεχνική υποστήριξη:",
-    href: (m: typeof MARKETING) => `mailto:${m.contactEmail}`,
-    label: (m: typeof MARKETING) => m.contactEmail,
-    external: false,
-  },
-  {
-    icon: Facebook,
-    title: "Facebook",
-    description: "Νέα, tips και ενημερώσεις για το MenuOS:",
-    href: (m: typeof MARKETING) => m.contactFacebook,
-    label: () => "MenuOS Greece",
-    external: true,
-  },
-] as const;
+const cardIcons = [Phone, Mail, Facebook];
 
-export default function ContactPage() {
-  const m = MARKETING;
+export default async function ContactPage() {
+  const locale = await getServerLocale();
+  const { marketing, pages } = getMessages(locale);
+  const ui = pages.contact;
+
+  const cards = ui.cards.map((card, i) => ({
+    icon: cardIcons[i] ?? Mail,
+    title: card.title,
+    description: card.description,
+    href:
+      i === 0
+        ? `tel:${marketing.contactPhoneTel}`
+        : i === 1
+          ? `mailto:${marketing.contactEmail}`
+          : marketing.contactFacebook,
+    label:
+      i === 0
+        ? marketing.contactPhone
+        : i === 1
+          ? marketing.contactEmail
+          : (card as { label?: string }).label ?? "MenuOS Greece",
+    external: i === 2,
+  }));
 
   return (
     <MarketingLayout>
       <MarketingPageJsonLd page={SEO_PAGES.contact} />
-      <MarketingPageHero
-        title="Επικοινωνία"
-        subtitle="Είμαστε εδώ για ερωτήσεις, δοκιμή ή custom πλάνο για μεγάλες επιχειρήσεις. Απαντάμε προσωπικά — όχι bot."
-        badge="Υποστήριξη"
-      />
+      <MarketingPageHero title={ui.heroTitle} subtitle={ui.heroSubtitle} badge={ui.badge} />
       <MarketingSection>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {contactCards.map(({ icon: Icon, title, description, href, label, external }) => (
+          {cards.map(({ icon: Icon, title, description, href, label, external }) => (
             <article
               key={title}
               className="group flex h-full flex-col rounded-card border border-slate-200/80 bg-white p-6 shadow-card transition hover:-translate-y-0.5 hover:shadow-cardHover"
@@ -62,11 +55,11 @@ export default function ContactPage() {
               <h2 className="mt-5 text-lg font-bold text-brand-navy">{title}</h2>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{description}</p>
               <a
-                href={href(m)}
+                href={href}
                 {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 className="mt-4 inline-block font-semibold text-brand-blue group-hover:underline"
               >
-                {label(m)}
+                {label}
               </a>
             </article>
           ))}
@@ -76,44 +69,35 @@ export default function ContactPage() {
         <div className="grid gap-8 lg:grid-cols-2">
           <article className="rounded-card border border-slate-200/80 bg-white p-8 shadow-card">
             <MessageCircle className="h-8 w-8 text-brand-cyan" aria-hidden />
-            <h2 className="mt-4 text-xl font-bold text-brand-navy">Νέος πελάτης;</h2>
-            <p className="mt-3 leading-relaxed text-slate-600">
-              Η δωρεάν εγγραφή είναι ο πιο γρήγορος τρόπος — 7 ημέρες χωρίς κάρτα. Φτιάξε venue, βάλε πιάτα και
-              δοκίμασε το QR με τη δική σου ομάδα.
-            </p>
+            <h2 className="mt-4 text-xl font-bold text-brand-navy">{ui.newCustomerTitle}</h2>
+            <p className="mt-3 leading-relaxed text-slate-600">{ui.newCustomerBody}</p>
             <Link href="/register" className={`mt-6 inline-flex ${buttonClass("primary")}`}>
-              Δημιουργία λογαριασμού
+              {pages.common.createAccount}
             </Link>
           </article>
           <article className="rounded-card border border-slate-200/80 bg-white p-8 shadow-card">
             <Clock className="h-8 w-8 text-brand-blue" aria-hidden />
-            <h2 className="mt-4 text-xl font-bold text-brand-navy">Enterprise & αλυσίδες</h2>
-            <p className="mt-3 leading-relaxed text-slate-600">
-              Για πολλαπλά καταστήματα, white-label, custom domain ή ειδικές ανάγκες — επικοινωνήστε για
-              προσφορά tailored στο project σας.
-            </p>
+            <h2 className="mt-4 text-xl font-bold text-brand-navy">{ui.enterpriseTitle}</h2>
+            <p className="mt-3 leading-relaxed text-slate-600">{ui.enterpriseBody}</p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li>• Προσαρμοσμένα πλάνα & SLA</li>
-              <li>• Onboarding βοήθεια</li>
-              <li>• Billing & συνδρομές από dashboard</li>
+              {ui.enterpriseBullets.map((b) => (
+                <li key={b}>• {b}</li>
+              ))}
             </ul>
           </article>
         </div>
       </MarketingSection>
       <MarketingSection>
-        <SectionHeader
-          title="MenuOS — menuos.gr"
-          description="Απευθύνεται σε επιχειρήσεις στην Ελλάδα και στο εξωτερικό. Μετά την εγγραφή, billing και συνδρομές από το dashboard σας."
-        />
+        <SectionHeader title={ui.infoTitle} description={ui.infoDesc} />
       </MarketingSection>
       <MarketingSection variant="muted">
         <MarketingCtaBand
-          title="Προτιμάς να μιλήσουμε;"
-          description={`Κάλεσε ${m.contactPhone} ή γράψε ${m.contactEmail} — θα χαρούμε να σε βοηθήσουμε.`}
-          primaryHref={`tel:${m.contactPhoneTel}`}
-          primaryLabel="Κάλεσε τώρα"
-          secondaryHref={`mailto:${m.contactEmail}`}
-          secondaryLabel="Στείλε email"
+          title={ui.cta.title}
+          description={`${marketing.contactPhone} · ${marketing.contactEmail}`}
+          primaryHref={`tel:${marketing.contactPhoneTel}`}
+          primaryLabel={ui.cta.primary}
+          secondaryHref={`mailto:${marketing.contactEmail}`}
+          secondaryLabel={ui.cta.secondary}
         />
       </MarketingSection>
     </MarketingLayout>

@@ -5,50 +5,42 @@ import { MarketingCtaBand, SectionHeader, StatStrip } from "@/components/marketi
 import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/components/marketing/marketing-layout";
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { buttonClass } from "@/components/ui/button";
-import { MARKETING } from "@/content/marketing-el";
 import { SEO_PAGES } from "@/content/seo-el";
+import { getMessages } from "@/i18n/get-messages";
+import { getServerLocale } from "@/i18n/server";
 import { seoPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = seoPageMetadata(SEO_PAGES.about);
 
 const valueIcons = [Sparkles, MapPin, Heart];
 
-export default function AboutPage() {
-  const p = MARKETING.pages.about;
+export default async function AboutPage() {
+  const locale = await getServerLocale();
+  const { marketing, pages } = getMessages(locale);
+  const p = marketing.pages.about;
+  const ui = pages.about;
 
   return (
     <MarketingLayout>
       <MarketingPageJsonLd page={SEO_PAGES.about} />
-      <MarketingPageHero title="Σχετικά με εμάς" subtitle={p.hero} badge={p.badge} />
+      <MarketingPageHero title={ui.heroTitle} subtitle={p.hero} badge={p.badge} />
       <MarketingSection variant="muted">
-        <StatStrip items={[...MARKETING.stats]} />
+        <StatStrip items={[...marketing.stats]} />
       </MarketingSection>
       <MarketingSection>
         <div className="mx-auto max-w-3xl space-y-6 text-lg leading-relaxed text-slate-600">
-          <p>
-            Το <strong className="text-brand-navy">MenuOS</strong> είναι ελληνική πλατφόρμα ψηφιακών menus με QR.
-            Στόχος μας: κάθε εστιατόριο, ξενοδοχείο ή bar να προσφέρει σύγχρονο menu στο κινητό — χωρίς δικό του
-            app ή περίπλοκο λογισμικό.
-          </p>
-          <p>
-            Γνωρίζουμε την ελληνική αγορά φιλοξενίας: εποχικότητα, τουρίστες, πολλές γλώσσες, γρήγορες αλλαγές
-            τιμών. Γι&apos; αυτό βάλαμε από την αρχή πολυγλωσσικό menu, call waiter και dashboard που χρησιμοποιεί
-            ο manager χωρίς IT τμήμα.
-          </p>
-          <p>
-            Δεν πουλάμε hardware ούτε «μαγικές» λύσεις. Σας δίνουμε καθαρή online υπηρεσία: φτιάχνετε menu, βγάζετε
-            QR, οι πελάτες σκανάρουν. Εσείς κρατάτε τον έλεγχο περιεχομένου και τιμών.
-          </p>
+          {ui.paragraphs.map((para) => (
+            <p key={para}>{para}</p>
+          ))}
         </div>
       </MarketingSection>
       <MarketingSection variant="muted">
-        <SectionHeader title="Οι αξίες μας" description="Αυτό που μας οδηγεί σε κάθε feature και κάθε υποστήριξη." />
+        <SectionHeader title={ui.valuesTitle} description={ui.valuesDesc} />
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {p.values.map(({ title, text }, i) => {
             const Icon = valueIcons[i] ?? Sparkles;
             return (
-              <article
-                key={title}
-                className="rounded-card border border-slate-200/80 bg-white p-6 shadow-card"
-              >
+              <article key={title} className="rounded-card border border-slate-200/80 bg-white p-6 shadow-card">
                 <div className="inline-flex rounded-xl bg-brand-blue/10 p-3 text-brand-blue">
                   <Icon className="h-5 w-5" aria-hidden />
                 </div>
@@ -61,32 +53,27 @@ export default function AboutPage() {
       </MarketingSection>
       <MarketingSection>
         <div className="mx-auto max-w-3xl rounded-card border border-slate-200 bg-gradient-to-br from-brand-surface to-white p-8 sm:p-10">
-          <h2 className="text-2xl font-extrabold text-brand-navy">Η αποστολή μας</h2>
-          <p className="mt-4 text-lg leading-relaxed text-slate-600">
-            Να είναι το ψηφιακό menu τόσο απλό όσο το να αλλάξετε μια τιμή — αλλά πιο όμορφο, πιο πρακτικό και
-            πιο φιλικό για τον επισκέπτη.
-          </p>
-          <p className="mt-4 text-sm leading-relaxed text-slate-500">
-            Υποστηρίζουμε πελάτες στην Ελλάδα με τηλέφωνο, email και προσωπική επικοινωνία — χωρίς jargon.
-          </p>
+          <h2 className="text-2xl font-extrabold text-brand-navy">{ui.missionTitle}</h2>
+          <p className="mt-4 text-lg leading-relaxed text-slate-600">{ui.missionBody}</p>
+          <p className="mt-4 text-sm leading-relaxed text-slate-500">{ui.missionNote}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/register" className={buttonClass("primary")}>
-              Δοκιμή 7 ημερών
+              {ui.trialButton}
             </Link>
             <Link href="/epikoinonia" className={buttonClass("secondary")}>
-              Επικοινωνία
+              {marketing.nav.contact}
             </Link>
           </div>
         </div>
       </MarketingSection>
       <MarketingSection variant="muted">
         <MarketingCtaBand
-          title="Ας φτιάξουμε το menu σας"
-          description="7 ημέρες δωρεάν. Χωρίς κάρτα. Ξεκίνα σήμερα και δες το αποτέλεσμα στο κινητό σου."
+          title={ui.cta.title}
+          description={ui.cta.description}
           primaryHref="/register"
-          primaryLabel="Δημιουργία λογαριασμού"
+          primaryLabel={ui.cta.primary}
           secondaryHref="/ypiresies"
-          secondaryLabel="Υπηρεσίες"
+          secondaryLabel={ui.cta.secondary}
         />
       </MarketingSection>
     </MarketingLayout>

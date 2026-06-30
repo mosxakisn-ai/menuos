@@ -40,7 +40,7 @@ export function MenuEditor({
     if (welcome) {
       setFlash({
         type: "info",
-        text: "Το venue δημιουργήθηκε! Πρόσθεσε την πρώτη κατηγορία και πιάτα για να εμφανιστεί στο QR menu.",
+        text: "Το venue δημιουργήθηκε! Πρόσθεσε κατηγορίες χειροκίνητα ή κάνε import από PDF.",
       });
     }
   }, [welcome, setFlash]);
@@ -199,15 +199,23 @@ export function MenuEditor({
           </select>
         </label>
         {venue ? (
-          <a
-            href={`/m/${venue.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
-          >
-            Προεπισκόπηση menu
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
+          <>
+            <a
+              href={`/dashboard/menus/import?venue=${venueId}`}
+              className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+            >
+              Import PDF
+            </a>
+            <a
+              href={`/m/${venue.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+            >
+              Προεπισκόπηση menu
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </>
         ) : null}
       </div>
 

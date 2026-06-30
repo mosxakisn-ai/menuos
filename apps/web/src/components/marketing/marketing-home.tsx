@@ -1,89 +1,123 @@
+"use client";
+
 import Link from "next/link";
 import {
+  ArrowDown,
   Bell,
   Building2,
   Check,
   Globe,
   QrCode,
   Smartphone,
+  Sparkles,
   UtensilsCrossed,
 } from "lucide-react";
-import { Logo } from "@/components/brand/logo";
+import { HeroShowcase } from "@/components/marketing/hero-showcase";
 import {
   FaqBlock,
   FeatureCard,
   SectionHeader,
   StatStrip,
+  ValuePill,
 } from "@/components/marketing/marketing-blocks";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MARKETING } from "@/content/marketing-el";
-
-const h = MARKETING.home;
+import { useI18n } from "@/i18n/context";
 
 const serviceIcons = [QrCode, Globe, Bell, UtensilsCrossed, Building2, Smartphone];
 
 export function MarketingHome() {
+  const { m } = useI18n();
+  const marketing = m.marketing;
+  const pages = m.pages;
+  const h = marketing.home;
   return (
     <>
-      <section className="relative overflow-hidden bg-hero-gradient pb-20 pt-16 sm:pb-28 sm:pt-24">
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden bg-hero-gradient pb-16 pt-12 sm:pb-24 sm:pt-16">
+        {/* Background orbs */}
+        <div className="pointer-events-none absolute -left-32 top-0 h-[28rem] w-[28rem] rounded-full bg-brand-blue/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-brand-cyan/10 blur-3xl" />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(15,23,42,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_70%_at_50%_0%,#000_50%,transparent_100%)]" />
+
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          <div className="grid items-center gap-12 lg:grid-cols-[1fr_1.05fr] lg:gap-10 xl:gap-16">
+            {/* Copy */}
             <div className="text-center lg:text-left">
               <div className="animate-fade-up flex justify-center lg:justify-start">
-                <Logo href={false} showTagline markSize={52} />
+                <ValuePill>
+                  <Sparkles className="mr-1.5 inline h-3.5 w-3.5" aria-hidden />
+                  {h.hero.badge}
+                </ValuePill>
               </div>
-              <h1 className="animate-fade-up mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-brand-navy sm:text-5xl lg:text-6xl">
+
+              <h1 className="animate-fade-up mt-6 text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-brand-navy sm:text-5xl lg:text-[3.5rem]">
                 {h.hero.title}
                 <span className="mt-1 block text-gradient-brand">{h.hero.titleAccent}</span>
               </h1>
-              <p className="animate-fade-up mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-600 lg:mx-0">
+
+              <p className="animate-fade-up-delay mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-600 opacity-0 lg:mx-0 sm:text-xl">
                 {h.hero.subtitle}
               </p>
-              <div className="animate-fade-up mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-                <Link href="/register" className={buttonClass("primary", "lg")}>
+
+              <div className="animate-fade-up-delay mt-8 flex flex-wrap items-center justify-center gap-2 opacity-0 lg:justify-start">
+                {h.hero.trust.map((t) => (
+                  <span
+                    key={t}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-600 shadow-soft backdrop-blur-sm"
+                  >
+                    <Check className="h-3.5 w-3.5 text-brand-cyan" aria-hidden />
+                    {t}
+                  </span>
+                ))}
+              </div>
+
+              <div className="animate-fade-up-delay-2 mt-10 flex flex-col items-center justify-center gap-4 opacity-0 sm:flex-row lg:justify-start">
+                <Link href="/register" className={`${buttonClass("primary", "lg")} shadow-glow`}>
                   {h.hero.ctaTrial}
                 </Link>
                 <Link href="/pricing" className={buttonClass("secondary", "lg")}>
                   {h.hero.ctaPricing}
                 </Link>
               </div>
+
+              <a
+                href="#pos-leitourgei"
+                className="animate-fade-up-delay-2 mt-8 inline-flex items-center gap-2 text-sm font-semibold text-brand-blue opacity-0 hover:underline"
+              >
+                {h.hero.ctaDemo}
+                <ArrowDown className="h-4 w-4 animate-bounce" />
+              </a>
             </div>
 
-            <div className="animate-float relative mx-auto w-full max-w-sm lg:max-w-none lg:justify-self-end">
-              <div className="rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-4 shadow-glow backdrop-blur-sm">
-                <div className="rounded-card bg-brand-gradient p-5 text-white">
-                  <p className="text-lg font-bold">Marine Hotel</p>
-                  <p className="text-xs text-white/80">Pool Bar · ΕΛ / EN</p>
-                </div>
-                <div className="mt-4 space-y-2.5">
-                  {[
-                    { cat: "Signature Cocktails", price: "€12" },
-                    { cat: "Light Bites", price: "€8" },
-                    { cat: "Wines & Spirits", price: "€9+" },
-                  ].map(({ cat, price }) => (
-                    <div
-                      key={cat}
-                      className="flex items-center justify-between rounded-xl bg-brand-surface px-4 py-3 text-sm"
-                    >
-                      <span className="font-semibold text-brand-navy">{cat}</span>
-                      <span className="font-bold text-brand-blue">{price}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 rounded-button bg-brand-gradient py-3 text-center text-xs font-bold text-white">
-                  Call Waiter · Τραπέζι 12
-                </div>
-              </div>
+            {/* Visual */}
+            <div className="animate-fade-up-delay-2 opacity-0 lg:justify-self-end">
+              <HeroShowcase />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-slate-100 bg-white py-12">
+      {/* ── Stats ── */}
+      <section className="relative border-b border-slate-100 bg-white py-10 sm:py-12">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <StatStrip items={[...MARKETING.stats]} />
+          <StatStrip items={[...marketing.stats]} />
+        </div>
+      </section>
+
+      {/* ── Social proof strip ── */}
+      <section className="border-b border-slate-100 bg-brand-surface/50 py-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+            {pages.common.designedFor}
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-semibold text-slate-500">
+            {pages.common.industries.map((label) => (
+              <span key={label} className="transition hover:text-brand-blue">
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -92,7 +126,7 @@ export function MarketingHome() {
           <SectionHeader title={h.whatWeDo.title} description={h.whatWeDo.body} />
           <p className="mt-6 text-lg leading-relaxed text-slate-600">{h.whatWeDo.body2}</p>
           <Link href="/ypiresies" className="mt-8 inline-flex text-sm font-semibold text-brand-blue hover:underline">
-            Δες όλες τις υπηρεσίες →
+            {pages.common.servicesLink}
           </Link>
         </div>
       </section>
@@ -102,8 +136,8 @@ export function MarketingHome() {
           <SectionHeader title={h.audiences.title} />
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
             {h.audiences.items.map(({ title, text }) => (
-              <Card key={title} className="transition hover:-translate-y-0.5 hover:shadow-cardHover">
-                <h3 className="text-lg font-bold text-brand-navy">{title}</h3>
+              <Card key={title} className="group transition hover:-translate-y-1 hover:border-brand-blue/20 hover:shadow-cardHover">
+                <h3 className="text-lg font-bold text-brand-navy group-hover:text-brand-blue">{title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">{text}</p>
               </Card>
             ))}
@@ -118,9 +152,9 @@ export function MarketingHome() {
             {h.steps.items.map(({ step, title, text }) => (
               <div
                 key={step}
-                className="rounded-card border border-slate-200/80 bg-white p-6 text-center shadow-card"
+                className="group rounded-card border border-slate-200/80 bg-white p-6 text-center shadow-card transition hover:-translate-y-1 hover:shadow-cardHover"
               >
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-gradient text-lg font-bold text-white shadow-soft">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-gradient text-lg font-bold text-white shadow-glow transition group-hover:scale-110">
                   {step}
                 </div>
                 <h3 className="mt-4 font-bold text-brand-navy">{title}</h3>
@@ -130,7 +164,7 @@ export function MarketingHome() {
           </div>
           <p className="mt-10 text-center">
             <Link href="/pos-leitourgei" className="text-sm font-semibold text-brand-blue hover:underline">
-              Λεπτομέρειες για τη ροή εργασίας →
+            {pages.common.howItWorksLink}
             </Link>
           </p>
         </div>
@@ -143,7 +177,7 @@ export function MarketingHome() {
             {h.services.items.map(({ title, text }, i) => {
               const Icon = serviceIcons[i] ?? QrCode;
               return (
-                <FeatureCard key={title} icon={Icon} title={title} description={text} href="/ypiresies" />
+                <FeatureCard key={title} icon={Icon} title={title} description={text} href="/ypiresies" learnMoreLabel={pages.common.learnMore} />
               );
             })}
           </div>
@@ -164,14 +198,12 @@ export function MarketingHome() {
                 ))}
               </ul>
             </div>
-            <Card className="border-brand-blue/10 bg-gradient-to-br from-brand-surface to-white">
-              <p className="text-sm font-semibold uppercase tracking-wide text-brand-blue">Δοκιμή 7 ημερών</p>
-              <p className="mt-3 text-2xl font-extrabold text-brand-navy">Ξεκίνα χωρίς ρίσκο</p>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                Δημιούργησε venue, βάλε πιάτα και δοκίμασε το QR με τη δική σου ομάδα πριν επιλέξεις πλάνο.
-              </p>
+            <Card className="border-brand-blue/10 bg-gradient-to-br from-brand-blue/5 via-white to-brand-cyan/5 shadow-glow">
+              <p className="text-sm font-semibold uppercase tracking-wide text-brand-blue">{pages.home.trialBadge}</p>
+              <p className="mt-3 text-2xl font-extrabold text-brand-navy">{pages.home.trialCardTitle}</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">{pages.home.trialCardBody}</p>
               <Link href="/register" className={`mt-6 inline-flex ${buttonClass("primary")}`}>
-                Δωρεάν εγγραφή
+                {pages.common.createAccount}
               </Link>
             </Card>
           </div>
@@ -189,12 +221,13 @@ export function MarketingHome() {
 
       <section className="relative overflow-hidden bg-brand-gradient py-16 text-white sm:py-20">
         <div className="pointer-events-none absolute -right-24 top-0 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-brand-cyan/20 blur-3xl" />
         <div className="relative mx-auto max-w-6xl px-4 text-center sm:px-6">
           <h2 className="text-3xl font-extrabold sm:text-4xl">{h.cta.title}</h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-white/90">{h.cta.text}</p>
           <Link
             href="/register"
-            className="mt-8 inline-flex rounded-button bg-white px-8 py-3.5 text-sm font-bold text-brand-blue shadow-lg transition hover:bg-brand-surface"
+            className="mt-8 inline-flex rounded-button bg-white px-8 py-3.5 text-sm font-bold text-brand-blue shadow-lg transition hover:scale-[1.02] hover:bg-brand-surface"
           >
             {h.cta.button}
           </Link>

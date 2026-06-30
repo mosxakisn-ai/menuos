@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import { RootJsonLd } from "@/components/seo/json-ld";
+import { I18nProvider } from "@/i18n/context";
+import { getMessages } from "@/i18n/get-messages";
+import { getServerLocale } from "@/i18n/server";
 import { buildRootMetadata } from "@/lib/seo";
 import "./globals.css";
 
@@ -12,12 +15,17 @@ const manrope = Manrope({
 
 export const metadata: Metadata = buildRootMetadata();
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getServerLocale();
+  const messages = getMessages(locale);
+
   return (
-    <html lang="el" className={manrope.variable}>
+    <html lang={locale} className={manrope.variable}>
       <body className="min-h-screen font-sans">
         <RootJsonLd />
-        {children}
+        <I18nProvider initialLocale={locale} initialMessages={messages}>
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

@@ -11,104 +11,68 @@ import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/componen
 import { MarketingPageJsonLd } from "@/components/seo/marketing-json-ld";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { buttonClass } from "@/components/ui/button";
-import { MARKETING } from "@/content/marketing-el";
 import { SEO_PAGES, SEO_PRICING_OFFERS } from "@/content/seo-el";
+import { getMessages } from "@/i18n/get-messages";
+import { getServerLocale } from "@/i18n/server";
 import { buildPricingOffersSchema } from "@/lib/seo-structured-data";
 import { seoPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = seoPageMetadata(SEO_PAGES.pricing);
 
-const plans = [
-  {
-    name: "Δοκιμή",
-    price: "€0",
-    period: " / 7 ημέρες",
-    description: "Για να δοκιμάσεις την πλατφόρμα πριν επιλέξεις πλάνο.",
-    features: ["1 venue", "1 menu", "50 πιάτα", "QR codes", "ΕΛ & EN", "Χωρίς κάρτα"],
-    cta: "Εγγραφή",
-    href: "/register",
-    highlighted: false,
-  },
-  {
-    name: "Basic",
-    price: "€29",
-    period: "/μήνα",
-    description: "Ιδανικό για εστιατόριο, cafe ή μοναδικό venue.",
-    features: [
-      "1 venue",
-      "3 menus",
-      "Απεριόριστα πιάτα",
-      "QR codes",
-      "Call waiter",
-      "ΕΛ & EN QR",
-    ],
-    cta: "Ξεκίνα Basic",
-    href: "/register",
-    highlighted: true,
-    badge: "Δημοφιλές",
-  },
-  {
-    name: "Pro",
-    price: "€79",
-    period: "/μήνα",
-    description: "Για ξενοδοχεία και επιχειρήσεις με πολλαπλούς χώρους.",
-    features: [
-      "3 venues",
-      "Απεριόριστα menus",
-      "Call waiter",
-      "ΕΛ & EN QR",
-      "Προτεραιότητα υποστήριξης",
-      "OCR import (σύντομα)",
-    ],
-    cta: "Ξεκίνα Pro",
-    href: "/register",
-    highlighted: false,
-  },
-];
-
-export default function PricingPage() {
-  const p = MARKETING.pages.pricing;
+export default async function PricingPage() {
+  const locale = await getServerLocale();
+  const { marketing, pages } = getMessages(locale);
+  const p = marketing.pages.pricing;
+  const ui = pages.pricing;
 
   return (
     <MarketingLayout>
       <MarketingPageJsonLd page={SEO_PAGES.pricing} />
       <JsonLdScript data={buildPricingOffersSchema(SEO_PRICING_OFFERS)} />
-      <MarketingPageHero title="Απλές, διαφανείς τιμές" subtitle={p.hero} badge={p.badge} />
+      <MarketingPageHero title={ui.heroTitle} subtitle={p.hero} badge={p.badge} />
       <MarketingSection variant="muted">
-        <StatStrip items={[...MARKETING.stats]} />
+        <StatStrip items={[...marketing.stats]} />
       </MarketingSection>
       <MarketingSection>
         <div className="grid gap-8 lg:grid-cols-3 lg:items-stretch">
-          {plans.map((plan) => (
-            <PricingCard key={plan.name} {...plan} />
+          {ui.plans.map((plan) => (
+            <PricingCard
+              key={plan.name}
+              name={plan.name}
+              price={plan.price}
+              period={plan.period}
+              description={plan.description}
+              features={[...plan.features]}
+              cta={plan.cta}
+              href="/register"
+              highlighted={"highlighted" in plan ? !!plan.highlighted : false}
+              badge={"badge" in plan ? plan.badge : undefined}
+            />
           ))}
         </div>
         <div className="mx-auto mt-14 max-w-2xl rounded-card border border-slate-200/80 bg-gradient-to-br from-brand-surface to-white p-8 text-center shadow-card">
           <p className="text-sm font-bold uppercase tracking-wide text-brand-blue">Enterprise</p>
-          <h2 className="mt-2 text-2xl font-extrabold text-brand-navy">Custom για αλυσίδες</h2>
-          <p className="mt-4 text-sm leading-relaxed text-slate-600">
-            White-label, custom domain, πολλαπλά venues, προτεραιότητα υποστήριξης — επικοινωνήστε για προσφορά
-            ανάλογα με τις ανάγκες σας.
-          </p>
+          <h2 className="mt-2 text-2xl font-extrabold text-brand-navy">{ui.enterpriseTitle}</h2>
+          <p className="mt-4 text-sm leading-relaxed text-slate-600">{ui.enterpriseDesc}</p>
           <Link href="/epikoinonia" className={`mt-6 inline-flex ${buttonClass("secondary")}`}>
-            Ζήτησε προσφορά
+            {ui.enterpriseCta}
           </Link>
         </div>
       </MarketingSection>
       <MarketingSection variant="muted">
-        <SectionHeader title="Ερωτήσεις για τιμές" description="Ό,τι χρειάζεστε να ξέρετε πριν ξεκινήσετε." />
+        <SectionHeader title={ui.faqTitle} description={ui.faqDesc} />
         <div className="mx-auto mt-10 max-w-3xl">
           <FaqBlock items={[...p.faq]} />
         </div>
       </MarketingSection>
       <MarketingSection>
         <MarketingCtaBand
-          title="Ξεκίνα δωρεάν σήμερα"
-          description="7 ημέρες trial. Χωρίς κάρτα. Αναβάθμισε όταν είσαι έτοιμος."
+          title={ui.cta.title}
+          description={ui.cta.description}
           primaryHref="/register"
-          primaryLabel="Δημιουργία λογαριασμού"
+          primaryLabel={ui.cta.primary}
           secondaryHref="/epikoinonia"
-          secondaryLabel="Ρώτα μας"
+          secondaryLabel={ui.cta.secondary}
         />
       </MarketingSection>
     </MarketingLayout>

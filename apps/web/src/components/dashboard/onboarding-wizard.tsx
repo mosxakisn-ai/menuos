@@ -26,11 +26,13 @@ export function OnboardingWizard({ state }: { state: OnboardingState }) {
       id: "menu",
       title: "Πρόσθεσε πιάτα",
       desc: state.hasCategory
-        ? "Πρόσθεσε τουλάχιστον ένα πιάτο για να εμφανιστεί το menu."
-        : "Κατηγορίες και πιάτα στα Ελληνικά (και προαιρετικά Αγγλικά).",
+        ? "Πρόσθεσε πιάτα χειροκίνητα ή κάνε import από PDF (breakfast, pool bar κ.λπ.)."
+        : "Κατηγορίες και πιάτα — χειροκίνητα ή import από PDF.",
       done: state.hasItem,
       href: state.venueId ? `/dashboard/menus?venue=${state.venueId}` : "/dashboard/menus",
       cta: "Επεξεργασία menu",
+      altHref: state.venueId ? `/dashboard/menus/import?venue=${state.venueId}` : "/dashboard/menus/import",
+      altCta: "Import PDF",
     },
     {
       id: "qr",
@@ -80,13 +82,23 @@ export function OnboardingWizard({ state }: { state: OnboardingState }) {
               <p className="font-semibold text-brand-navy">{step.title}</p>
               <p className="text-sm text-slate-600">{step.desc}</p>
               {!step.done && i === completed ? (
-                <Link
-                  href={step.href}
-                  className={`mt-2 inline-flex items-center gap-1 text-sm font-semibold ${buttonClass("primary", "sm")}`}
-                >
-                  {step.cta}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Link
+                    href={step.href}
+                    className={`inline-flex items-center gap-1 text-sm font-semibold ${buttonClass("primary", "sm")}`}
+                  >
+                    {step.cta}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  {"altHref" in step && step.altHref ? (
+                    <Link
+                      href={step.altHref}
+                      className={`inline-flex items-center gap-1 text-sm font-semibold ${buttonClass("secondary", "sm")}`}
+                    >
+                      {step.altCta}
+                    </Link>
+                  ) : null}
+                </div>
               ) : step.done ? (
                 <p className="mt-1 flex items-center gap-1 text-xs font-medium text-emerald-700">
                   <Check className="h-3 w-3" /> Έτοιμο
