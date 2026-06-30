@@ -14,7 +14,28 @@ load_env() {
   set +a
 }
 
-# Build DATABASE_URL from .env parts when unset or when FORCE_REBUILD_DATABASE_URL=1
+# Apply production host defaults when APP_URL points to menuos.gr (server only).
+apply_production_env_defaults() {
+  local env_file="${1:-.env}"
+  if [[ "${APP_URL:-}" != *menuos.gr* ]]; then
+    return 0
+  fi
+  local tmp
+  tmp="$(mktemp)"
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line//$'\r'/}"
+    case "$line" in
+      DATABASE_HOST=*) echo "DATABASE_HOST=menuos-db" ;;
+      DATABASE_PORT=*) echo "DATABASE_PORT=5432" ;;
+      NODE_ENV=*) echo "NODE_ENV=production" ;;
+      *) echo "$line" ;;
+    esac
+  done < "$env_file" > "$tmp"
+  mv "$tmp" "$env_file"
+  echo "Applied production defaults (menuos-db, port 5432) to $env_file"
+}
+
+# Build DATABASE_URL from .env parts.
 build_database_url() {
   POSTGRES_USER="${POSTGRES_USER:-menuos}"
   POSTGRES_DB="${POSTGRES_DB:-menuos}"

@@ -11,6 +11,8 @@ bash "$ROOT/scripts/ensure-env.sh"
 # shellcheck source=scripts/load-env.sh
 source "$ROOT/scripts/load-env.sh"
 load_env "$ROOT"
+apply_production_env_defaults "$ROOT/.env"
+load_env "$ROOT"
 
 PG_USER="${POSTGRES_USER:-menuos}"
 PG_DB="${POSTGRES_DB:-menuos}"
