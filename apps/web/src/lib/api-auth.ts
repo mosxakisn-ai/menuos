@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { UserRole } from "@menuos/db";
 import { getSession, type SessionPayload } from "@/lib/auth";
+import { getSupervisorSession } from "@/lib/supervisor-auth";
 import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
 
 type AuthResult =
@@ -76,4 +77,19 @@ export async function requirePdfImportPlan(options?: {
   }
 
   return auth;
+}
+
+type SupervisorAuthResult =
+  | { supervisor: { username: string }; response: null }
+  | { supervisor: null; response: NextResponse };
+
+export async function requireSupervisor(): Promise<SupervisorAuthResult> {
+  const supervisor = await getSupervisorSession();
+  if (!supervisor) {
+    return {
+      supervisor: null,
+      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+  return { supervisor, response: null };
 }

@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { LOCALE_COOKIE, LOCALE_REQUEST_HEADER, resolveLocale } from "@/i18n/types";
 import { SESSION_COOKIE } from "@/lib/config";
 import { verifySessionToken } from "@/lib/auth";
+import { SUPERVISOR_COOKIE, verifySupervisorToken } from "@/lib/supervisor-auth";
 
 const TRIAL_EXEMPT_PREFIXES = ["/dashboard/billing"];
 
@@ -57,7 +58,29 @@ export async function middleware(request: NextRequest) {
 
   let response: NextResponse;
 
-  if (pathname.startsWith("/dashboard")) {
+  if (pathname.startsWith("/supervisor")) {
+    if (pathname === "/supervisor/login") {
+      const token = request.cookies.get(SUPERVISOR_COOKIE)?.value;
+      if (token && verifySupervisorToken(token)) {
+        const next = request.nextUrl.searchParams.get("next");
+        const target =
+          next && next.startsWith("/supervisor") ? next : "/supervisor";
+        response = NextResponse.redirect(new URL(target, request.url));
+        return applyLocale(request, response);
+      }
+      response = NextResponse.next({ request: { headers: requestHeaders } });
+      return applyLocale(request, response);
+    }
+
+    const token = request.cookies.get(SUPERVISOR_COOKIE)?.value;
+    if (!token || !verifySupervisorToken(token)) {
+      const login = new URL("/supervisor/login", request.url);
+      login.searchParams.set("next", pathname + request.nextUrl.search);
+      response = NextResponse.redirect(login);
+      return applyLocale(request, response);
+    }
+    response = NextResponse.next({ request: { headers: requestHeaders } });
+  } else if (pathname.startsWith("/dashboard")) {
     const token = request.cookies.get(SESSION_COOKIE)?.value;
     if (!token) {
       response = NextResponse.redirect(new URL("/login", request.url));
