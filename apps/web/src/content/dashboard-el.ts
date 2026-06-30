@@ -65,6 +65,17 @@ export const DASHBOARD_EL = {
     enable: "Ενεργοποίηση",
     disable: "Απενεργοποίηση",
   },
+  photos: {
+    label: "Φωτογραφία πιάτου (προαιρετικό)",
+    uploadButton: "Ανέβασμα από κινητό/υπολογιστή",
+    uploading: "Ανέβασμα...",
+    uploadHint: "JPG ή PNG έως 5 MB — βελτιστοποιείται αυτόματα για το menu.",
+    uploadFailed: "Αποτυχία ανεβάσματος.",
+    urlPlaceholder: "ή επικόλλησε link φωτογραφίας",
+    urlOptional: "ή επικόλλησε link φωτογραφίας",
+    urlOnlyHint: "Χωρίς φωτό εμφανίζεται ως καθαρή γραμμή στο menu.",
+    remove: "Αφαίρεση",
+  },
 } as const;
 
 export function planLabel(planId: string): string {

@@ -4,6 +4,7 @@ import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, type ItemLabel } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
@@ -446,15 +447,21 @@ export function MenuEditor({
                                 ✕
                               </button>
                             </div>
-                            <input
-                              placeholder="Φωτογραφία URL (προαιρετικό — χωρίς φωτό: καθαρή γραμμή στο menu)"
+                            <PhotoUploadField
                               value={editPhotoUrl}
-                              onChange={(e) => setEditPhotoUrl(e.target.value)}
-                              className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                              onChange={setEditPhotoUrl}
                             />
                           </div>
                         ) : (
                           <div className="flex flex-wrap items-center gap-2">
+                            {item.photoUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={item.photoUrl}
+                                alt=""
+                                className="h-9 w-9 shrink-0 rounded-md border border-slate-200 object-cover"
+                              />
+                            ) : null}
                             <p className={`font-medium ${item.available ? "text-brand-navy" : "text-slate-400 line-through"}`}>
                               {tName(item.translations)}
                             </p>
@@ -565,12 +572,11 @@ export function MenuEditor({
                       onChange={(e) => setItemForm((f) => ({ ...f, descriptionGr: e.target.value }))}
                       className="rounded-button border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
                     />
-                    <input
-                      placeholder="Φωτογραφία URL (προαιρετικό — χωρίς φωτό: καθαρή γραμμή στο menu)"
-                      value={itemForm.photoUrl}
-                      onChange={(e) => setItemForm((f) => ({ ...f, photoUrl: e.target.value }))}
-                      className="rounded-button border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
-                    />
+                        <PhotoUploadField
+                          value={itemForm.photoUrl}
+                          onChange={(url) => setItemForm((f) => ({ ...f, photoUrl: url }))}
+                          className="sm:col-span-2"
+                        />
                     <label className="block text-sm sm:col-span-2">
                       <span className="font-medium text-brand-navy">Ετικέτα στο QR menu</span>
                       <select
