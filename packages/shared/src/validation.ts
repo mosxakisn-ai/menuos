@@ -78,6 +78,9 @@ export const itemCreateSchema = z.object({
   nameDe: z.string().max(120).optional(),
   nameFr: z.string().max(120).optional(),
   label: itemLabelSchema.optional(),
+  photoUrl: z
+    .union([z.string().url().max(2048), z.literal(""), z.null()])
+    .optional(),
   descriptionGr: z.string().max(1000).optional(),
   descriptionEn: z.string().max(1000).optional(),
   ingredientsGr: z.string().max(500).optional(),
@@ -99,6 +102,8 @@ export const waiterCallUpdateSchema = z.object({
 export const menuImportItemSchema = z.object({
   nameGr: z.string().min(1).max(120),
   nameEn: z.string().max(120).optional(),
+  nameDe: z.string().max(120).optional(),
+  nameFr: z.string().max(120).optional(),
   price: z.number().min(0).max(99999),
   descriptionGr: z.string().max(1000).optional(),
   selected: z.boolean().optional(),
@@ -107,6 +112,8 @@ export const menuImportItemSchema = z.object({
 export const menuImportCategorySchema = z.object({
   nameGr: z.string().min(1).max(120),
   nameEn: z.string().max(120).optional(),
+  nameDe: z.string().max(120).optional(),
+  nameFr: z.string().max(120).optional(),
   selected: z.boolean().optional(),
   items: z.array(menuImportItemSchema),
 });
@@ -129,6 +136,9 @@ export const itemPatchSchema = z
     available: z.boolean().optional(),
     price: z.number().finite().min(0).max(99999).optional(),
     label: itemLabelSchema.optional(),
+    photoUrl: z
+      .union([z.string().url().max(2048), z.literal(""), z.null()])
+      .optional(),
     nameGr: z.string().min(1).max(120).optional(),
     nameEn: z.string().max(120).optional(),
     nameDe: z.string().max(120).optional(),
@@ -139,6 +149,7 @@ export const itemPatchSchema = z
       d.available !== undefined ||
       d.price !== undefined ||
       d.label !== undefined ||
+      d.photoUrl !== undefined ||
       d.nameGr !== undefined ||
       d.nameEn !== undefined ||
       d.nameDe !== undefined ||

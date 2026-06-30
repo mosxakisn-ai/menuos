@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { menuImportApplySchema } from "@menuos/shared";
+import { menuImportApplySchema, buildMenuNameTranslations } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { canOrganizationAddItems } from "@/lib/billing";
 import { getMenuForOrganization } from "@/lib/venue-access";
@@ -76,6 +76,12 @@ export async function POST(request: Request) {
               ...(cat.nameEn?.trim()
                 ? [{ language: "EN" as const, name: cat.nameEn.trim() }]
                 : []),
+              ...(cat.nameDe?.trim()
+                ? [{ language: "DE" as const, name: cat.nameDe.trim() }]
+                : []),
+              ...(cat.nameFr?.trim()
+                ? [{ language: "FR" as const, name: cat.nameFr.trim() }]
+                : []),
             ],
           },
         },
@@ -84,8 +90,12 @@ export async function POST(request: Request) {
 
       let itemSort = 0;
       for (const item of items) {
-        const grName = item.nameGr.trim();
-        const enName = item.nameEn?.trim();
+        const nameRows = buildMenuNameTranslations({
+          nameGr: item.nameGr.trim(),
+          nameEn: item.nameEn,
+          nameDe: item.nameDe,
+          nameFr: item.nameFr,
+        });
         await tx.item.create({
           data: {
             categoryId: category.id,
@@ -93,22 +103,11 @@ export async function POST(request: Request) {
             available: true,
             sortOrder: itemSort++,
             translations: {
-              create: [
-                {
-                  language: "GR",
-                  name: grName,
-                  description: item.descriptionGr?.trim() || null,
-                },
-                ...(enName
-                  ? [
-                      {
-                        language: "EN" as const,
-                        name: enName,
-                        description: null as string | null,
-                      },
-                    ]
-                  : []),
-              ],
+              create: nameRows.map((row) => ({
+                language: row.language,
+                name: row.name,
+                description: row.language === "GR" ? item.descriptionGr?.trim() || null : null,
+              })),
             },
           },
         });

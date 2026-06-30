@@ -20,6 +20,10 @@ const STATUS_GR: Record<string, string> = {
   CANCELED: "Ακυρωμένη",
 };
 
+function formatPlanPrice(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
 export function BillingPlans({
   organizationId,
   subscription,
@@ -107,7 +111,7 @@ export function BillingPlans({
                 {plan.name}
               </p>
               <p className="mt-2 font-serif text-3xl font-bold text-primary">
-                €{plan.priceMonthly}
+                €{formatPlanPrice(plan.priceMonthly)}
                 <span className="text-base font-normal text-slate-500">/μήνα</span>
               </p>
               <ul className="mt-4 space-y-1.5 text-sm text-slate-600">

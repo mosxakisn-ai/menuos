@@ -13,6 +13,7 @@ type Item = {
   price: { toString(): string };
   available: boolean;
   label: string | null;
+  photoUrl: string | null;
   translations: Translation[];
 };
 type Category = {
@@ -62,11 +63,16 @@ export function MenuEditor({
     price: "",
     descriptionGr: "",
     label: "" as "" | ItemLabel,
+    photoUrl: "",
   });
   const [addingItem, setAddingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editNameGr, setEditNameGr] = useState("");
+  const [editPhotoUrl, setEditPhotoUrl] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [activeMenuId, setActiveMenuId] = useState<string>("");
+  const [newMenuName, setNewMenuName] = useState("");
+  const [addingMenu, setAddingMenu] = useState(false);
 
   const loadMenus = useCallback(async () => {
     if (!venueId) return;
@@ -77,6 +83,11 @@ export function MenuEditor({
       if (res.ok) {
         setMenus(data.menus ?? []);
         setVenue(data.venue ?? null);
+        setActiveMenuId((prev) => {
+          const list = data.menus ?? [];
+          if (prev && list.some((m: Menu) => m.id === prev)) return prev;
+          return list[0]?.id ?? "";
+        });
       } else {
         showFromResponse(data, false);
       }
@@ -91,7 +102,7 @@ export function MenuEditor({
 
   async function addCategory(e: React.FormEvent) {
     e.preventDefault();
-    const menuId = menus[0]?.id;
+    const menuId = activeMenuId || menus[0]?.id;
     if (!menuId || !catNameGr.trim()) return;
     setAddingCat(true);
     try {
@@ -137,17 +148,40 @@ export function MenuEditor({
           price: parseFloat(itemForm.price),
           descriptionGr: itemForm.descriptionGr.trim() || undefined,
           label: itemForm.label || undefined,
+          photoUrl: itemForm.photoUrl.trim() || undefined,
         }),
       });
       const data = await res.json();
       showFromResponse(data, res.ok);
       if (res.ok) {
-        setItemForm({ nameGr: "", nameEn: "", nameDe: "", nameFr: "", price: "", descriptionGr: "", label: "" });
+        setItemForm({ nameGr: "", nameEn: "", nameDe: "", nameFr: "", price: "", descriptionGr: "", label: "", photoUrl: "" });
         setItemCategoryId(null);
         await loadMenus();
       }
     } finally {
       setAddingItem(false);
+    }
+  }
+
+  async function addMenu(e: React.FormEvent) {
+    e.preventDefault();
+    if (!venueId || !newMenuName.trim()) return;
+    setAddingMenu(true);
+    try {
+      const res = await fetch("/api/menus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venueId, name: newMenuName.trim() }),
+      });
+      const data = await res.json();
+      showFromResponse(data, res.ok);
+      if (res.ok) {
+        setNewMenuName("");
+        await loadMenus();
+        if (data.menu?.id) setActiveMenuId(data.menu.id);
+      }
+    } finally {
+      setAddingMenu(false);
     }
   }
 
@@ -162,14 +196,17 @@ export function MenuEditor({
     if (res.ok) await loadMenus();
   }
 
-  async function saveItemName(itemId: string) {
+  async function saveItemEdit(itemId: string) {
     if (!editNameGr.trim()) return;
     setSavingName(true);
     try {
       const res = await fetch(`/api/items/${itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nameGr: editNameGr.trim() }),
+        body: JSON.stringify({
+          nameGr: editNameGr.trim(),
+          photoUrl: editPhotoUrl.trim() || "",
+        }),
       });
       const data = await res.json();
       showFromResponse(data, res.ok);
@@ -212,6 +249,8 @@ export function MenuEditor({
   function tName(translations: Translation[]) {
     return translations.find((t) => t.language === "GR")?.name ?? translations[0]?.name ?? "—";
   }
+
+  const activeMenu = menus.find((m) => m.id === activeMenuId) ?? menus[0];
 
   if (venues.length === 0) {
     return (
@@ -271,6 +310,39 @@ export function MenuEditor({
         <p className="text-sm text-slate-500">Φόρτωση menu...</p>
       ) : (
         <>
+          {menus.length > 0 ? (
+            <Card>
+              <h2 className="font-semibold text-brand-navy">Menus</h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {menus.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setActiveMenuId(m.id)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
+                      activeMenu?.id === m.id
+                        ? "bg-brand-gradient text-white"
+                        : "bg-brand-surface text-brand-navy ring-1 ring-slate-200"
+                    }`}
+                  >
+                    {m.name}
+                  </button>
+                ))}
+              </div>
+              <form onSubmit={addMenu} className="mt-4 flex flex-wrap items-end gap-2">
+                <input
+                  placeholder="Νέο menu (π.χ. Pool Bar)"
+                  value={newMenuName}
+                  onChange={(e) => setNewMenuName(e.target.value)}
+                  className="min-w-[200px] flex-1 rounded-button border border-slate-200 px-3 py-2 text-sm"
+                />
+                <button type="submit" disabled={addingMenu} className={buttonClass("secondary", "sm")}>
+                  {addingMenu ? "..." : "+ Menu"}
+                </button>
+              </form>
+            </Card>
+          ) : null}
+
           <Card>
             <h2 className="font-semibold text-brand-navy">Νέα κατηγορία</h2>
             <p className="mt-1 text-xs text-slate-500">
@@ -313,7 +385,7 @@ export function MenuEditor({
             </form>
           </Card>
 
-          {menus[0]?.categories.map((cat) => (
+          {activeMenu?.categories.map((cat) => (
             <Card key={cat.id}>
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -338,28 +410,36 @@ export function MenuEditor({
                     <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
                       <div className="min-w-0 flex-1">
                         {editingItemId === item.id ? (
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <input
+                                value={editNameGr}
+                                onChange={(e) => setEditNameGr(e.target.value)}
+                                className="min-w-[8rem] flex-1 rounded border border-slate-200 px-2 py-1 text-sm"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                disabled={savingName}
+                                onClick={() => void saveItemEdit(item.id)}
+                                className={buttonClass("primary", "sm")}
+                              >
+                                {savingName ? "..." : "OK"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingItemId(null)}
+                                className={buttonClass("secondary", "sm")}
+                              >
+                                ✕
+                              </button>
+                            </div>
                             <input
-                              value={editNameGr}
-                              onChange={(e) => setEditNameGr(e.target.value)}
-                              className="min-w-[8rem] flex-1 rounded border border-slate-200 px-2 py-1 text-sm"
-                              autoFocus
+                              placeholder="URL φωτογραφίας (προαιρετικό)"
+                              value={editPhotoUrl}
+                              onChange={(e) => setEditPhotoUrl(e.target.value)}
+                              className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
                             />
-                            <button
-                              type="button"
-                              disabled={savingName}
-                              onClick={() => void saveItemName(item.id)}
-                              className={buttonClass("primary", "sm")}
-                            >
-                              {savingName ? "..." : "OK"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingItemId(null)}
-                              className={buttonClass("secondary", "sm")}
-                            >
-                              ✕
-                            </button>
                           </div>
                         ) : (
                           <div className="flex flex-wrap items-center gap-2">
@@ -378,6 +458,7 @@ export function MenuEditor({
                               onClick={() => {
                                 setEditingItemId(item.id);
                                 setEditNameGr(tName(item.translations));
+                                setEditPhotoUrl(item.photoUrl ?? "");
                               }}
                               className="rounded p-1 text-slate-400 hover:text-brand-blue"
                               title="Επεξεργασία ονόματος"
@@ -472,6 +553,12 @@ export function MenuEditor({
                       onChange={(e) => setItemForm((f) => ({ ...f, descriptionGr: e.target.value }))}
                       className="rounded-button border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
                     />
+                    <input
+                      placeholder="URL φωτογραφίας (προαιρετικό)"
+                      value={itemForm.photoUrl}
+                      onChange={(e) => setItemForm((f) => ({ ...f, photoUrl: e.target.value }))}
+                      className="rounded-button border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
+                    />
                     <label className="block text-sm sm:col-span-2">
                       <span className="font-medium text-brand-navy">Ετικέτα στο QR menu</span>
                       <select
@@ -516,7 +603,7 @@ export function MenuEditor({
             </Card>
           ))}
 
-          {menus[0]?.categories.length === 0 ? (
+          {activeMenu?.categories.length === 0 ? (
             <Card className="border-dashed">
               <p className="text-center text-sm text-slate-500">
                 Δεν υπάρχουν κατηγορίες. Πρόσθεσε την πρώτη παραπάνω για να ξεκινήσεις.

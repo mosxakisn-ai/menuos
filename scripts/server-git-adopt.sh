@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Adopt existing /opt/menuos as a git checkout (keeps .env, no full re-clone).
+# Adopt /opt/menuos for git-based deploy (keeps .env). Uses HTTPS (public repo).
 # Usage (on server as root):
-#   GITHUB_REPO=git@github.com:mosxakisn-ai/menuos.git bash scripts/server-git-adopt.sh
+#   bash scripts/server-git-adopt.sh
 
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/menuos}"
-GITHUB_REPO="${GITHUB_REPO:-git@github.com:mosxakisn-ai/menuos.git}"
+GITHUB_REPO="${GITHUB_REPO:-https://github.com/mosxakisn-ai/menuos.git}"
 BACKUP_ENV="/tmp/menuos.env.backup.$$"
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -24,19 +24,18 @@ if [ -f "$APP_DIR/.env" ]; then
   echo "Backed up .env"
 fi
 
-if [ -d "$APP_DIR/.git" ]; then
-  echo "Git already initialized at $APP_DIR"
-  cd "$APP_DIR"
-  git remote -v || true
-  exit 0
-fi
-
 apt-get update -qq
 apt-get install -y -qq git
 
 cd "$APP_DIR"
-git init
-git remote add origin "$GITHUB_REPO" 2>/dev/null || git remote set-url origin "$GITHUB_REPO"
+
+if [ ! -d .git ]; then
+  git init
+  git remote add origin "$GITHUB_REPO"
+else
+  git remote set-url origin "$GITHUB_REPO" 2>/dev/null || git remote add origin "$GITHUB_REPO"
+fi
+
 git fetch origin main
 git checkout -B main
 git reset --hard origin/main

@@ -78,9 +78,9 @@ export const SEO_PAGES = {
     keywords: ["πώς φτιάχνω QR menu", "QR menu βήματα", "ψηφιακό menu οδηγός"],
   },
   pricing: {
-    title: "Τιμές — Πλάνα από €29/μήνα",
+    title: "Τιμές — Πλάνα από €9.99/μήνα",
     description:
-      "Τιμές MenuOS: δωρεάν δοκιμή 7 ημερών, Basic €29/μήνα, Pro €79/μήνα. Χωρίς κρυφές χρεώσεις. Για Enterprise επικοινωνήστε μαζί μας.",
+      "Τιμές MenuOS: δωρεάν δοκιμή 7 ημερών, Basic €9.99/μήνα, Pro €19.99/μήνα. Χωρίς κρυφές χρεώσεις. Για Enterprise επικοινωνήστε μαζί μας.",
     path: "/pricing",
     breadcrumbLabel: "Τιμές",
     keywords: ["τιμές QR menu", "κόστος ψηφιακού menu", "MenuOS pricing"],
@@ -156,8 +156,8 @@ export const SEO_QR_MENU_FAQ = [
 
 export const SEO_PRICING_OFFERS = [
   { name: "Δοκιμή 7 ημερών", price: 0, description: "1 venue, 1 menu, 50 πιάτα" },
-  { name: "Basic", price: 29, description: "1 venue, 3 menus, απεριόριστα πιάτα" },
-  { name: "Pro", price: 79, description: "3 venues, απεριόριστα menus" },
+  { name: "Basic", price: 9.99, description: "1 venue, 3 menus, απεριόριστα πιάτα" },
+  { name: "Pro", price: 19.99, description: "3 venues, απεριόριστα menus" },
 ] as const;
 
 export const SEO_SITEMAP_ROUTES = Object.values(SEO_PAGES).map((page) => page.path);

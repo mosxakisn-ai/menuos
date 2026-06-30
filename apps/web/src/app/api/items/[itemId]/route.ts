@@ -47,7 +47,10 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Μη έγκυρα δεδομένα πιάτου." }, { status: 400 });
   }
 
-  const { nameGr, nameEn, nameDe, nameFr, available, price, label } = parsed.data;
+  const { nameGr, nameEn, nameDe, nameFr, available, price, label, photoUrl } = parsed.data;
+
+  const normalizedPhoto =
+    photoUrl === undefined ? undefined : photoUrl === "" || photoUrl === null ? null : photoUrl;
 
   await prisma.item.update({
     where: { id: itemId },
@@ -55,6 +58,7 @@ export async function PATCH(request: Request, { params }: Params) {
       ...(available !== undefined ? { available } : {}),
       ...(price !== undefined ? { price } : {}),
       ...(label !== undefined ? { label } : {}),
+      ...(normalizedPhoto !== undefined ? { photoUrl: normalizedPhoto } : {}),
     },
   });
 

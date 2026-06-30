@@ -4,6 +4,7 @@ import { Bell, Check, Globe, QrCode, Receipt, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { ItemLabel, QrMenuLanguage } from "@menuos/shared";
+import { QR_MENU_UI } from "@menuos/shared";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { ItemLabelBadge } from "@/components/menu/menu-item-card";
 import { cn } from "@/lib/utils";
@@ -14,9 +15,13 @@ type DemoItem = {
   id: string;
   nameGr: string;
   nameEn: string;
+  nameDe?: string;
+  nameFr?: string;
   price: string;
   descriptionGr: string;
   descriptionEn: string;
+  descriptionDe?: string;
+  descriptionFr?: string;
   label: ItemLabel | null;
   gradient: string;
   emoji: string;
@@ -26,6 +31,8 @@ type DemoCategory = {
   id: string;
   nameGr: string;
   nameEn: string;
+  nameDe?: string;
+  nameFr?: string;
   items: DemoItem[];
 };
 
@@ -34,6 +41,8 @@ const DEMO_CATEGORIES: DemoCategory[] = [
     id: "salads",
     nameGr: "Σαλάτες",
     nameEn: "Salads",
+    nameDe: "Salate",
+    nameFr: "Salades",
     items: [
       {
         id: "salad",
@@ -63,14 +72,20 @@ const DEMO_CATEGORIES: DemoCategory[] = [
     id: "fish",
     nameGr: "Ψάρια",
     nameEn: "Fish",
+    nameDe: "Fisch",
+    nameFr: "Poissons",
     items: [
       {
         id: "bream",
         nameGr: "Τσιπούρα",
         nameEn: "Sea Bream",
+        nameDe: "Goldbrasse",
+        nameFr: "Daurade",
         price: "18.00",
         descriptionGr: "Ψητή στο φούρνο με λεμόνι και ελαιόλαδο.",
         descriptionEn: "Oven-grilled with lemon and olive oil.",
+        descriptionDe: "Im Ofen mit Zitrone und Olivenöl.",
+        descriptionFr: "Grillée au four, citron et huile d'olive.",
         label: "BEST",
         gradient: "from-sky-100 to-blue-200",
         emoji: "🐟",
@@ -92,11 +107,15 @@ const DEMO_CATEGORIES: DemoCategory[] = [
     id: "drinks",
     nameGr: "Ποτά",
     nameEn: "Drinks",
+    nameDe: "Getränke",
+    nameFr: "Boissons",
     items: [
       {
         id: "mojito",
         nameGr: "Μοχίτο",
         nameEn: "Mojito",
+        nameDe: "Mojito",
+        nameFr: "Mojito",
         price: "12.00",
         descriptionGr: "Ρούμι, μέντα, λάιμ, σόδα.",
         descriptionEn: "Rum, mint, lime, soda.",
@@ -109,8 +128,38 @@ const DEMO_CATEGORIES: DemoCategory[] = [
 ];
 
 const DETAIL_ITEM = DEMO_CATEGORIES[1]!.items[0]!;
-const STEP_LABELS = ["Κατηγορίες", "Πιάτο", "Κλήση"] as const;
+const STEP_LABELS: Record<QrMenuLanguage, readonly string[]> = {
+  GR: ["Κατηγορίες", "Πιάτο", "Κλήση"],
+  EN: ["Categories", "Dish", "Call"],
+  DE: ["Kategorien", "Gericht", "Anruf"],
+  FR: ["Catégories", "Plat", "Appel"],
+};
+
 const LANGS: QrMenuLanguage[] = ["GR", "EN", "DE", "FR"];
+
+function demoText(
+  item: DemoItem,
+  lang: QrMenuLanguage,
+  field: "name" | "description",
+): string {
+  if (field === "name") {
+    if (lang === "GR") return item.nameGr;
+    if (lang === "DE") return item.nameDe ?? item.nameEn;
+    if (lang === "FR") return item.nameFr ?? item.nameEn;
+    return item.nameEn;
+  }
+  if (lang === "GR") return item.descriptionGr;
+  if (lang === "DE") return item.descriptionDe ?? item.descriptionEn;
+  if (lang === "FR") return item.descriptionFr ?? item.descriptionEn;
+  return item.descriptionEn;
+}
+
+function demoCategoryName(cat: DemoCategory, lang: QrMenuLanguage): string {
+  if (lang === "GR") return cat.nameGr;
+  if (lang === "DE") return cat.nameDe ?? cat.nameEn;
+  if (lang === "FR") return cat.nameFr ?? cat.nameEn;
+  return cat.nameEn;
+}
 
 function DemoMenuCard({
   item,
@@ -121,7 +170,7 @@ function DemoMenuCard({
   lang: QrMenuLanguage;
   highlighted?: boolean;
 }) {
-  const name = lang === "GR" ? item.nameGr : item.nameEn;
+  const name = demoText(item, lang, "name");
   return (
     <div
       className={cn(
@@ -156,8 +205,9 @@ function PhoneScreen({
   menuScroll: number;
   waiterSuccess: boolean;
 }) {
-  const detailName = lang === "GR" ? DETAIL_ITEM.nameGr : DETAIL_ITEM.nameEn;
-  const detailDesc = lang === "GR" ? DETAIL_ITEM.descriptionGr : DETAIL_ITEM.descriptionEn;
+  const ui = QR_MENU_UI[lang];
+  const detailName = demoText(DETAIL_ITEM, lang, "name");
+  const detailDesc = demoText(DETAIL_ITEM, lang, "description");
 
   return (
     <div className="relative flex h-full flex-col bg-surface">
@@ -168,7 +218,7 @@ function PhoneScreen({
             <p className="font-serif text-[15px] font-bold leading-tight">Marine Hotel</p>
             <p className="mt-0.5 text-[10px] text-white/75">Pool Bar</p>
             <p className="mt-1.5 inline-block rounded-full bg-white/15 px-2 py-0.5 text-[9px]">
-              {lang === "GR" ? "Τραπέζι 12" : "Table 12"}
+              {ui.table("12")}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-0.5 rounded-[8px] bg-white/10 p-0.5">
@@ -197,7 +247,7 @@ function PhoneScreen({
           {DEMO_CATEGORIES.map((cat) => (
             <section key={cat.id}>
               <h2 className="font-serif text-[13px] font-bold text-primary">
-                {lang === "GR" ? cat.nameGr : cat.nameEn}
+                {demoCategoryName(cat, lang)}
               </h2>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {cat.items.map((item) => (
@@ -268,14 +318,14 @@ function PhoneScreen({
             )}
           >
             {waiterSuccess ? <Check className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
-            <span>{waiterSuccess ? (lang === "GR" ? "Εστάλη!" : "Sent!") : lang === "GR" ? "Σερβιτόρος" : "Waiter"}</span>
+            <span>{waiterSuccess ? ui.called.split(" ")[0] + "!" : ui.callWaiter.split(" ")[0]}</span>
           </div>
           <div className="flex flex-col items-center justify-center gap-0.5 rounded-[8px] border border-slate-200 bg-white py-2 text-[8px] font-semibold text-slate-600">
             <Receipt className="h-3.5 w-3.5" />
-            <span>{lang === "GR" ? "Λογαριασμός" : "Bill"}</span>
+            <span>{ui.requestBill}</span>
           </div>
           <div className="flex flex-col items-center justify-center rounded-[8px] border border-slate-200 bg-white py-2 text-[8px] font-semibold text-slate-500">
-            {lang === "GR" ? "Ακύρωση" : "Cancel"}
+            {ui.cancelCall}
           </div>
         </div>
       </div>
@@ -291,6 +341,7 @@ export function HeroShowcase() {
   const [scanning, setScanning] = useState(true);
 
   const stepIndex = useMemo(() => (step === "menu" ? 0 : step === "detail" ? 1 : 2), [step]);
+  const stepLabels = STEP_LABELS[lang];
 
   useEffect(() => {
     const scanTimer = setInterval(() => setScanning((s) => !s), 2800);
@@ -328,7 +379,7 @@ export function HeroShowcase() {
         setTimeout(() => {
           if (!cancelled) {
             setStep("waiter");
-            setLang("GR");
+            setLang("DE");
           }
         }, 7600),
       );
@@ -403,7 +454,7 @@ export function HeroShowcase() {
         {/* Phone mockup — realistic size */}
         <div className="relative w-full max-w-[320px] shrink-0 sm:max-w-[340px]">
           <div className="mb-4 flex items-center justify-center gap-2">
-            {STEP_LABELS.map((label, idx) => (
+            {stepLabels.map((label, idx) => (
               <div key={label} className="flex items-center gap-2">
                 <span
                   className={cn(
@@ -417,7 +468,7 @@ export function HeroShowcase() {
                 >
                   {idx + 1}. {label}
                 </span>
-                {idx < STEP_LABELS.length - 1 ? (
+                {idx < stepLabels.length - 1 ? (
                   <span className="hidden text-slate-300 sm:inline" aria-hidden>
                     →
                   </span>

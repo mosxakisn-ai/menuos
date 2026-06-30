@@ -202,7 +202,7 @@ export const PAGES_EN = {
       },
       {
         name: "Basic",
-        price: "€29",
+        price: "€9.99",
         period: "/month",
         description: "Ideal for restaurant, café or single venue.",
         features: ["1 venue", "3 menus", "Unlimited dishes", "QR codes", "Call waiter", "4 QR languages"],
@@ -212,7 +212,7 @@ export const PAGES_EN = {
       },
       {
         name: "Pro",
-        price: "€79",
+        price: "€19.99",
         period: "/month",
         description: "For hotels and businesses with multiple areas.",
         features: ["3 venues", "Unlimited menus", "Call waiter", "4 QR languages", "Priority support", "PDF import"],

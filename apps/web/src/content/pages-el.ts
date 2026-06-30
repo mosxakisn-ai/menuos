@@ -208,7 +208,7 @@ export const PAGES_EL = {
       },
       {
         name: "Basic",
-        price: "€29",
+        price: "€9.99",
         period: "/μήνα",
         description: "Ιδανικό για εστιατόριο, cafe ή μοναδικό venue.",
         features: ["1 venue", "3 menus", "Απεριόριστα πιάτα", "QR codes", "Call waiter", "4 γλώσσες QR"],
@@ -218,7 +218,7 @@ export const PAGES_EL = {
       },
       {
         name: "Pro",
-        price: "€79",
+        price: "€19.99",
         period: "/μήνα",
         description: "Για ξενοδοχεία και επιχειρήσεις με πολλαπλούς χώρους.",
         features: ["3 venues", "Απεριόριστα menus", "Call waiter", "4 γλώσσες QR", "Προτεραιότητα", "PDF import"],

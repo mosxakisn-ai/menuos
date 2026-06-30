@@ -2,6 +2,8 @@ export type ParsedMenuItemDraft = {
   id: string;
   nameGr: string;
   nameEn?: string;
+  nameDe?: string;
+  nameFr?: string;
   price: number | null;
   descriptionGr?: string;
   warnings: string[];
@@ -13,6 +15,8 @@ export type ParsedMenuCategoryDraft = {
   id: string;
   nameGr: string;
   nameEn?: string;
+  nameDe?: string;
+  nameFr?: string;
   items: ParsedMenuItemDraft[];
   warnings: string[];
   selected: boolean;

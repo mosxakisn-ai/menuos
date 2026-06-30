@@ -65,7 +65,7 @@ export function buildSoftwareApplicationSchema() {
     offers: {
       "@type": "AggregateOffer",
       lowPrice: "0",
-      highPrice: "79",
+      highPrice: "19.99",
       priceCurrency: "EUR",
       offerCount: "3",
     },
