@@ -186,10 +186,15 @@ export function SiteFooter() {
         <div className="mt-12 grid gap-8 border-t border-white/10 pt-10 sm:grid-cols-2">
           <div>
             <p className="text-sm font-semibold text-white">
-              {isEn ? "Guides by area" : "Οδηγοί ανά περιοχή"}
+              {isEn ? "Local guides" : "Τοπικοί οδηγοί"}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {isEn
+                ? "Area + business type — e.g. beach bar with sunbed QR, not generic city pages."
+                : "Περιοχή + κλάδος — π.χ. beach bar με QR σε ξαπλώστρα, όχι γενικό «QR menu Ρόδος»."}
             </p>
             <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400">
-              {SEO_FOOTER_HUB.cities.map((link) => (
+              {SEO_FOOTER_HUB.local.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="hover:text-brand-cyan">
                     {isEn ? link.labelEn : link.labelEl}

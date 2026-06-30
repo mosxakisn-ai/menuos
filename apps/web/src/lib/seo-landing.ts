@@ -133,24 +133,56 @@ export function resolveSeoLandingFromSlug(slug: string[]): SeoLandingConfig | nu
   return LANDING_BY_PATH.get(path) ?? null;
 }
 
-/** Footer hub — grouped links for internal SEO (not in main nav). */
+/** Footer hub — τοπικοί οδηγοί (περιοχή + κλάδος), όχι γενικό «QR menu Ρόδος». */
 export const SEO_FOOTER_HUB = {
-  cities: [
-    { href: "/rodos/qr-menu", labelEl: "QR menu Ρόδος", labelEn: "QR menu Rhodes" },
-    { href: "/santorini/digital-menu", labelEl: "Digital menu Σαντορίνη", labelEn: "Digital menu Santorini" },
-    { href: "/athina/qr-menu", labelEl: "QR menu Αθήνα", labelEn: "QR menu Athens" },
-    { href: "/thessaloniki/qr-menu", labelEl: "QR menu Θεσσαλονίκη", labelEn: "QR menu Thessaloniki" },
-    { href: "/korfu/digital-menu", labelEl: "Digital menu Κέρκυρα", labelEn: "Digital menu Corfu" },
-    { href: "/kriti/qr-menu", labelEl: "QR menu Κρήτη", labelEn: "QR menu Crete" },
-    { href: "/mykonos/qr-menu", labelEl: "QR menu Μύκονος", labelEn: "QR menu Mykonos" },
-    { href: "/paros/qr-menu", labelEl: "QR menu Πάρος", labelEn: "QR menu Paros" },
+  local: [
+    {
+      href: "/rodos/estiatorio/qr-menu",
+      labelEl: "Εστιατόριο · Ρόδος",
+      labelEn: "Restaurant · Rhodes",
+    },
+    {
+      href: "/mykonos/beach-bar/qr-menu",
+      labelEl: "Beach bar · Μύκονος",
+      labelEn: "Beach bar · Mykonos",
+    },
+    {
+      href: "/santorini/xenodocheio/digital-menu",
+      labelEl: "Ξενοδοχείο · Σαντορίνη",
+      labelEn: "Hotel · Santorini",
+    },
+    {
+      href: "/kriti/xenodocheio/digital-menu",
+      labelEl: "Ξενοδοχείο · Κρήτη",
+      labelEn: "Hotel · Crete",
+    },
+    {
+      href: "/paros/xenodocheio/digital-menu",
+      labelEl: "Ξενοδοχείο · Πάρος",
+      labelEn: "Hotel · Paros",
+    },
+    {
+      href: "/athina/beach-bar/qr-menu",
+      labelEl: "Beach bar · Αθήνα",
+      labelEn: "Beach bar · Athens",
+    },
+    {
+      href: "/thessaloniki/estiatorio/qr-menu",
+      labelEl: "Εστιατόριο · Θεσσαλονίκη",
+      labelEn: "Restaurant · Thessaloniki",
+    },
+    {
+      href: "/korfu/estiatorio/qr-menu",
+      labelEl: "Εστιατόριο · Κέρκυρα",
+      labelEn: "Restaurant · Corfu",
+    },
   ] as const,
   verticals: [
-    { href: "/estiatorio/qr-menu", labelEl: "QR menu εστιατόριο", labelEn: "Restaurant QR menu" },
-    { href: "/xenodocheio/digital-menu", labelEl: "Digital menu ξενοδοχείο", labelEn: "Hotel digital menu" },
-    { href: "/beach-bar/qr-menu", labelEl: "QR menu beach bar", labelEn: "Beach bar QR menu" },
-    { href: "/pool-bar/digital-menu", labelEl: "Digital menu pool bar", labelEn: "Pool bar digital menu" },
-    { href: "/room-service/qr-menu", labelEl: "QR menu room service", labelEn: "Room service QR menu" },
-    { href: "/spa-menu", labelEl: "Spa menu QR", labelEn: "Spa menu QR" },
+    { href: "/estiatorio/qr-menu", labelEl: "Εστιατόριο · QR menu", labelEn: "Restaurant · QR menu" },
+    { href: "/xenodocheio/digital-menu", labelEl: "Ξενοδοχείο · digital menu", labelEn: "Hotel · digital menu" },
+    { href: "/beach-bar/qr-menu", labelEl: "Beach bar · QR menu", labelEn: "Beach bar · QR menu" },
+    { href: "/pool-bar/digital-menu", labelEl: "Pool bar · digital menu", labelEn: "Pool bar · digital menu" },
+    { href: "/room-service/qr-menu", labelEl: "Room service · QR menu", labelEn: "Room service · QR menu" },
+    { href: "/spa-menu", labelEl: "Spa · menu QR", labelEn: "Spa · menu QR" },
   ] as const,
 } as const;

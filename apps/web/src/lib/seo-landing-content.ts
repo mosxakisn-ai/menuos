@@ -37,6 +37,96 @@ const VERTICAL_LABELS: Record<
   spa: { el: "Spa", en: "Spa", forEl: "spa", forEn: "spa" },
 };
 
+/** Terminology per venue type — not everything is «τραπέζι / δωμάτιο». */
+const VERTICAL_SEO: Record<
+  SeoVerticalSlug,
+  {
+    sceneEl: string;
+    sceneEn: string;
+    qrPlacementEl: string;
+    qrPlacementEn: string;
+    serviceEl: string;
+    serviceEn: string;
+    faqPlacementQEl: string;
+    faqPlacementQEn: string;
+    faqPlacementAEl: string;
+    faqPlacementAEn: string;
+  }
+> = {
+  estiatorio: {
+    sceneEl: "Οι πελάτες σκανάρουν QR στο τραπέζι τους",
+    sceneEn: "Guests scan a QR code at their table",
+    qrPlacementEl: "QR codes ανά τραπέζι",
+    qrPlacementEn: "QR codes per table",
+    serviceEl: "Κλήση σερβιτόρου με αριθμό τραπεζιού",
+    serviceEn: "Call waiter with table number",
+    faqPlacementQEl: "Πού μπαίνουν τα QR;",
+    faqPlacementQEn: "Where do QR codes go?",
+    faqPlacementAEl: "Σε κάθε τραπέζι — το link περιλαμβάνει αριθμό τραπεζιού.",
+    faqPlacementAEn: "On each table — the link includes the table number.",
+  },
+  xenodocheio: {
+    sceneEl: "QR στο εστιατόριο, bar, pool ή δωμάτιο",
+    sceneEn: "QR at the restaurant, bar, pool area or in-room",
+    qrPlacementEl: "QR codes ανά τραπέζι, bar ή δωμάτιο",
+    qrPlacementEn: "QR codes per table, bar zone or room",
+    serviceEl: "Κλήση σερβιτόρου / room service με τραπέζι ή δωμάτιο",
+    serviceEn: "Call staff or room service by table or room",
+    faqPlacementQEl: "Πού μπαίνουν τα QR;",
+    faqPlacementQEn: "Where do QR codes go?",
+    faqPlacementAEl: "Ανά χώρο: εστιατόριο (τραπέζι), pool bar, breakfast, δωμάτιο room service.",
+    faqPlacementAEn: "Per area: restaurant tables, pool bar, breakfast, in-room for room service.",
+  },
+  "beach-bar": {
+    sceneEl: "Οι επισκέπτες σκανάρουν από την ξαπλώστρα ή το τραπέζι τους",
+    sceneEn: "Guests scan from their sunbed or beach table",
+    qrPlacementEl: "QR codes ανά ξαπλώστρα ή τραπέζι",
+    qrPlacementEn: "QR codes per sunbed or table",
+    serviceEl: "Κλήση σερβιτόρου με αριθμό ξαπλώστρας",
+    serviceEn: "Call waiter with sunbed number",
+    faqPlacementQEl: "Πού μπαίνουν τα QR στο beach bar;",
+    faqPlacementQEn: "Where do QR codes go at a beach bar?",
+    faqPlacementAEl: "Στην ξαπλώστρα ή στο τραπέζι — όχι «δωμάτιο». Κάθε QR μπορεί να έχει αριθμό ξαπλώστρας.",
+    faqPlacementAEn: "On the sunbed or table — not a hotel room. Each QR can carry a sunbed number.",
+  },
+  "pool-bar": {
+    sceneEl: "Οι επισκέπτες σκανάρουν από την ξαπλώστρα pool ή το bar",
+    sceneEn: "Guests scan from a pool sunbed or the bar",
+    qrPlacementEl: "QR codes ανά ξαπλώστρα pool ή τραπέζι bar",
+    qrPlacementEn: "QR codes per pool sunbed or bar table",
+    serviceEl: "Κλήση σερβιτόρου με ξαπλώστρα ή τραπέζι",
+    serviceEn: "Call waiter by sunbed or table",
+    faqPlacementQEl: "Πού μπαίνουν τα QR στο pool bar;",
+    faqPlacementQEn: "Where do QR codes go at the pool bar?",
+    faqPlacementAEl: "Στις ξαπλώστρες γύρω από το pool ή στα τραπέζια του bar.",
+    faqPlacementAEn: "On pool sunbeds or bar tables around the pool.",
+  },
+  "room-service": {
+    sceneEl: "Οι πελάτες παραγγέλνουν από το δωμάτιό τους",
+    sceneEn: "Guests order from their hotel room",
+    qrPlacementEl: "QR codes ανά δωμάτιο",
+    qrPlacementEn: "QR codes per room",
+    serviceEl: "Αίτημα room service με αριθμό δωματίου",
+    serviceEn: "Room service requests with room number",
+    faqPlacementQEl: "Πού μπαίνουν τα QR;",
+    faqPlacementQEn: "Where do QR codes go?",
+    faqPlacementAEl: "Στο δωμάτιο (card, TV area, folder) — το link φέρει αριθμό δωματίου.",
+    faqPlacementAEn: "In the room (card, folder) — the link includes the room number.",
+  },
+  spa: {
+    sceneEl: "Οι επισκέπτες βλέπουν υπηρεσίες και τιμές spa στο κινητό",
+    sceneEn: "Guests browse spa services and prices on mobile",
+    qrPlacementEl: "QR codes στο reception spa ή ανά χώρο θεραπείας",
+    qrPlacementEn: "QR at spa reception or per treatment area",
+    serviceEl: "Επικοινωνία με reception spa (χωρίς τραπέζι/ξαπλώστρα)",
+    serviceEn: "Contact spa reception (no table or sunbed flow)",
+    faqPlacementQEl: "Πού μπαίνουν τα QR στο spa;",
+    faqPlacementQEn: "Where do QR codes go in a spa?",
+    faqPlacementAEl: "Στο reception, στους χώρους αναμονής ή στα δωμάτια ξενοδοχείου — menu υπηρεσιών, όχι φαγητό τραπεζιού.",
+    faqPlacementAEn: "At reception, waiting areas or hotel rooms — a services menu, not a restaurant table flow.",
+  },
+};
+
 const PRODUCT_LABELS: Record<SeoProductSlug, { el: string; en: string }> = {
   "qr-menu": { el: "QR menu", en: "QR menu" },
   "digital-menu": { el: "ψηφιακό menu", en: "digital menu" },
@@ -123,33 +213,49 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
         ? `${product} για ${context}`
         : `${product} for ${context}`;
 
+  const verticalSeo = config.vertical ? VERTICAL_SEO[config.vertical] : null;
+
   const paragraphs = isEl
     ? [
-        `Το MenuOS σας βοηθά να αντικαταστήσετε το printed menu με ένα σύγχρονο ${product}. Οι πελάτες σκανάρουν QR, βλέπουν φωτογραφίες και τιμές — εσείς ενημερώνετε από το panel σας σε λεπτά.`,
+        verticalSeo
+          ? `${verticalSeo.sceneEl}. Το MenuOS αντικαθιστά το printed menu με σύγχρονο ${product} — φωτογραφίες, τιμές και πολλαπλές γλώσσες. Εσείς ενημερώνετε από το panel σε λεπτά.`
+          : `Το MenuOS σας βοηθά να αντικαταστήσετε το printed menu με ένα σύγχρονο ${product}. Οι πελάτες σκανάρουν QR, βλέπουν φωτογραφίες και τιμές — εσείς ενημερώνετε από το panel σας σε λεπτά.`,
         config.city
           ? `Ιδανικό για επιχειρήσεις ${context}: τουρίστες, εποχικότητα, γρήγορες αλλαγές τιμών χωρίς επανεκτύπωση.`
-          : `Ιδανικό για ${context} που θέλουν premium εμφάνιση, πολλαπλές γλώσσες QR και απλή διαχείριση χωρίς τεχνικές γνώσεις.`,
+          : verticalSeo
+            ? `Ιδανικό για ${context} — premium εμφάνιση, πολλαπλές γλώσσες QR, ${verticalSeo.qrPlacementEl.toLowerCase()}.`
+            : `Ιδανικό για ${context} που θέλουν premium εμφάνιση, πολλαπλές γλώσσες QR και απλή διαχείριση χωρίς τεχνικές γνώσεις.`,
         "Ξεκινήστε με δωρεάν δοκιμή 7 ημερών — χωρίς κάρτα. Κατεβάζετε QR codes και είστε live την ίδια μέρα.",
       ]
     : [
-        `MenuOS helps you replace printed menus with a modern ${product}. Guests scan a QR code, browse photos and prices — you update everything from your panel in minutes.`,
+        verticalSeo
+          ? `${verticalSeo.sceneEn}. MenuOS replaces printed menus with a modern ${product} — photos, prices and multiple languages. You update from your panel in minutes.`
+          : `MenuOS helps you replace printed menus with a modern ${product}. Guests scan a QR code, browse photos and prices — you update everything from your panel in minutes.`,
         config.city
           ? `Built for businesses ${context}: tourists, seasonal menus, and instant price updates without reprinting.`
-          : `Built for ${context} that want a premium look, multiple QR languages, and simple management without technical skills.`,
+          : verticalSeo
+            ? `Built for ${context} — premium look, multiple QR languages, ${verticalSeo.qrPlacementEn.toLowerCase()}.`
+            : `Built for ${context} that want a premium look, multiple QR languages, and simple management without technical skills.`,
         "Start with a free 7-day trial — no credit card. Download QR codes and go live the same day.",
       ];
 
   const bullets = isEl
     ? [
         "Πολλαπλές γλώσσες QR",
-        "Κλήση σερβιτόρου από το menu",
-        "QR codes ανά τραπέζι ή δωμάτιο",
+        verticalSeo?.serviceEl ?? "Κλήση σερβιτόρου από το menu",
+        verticalSeo?.qrPlacementEl ??
+          (config.city
+            ? "QR codes ανά τραπέζι, ξαπλώστρα, bar ή δωμάτιο"
+            : "QR codes ανά τραπέζι, bar ή χώρο"),
         "Ενημέρωση τιμών σε δευτερόλεπτα",
       ]
     : [
         "Multiple QR languages",
-        "Call waiter from the menu",
-        "QR codes per table or room",
+        verticalSeo?.serviceEn ?? "Call waiter from the menu",
+        verticalSeo?.qrPlacementEn ??
+          (config.city
+            ? "QR codes per table, sunbed, bar or room"
+            : "QR codes per table, bar or area"),
         "Update prices in seconds",
       ];
 
@@ -157,8 +263,16 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
     ? [
         {
           q: "Χρειάζεται app ο πελάτης;",
-          a: "Όχι. Σκανάρει το QR και ανοίγει το menu στο browser.",
+          a: "Όχι. Σκανάρει το QR και ανοίγει το menu στο browser — χωρίς κατέβασμα.",
         },
+        ...(verticalSeo
+          ? [
+              {
+                q: verticalSeo.faqPlacementQEl,
+                a: verticalSeo.faqPlacementAEl,
+              },
+            ]
+          : []),
         {
           q: "Πόσο γρήγορα μπορώ να είμαι live;",
           a: "Με βασικό κατάλογο, συνήθως σε λιγότερο από μία ώρα.",
@@ -175,8 +289,16 @@ export function getSeoLandingCopy(config: SeoLandingConfig, locale: SeoLandingLo
     : [
         {
           q: "Does the guest need an app?",
-          a: "No. They scan the QR and the menu opens in the browser.",
+          a: "No. They scan the QR and the menu opens in the browser — no download.",
         },
+        ...(verticalSeo
+          ? [
+              {
+                q: verticalSeo.faqPlacementQEn,
+                a: verticalSeo.faqPlacementAEn,
+              },
+            ]
+          : []),
         {
           q: "How fast can I go live?",
           a: "With a basic menu, usually in under an hour.",
