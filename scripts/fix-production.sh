@@ -62,6 +62,10 @@ else
 fi
 
 echo ""
+echo "==> Postgres hostname (menuos-db avoids MatchWork network collision)"
+bash "$ROOT/scripts/align-postgres-password.sh" 2>/dev/null || true
+
+echo ""
 export APP_DIR="$ROOT"
 export RUN_DB_PUSH=1
 export STRICT=0

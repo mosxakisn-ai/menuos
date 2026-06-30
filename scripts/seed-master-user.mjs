@@ -125,13 +125,7 @@ const DEMO_CATEGORIES = [
   },
 ];
 
-function translationRows(
-  gr: string,
-  en: string,
-  de?: string,
-  fr?: string,
-  descriptionGr?: string,
-) {
+function translationRows(gr, en, de, fr, descriptionGr) {
   const rows = [
     { language: "GR", name: gr, description: descriptionGr ?? null },
     { language: "EN", name: en, description: null },
