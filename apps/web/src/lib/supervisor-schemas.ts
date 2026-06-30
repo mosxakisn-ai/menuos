@@ -17,3 +17,12 @@ export const supervisorOrganizationUpdateSchema = z
   );
 
 export type SupervisorOrganizationUpdateInput = z.infer<typeof supervisorOrganizationUpdateSchema>;
+
+export const supervisorAddUserSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  email: z.string().email().max(254).transform((s) => s.trim().toLowerCase()),
+  password: z.string().min(8).max(128),
+  role: z.enum(["ADMIN", "MANAGER", "STAFF"]).default("STAFF"),
+});
+
+export type SupervisorAddUserInput = z.infer<typeof supervisorAddUserSchema>;

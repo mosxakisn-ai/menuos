@@ -1,6 +1,7 @@
-import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/db";
+import bcrypt from "bcryptjs";
+import { prisma, type SubscriptionPlan, type SubscriptionStatus, type UserRole } from "@menuos/db";
 import { DEMO_VENUE_SLUG, PLAN_DEFINITIONS, isPaidPlan, organizationHasPaidPlan } from "@menuos/shared";
-import type { SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
+import type { SupervisorAddUserInput, SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
 
 export type SupervisorOrganizationRow = {
   id: string;
@@ -19,6 +20,14 @@ export type SupervisorOrganizationRow = {
   venueCount: number;
   menuCount: number;
   itemCount: number;
+};
+
+export type SupervisorUserRow = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
 };
 
 export type SupervisorOverview = {
@@ -43,6 +52,11 @@ async function demoOrganizationIds(): Promise<Set<string>> {
     select: { organizationId: true },
   });
   return new Set(rows.map((r) => r.organizationId));
+}
+
+function excludeDemoOrganizations(demoIds: Set<string>) {
+  const ids = [...demoIds];
+  return ids.length > 0 ? { organizationId: { notIn: ids } } : {};
 }
 
 function countMenusAndItems(venues: {
@@ -128,6 +142,7 @@ export async function getSupervisorOverview(): Promise<SupervisorOverview> {
   const day30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const trialExpiring = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const demoIds = await demoOrganizationIds();
+  const excludeDemo = excludeDemoOrganizations(demoIds);
 
   const [orgs, subs, venuesCount, itemsCount] = await Promise.all([
     prisma.organization.findMany({
@@ -136,9 +151,9 @@ export async function getSupervisorOverview(): Promise<SupervisorOverview> {
     prisma.subscription.findMany({
       select: { organizationId: true, plan: true, status: true, trialEndsAt: true },
     }),
-    prisma.venue.count({ where: { organizationId: { notIn: [...demoIds] } } }),
+    prisma.venue.count({ where: excludeDemo }),
     prisma.item.count({
-      where: { category: { menu: { venue: { organizationId: { notIn: [...demoIds] } } } } },
+      where: { category: { menu: { venue: excludeDemo } } },
     }),
   ]);
 
@@ -282,6 +297,7 @@ export async function updateOrganizationForSupervisor(
       data.plan = "TRIAL";
       data.status = "TRIALING";
       data.trialEndsAt = extended;
+      data.currentPeriodEnd = null;
     } else if (data.plan === "TRIAL") {
       const sub = await prisma.subscription.findUnique({ where: { organizationId: id } });
       const trialValid = sub?.trialEndsAt && sub.trialEndsAt > now;
@@ -289,6 +305,7 @@ export async function updateOrganizationForSupervisor(
         data.trialEndsAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       }
       if (!data.status) data.status = "TRIALING";
+      data.currentPeriodEnd = null;
     }
   }
 
@@ -307,4 +324,54 @@ export async function updateOrganizationForSupervisor(
   const updated = await getOrganizationForSupervisor(id);
   if (!updated) throw new Error("not_found");
   return updated;
+}
+
+export async function listUsersForSupervisor(organizationId: string): Promise<SupervisorUserRow[]> {
+  const org = await prisma.organization.findUnique({ where: { id: organizationId } });
+  if (!org) throw new Error("not_found");
+
+  const users = await prisma.user.findMany({
+    where: { organizationId },
+    select: { id: true, name: true, email: true, role: true, createdAt: true },
+    orderBy: [{ createdAt: "asc" }],
+  });
+
+  return users.map((user) => ({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt.toISOString(),
+  }));
+}
+
+export async function addUserForSupervisor(
+  organizationId: string,
+  input: SupervisorAddUserInput,
+): Promise<SupervisorUserRow> {
+  const org = await prisma.organization.findUnique({ where: { id: organizationId } });
+  if (!org) throw new Error("not_found");
+
+  const existing = await prisma.user.findUnique({ where: { email: input.email } });
+  if (existing) throw new Error("email_taken");
+
+  const passwordHash = await bcrypt.hash(input.password, 12);
+  const user = await prisma.user.create({
+    data: {
+      organizationId,
+      name: input.name.trim(),
+      email: input.email,
+      passwordHash,
+      role: input.role as UserRole,
+    },
+    select: { id: true, name: true, email: true, role: true, createdAt: true },
+  });
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt.toISOString(),
+  };
 }

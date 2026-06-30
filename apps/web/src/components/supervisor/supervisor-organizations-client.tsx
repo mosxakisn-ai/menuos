@@ -203,7 +203,8 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
             <SupervisorOrganizationEditor
               organization={editing}
               onClose={() => setEditing(null)}
-              onSaved={() => {
+              onSaved={(updated) => {
+                if (updated) setEditing(updated);
                 void load();
               }}
             />
