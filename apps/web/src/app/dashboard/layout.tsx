@@ -75,6 +75,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className="min-w-0">
             <p className="text-sm text-slate-500">Καλώς ήρθες</p>
             <p className="truncate font-semibold text-primary">{session.name}</p>
+            <p className="truncate text-xs text-slate-500">{session.email}</p>
             {org ? (
               <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-slate-500 md:hidden">
                 <span

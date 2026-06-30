@@ -10,6 +10,8 @@ export const DASHBOARD_EL = {
   logout: "Αποσύνδεση",
   calls: "Κλήσεις",
   settings: "Ρυθμίσεις",
+  account: "Λογαριασμός",
+  accountEmail: "Email σύνδεσης",
   addVenue: "Προσθήκη καταστήματος",
   editCatalog: "Επεξεργασία καταλόγου",
   livePreview: "Δες πώς φαίνεται",
