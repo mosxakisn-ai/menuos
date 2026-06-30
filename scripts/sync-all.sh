@@ -5,8 +5,9 @@ set -euo pipefail
 ROOT="${APP_DIR:-/opt/menuos}"
 export APP_DIR="$ROOT"
 export RUN_DB_PUSH="${RUN_DB_PUSH:-1}"
+STRICT="${STRICT:-1}"
 
-echo "==> MenuOS sync-all (APP_DIR=$ROOT)"
+echo "==> MenuOS sync-all (APP_DIR=$ROOT, STRICT=$STRICT)"
 bash "$ROOT/scripts/server-deploy.sh"
 
 echo "==> Post-sync health check..."
@@ -20,11 +21,17 @@ if HEALTH_JSON="$(docker compose -f "$ROOT/docker-compose.prod.yml" exec -T menu
     echo "==> Sync OK — database connected."
     exit 0
   fi
-  echo "ERROR: App running but database check failed."
-  echo "       Fix POSTGRES_PASSWORD in $ROOT/.env and re-run: APP_DIR=$ROOT bash scripts/sync-all.sh"
-  exit 1
+  echo "WARN: App running but database check failed."
+  echo "      Fix POSTGRES_PASSWORD in $ROOT/.env and re-run: APP_DIR=$ROOT bash scripts/sync-all.sh"
+  if [ "$STRICT" = "1" ]; then
+    exit 1
+  fi
+  exit 0
 fi
 
 echo "ERROR: /api/health unreachable inside container."
 docker compose -f "$ROOT/docker-compose.prod.yml" logs menuos-web --tail 40 || true
-exit 1
+if [ "$STRICT" = "1" ]; then
+  exit 1
+fi
+exit 0

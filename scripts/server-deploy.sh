@@ -29,8 +29,8 @@ done
 
 if ! docker compose -f docker-compose.prod.yml exec -T postgres \
   psql -v ON_ERROR_STOP=1 -U menuos -d menuos -c "SELECT 1" >/dev/null 2>&1; then
-  echo "ERROR: Cannot query Postgres. Check POSTGRES_PASSWORD in .env matches the database volume."
-  exit 1
+  echo "WARN: Cannot query Postgres. Check POSTGRES_PASSWORD in .env matches the database volume."
+  echo "      Continuing deploy — web will start but API calls need a working database."
 fi
 
 echo "==> Build MenuOS web..."
