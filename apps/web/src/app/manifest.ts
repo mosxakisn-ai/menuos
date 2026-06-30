@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: `${APP_NAME} — Ψηφιακό menu με QR`,
     short_name: APP_NAME,
     description: SEO_SITE.description,
-    start_url: "/",
+    start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     background_color: "#ffffff",

@@ -5,6 +5,8 @@ import { requireActiveSubscription } from "@/lib/api-auth";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { getVenueForOrganization } from "@/lib/venue-access";
+import { pushStaffWaiterCall } from "@/lib/waiter-call-push";
+import type { StaffWaiterNotifyReason } from "@/lib/staff-push-notify";
 
 export async function GET(request: Request) {
   const auth = await requireActiveSubscription();
@@ -100,13 +102,21 @@ export async function POST(request: Request) {
       parsed.data.orderItems.lines.length > 0
     ) {
       const merged = mergeOrderPayload(existing.orderItems, parsed.data.orderItems);
+      const wasAcknowledged = existing.status === "ACKNOWLEDGED";
       const updated = await prisma.waiterCall.update({
         where: { id: existing.id },
         data: {
           orderItems: merged,
-          ...(existing.status === "ACKNOWLEDGED" ? { status: WaiterCallStatus.PENDING } : {}),
+          ...(wasAcknowledged ? { status: WaiterCallStatus.PENDING } : {}),
         },
       });
+      if (updated.status === "PENDING") {
+        pushStaffWaiterCall(
+          venue,
+          updated,
+          wasAcknowledged ? "reopened" : "order_updated",
+        );
+      }
       return NextResponse.json({
         id: updated.id,
         type: updated.type,
@@ -122,7 +132,10 @@ export async function POST(request: Request) {
     });
   }
 
-  const call = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx): Promise<{
+    call: Awaited<ReturnType<typeof tx.waiterCall.create>>;
+    notify: StaffWaiterNotifyReason | null;
+  }> => {
     const pending = await tx.waiterCall.findFirst({
       where: {
         venueId: venue.id,
@@ -141,18 +154,24 @@ export async function POST(request: Request) {
         parsed.data.orderItems.lines.length > 0
       ) {
         const merged = mergeOrderPayload(pending.orderItems, parsed.data.orderItems);
-        return tx.waiterCall.update({
+        const wasAcknowledged = pending.status === "ACKNOWLEDGED";
+        const updated = await tx.waiterCall.update({
           where: { id: pending.id },
           data: {
             orderItems: merged,
-            ...(pending.status === "ACKNOWLEDGED" ? { status: WaiterCallStatus.PENDING } : {}),
+            ...(wasAcknowledged ? { status: WaiterCallStatus.PENDING } : {}),
           },
         });
+        const notifyReason: StaffWaiterNotifyReason = wasAcknowledged ? "reopened" : "order_updated";
+        return {
+          call: updated,
+          notify: notifyReason,
+        };
       }
-      return pending;
+      return { call: pending, notify: null };
     }
 
-    return tx.waiterCall.create({
+    const created = await tx.waiterCall.create({
       data: {
         venueId: venue.id,
         type: parsed.data.type as WaiterCallType,
@@ -165,7 +184,14 @@ export async function POST(request: Request) {
             : undefined,
       },
     });
+    return { call: created, notify: "new" };
   });
+
+  if (result.notify) {
+    pushStaffWaiterCall(venue, result.call, result.notify);
+  }
+
+  const call = result.call;
 
   return NextResponse.json({
     id: call.id,
