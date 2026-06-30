@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { loginSchema } from "@menuos/shared";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -19,13 +19,21 @@ export async function POST(request: Request) {
   }
 
   const ip = clientIp(request);
-  if (!(await checkRateLimit(`login:ip:${ip}`, 30, 15 * 60 * 1000))) {
+  const ipLimit = await checkRateLimitOutcome(`login:ip:${ip}`, 30, 15 * 60 * 1000);
+  if (ipLimit === "unavailable") {
+    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
+  }
+  if (ipLimit === "limited") {
     return NextResponse.json(
       { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },
     );
   }
-  if (!(await checkRateLimit(`login:email:${parsed.data.email}`, 10, 15 * 60 * 1000))) {
+  const emailLimit = await checkRateLimitOutcome(`login:email:${parsed.data.email}`, 10, 15 * 60 * 1000);
+  if (emailLimit === "unavailable") {
+    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
+  }
+  if (emailLimit === "limited") {
     return NextResponse.json(
       { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },

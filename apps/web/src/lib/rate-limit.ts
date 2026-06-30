@@ -53,17 +53,34 @@ async function checkRateLimitDb(key: string, limit: number, windowMs: number): P
 }
 
 /** Postgres-backed when available; in-memory fallback for local dev without migrations. */
-export async function checkRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
+export type RateLimitOutcome = "ok" | "limited" | "unavailable";
+
+export async function checkRateLimitOutcome(
+  key: string,
+  limit: number,
+  windowMs: number,
+): Promise<RateLimitOutcome> {
   try {
-    return await checkRateLimitDb(key, limit, windowMs);
+    return (await checkRateLimitDb(key, limit, windowMs)) ? "ok" : "limited";
   } catch (err) {
     console.warn("[menuos-rate-limit] Postgres unavailable", err);
     if (process.env.NODE_ENV === "production") {
-      return false;
+      return "unavailable";
     }
-    return checkRateLimitMemory(key, limit, windowMs);
+    return checkRateLimitMemory(key, limit, windowMs) ? "ok" : "limited";
   }
 }
+
+/** @deprecated Prefer checkRateLimitOutcome when callers need to distinguish store failures. */
+export async function checkRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
+  const outcome = await checkRateLimitOutcome(key, limit, windowMs);
+  return outcome === "ok";
+}
+
+export const RATE_LIMIT_SERVER_ERROR = {
+  error: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο.",
+  code: "server_error",
+} as const;
 
 export function clientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");

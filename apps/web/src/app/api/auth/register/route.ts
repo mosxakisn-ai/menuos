@@ -7,9 +7,10 @@ import { createSessionToken, setSessionCookie } from "@/lib/auth";
 import { sendWelcomeEmail } from "@/lib/mail";
 import { normalizeRegistrationEmail, verifyRegistrationOtp } from "@/lib/registration-otp";
 import { slugifyOrFallback } from "@/lib/utils";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  try {
   let body: unknown;
   try {
     body = await request.json();
@@ -26,7 +27,11 @@ export async function POST(request: Request) {
   const normalizedEmail = normalizeRegistrationEmail(email);
 
   const ip = clientIp(request);
-  if (!(await checkRateLimit(`register:ip:${ip}`, 20, 60 * 60 * 1000))) {
+  const ipLimit = await checkRateLimitOutcome(`register:ip:${ip}`, 20, 60 * 60 * 1000);
+  if (ipLimit === "unavailable") {
+    return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
+  }
+  if (ipLimit === "limited") {
     return NextResponse.json(
       { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },
@@ -110,6 +115,23 @@ export async function POST(request: Request) {
     if (code === "P2002") {
       return NextResponse.json({ error: "Το email ή ο οργανισμός υπάρχει ήδη." }, { status: 409 });
     }
-    throw err;
+    console.error("[menuos] register create failed", err);
+    return NextResponse.json(
+      {
+        error: "Η εγγραφή απέτυχε. Στείλε νέο κωδικό στο email και δοκίμασε ξανά.",
+        code: "server_error",
+      },
+      { status: 503 },
+    );
+  }
+  } catch (err) {
+    console.error("[menuos] register failed", err);
+    return NextResponse.json(
+      {
+        error: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr.",
+        code: "server_error",
+      },
+      { status: 503 },
+    );
   }
 }

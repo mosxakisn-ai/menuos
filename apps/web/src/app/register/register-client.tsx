@@ -72,25 +72,43 @@ export default function RegisterPageClient() {
     setLoading(true);
     setError(null);
     const form = new FormData(e.currentTarget);
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: form.get("name"),
-        email: form.get("email"),
-        password: form.get("password"),
-        businessName: form.get("businessName"),
-        otp: form.get("otp"),
-      }),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setError(data.error ?? "Η εγγραφή απέτυχε.");
-      return;
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.get("name"),
+          email: form.get("email"),
+          password: form.get("password"),
+          businessName: form.get("businessName"),
+          otp: form.get("otp"),
+        }),
+      });
+      let data: { error?: string } = {};
+      try {
+        data = (await res.json()) as typeof data;
+      } catch {
+        setError(
+          res.status >= 500
+            ? "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr."
+            : "Η εγγραφή απέτυχε.",
+        );
+        return;
+      }
+      if (!res.ok) {
+        setError(data.error ?? "Η εγγραφή απέτυχε.");
+        if (data.error?.includes("Στείλε νέο κωδικό")) {
+          setOtpSent(false);
+        }
+        return;
+      }
+      router.push("/dashboard?welcome=1");
+      router.refresh();
+    } catch {
+      setError("Σφάλμα σύνδεσης. Έλεγξε το internet και δοκίμασε ξανά.");
+    } finally {
+      setLoading(false);
     }
-    router.push("/dashboard?welcome=1");
-    router.refresh();
   }
 
   return (
