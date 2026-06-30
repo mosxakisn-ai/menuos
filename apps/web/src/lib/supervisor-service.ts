@@ -260,8 +260,8 @@ export async function listOrganizationsForSupervisor(input?: {
 
   if (search) {
     rows = rows.filter((row) =>
-      [row.name, row.slug, row.adminEmail, row.adminName].some((v) =>
-        v.toLowerCase().includes(search),
+      [row.name, row.slug, row.adminEmail, row.adminName, row.phone, row.city].some((v) =>
+        v?.toLowerCase().includes(search),
       ),
     );
   }
@@ -335,6 +335,15 @@ export async function updateOrganizationForSupervisor(
   } else {
     if (input.plan) data.plan = input.plan as SubscriptionPlan;
     if (input.status) data.status = input.status as SubscriptionStatus;
+    if (input.plan && input.plan !== "TRIAL") {
+      data.trialEndsAt = null;
+      const sub = await prisma.subscription.findUnique({ where: { organizationId: id } });
+      if (!sub?.currentPeriodEnd && input.plan !== "ENTERPRISE") {
+        const periodEnd = new Date(now);
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+        data.currentPeriodEnd = periodEnd;
+      }
+    }
     if (input.extendTrialDays) {
       const sub = await prisma.subscription.findUnique({ where: { organizationId: id } });
       if (sub && sub.plan !== "TRIAL" && isPaidPlan(sub.plan)) {

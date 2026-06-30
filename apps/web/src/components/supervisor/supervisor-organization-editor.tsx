@@ -42,14 +42,16 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 
 export function SupervisorOrganizationEditor({
   organization: initial,
+  defaultTab = "details",
   onClose,
   onSaved,
 }: {
   organization: SupervisorOrganizationRow;
+  defaultTab?: "details" | "subscription";
   onClose: () => void;
   onSaved: (updated?: SupervisorOrganizationRow) => void;
 }) {
-  const [tab, setTab] = useState<"details" | "subscription">("details");
+  const [tab, setTab] = useState<"details" | "subscription">(defaultTab);
   const [organization, setOrganization] = useState(initial);
   const [loading, setLoading] = useState(true);
 
@@ -123,10 +125,12 @@ export function SupervisorOrganizationEditor({
   }
 
   const profileDirty =
-    businessName !== organization.name ||
+    businessName.trim() !== organization.name ||
     phone !== (organization.phone ?? "") ||
     city !== (organization.city ?? "") ||
     notes !== (organization.notes ?? "");
+
+  const profileValid = businessName.trim().length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-brand-navy/40 p-4 sm:items-center">
@@ -252,11 +256,11 @@ export function SupervisorOrganizationEditor({
 
             <button
               type="button"
-              disabled={saving || !profileDirty}
+              disabled={saving || !profileDirty || !profileValid}
               className={buttonClass("primary", "sm")}
               onClick={() =>
                 void save(
-                  { name: businessName, phone, city, notes },
+                  { name: businessName.trim(), phone, city, notes },
                   "Αποθήκευση στοιχείων.",
                 )
               }
@@ -268,7 +272,9 @@ export function SupervisorOrganizationEditor({
           <div className="mt-6 space-y-4">
             <dl className="grid gap-3 rounded-xl border border-slate-200 bg-brand-surface/40 p-4 sm:grid-cols-2">
               <DetailRow label="Κατάσταση">{organization.status}</DetailRow>
-              <DetailRow label="Trial λήγει">{formatDate(organization.trialEndsAt)}</DetailRow>
+              {organization.plan === "TRIAL" ? (
+                <DetailRow label="Trial λήγει">{formatDate(organization.trialEndsAt)}</DetailRow>
+              ) : null}
               <DetailRow label="Περίοδος έως">{formatDate(organization.currentPeriodEnd)}</DetailRow>
               <DetailRow label="Venues / Μενού / Πιάτα">
                 {organization.venueCount} / {organization.menuCount} / {organization.itemCount}

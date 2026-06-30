@@ -184,6 +184,7 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
           {editing ? (
             <SupervisorOrganizationEditor
               organization={editing}
+              defaultTab={mode === "subscriptions" ? "subscription" : "details"}
               onClose={() => setEditing(null)}
               onSaved={(updated) => {
                 if (updated) setEditing(updated);
