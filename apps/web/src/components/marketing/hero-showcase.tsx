@@ -216,11 +216,11 @@ export function HeroShowcase() {
 
               <div className="relative isolate aspect-[9/19.5] overflow-hidden rounded-[2.2rem] bg-white">
                 <PhoneStatusBar />
-                <div className="absolute inset-x-0 bottom-7 top-11 overflow-hidden bg-white">
+                <div className="absolute inset-x-0 bottom-3 top-10 overflow-hidden bg-white">
                   <iframe
                     src={demoMenuPath}
                     title={`${hs.venueName} — ${hs.venueSubtitle}`}
-                    className="block h-full w-full max-w-full border-0 bg-white"
+                    className="block h-full w-full max-w-full touch-pan-y border-0 bg-white"
                     loading="eager"
                     referrerPolicy="strict-origin-when-cross-origin"
                   />

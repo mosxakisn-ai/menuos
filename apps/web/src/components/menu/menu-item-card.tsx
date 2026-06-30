@@ -63,7 +63,7 @@ export function MenuItemCard({
       aria-label={onClick ? `${name}, €${price}` : undefined}
       className={cn(
         "w-full overflow-hidden rounded-card bg-white text-left shadow-soft transition hover:shadow-card",
-        onClick && "cursor-pointer",
+        onClick && "cursor-pointer touch-manipulation active:scale-[0.99]",
         className,
       )}
     >

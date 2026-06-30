@@ -176,7 +176,11 @@ export function PublicMenuView({
   useEffect(() => {
     if (!isEmbedded) return;
     document.documentElement.classList.add("menu-embed");
-    return () => document.documentElement.classList.remove("menu-embed");
+    document.body.classList.add("menu-embed");
+    return () => {
+      document.documentElement.classList.remove("menu-embed");
+      document.body.classList.remove("menu-embed");
+    };
   }, [isEmbedded]);
 
   useEffect(() => {
@@ -455,7 +459,7 @@ export function PublicMenuView({
     <div
       className={cn(
         isEmbedded
-          ? "flex h-full w-full max-w-full flex-col overflow-hidden bg-surface"
+          ? "fixed inset-0 z-0 flex w-full max-w-full flex-col overflow-hidden bg-surface"
           : "min-h-screen bg-surface",
         !isEmbedded && canUseCallActions && (hasCart ? "pb-52" : "pb-36"),
         !isEmbedded && !canUseCallActions && "pb-8",
@@ -463,7 +467,7 @@ export function PublicMenuView({
     >
       <div
         className={cn(
-          isEmbedded && "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain",
+          isEmbedded && "menu-touch-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto",
         )}
       >
       {!isEmbedded ? (
@@ -620,7 +624,13 @@ export function PublicMenuView({
             isEmbedded ? "top-0" : "top-[53px]",
           )}
         >
-          <div className={cn(shell, "flex gap-2 overflow-x-auto", isEmbedded ? "px-3 py-1.5" : "px-4 py-2")}>
+          <div
+            className={cn(
+              shell,
+              "menu-touch-scroll-x scrollbar-none flex gap-2 overflow-x-auto",
+              isEmbedded ? "px-3 py-1.5" : "px-4 py-2",
+            )}
+          >
             {categoryNav.map((category) => {
               const id = `cat-${category.id}`;
               return (
@@ -706,10 +716,10 @@ export function PublicMenuView({
       {canUseCallActions && hasCart ? (
         <div
           className={cn(
-            "z-40 w-full max-w-full border-t border-slate-200/80 bg-white/95 backdrop-blur",
+            "relative z-50 w-full max-w-full shrink-0 border-t border-slate-200/80 bg-white/95 backdrop-blur",
             isEmbedded
-              ? "shrink-0 px-2 py-2"
-              : "fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-0 right-0 px-3 py-2",
+              ? "px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+              : "fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 px-3 py-2",
           )}
         >
           <div className={cn(shell, "flex items-center gap-2")}>
@@ -753,19 +763,19 @@ export function PublicMenuView({
       {canUseCallActions ? (
       <div
         className={cn(
-          "z-40 w-full max-w-full border-t border-slate-200/80 bg-white/95 backdrop-blur",
+          "relative z-50 w-full max-w-full shrink-0 border-t border-slate-200/80 bg-white/95 backdrop-blur",
           isEmbedded
-            ? "shrink-0 px-2 pb-2 pt-2"
-            : "fixed bottom-0 left-0 right-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3",
+            ? "px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2"
+            : "fixed bottom-0 left-0 right-0 z-50 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3",
         )}
       >
         <div className={cn(shell, "grid grid-cols-3 gap-1.5", !isEmbedded && "gap-2")}>
           <button
             type="button"
-            onClick={() => sendCall("WAITER")}
+            onClick={() => void sendCall("WAITER")}
             disabled={actionState.WAITER === "loading" || hasPendingCall}
             className={cn(
-              "flex flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
+              "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
               hasPendingCall
                 ? "bg-slate-100 text-slate-400"
@@ -781,10 +791,10 @@ export function PublicMenuView({
           </button>
           <button
             type="button"
-            onClick={() => sendCall("BILL")}
+            onClick={() => void sendCall("BILL")}
             disabled={actionState.BILL === "loading" || hasPendingCall}
             className={cn(
-              "flex flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
+              "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
               hasPendingCall
                 ? "bg-slate-100 text-slate-400"
@@ -798,10 +808,10 @@ export function PublicMenuView({
           </button>
           <button
             type="button"
-            onClick={cancelCall}
+            onClick={() => void cancelCall()}
             disabled={!hasPendingCall || !callCancellable || actionState.CANCEL === "loading"}
             className={cn(
-              "flex flex-col items-center justify-center gap-0.5 rounded-button border font-semibold leading-tight",
+              "touch-manipulation flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-button border font-semibold leading-tight",
               isEmbedded ? "py-2 text-[9px]" : "gap-1 py-3 text-[11px]",
               hasPendingCall
                 ? "border-slate-300 bg-white text-slate-700"
@@ -819,7 +829,10 @@ export function PublicMenuView({
 
       {selectedItem ? (
         <div
-          className="fixed inset-0 z-50 flex items-end bg-black/50 sm:items-center sm:justify-center"
+          className={cn(
+            "z-50 flex items-end bg-black/50 sm:items-center sm:justify-center",
+            isEmbedded ? "absolute inset-0" : "fixed inset-0",
+          )}
           onClick={() => setSelectedItem(null)}
           role="presentation"
         >
@@ -936,7 +949,10 @@ export function PublicMenuView({
 
       {cartOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-end bg-black/50 sm:items-center sm:justify-center"
+          className={cn(
+            "z-50 flex items-end bg-black/50 sm:items-center sm:justify-center",
+            isEmbedded ? "absolute inset-0" : "fixed inset-0",
+          )}
           onClick={() => setCartOpen(false)}
           role="presentation"
         >
