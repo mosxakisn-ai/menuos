@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { demoMenuUrl } from "@menuos/shared";
 import {
-  ArrowRight,
   Bell,
   Clock,
   Facebook,
@@ -127,10 +126,6 @@ export function SiteFooter() {
     "highlights" in f
       ? (f as { highlights: readonly { title: string; text: string }[] }).highlights
       : [];
-  const cta =
-    "cta" in f
-      ? (f as { cta: { title: string; text: string; button: string } }).cta
-      : null;
   const hub =
     "hub" in f
       ? (f as {
@@ -155,9 +150,9 @@ export function SiteFooter() {
         aria-hidden
       />
 
-      <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+      <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
         {/* Brand + highlights */}
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
+        <div className="grid gap-8 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-5">
             <Logo href="/" dark markSize={40} showTagline />
             <p className="mt-5 max-w-md text-sm leading-relaxed text-slate-300">{f.about}</p>
@@ -188,7 +183,7 @@ export function SiteFooter() {
         </div>
 
         {/* Link columns */}
-        <div className="mt-14 grid gap-10 border-t border-white/10 pt-14 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-8 border-t border-white/10 pt-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
               {f.columns.product}
@@ -306,26 +301,6 @@ export function SiteFooter() {
           </div>
         </div>
 
-        {/* CTA band */}
-        {cta ? (
-          <div className="mt-14 rounded-2xl border border-brand-cyan/20 bg-gradient-to-br from-brand-blue/20 via-white/[0.06] to-brand-cyan/10 p-8 sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-10">
-            <div className="max-w-xl">
-              <p className="text-lg font-bold text-white sm:text-xl">{cta.title}</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-300">{cta.text}</p>
-            </div>
-            <Link
-              href="/register"
-              className={cn(
-                buttonClass("primary", "lg"),
-                "mt-6 inline-flex shrink-0 items-center gap-2 sm:mt-0",
-              )}
-            >
-              {cta.button}
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </div>
-        ) : null}
-
         {/* SEO hub — crawlable, visually hidden */}
         <nav className="sr-only" aria-label={isEn ? "Site guides" : "Οδηγοί ιστοτόπου"}>
           {hub ? <p>{hub.description}</p> : null}
@@ -343,7 +318,7 @@ export function SiteFooter() {
           </ul>
         </nav>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
+        <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row">
           <p className="text-xs text-slate-500">
             © {new Date().getFullYear()} MenuOS. {f.rights}
           </p>

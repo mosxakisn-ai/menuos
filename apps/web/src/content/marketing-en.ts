@@ -211,11 +211,6 @@ export const MARKETING_EN = {
         text: "No guest app, no IT team — browser only.",
       },
     ],
-    cta: {
-      title: "Start free for 7 days",
-      text: "Build your first menu today. No card, no lock-in.",
-      button: "Create account",
-    },
     hub: {
       title: "Guides & solutions",
       localTitle: "QR menu by city",
