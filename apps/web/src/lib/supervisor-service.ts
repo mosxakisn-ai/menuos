@@ -1,6 +1,6 @@
 import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/db";
 import { DEMO_VENUE_SLUG, isPaidPlan, organizationHasPaidPlan } from "@menuos/shared";
-import { getPlanPriceMap } from "@/lib/plan-catalog-service";
+import { getPlanPriceMap, getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import type { SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
 
 export type SupervisorOrganizationUser = {
@@ -361,12 +361,15 @@ export async function updateOrganizationForSupervisor(
       const sub = await prisma.subscription.findUnique({ where: { organizationId: id } });
       const trialValid = sub?.trialEndsAt && sub.trialEndsAt > now;
       if (!trialValid) {
-        data.trialEndsAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const trialDays = await getTrialDaysFromCatalog();
+        data.trialEndsAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000);
       }
       if (!data.status) data.status = "TRIALING";
       data.currentPeriodEnd = null;
     }
   }
+
+  const defaultTrialDays = await getTrialDaysFromCatalog();
 
   await prisma.subscription.upsert({
     where: { organizationId: id },
@@ -374,7 +377,7 @@ export async function updateOrganizationForSupervisor(
       organizationId: id,
       plan: data.plan ?? "TRIAL",
       status: data.status ?? "TRIALING",
-      trialEndsAt: data.trialEndsAt ?? new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+      trialEndsAt: data.trialEndsAt ?? new Date(now.getTime() + defaultTrialDays * 24 * 60 * 60 * 1000),
       currentPeriodEnd: data.currentPeriodEnd ?? null,
     },
     update: data,

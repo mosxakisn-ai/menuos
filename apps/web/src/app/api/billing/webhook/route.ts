@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
       const resolvedPlanId =
         metadata.planId && isCheckoutPlan(metadata.planId)
           ? metadata.planId
-          : planIdFromStripeSubscription(subscription);
+          : await planIdFromStripeSubscription(subscription);
 
       if (isMenuOsStripeMetadata(metadata) || stripeSubId) {
         await syncSubscriptionFromStripe({

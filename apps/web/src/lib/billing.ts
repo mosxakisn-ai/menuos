@@ -2,10 +2,11 @@ import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/
 import {
   isPaidPlan,
   organizationHasPaidPlan,
+  PAID_SUBSCRIPTION_PLANS,
   type PaidSubscriptionPlanId,
   type PlanDefinition,
 } from "@menuos/shared";
-import { getPlanFromCatalog } from "@/lib/plan-catalog-service";
+import { getPlanFromCatalog, getPlanPriceMap } from "@/lib/plan-catalog-service";
 import { sendSubscriptionActivatedEmail } from "@/lib/mail";
 
 export type OrganizationPlanContext = {
@@ -278,9 +279,9 @@ export function isCheckoutPlan(planId: string): planId is PaidSubscriptionPlanId
   return isPaidPlan(planId);
 }
 
-export function planIdFromStripeSubscription(
+export async function planIdFromStripeSubscription(
   subscription: Record<string, unknown>,
-): PaidSubscriptionPlanId | undefined {
+): Promise<PaidSubscriptionPlanId | undefined> {
   const metadata = (subscription.metadata ?? {}) as Record<string, string>;
   if (metadata.planId && isCheckoutPlan(metadata.planId)) return metadata.planId;
 
@@ -288,6 +289,14 @@ export function planIdFromStripeSubscription(
     | { data?: Array<{ price?: { unit_amount?: number | null } }> }
     | undefined;
   const amount = items?.data?.[0]?.price?.unit_amount;
+  if (amount == null) return undefined;
+
+  const prices = await getPlanPriceMap();
+  for (const planId of PAID_SUBSCRIPTION_PLANS) {
+    const cents = Math.round((prices[planId] ?? 0) * 100);
+    if (cents === amount) return planId;
+  }
+
   if (amount === 999) return "BASIC";
   if (amount === 1999) return "PRO";
   return undefined;
