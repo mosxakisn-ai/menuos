@@ -94,20 +94,29 @@ function isAllCapsTitle(line: string): boolean {
   );
 }
 
+function isTitleCaseSection(line: string): boolean {
+  const words = line.trim().split(/\s+/);
+  if (words.length < 2 || words.length > 8 || line.length > 60) return false;
+  return words.every((w) => /^[A-ZΑ-ΩΆΈΉΊΌΎΏ]/.test(w));
+}
+
 function looksLikeCategory(line: string, nextLineHasPrice: boolean): boolean {
   if (line.length < 2 || line.length > 80) return false;
   if (extractItemFromLine(line)) return false;
   if (/^\d+$/.test(line)) return false;
   if (SKIP_LINE.test(line) || SKIP_HEADER.test(line)) return false;
 
-  const colonMatch = line.match(/^(.{2,60}):\s*$/);
-  if (colonMatch) return true;
+  if (line.match(/^(.{2,60}):\s*$/)) return true;
+  if (isAllCapsTitle(line)) return true;
+  if (isTitleCaseSection(line)) return true;
 
-  const upperRatio =
-    (line.match(/[A-ZΑ-ΩΆΈΉΊΌΎΏ]/gu) ?? []).length / Math.max(line.length, 1);
-  const titleLike = upperRatio > 0.6 || /^[A-ZΑ-ΩΆΈΉΊΌΎΏ]/.test(line);
+  if (nextLineHasPrice) {
+    const upperRatio =
+      (line.match(/[A-ZΑ-ΩΆΈΉΊΌΎΏ]/gu) ?? []).length / Math.max(line.length, 1);
+    if (upperRatio > 0.6 && line.length <= 40) return true;
+  }
 
-  return titleLike || nextLineHasPrice || isAllCapsTitle(line);
+  return false;
 }
 
 function extractItemFromLine(line: string): { name: string; price: number | null } | null {
@@ -270,7 +279,7 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
         nameEn,
         price: item.price,
         warnings,
-        selected: item.price !== null,
+        selected: true,
         sourceFile,
       });
       continue;

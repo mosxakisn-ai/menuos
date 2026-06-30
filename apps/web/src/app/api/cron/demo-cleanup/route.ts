@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeCron } from "@/lib/cron-auth";
-import { processTrialReminderEmails } from "@/lib/trial-reminders";
+import { processDemoVenueCleanup } from "@/lib/demo-cleanup";
 
 export async function POST(request: Request) {
   if (!authorizeCron(request)) {
@@ -8,11 +8,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await processTrialReminderEmails();
+    const result = await processDemoVenueCleanup();
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
-    console.error("[menuos-cron] trial-reminders failed", err);
-    return NextResponse.json({ error: "Trial reminder job failed" }, { status: 500 });
+    console.error("[menuos-cron] demo-cleanup failed", err);
+    return NextResponse.json({ error: "Demo cleanup job failed" }, { status: 500 });
   }
 }
 

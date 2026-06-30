@@ -15,17 +15,15 @@ export const metadata: Metadata = buildPrivatePageMetadata("Συνδρομή", "
 
 type Props = { searchParams: Promise<{ inactive?: string; trial?: string }> };
 
-export default async function BillingPage({ searchParams }: Props) {
+export default async function BillingPage({ searchParams: _searchParams }: Props) {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const sp = await searchParams;
   const subscription = await prisma.subscription.findUnique({
     where: { organizationId: session.organizationId },
   });
   const hasActiveSubscription = await organizationHasActiveSubscription(session.organizationId);
-  const showInactive =
-    !hasActiveSubscription || sp.inactive === "1" || sp.trial === "expired";
+  const showInactive = !hasActiveSubscription;
 
   return (
     <DashboardPage>
