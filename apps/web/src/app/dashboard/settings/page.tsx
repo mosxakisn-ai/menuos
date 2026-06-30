@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
 import { SettingsForm } from "@/components/dashboard/settings-form";
+import { ChangePasswordForm } from "@/components/dashboard/change-password-form";
 import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
 import { Card } from "@/components/ui/card";
 import { getSession } from "@/lib/auth";
@@ -38,6 +39,12 @@ export default async function SettingsPage() {
             <dd className="text-slate-700">{roleLabel(session!.role)}</dd>
           </div>
         </dl>
+      </Card>
+      <Card className="p-6 sm:p-8">
+        <h2 className="font-semibold text-primary">{DASHBOARD_EL.changePassword.title}</h2>
+        <div className="mt-4 max-w-md">
+          <ChangePasswordForm />
+        </div>
       </Card>
       <SettingsForm venues={venues} />
     </DashboardPage>

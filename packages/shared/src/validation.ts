@@ -18,6 +18,21 @@ export const loginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1).max(128),
+    newPassword: z.string().min(8).max(128),
+    confirmPassword: z.string().min(8).max(128),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: "New password must differ",
+    path: ["newPassword"],
+  });
+
 export const venueSchema = z.object({
   name: z.string().min(2).max(120),
   slug: z
@@ -106,6 +121,7 @@ export const venueSpotBulkCreateSchema = z
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type RegisterOtpSendInput = z.infer<typeof registerOtpSendSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type VenueInput = z.infer<typeof venueSchema>;
 export type CategoryInput = z.infer<typeof categorySchema>;
 export type ItemInput = z.infer<typeof itemSchema>;
