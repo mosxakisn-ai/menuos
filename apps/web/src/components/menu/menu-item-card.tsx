@@ -7,7 +7,7 @@ import {
   type ItemLabel,
   type QrMenuLanguage,
 } from "@menuos/shared";
-import { UtensilsCrossed } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ItemLabelBadge({
@@ -32,17 +32,58 @@ export function ItemLabelBadge({
   );
 }
 
-type MenuItemCardProps = {
+type MenuItemBaseProps = {
   name: string;
   description?: string | null;
   price: string;
-  photoUrl?: string | null;
   label?: string | null;
   lang: QrMenuLanguage;
   onClick?: () => void;
   className?: string;
 };
 
+/** Καθαρή γραμμή menu — για πιάτα χωρίς φωτογραφία (ποτά, συνοδευτικά κ.λπ.). */
+export function MenuItemRow({
+  name,
+  description,
+  price,
+  label,
+  lang,
+  onClick,
+  className,
+}: MenuItemBaseProps) {
+  const badge = isItemLabel(label) ? label : null;
+  const Comp = onClick ? "button" : "div";
+
+  return (
+    <Comp
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      aria-label={onClick ? `${name}, €${price}` : undefined}
+      className={cn(
+        "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition",
+        onClick && "cursor-pointer touch-manipulation hover:bg-slate-50 active:bg-slate-100",
+        className,
+      )}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-medium text-primary">{name}</p>
+          {badge ? <ItemLabelBadge label={badge} lang={lang} /> : null}
+        </div>
+        {description ? (
+          <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{description}</p>
+        ) : null}
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <p className="font-semibold text-primary">€{price}</p>
+        {onClick ? <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden /> : null}
+      </div>
+    </Comp>
+  );
+}
+
+/** Κάρτα με φωτογραφία — μόνο όταν υπάρχει πραγματική εικόνα. */
 export function MenuItemCard({
   name,
   description,
@@ -52,7 +93,7 @@ export function MenuItemCard({
   lang,
   onClick,
   className,
-}: MenuItemCardProps) {
+}: MenuItemBaseProps & { photoUrl: string }) {
   const badge = isItemLabel(label) ? label : null;
   const Comp = onClick ? "button" : "div";
 
@@ -67,15 +108,9 @@ export function MenuItemCard({
         className,
       )}
     >
-      <div className="relative aspect-[16/10] w-full bg-gradient-to-br from-slate-100 to-slate-200">
-        {photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photoUrl} alt={name} className="absolute inset-0 h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full items-center justify-center bg-gradient-to-br from-slate-100 via-white to-slate-200">
-            <UtensilsCrossed className="h-10 w-10 text-slate-300" aria-hidden />
-          </div>
-        )}
+      <div className="relative aspect-[4/3] w-full bg-slate-100">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={photoUrl} alt={name} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
         {badge ? (
           <div className="absolute left-2 top-2">
             <ItemLabelBadge label={badge} lang={lang} />

@@ -47,6 +47,18 @@ const businessName = process.env.SEED_BUSINESS_NAME ?? "MenuOS Demo";
 const orgSlug = "menuos-master";
 const venueSlug = "demo-taverna";
 
+const DEMO_PHOTOS = {
+  "Χωριάτικη":
+    "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80",
+  Ρόκα: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80",
+  Μουσακάς:
+    "https://images.unsplash.com/photo-1604908176997-431836457af9?auto=format&fit=crop&w=800&q=80",
+  "Σουβλάκι χοιρινό":
+    "https://images.unsplash.com/photo-1529006557810-274b1b4c8577?auto=format&fit=crop&w=800&q=80",
+  "Ψητή τσιπούρα":
+    "https://images.unsplash.com/photo-1544943910-4c1dc44aab44?auto=format&fit=crop&w=800&q=80",
+};
+
 const DEMO_CATEGORIES = [
   {
     nameGr: "Σαλάτες",
@@ -164,6 +176,7 @@ async function ensureDemoMenu(venueId, menuId) {
           price: item.price,
           sortOrder: itemSort++,
           available: true,
+          photoUrl: DEMO_PHOTOS[item.nameGr] ?? null,
           translations: {
             create: translationRows(
               item.nameGr,

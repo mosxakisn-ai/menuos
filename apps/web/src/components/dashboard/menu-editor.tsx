@@ -447,7 +447,7 @@ export function MenuEditor({
                               </button>
                             </div>
                             <input
-                              placeholder="URL φωτογραφίας (προαιρετικό)"
+                              placeholder="Φωτογραφία URL (προαιρετικό — χωρίς φωτό: καθαρή γραμμή στο menu)"
                               value={editPhotoUrl}
                               onChange={(e) => setEditPhotoUrl(e.target.value)}
                               className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
@@ -566,7 +566,7 @@ export function MenuEditor({
                       className="rounded-button border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
                     />
                     <input
-                      placeholder="URL φωτογραφίας (προαιρετικό)"
+                      placeholder="Φωτογραφία URL (προαιρετικό — χωρίς φωτό: καθαρή γραμμή στο menu)"
                       value={itemForm.photoUrl}
                       onChange={(e) => setItemForm((f) => ({ ...f, photoUrl: e.target.value }))}
                       className="rounded-button border border-slate-200 px-3 py-2 text-sm sm:col-span-2"

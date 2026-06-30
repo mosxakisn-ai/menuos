@@ -20,7 +20,7 @@ import {
 } from "@menuos/shared";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { cn } from "@/lib/utils";
-import { ItemLabelBadge, MenuItemCard } from "@/components/menu/menu-item-card";
+import { ItemLabelBadge, MenuItemCard, MenuItemRow } from "@/components/menu/menu-item-card";
 import { isItemLabel } from "@menuos/shared";
 
 type Translation = {
@@ -662,23 +662,51 @@ export function PublicMenuView({
           activeMenu.categories.map((category) => (
             <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-24">
               <h2 className="font-serif text-xl font-bold text-primary">{tName(category.translations)}</h2>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {category.items.map((item) => {
-                  const tr = pickQrMenuTranslation(item.translations, lang);
-                  return (
-                    <MenuItemCard
-                      key={item.id}
-                      name={tr?.name ?? "—"}
-                      description={tr?.description}
-                      price={item.price.toString()}
-                      photoUrl={item.photoUrl}
-                      label={item.label}
-                      lang={lang}
-                      onClick={() => setSelectedItem(item)}
-                    />
-                  );
-                })}
-              </div>
+              {(() => {
+                const withPhoto = category.items.filter((item) => item.photoUrl);
+                const withoutPhoto = category.items.filter((item) => !item.photoUrl);
+                return (
+                  <div className="mt-3 space-y-3">
+                    {withoutPhoto.length > 0 ? (
+                      <div className="overflow-hidden rounded-card border border-slate-100 bg-white shadow-soft divide-y divide-slate-100">
+                        {withoutPhoto.map((item) => {
+                          const tr = pickQrMenuTranslation(item.translations, lang);
+                          return (
+                            <MenuItemRow
+                              key={item.id}
+                              name={tr?.name ?? "—"}
+                              description={tr?.description}
+                              price={item.price.toString()}
+                              label={item.label}
+                              lang={lang}
+                              onClick={() => setSelectedItem(item)}
+                            />
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                    {withPhoto.length > 0 ? (
+                      <div className={cn("grid gap-3", withPhoto.length > 1 ? "sm:grid-cols-2" : "")}>
+                        {withPhoto.map((item) => {
+                          const tr = pickQrMenuTranslation(item.translations, lang);
+                          return (
+                            <MenuItemCard
+                              key={item.id}
+                              name={tr?.name ?? "—"}
+                              description={tr?.description}
+                              price={item.price.toString()}
+                              photoUrl={item.photoUrl!}
+                              label={item.label}
+                              lang={lang}
+                              onClick={() => setSelectedItem(item)}
+                            />
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })()}
             </section>
           ))
         )}
@@ -897,21 +925,23 @@ export function PublicMenuView({
               const tr = pickQrMenuTranslation(selectedItem.translations, lang);
               return (
                 <>
-                  {selectedItem.photoUrl || isItemLabel(selectedItem.label) ? (
-                    <div className="relative -mx-6 mb-4 aspect-[16/10] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
-                      {selectedItem.photoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={selectedItem.photoUrl}
-                          alt={tr?.name ?? ""}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : null}
+                  {selectedItem.photoUrl ? (
+                    <div className="relative -mx-6 mb-4 aspect-[4/3] overflow-hidden bg-slate-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={selectedItem.photoUrl}
+                        alt={tr?.name ?? ""}
+                        className="h-full w-full object-cover"
+                      />
                       {isItemLabel(selectedItem.label) ? (
                         <div className="absolute left-3 top-3">
                           <ItemLabelBadge label={selectedItem.label} lang={lang} />
                         </div>
                       ) : null}
+                    </div>
+                  ) : isItemLabel(selectedItem.label) ? (
+                    <div className="mb-3">
+                      <ItemLabelBadge label={selectedItem.label} lang={lang} />
                     </div>
                   ) : null}
                   <h3 id="menu-item-dialog-title" className="font-serif text-2xl font-bold text-primary">
