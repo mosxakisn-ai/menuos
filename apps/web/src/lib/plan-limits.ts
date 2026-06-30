@@ -56,8 +56,10 @@ export async function assertCanAddVenueInTransaction(
   const ctx = await planContextInTransaction(tx, organizationId);
   if (!ctx.active) {
     throw new PlanLimitError(
-      "trial_expired",
-      "Η δοκιμαστική περίοδος έληξε. Αναβάθμισε για να προσθέσεις μαγαζιά.",
+      "subscription_inactive",
+      ctx.plan.id === "TRIAL"
+        ? "Η δωρεάν δοκιμή έληξε. Αναβάθμισε για να προσθέσεις καταστήματα."
+        : "Η συνδρομή δεν είναι ενεργή.",
     );
   }
 

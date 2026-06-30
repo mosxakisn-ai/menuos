@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       stripeCustomerId: session.customer,
       stripeSubId: session.subscription,
       currentPeriodEnd: new Date(sub.current_period_end * 1000),
-      sendActivationEmail: false,
+      sendActivationEmail: true,
     });
 
     const subscription = await getOrganizationSubscription(organizationId);

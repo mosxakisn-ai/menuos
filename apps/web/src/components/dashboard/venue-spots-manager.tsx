@@ -37,7 +37,7 @@ export function VenueSpotsManager({
   const [spotType, setSpotType] = useState<VenueSpotType>("TABLE");
   const [label, setLabel] = useState("");
   const [bulkFrom, setBulkFrom] = useState("1");
-  const [bulkTo, setBulkTo] = useState("50");
+  const [bulkTo, setBulkTo] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
@@ -86,7 +86,17 @@ export function VenueSpotsManager({
     if (!venueId) return;
     const from = Number(bulkFrom);
     const to = Number(bulkTo);
-    if (!Number.isFinite(from) || !Number.isFinite(to)) return;
+    if (!Number.isFinite(from) || !Number.isFinite(to) || to < from) {
+      setFlash({ type: "error", text: "Βάλε έγκυρο εύρος (π.χ. από 1 έως 120)." });
+      return;
+    }
+    if (to - from >= 200) {
+      setFlash({
+        type: "error",
+        text: "Μέγιστο 200 θέσεις ανά φορά. Για περισσότερες, κάνε δεύτερη προσθήκη (π.χ. 201–400).",
+      });
+      return;
+    }
     setBusy("bulk");
     try {
       const res = await fetch(`/api/venues/${venueId}/spots`, {
@@ -242,14 +252,18 @@ export function VenueSpotsManager({
         </form>
 
         <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-5">
-          <p className="text-sm font-semibold text-brand-navy">Μαζική προσθήκη (π.χ. τραπέζια 1–50)</p>
+          <p className="text-sm font-semibold text-brand-navy">Μαζική προσθήκη</p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">
+            Όσα τραπέζια, δωμάτια ή ξαπλώστρες χρειάζεσαι — χωρίς όριο πλάνου. Έως 200 θέσεις κάθε φορά
+            (για περισσότερες, επανάλαβε με νέο εύρος).
+          </p>
           <div className="mt-4 flex flex-wrap items-end gap-4">
             <label className="block">
               <span className={dashboardLabelClass}>Από</span>
               <input
                 type="number"
                 min={1}
-                max={999}
+                max={9999}
                 value={bulkFrom}
                 onChange={(e) => setBulkFrom(e.target.value)}
                 className={`${dashboardFieldClass} w-24`}
@@ -260,7 +274,8 @@ export function VenueSpotsManager({
               <input
                 type="number"
                 min={1}
-                max={999}
+                max={9999}
+                placeholder="120"
                 value={bulkTo}
                 onChange={(e) => setBulkTo(e.target.value)}
                 className={`${dashboardFieldClass} w-24`}
@@ -268,7 +283,7 @@ export function VenueSpotsManager({
             </label>
             <button
               type="button"
-              disabled={busy !== null}
+              disabled={busy !== null || !bulkTo.trim()}
               onClick={() => void bulkAdd()}
               className={`h-10 ${buttonClass("secondary", "md")}`}
             >
@@ -288,7 +303,7 @@ export function VenueSpotsManager({
 
         {spots.length === 0 && !loadingSpots ? (
           <p className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm text-slate-500">
-            Δεν έχεις ακόμα θέσεις. Πρόσθεσε τραπέζι 12 ή κάνε μαζική προσθήκη 1–50.
+            Δεν έχεις ακόμα θέσεις. Πρόσθεσε μία θέση ή κάνε μαζική προσθήκη (π.χ. 1–120).
           </p>
         ) : (
           <ul className="mt-6 space-y-3">

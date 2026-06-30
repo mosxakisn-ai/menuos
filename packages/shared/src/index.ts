@@ -20,6 +20,7 @@ export const BRAND = {
 
 export * from "./validation";
 export * from "./plans";
+export * from "./trial";
 export * from "./item-labels";
 export * from "./menu-languages";
 export * from "./menu-pdf-parser";

@@ -126,7 +126,7 @@ export async function createPlanCheckoutSession(input: {
     invoiceDescription: copy.invoiceDescription,
     invoiceCreation: false,
   });
-  params.set("line_items[0][price_data][unit_amount]", String(plan.priceMonthly * 100));
+  params.set("line_items[0][price_data][unit_amount]", String(Math.round(plan.priceMonthly * 100)));
   params.set("line_items[0][price_data][recurring][interval]", "month");
   params.set("line_items[0][quantity]", "1");
   if (input.stripeCustomerId) {

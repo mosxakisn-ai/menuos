@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@menuos/db";
-import { DashboardWelcome } from "@/components/dashboard/dashboard-welcome";
+import { WelcomeTrialCard } from "@/components/dashboard/welcome-trial-card";
 import { DashboardPage as DashboardPageShell, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
 import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
-import { TrialEndingBanner } from "@/components/dashboard/trial-ending-banner";
 import { TrialLimitsHint } from "@/components/dashboard/trial-limits-hint";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
@@ -50,8 +49,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   return (
     <DashboardPageShell>
-      <DashboardWelcome show={sp.welcome === "1"} />
-      <TrialEndingBanner trialEndsAt={planId === "TRIAL" ? trialEndsAt : null} />
+      <WelcomeTrialCard show={sp.welcome === "1"} trialEndsAt={trialEndsAt} />
       <DashboardPageHeader
         title={org?.name ?? "Επισκόπηση"}
         description={`Πλάνο: ${planLabel(planId)} · ${venueCount} ${venueCount === 1 ? DASHBOARD_EL.venue.toLowerCase() : DASHBOARD_EL.venues.toLowerCase()} · ${menuCount} ${menuCount === 1 ? "κατάλογος" : "κατάλογοι"} · ${itemCount} πιάτα`}

@@ -37,9 +37,11 @@ function planChangeButtonLabel(currentPlanId: string, targetPlanId: (typeof PAID
 export function BillingPlans({
   organizationId,
   subscription,
+  userRole,
 }: {
   organizationId: string;
   subscription: Subscription | null;
+  userRole?: string;
 }) {
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
@@ -80,9 +82,15 @@ export function BillingPlans({
 
   const currentPlan = subscription?.plan ?? "TRIAL";
   const statusLabel = STATUS_GR[subscription?.status ?? "TRIALING"] ?? subscription?.status ?? "Δοκιμή";
+  const canCheckout = userRole !== "STAFF";
 
   return (
     <div className="space-y-6">
+      {!canCheckout ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          {DASHBOARD_EL.billing.staffNoCheckout}
+        </div>
+      ) : null}
       <Card>
         <h2 className="font-semibold text-primary">Τρέχον πλάνο</h2>
         <p className="mt-2 text-sm text-slate-600">
@@ -131,7 +139,7 @@ export function BillingPlans({
               </ul>
               <button
                 type="button"
-                disabled={isCurrent || loadingPlan === planId}
+                disabled={isCurrent || loadingPlan === planId || !canCheckout}
                 onClick={() => checkout(planId)}
                 className={`mt-6 w-full ${buttonClass(isCurrent ? "secondary" : "primary")}`}
               >

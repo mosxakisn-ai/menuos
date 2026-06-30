@@ -129,8 +129,9 @@ export async function activateSubscriptionFromCheckout(input: {
       to: admin.email,
       name: admin.name,
       businessName: org.name,
-      planId: plan.name,
+      planName: plan.name,
       priceMonthly: plan.priceMonthly,
+      renewalDate: periodEnd.toLocaleDateString("el-GR"),
     }).catch((err) => console.error("[menuos-mail] subscription email failed", err));
   }
 
@@ -191,8 +192,11 @@ export async function canOrganizationAddVenue(organizationId: string): Promise<
   if (!ctx?.active) {
     return {
       ok: false,
-      error: "Η δοκιμαστική περίοδος έληξε. Αναβάθμισε για να προσθέσεις μαγαζιά.",
-      code: "trial_expired",
+      error:
+        ctx?.planId === "TRIAL"
+          ? "Η δωρεάν δοκιμή έληξε. Αναβάθμισε για να προσθέσεις καταστήματα."
+          : "Η συνδρομή δεν είναι ενεργή. Ανανέωσε για να προσθέσεις καταστήματα.",
+      code: ctx?.planId === "TRIAL" ? "trial_expired" : "subscription_inactive",
     };
   }
 
