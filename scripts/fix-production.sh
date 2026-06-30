@@ -14,6 +14,14 @@ load_env "$ROOT"
 apply_production_env_defaults "$ROOT/.env"
 load_env "$ROOT"
 
+# Public URLs on server (localhost breaks emails, IndexNow, OAuth callbacks).
+if grep -qE '^APP_URL=http://localhost' "$ROOT/.env" 2>/dev/null; then
+  sed -i 's|^APP_URL=http://localhost:3000|APP_URL=https://menuos.gr|' "$ROOT/.env"
+  sed -i 's|^NEXTAUTH_URL=http://localhost:3000|NEXTAUTH_URL=https://menuos.gr|' "$ROOT/.env"
+  echo "==> Fixed APP_URL / NEXTAUTH_URL for menuos.gr"
+  load_env "$ROOT"
+fi
+
 PG_USER="${POSTGRES_USER:-menuos}"
 PG_DB="${POSTGRES_DB:-menuos}"
 

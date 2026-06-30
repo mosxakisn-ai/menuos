@@ -32,7 +32,13 @@ function loadDotEnv() {
 
 loadDotEnv();
 
-const APP_URL = process.env.APP_URL?.replace(/\/$/, "");
+const APP_URL = (
+  process.env.APP_URL?.includes("menuos.gr")
+    ? process.env.APP_URL
+    : process.env.INDEXNOW_HOST
+      ? `https://${process.env.INDEXNOW_HOST.replace(/^https?:\/\//, "")}`
+      : process.env.APP_URL
+)?.replace(/\/$/, "");
 const KEY = process.env.INDEXNOW_KEY;
 const HOST = process.env.INDEXNOW_HOST ?? (APP_URL ? new URL(APP_URL).host : undefined);
 
