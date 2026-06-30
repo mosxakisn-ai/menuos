@@ -101,6 +101,17 @@ function extractItemFromLine(line: string): { name: string; price: number | null
   return null;
 }
 
+function looksLikeNameOnlyItem(line: string): boolean {
+  if (line.length < 2 || line.length > 100) return false;
+  if (extractItemFromLine(line)) return false;
+  if (SKIP_LINE.test(line)) return false;
+  if (/^\d+$/.test(line)) return false;
+  const stripped = line.replace(/^[-•●▪*]\s*/, "").trim();
+  if (stripped.length < 2) return false;
+  if (/^(all\s*inclusive|beverages|ποτά|drinks?)$/i.test(stripped)) return false;
+  return true;
+}
+
 function itemWarnings(name: string, price: number | null): string[] {
   const warnings: string[] = [];
   if (price === null) warnings.push("Λείπει τιμή — συμπλήρωσέ την πριν την εισαγωγή.");
@@ -195,6 +206,22 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
 
     if (looksLikeCategory(line, nextHasPrice)) {
       ensureCategory(line);
+      continue;
+    }
+
+    if (looksLikeNameOnlyItem(line)) {
+      if (!currentCategory) ensureCategory("Γενικά");
+      itemsFound += 1;
+      itemsWithPrice += 1;
+      currentCategory!.items.push({
+        id: nextId("item"),
+        nameGr: line.replace(/^[-•●▪*]\s*/, "").trim(),
+        nameEn: isMostlyLatin(line) ? line.replace(/^[-•●▪*]\s*/, "").trim() : undefined,
+        price: 0,
+        warnings: ["Χωρίς τιμή στο PDF — βάλαμε €0 (άλλαξέ το αν χρειάζεται)."],
+        selected: true,
+        sourceFile,
+      });
     }
   }
 

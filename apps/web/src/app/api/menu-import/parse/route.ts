@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { requirePdfImportPlan } from "@/lib/api-auth";
-import { parseUploadedPdfFiles, readPdfFilesFromFormData, validatePdfUploadFiles } from "@/lib/pdf-extract";
+import {
+  PdfTextExtractionError,
+  parseUploadedPdfFiles,
+  readPdfFilesFromFormData,
+  validatePdfUploadFiles,
+} from "@/lib/pdf-extract";
 import { getMenuForOrganization } from "@/lib/venue-access";
 
 export const runtime = "nodejs";
@@ -39,10 +44,13 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("menu-import parse", err);
+    if (err instanceof PdfTextExtractionError) {
+      return NextResponse.json({ error: err.message }, { status: 422 });
+    }
     return NextResponse.json(
       {
         error:
-          "Αποτυχία ανάγνωσης PDF. Βεβαιώσου ότι είναι digital PDF (όχι σαρωμένη φωτογραφία).",
+          "Αποτυχία ανάγνωσης PDF. Δοκίμασε ξανά ή πρόσθεσε τον κατάλογο χειροκίνητα.",
       },
       { status: 422 },
     );
