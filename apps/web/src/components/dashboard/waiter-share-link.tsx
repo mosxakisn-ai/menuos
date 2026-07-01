@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { clientShareOrigin } from "@/lib/client-share-origin";
 
 export function WaiterShareLink({
   venueSlug,
@@ -26,7 +27,7 @@ export function WaiterShareLink({
 
   useEffect(() => {
     if (!venueSlug || !staffToken) return;
-    const u = new URL("/api/staff/session", window.location.origin);
+    const u = new URL("/api/staff/session", clientShareOrigin());
     u.searchParams.set("venueSlug", venueSlug);
     u.searchParams.set("key", staffToken);
     setUrl(u.toString());

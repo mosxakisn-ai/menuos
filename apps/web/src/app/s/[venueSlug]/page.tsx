@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
+import { StaffWaiterInvalidLink } from "@/components/dashboard/staff-waiter-invalid-link";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { resolveVenueByStaffKey, resolveVenueByStaffSlug } from "@/lib/staff-auth";
 import { readStaffSessionFromCookies } from "@/lib/staff-session";
@@ -28,11 +29,13 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   }
 
   const session = await readStaffSessionFromCookies();
-  if (!session) notFound();
+  if (!session) {
+    return <StaffWaiterInvalidLink venueSlug={venueSlug} />;
+  }
 
   const venue = await resolveVenueByStaffKey(session.venueId, session.staffToken);
   if (!venue || venue.slug !== venueSlug) {
-    notFound();
+    return <StaffWaiterInvalidLink venueSlug={venueSlug} />;
   }
 
   return (
