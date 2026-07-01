@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import { DemoBadge } from "@/components/dashboard/settings-demo-badge";
-import { TableGridPreview } from "@/components/dashboard/table-grid-preview";
+import { PassSignalHistoryPanel } from "@/components/dashboard/pass-signal-history-panel";
 import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
 import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
@@ -17,9 +17,27 @@ type VenueSpotVenue = { id: string; name: string; slug: string };
 type VenueWithScreenTokens = VenueSpotVenue & {
   kitchenScreenToken?: string;
   barScreenToken?: string;
+  coldScreenToken?: string;
+  dessertScreenToken?: string;
 };
 
-function buildScreenUrl(path: "/kds" | "/bds", slug: string, token: string) {
+type ScreenKind = "kitchen" | "bar" | "cold" | "dessert";
+
+const SCREEN_PATHS: Record<ScreenKind, "/kds" | "/bds" | "/cold" | "/dessert"> = {
+  kitchen: "/kds",
+  bar: "/bds",
+  cold: "/cold",
+  dessert: "/dessert",
+};
+
+const SCREEN_TOKEN_KEYS: Record<ScreenKind, keyof VenueWithScreenTokens> = {
+  kitchen: "kitchenScreenToken",
+  bar: "barScreenToken",
+  cold: "coldScreenToken",
+  dessert: "dessertScreenToken",
+};
+
+function buildScreenUrl(path: "/kds" | "/bds" | "/cold" | "/dessert", slug: string, token: string) {
   const u = new URL(path, clientShareOrigin());
   u.searchParams.set("venueSlug", slug);
   u.searchParams.set("key", token);
@@ -73,19 +91,35 @@ export function SettingsPersonnelPanel() {
 function StationScreenPanel({
   kind,
   venues,
+  tokenOverrides,
+  onTokenRotated,
 }: {
-  kind: "kitchen" | "bar";
+  kind: ScreenKind;
   venues: VenueWithScreenTokens[];
+  tokenOverrides: Record<string, string>;
+  onTokenRotated: (venueId: string, kind: ScreenKind, token: string) => void;
 }) {
   const { d } = useDashboardCopy();
   const S = d.pages.settings;
-  const copy = kind === "kitchen" ? S.kitchen : S.bar;
+  const copy =
+    kind === "kitchen"
+      ? S.kitchen
+      : kind === "bar"
+        ? S.bar
+        : kind === "cold"
+          ? S.cold
+          : S.dessert;
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
   const [copied, setCopied] = useState(false);
+  const [rotating, setRotating] = useState(false);
   const venue = venues.find((v) => v.id === venueId);
+  const tokenKey = SCREEN_TOKEN_KEYS[kind];
+  const overrideKey = venueId ? `${venueId}:${kind}` : "";
   const token =
-    kind === "kitchen" ? venue?.kitchenScreenToken : venue?.barScreenToken;
-  const screenUrl = venue?.slug && token ? buildScreenUrl(kind === "kitchen" ? "/kds" : "/bds", venue.slug, token) : "";
+    (overrideKey ? tokenOverrides[overrideKey] : undefined) ??
+    (venue ? (venue[tokenKey] as string | undefined) : undefined);
+  const screenUrl =
+    venue?.slug && token ? buildScreenUrl(SCREEN_PATHS[kind], venue.slug, token) : "";
 
   useEffect(() => {
     if (venues.length && !venues.some((v) => v.id === venueId)) {
@@ -102,6 +136,28 @@ function StationScreenPanel({
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function rotateToken() {
+    if (!venueId || !window.confirm(S.rotateScreenConfirm)) return;
+    setRotating(true);
+    try {
+      const res = await fetch(`/api/venues/${venueId}/rotate-screen-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ screen: kind }),
+      });
+      const data = (await res.json()) as { screenToken?: string; error?: string };
+      if (!res.ok || !data.screenToken) {
+        window.alert(data.error ?? S.rotateScreenFailed);
+        return;
+      }
+      onTokenRotated(venueId, kind, data.screenToken);
+    } catch {
+      window.alert(S.rotateScreenFailed);
+    } finally {
+      setRotating(false);
+    }
   }
 
   if (venues.length === 0) {
@@ -160,17 +216,54 @@ function StationScreenPanel({
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           {copied ? d.waiter.copied : copy.copyScreenLink}
         </button>
+        <button
+          type="button"
+          disabled={!venueId || rotating}
+          onClick={() => void rotateToken()}
+          className={`inline-flex items-center gap-1 ${buttonClass("secondary", "md")}`}
+        >
+          <RefreshCw className={`h-4 w-4 ${rotating ? "animate-spin" : ""}`} />
+          {rotating ? S.rotatingScreen : S.rotateScreenButton}
+        </button>
       </div>
     </div>
   );
 }
 
+function StationScreensGroup({
+  kinds,
+  venues,
+}: {
+  kinds: ScreenKind[];
+  venues: VenueWithScreenTokens[];
+}) {
+  const [tokenOverrides, setTokenOverrides] = useState<Record<string, string>>({});
+
+  function handleRotated(venueId: string, kind: ScreenKind, token: string) {
+    setTokenOverrides((prev) => ({ ...prev, [`${venueId}:${kind}`]: token }));
+  }
+
+  return (
+    <div className="space-y-5">
+      {kinds.map((kind) => (
+        <StationScreenPanel
+          key={kind}
+          kind={kind}
+          venues={venues}
+          tokenOverrides={tokenOverrides}
+          onTokenRotated={handleRotated}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function SettingsKitchenPanel({ venues }: { venues: VenueWithScreenTokens[] }) {
-  return <StationScreenPanel kind="kitchen" venues={venues} />;
+  return <StationScreensGroup kinds={["kitchen", "cold"]} venues={venues} />;
 }
 
 export function SettingsBarPanel({ venues }: { venues: VenueWithScreenTokens[] }) {
-  return <StationScreenPanel kind="bar" venues={venues} />;
+  return <StationScreensGroup kinds={["bar", "dessert"]} venues={venues} />;
 }
 
 export function SettingsTablesPanel({ venues }: { venues: VenueSpotVenue[] }) {
@@ -182,9 +275,8 @@ export function SettingsServicesPanel({
 }: {
   venues: (Pick<SettingsVenue, "id" | "name" | "slug"> & { staffToken?: string })[];
 }) {
-  const { d, lang } = useDashboardCopy();
+  const { d } = useDashboardCopy();
   const S = d.pages.settings;
-  const demo = getSettingsDemo(lang);
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
   const venue = venues.find((v) => v.id === venueId);
 
@@ -241,17 +333,9 @@ export function SettingsServicesPanel({
           </a>
         </div>
         <p className="mt-2 text-sm text-slate-600">{S.services.passHint}</p>
-
-        <div className="mt-6 border-t border-slate-100 pt-5">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {S.tables.gridPreview}
-            </p>
-            <DemoBadge>{S.demoBadge}</DemoBadge>
-          </div>
-          <TableGridPreview tiles={demo.tableTiles} stateLabels={demo.tableStateLabels} />
-        </div>
       </div>
+
+      <PassSignalHistoryPanel venues={venues} />
     </div>
   );
 }

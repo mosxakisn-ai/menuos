@@ -2,9 +2,10 @@
 
 import { Bell, Check, Clock } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatWaiterCallLocationForLang, formatOrderLineDetail, passStationDbToInput, type OrderLine } from "@menuos/shared";
+import { formatWaiterCallLocationForLang, formatOrderLineDetail, passStationDbToInput, type OrderLine, type VenueSpotType } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
+import { WaiterTableGrid } from "@/components/dashboard/waiter-table-grid";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
@@ -15,6 +16,7 @@ type OrderPayload = {
   lines: OrderLine[];
   total: string;
 };
+type VenueSpot = { id: string; type: VenueSpotType; label: string };
 type PassSignal = {
   id: string;
   station: string;
@@ -66,6 +68,7 @@ export function WaiterPanel({
     Object.fromEntries(venues.filter((v) => v.staffToken).map((v) => [v.id, v.staffToken!])),
   );
   const [calls, setCalls] = useState<WaiterCall[]>([]);
+  const [spots, setSpots] = useState<VenueSpot[]>([]);
   const [passSignals, setPassSignals] = useState<PassSignal[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [passCount, setPassCount] = useState(0);
@@ -75,10 +78,12 @@ export function WaiterPanel({
   const prevPassRef = useRef<number | null>(null);
   const prevCallsRef = useRef<WaiterCall[]>([]);
   const pendingBaselineSetRef = useRef(false);
+  const loadGenerationRef = useRef(0);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   const load = useCallback(async () => {
     if (!venueId) return;
+    const generation = ++loadGenerationRef.current;
     const params = new URLSearchParams({ venueId });
     if (staffKey && !staffViaCookie) params.set("staffKey", staffKey);
     const creds = staffViaCookie ? "include" : "same-origin";
@@ -88,6 +93,8 @@ export function WaiterPanel({
     ]);
     const data = await callsRes.json().catch(() => ({}));
     const passData = await passRes.json().catch(() => ({}));
+
+    if (generation !== loadGenerationRef.current) return;
 
     if (callsRes.ok) {
       const newCalls = (data.calls ?? []) as WaiterCall[];
@@ -102,6 +109,7 @@ export function WaiterPanel({
       }
       prevCallsRef.current = newCalls;
       setCalls(newCalls);
+      setSpots((data.spots ?? []) as VenueSpot[]);
       const nextPending = data.pendingCount ?? 0;
       if (!pendingBaselineSetRef.current) {
         prevPendingRef.current = nextPending;
@@ -110,6 +118,7 @@ export function WaiterPanel({
       setPendingCount(nextPending);
     } else {
       setCalls([]);
+      setSpots([]);
       prevCallsRef.current = [];
       if (!pendingBaselineSetRef.current) {
         prevPendingRef.current = 0;
@@ -146,7 +155,9 @@ export function WaiterPanel({
   }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash]);
 
   useEffect(() => {
+    loadGenerationRef.current += 1;
     setCalls([]);
+    setSpots([]);
     setPassSignals([]);
     setPendingCount(0);
     setPassCount(0);
@@ -277,6 +288,8 @@ export function WaiterPanel({
         )}
       </div>
 
+      <WaiterTableGrid spots={spots} calls={calls} passSignals={passSignals} />
+
       {passSignals.length > 0 ? (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-brand-navy">{W.passSection}</h2>
@@ -333,7 +346,7 @@ export function WaiterPanel({
         </div>
       ) : null}
 
-      {calls.length === 0 && passSignals.length === 0 ? (
+      {calls.length === 0 && passSignals.length === 0 && spots.length === 0 ? (
         <Card className="border-dashed text-center">
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 font-medium text-brand-navy">{W.emptyTitle}</p>

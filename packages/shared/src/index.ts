@@ -30,4 +30,5 @@ export * from "./menu-cart";
 export * from "./venue-spots";
 export * from "./item-extras";
 export * from "./pass-signal";
+export * from "./waiter-table-grid";
 export * from "./organization-activity";

@@ -2,16 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import type { PassStationInput } from "@menuos/shared";
+import type { PassStationInput, VenueSpotType } from "@menuos/shared";
 import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+type ScreenSpot = { type: VenueSpotType; label: string };
 
 type ScreenContext = {
   venueId: string;
   venueName: string;
   venueSlug: string;
   station: PassStationInput;
-  spots: string[];
+  spots: ScreenSpot[];
 };
 
 const COPY = {
@@ -33,9 +35,29 @@ const COPY = {
     pickTable: "Επίλεξε τραπέζι",
     invalid: "Μη έγκυρο link οθόνης.",
   },
+  cold: {
+    title: "Κρύα κουζίνα",
+    send: "Έτοιμο — κρύα",
+    comment: "Σχόλιο (προαιρετικό)",
+    commentPh: "π.χ. σαλάτα",
+    sent: "Στάλθηκε στον σερβιτόρο!",
+    pickTable: "Επίλεξε τραπέζι",
+    invalid: "Μη έγκυρο link οθόνης.",
+  },
+  dessert: {
+    title: "Γλυκά",
+    send: "Έτοιμο το γλυκό",
+    comment: "Σχόλιο (προαιρετικό)",
+    commentPh: "π.χ. με παγωτό",
+    sent: "Στάλθηκε στον σερβιτόρο!",
+    pickTable: "Επίλεξε τραπέζι",
+    invalid: "Μη έγκυρο link οθόνης.",
+  },
 };
 
-export function StationPassScreen({ station }: { station: "kitchen" | "bar" }) {
+export type StationScreenKind = keyof typeof COPY;
+
+export function StationPassScreen({ station }: { station: StationScreenKind }) {
   const searchParams = useSearchParams();
   const venueSlug = searchParams.get("venueSlug")?.trim() ?? "";
   const stationKey = searchParams.get("key")?.trim() ?? "";
@@ -43,7 +65,7 @@ export function StationPassScreen({ station }: { station: "kitchen" | "bar" }) {
 
   const [ctx, setCtx] = useState<ScreenContext | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [table, setTable] = useState<string | null>(null);
+  const [table, setTable] = useState<ScreenSpot | null>(null);
   const [manualTable, setManualTable] = useState("");
   const [comment, setComment] = useState("");
   const [sending, setSending] = useState(false);
@@ -71,11 +93,19 @@ export function StationPassScreen({ station }: { station: "kitchen" | "bar" }) {
   }, [load]);
 
   async function send() {
-    const tableNumber = table ?? manualTable.trim();
-    if (!tableNumber || !ctx) return;
+    const manual = manualTable.trim();
+    if ((!table && !manual) || !ctx) return;
     setSending(true);
     setFlash(null);
     try {
+      const location = table
+        ? table.type === "TABLE"
+          ? { tableNumber: table.label }
+          : table.type === "ROOM"
+            ? { roomNumber: table.label }
+            : { sunbedNumber: table.label }
+        : { tableNumber: manual };
+
       const res = await fetch("/api/pass-signals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -83,7 +113,7 @@ export function StationPassScreen({ station }: { station: "kitchen" | "bar" }) {
           venueSlug: ctx.venueSlug,
           station,
           stationKey,
-          tableNumber,
+          ...location,
           message: comment.trim() || undefined,
         }),
       });
@@ -102,7 +132,7 @@ export function StationPassScreen({ station }: { station: "kitchen" | "bar" }) {
     }
   }
 
-  const tables = ctx?.spots?.length ? ctx.spots : [];
+  const spots = ctx?.spots?.length ? ctx.spots : [];
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -120,21 +150,21 @@ export function StationPassScreen({ station }: { station: "kitchen" | "bar" }) {
         {ctx ? (
           <>
             <p className="text-sm font-medium text-slate-300">{C.pickTable}</p>
-            {tables.length > 0 ? (
+            {spots.length > 0 ? (
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-                {tables.map((label) => (
+                {spots.map((spot) => (
                   <button
-                    key={label}
+                    key={`${spot.type}-${spot.label}`}
                     type="button"
-                    onClick={() => setTable(label)}
+                    onClick={() => setTable(spot)}
                     className={cn(
                       "aspect-square rounded-xl border-2 text-lg font-bold tabular-nums transition",
-                      table === label
+                      table?.type === spot.type && table.label === spot.label
                         ? "border-cyan-400 bg-cyan-500/20 text-white"
                         : "border-white/15 bg-white/5 text-slate-200 hover:border-white/30",
                     )}
                   >
-                    {label}
+                    {spot.label}
                   </button>
                 ))}
               </div>

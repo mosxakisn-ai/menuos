@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   }
 
   const station = stationParsed.data as PassStationInput;
-  if (station !== "kitchen" && station !== "bar") {
+  if (!["kitchen", "bar", "cold", "dessert"].includes(station)) {
     return NextResponse.json({ error: "Μη έγκυρο τμήμα." }, { status: 400 });
   }
 
@@ -28,9 +28,9 @@ export async function GET(request: Request) {
   if (auth.response) return auth.response;
 
   const spots = await prisma.venueSpot.findMany({
-    where: { venueId: auth.venue.id, type: "TABLE" },
-    orderBy: [{ sortOrder: "asc" }, { label: "asc" }],
-    select: { label: true },
+    where: { venueId: auth.venue.id },
+    orderBy: [{ type: "asc" }, { sortOrder: "asc" }, { label: "asc" }],
+    select: { type: true, label: true },
     take: 200,
   });
 
@@ -39,6 +39,6 @@ export async function GET(request: Request) {
     venueName: auth.venue.name,
     venueSlug: auth.venue.slug,
     station,
-    spots: spots.map((s) => s.label),
+    spots,
   });
 }

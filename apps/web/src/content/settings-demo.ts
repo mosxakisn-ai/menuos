@@ -16,6 +16,7 @@ export type DemoPassSignal = {
 };
 
 export type DemoTableTile = {
+  id?: string;
   label: string;
   state: "idle" | "guest_call" | "kitchen_ready" | "bar_ready" | "both";
   hint?: string;

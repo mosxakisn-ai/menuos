@@ -23,6 +23,8 @@ export default async function SettingsPage() {
       staffToken: true,
       kitchenScreenToken: true,
       barScreenToken: true,
+      coldScreenToken: true,
+      dessertScreenToken: true,
     },
     orderBy: { createdAt: "asc" },
   });

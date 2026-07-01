@@ -9,43 +9,46 @@ import { resolveStaffKey, resolveVenueByStaffKey, type StaffVenueContext } from 
 export type PassSignalVenue = StaffVenueContext & {
   kitchenScreenToken: string;
   barScreenToken: string;
+  coldScreenToken: string;
+  dessertScreenToken: string;
 };
+
+const VENUE_SCREEN_SELECT = {
+  id: true,
+  slug: true,
+  name: true,
+  organizationId: true,
+  kitchenScreenToken: true,
+  barScreenToken: true,
+  coldScreenToken: true,
+  dessertScreenToken: true,
+} as const;
 
 async function loadVenueById(venueId: string): Promise<PassSignalVenue | null> {
   return prisma.venue.findUnique({
     where: { id: venueId },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      organizationId: true,
-      kitchenScreenToken: true,
-      barScreenToken: true,
-    },
+    select: VENUE_SCREEN_SELECT,
   });
 }
 
 async function loadVenueBySlug(slug: string): Promise<PassSignalVenue | null> {
   return prisma.venue.findUnique({
     where: { slug },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      organizationId: true,
-      kitchenScreenToken: true,
-      barScreenToken: true,
-    },
+    select: VENUE_SCREEN_SELECT,
   });
 }
 
 function screenTokenMatches(venue: PassSignalVenue, station: PassStationInput, stationKey: string): boolean {
   if (station === "kitchen") return venue.kitchenScreenToken === stationKey;
   if (station === "bar") return venue.barScreenToken === stationKey;
+  if (station === "cold") return venue.coldScreenToken === stationKey;
+  if (station === "dessert") return venue.dessertScreenToken === stationKey;
   return false;
 }
 
-/** Dashboard session, waiter staff key, or kitchen/bar screen token. */
+const SCREEN_STATIONS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
+
+/** Dashboard session, waiter staff key, or department screen token. */
 export async function authorizePassSignalCreate(
   request: Request,
   input: {
@@ -78,7 +81,7 @@ export async function authorizePassSignalCreate(
   }
 
   const key = input.stationKey?.trim();
-  if (key && (input.station === "kitchen" || input.station === "bar")) {
+  if (key && SCREEN_STATIONS.includes(input.station)) {
     if (screenTokenMatches(venue, input.station, key)) {
       return { venue, response: null };
     }
@@ -107,7 +110,7 @@ export async function authorizePassSignalCreate(
 }
 
 export function buildStationScreenUrl(
-  path: "/kds" | "/bds",
+  path: "/kds" | "/bds" | "/cold" | "/dessert",
   slug: string,
   screenToken: string,
 ): string {

@@ -29,7 +29,7 @@ export function TableGridPreview({
     >
       {tiles.map((tile) => (
         <div
-          key={tile.label}
+          key={tile.id ?? tile.label}
           title={stateLabels[tile.state]}
           className={cn(
             "flex aspect-square flex-col items-center justify-center rounded-xl border p-2 text-center shadow-sm transition",

@@ -19,6 +19,8 @@ export type SettingsVenueFull = SettingsVenue & {
   staffToken?: string;
   kitchenScreenToken?: string;
   barScreenToken?: string;
+  coldScreenToken?: string;
+  dessertScreenToken?: string;
 };
 
 function SettingsGeneralTab({

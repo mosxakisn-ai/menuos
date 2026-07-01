@@ -109,18 +109,25 @@ export async function GET(request: Request) {
   const auth = await requireWaiterVenueAccess(request, venueId);
   if (auth.response) return auth.response;
 
-  const calls = await prisma.waiterCall.findMany({
-    where: {
-      venueId,
-      status: { in: ["PENDING", "ACKNOWLEDGED"] },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+  const [calls, spots] = await Promise.all([
+    prisma.waiterCall.findMany({
+      where: {
+        venueId,
+        status: { in: ["PENDING", "ACKNOWLEDGED"] },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    prisma.venueSpot.findMany({
+      where: { venueId },
+      orderBy: [{ type: "asc" }, { sortOrder: "asc" }, { label: "asc" }],
+      select: { id: true, type: true, label: true },
+    }),
+  ]);
 
   const pendingCount = calls.filter((c) => c.status === "PENDING").length;
 
-  return NextResponse.json({ calls, pendingCount });
+  return NextResponse.json({ calls, pendingCount, spots });
 }
 
 export async function POST(request: Request) {
