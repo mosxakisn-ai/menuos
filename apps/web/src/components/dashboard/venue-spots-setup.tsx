@@ -10,7 +10,7 @@ import {
   VENUE_SPOT_TYPES,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
-import { TableGridPreview } from "@/components/dashboard/table-grid-preview";
+import { TableGridLegend, TableGridPreview } from "@/components/dashboard/table-grid-preview";
 import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
 import {
   DashboardSectionTitle,
