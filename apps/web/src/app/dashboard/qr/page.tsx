@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
 import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
-import { VenueSpotsManager } from "@/components/dashboard/venue-spots-manager";
+import { VenueSpotsQrList } from "@/components/dashboard/venue-spots-qr-list";
 import { MarkQrOnboarding } from "@/components/dashboard/mark-qr-onboarding";
 import { getSession } from "@/lib/auth";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
@@ -43,7 +43,7 @@ export default async function QrPage({ searchParams }: Props) {
     <DashboardPage>
       <MarkQrOnboarding />
       <LocalizedDashboardPageHeader page="qr" />
-      <VenueSpotsManager venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />
+      <VenueSpotsQrList venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />
     </DashboardPage>
   );
 }

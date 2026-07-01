@@ -29,4 +29,5 @@ export * from "./demo-venue";
 export * from "./menu-cart";
 export * from "./venue-spots";
 export * from "./item-extras";
+export * from "./pass-signal";
 export * from "./organization-activity";

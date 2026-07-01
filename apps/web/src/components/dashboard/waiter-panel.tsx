@@ -2,7 +2,7 @@
 
 import { Bell, Check, Clock } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatWaiterCallLocationForLang, formatOrderLineDetail, type OrderLine } from "@menuos/shared";
+import { formatWaiterCallLocationForLang, formatOrderLineDetail, passStationDbToInput, type OrderLine } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { buttonClass } from "@/components/ui/button";
@@ -14,6 +14,16 @@ type Venue = { id: string; name: string; slug?: string; staffToken?: string };
 type OrderPayload = {
   lines: OrderLine[];
   total: string;
+};
+type PassSignal = {
+  id: string;
+  station: string;
+  tableNumber: string | null;
+  roomNumber: string | null;
+  sunbedNumber: string | null;
+  message: string | null;
+  status: string;
+  readyAt: string;
 };
 type WaiterCall = {
   id: string;
@@ -56,9 +66,13 @@ export function WaiterPanel({
     Object.fromEntries(venues.filter((v) => v.staffToken).map((v) => [v.id, v.staffToken!])),
   );
   const [calls, setCalls] = useState<WaiterCall[]>([]);
+  const [passSignals, setPassSignals] = useState<PassSignal[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
+  const [passCount, setPassCount] = useState(0);
   const [updatingCallId, setUpdatingCallId] = useState<string | null>(null);
+  const [updatingPassId, setUpdatingPassId] = useState<string | null>(null);
   const prevPendingRef = useRef<number | null>(null);
+  const prevPassRef = useRef<number | null>(null);
   const prevCallsRef = useRef<WaiterCall[]>([]);
   const pendingBaselineSetRef = useRef(false);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -67,11 +81,15 @@ export function WaiterPanel({
     if (!venueId) return;
     const params = new URLSearchParams({ venueId });
     if (staffKey && !staffViaCookie) params.set("staffKey", staffKey);
-    const res = await fetch(`/api/waiter-call?${params}`, {
-      credentials: staffViaCookie ? "include" : "same-origin",
-    });
-    const data = await res.json();
-    if (res.ok) {
+    const creds = staffViaCookie ? "include" : "same-origin";
+    const [callsRes, passRes] = await Promise.all([
+      fetch(`/api/waiter-call?${params}`, { credentials: creds }),
+      fetch(`/api/pass-signals?${params}`, { credentials: creds }),
+    ]);
+    const data = await callsRes.json().catch(() => ({}));
+    const passData = await passRes.json().catch(() => ({}));
+
+    if (callsRes.ok) {
       const newCalls = (data.calls ?? []) as WaiterCall[];
       if (pendingBaselineSetRef.current && prevCallsRef.current.length > 0) {
         const prevById = new Map(prevCallsRef.current.map((c) => [c.id, c]));
@@ -99,20 +117,41 @@ export function WaiterPanel({
       }
       setPendingCount(0);
       const apiError = typeof data.error === "string" ? data.error : null;
-      if (res.status === 401) {
+      if (callsRes.status === 401) {
         setFlash({ type: "error", text: W.sessionExpired });
       } else if (apiError) {
         setFlash({ type: "error", text: apiError });
-      } else if (res.status >= 500) {
+      } else if (callsRes.status >= 500) {
         setFlash({ type: "error", text: W.loadFailed });
+      }
+    }
+
+    if (passRes.ok) {
+      const nextPass = (passData.activeCount ?? 0) as number;
+      if (prevPassRef.current !== null && nextPass > prevPassRef.current) {
+        alertNewWaiterCall();
+      }
+      if (prevPassRef.current === null) prevPassRef.current = nextPass;
+      else prevPassRef.current = nextPass;
+      setPassSignals((passData.signals ?? []) as PassSignal[]);
+      setPassCount(nextPass);
+    } else {
+      setPassSignals([]);
+      setPassCount(0);
+      if (prevPassRef.current === null) prevPassRef.current = 0;
+      if (passRes.status === 401 && callsRes.status !== 401) {
+        setFlash({ type: "error", text: W.sessionExpired });
       }
     }
   }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash]);
 
   useEffect(() => {
     setCalls([]);
+    setPassSignals([]);
     setPendingCount(0);
+    setPassCount(0);
     prevPendingRef.current = null;
+    prevPassRef.current = null;
     prevCallsRef.current = [];
     pendingBaselineSetRef.current = false;
   }, [venueId]);
@@ -130,6 +169,27 @@ export function WaiterPanel({
     const t = setInterval(load, 5000);
     return () => clearInterval(t);
   }, [load]);
+
+  async function updatePassStatus(signalId: string, status: "PICKED_UP" | "DELIVERED") {
+    if (updatingPassId) return;
+    setUpdatingPassId(signalId);
+    try {
+      const res = await fetch(`/api/pass-signals/${signalId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: staffViaCookie ? "include" : "same-origin",
+        body: JSON.stringify({
+          status,
+          ...(staffKey && !staffViaCookie ? { staffKey } : {}),
+        }),
+      });
+      const data = await res.json();
+      showFromResponse(data, res.ok);
+      if (res.ok) await load();
+    } finally {
+      setUpdatingPassId(null);
+    }
+  }
 
   async function updateStatus(callId: string, status: "ACKNOWLEDGED" | "COMPLETED") {
     if (updatingCallId) return;
@@ -205,17 +265,75 @@ export function WaiterPanel({
             </select>
           </label>
         )}
-        {pendingCount > 0 ? (
+        {(pendingCount > 0 || passCount > 0) ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">
             <Bell className="h-4 w-4" />
-            {W.pendingCount(pendingCount)}
+            {pendingCount > 0 ? W.pendingCount(pendingCount) : null}
+            {pendingCount > 0 && passCount > 0 ? " · " : null}
+            {passCount > 0 ? W.passCount(passCount) : null}
           </span>
         ) : (
           <span className="text-sm text-slate-500">{W.refreshHint}</span>
         )}
       </div>
 
-      {calls.length === 0 ? (
+      {passSignals.length > 0 ? (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-brand-navy">{W.passSection}</h2>
+          <ul className="space-y-3">
+            {passSignals.map((signal) => {
+              const stationKey = passStationDbToInput(signal.station);
+              const stationLabel =
+                W.passStation[stationKey as keyof typeof W.passStation] ?? signal.station;
+              return (
+                <li key={signal.id}>
+                  <Card className="border-orange-200 bg-orange-50/60">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-brand-navy">
+                          {stationLabel}
+                          {" · "}
+                          {formatWaiterCallLocationForLang(signal, lang)}
+                        </p>
+                        {signal.message ? (
+                          <p className="mt-1 text-sm text-slate-700">{signal.message}</p>
+                        ) : null}
+                        <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                          <Clock className="h-3 w-3" />
+                          {new Date(signal.readyAt).toLocaleString(lang === "EN" ? "en-GB" : "el-GR")}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        {signal.status === "READY" ? (
+                          <button
+                            type="button"
+                            disabled={updatingPassId !== null}
+                            onClick={() => void updatePassStatus(signal.id, "PICKED_UP")}
+                            className={buttonClass("secondary", "sm")}
+                          >
+                            {W.passPickedUp}
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          disabled={updatingPassId !== null}
+                          onClick={() => void updatePassStatus(signal.id, "DELIVERED")}
+                          className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          {W.passDelivered}
+                        </button>
+                      </div>
+                    </div>
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
+
+      {calls.length === 0 && passSignals.length === 0 ? (
         <Card className="border-dashed text-center">
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 font-medium text-brand-navy">{W.emptyTitle}</p>

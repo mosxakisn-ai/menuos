@@ -37,6 +37,19 @@ enum WaiterCallType {
   ORDER
 }
 
+enum PassStation {
+  KITCHEN
+  BAR
+  COLD
+  DESSERT
+}
+
+enum PassSignalStatus {
+  READY
+  PICKED_UP
+  DELIVERED
+}
+
 enum SubscriptionPlan {
   TRIAL
   BASIC
@@ -155,7 +168,9 @@ model Venue {
   organizationId String
   name           String
   slug           String   @unique
-  staffToken     String   @unique @default(cuid())
+  staffToken          String   @unique @default(cuid())
+  kitchenScreenToken  String   @unique @default(cuid())
+  barScreenToken      String   @unique @default(cuid())
   description    String?
   logoUrl        String?
   primaryColor   String   @default("#2563EB")
@@ -166,6 +181,7 @@ model Venue {
   organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   menus             Menu[]
   waiterCalls       WaiterCall[]
+  passSignals       PassSignal[]
   spots             VenueSpot[]
   settings          VenueSetting?
   pushSubscriptions PushSubscription[]
@@ -297,6 +313,26 @@ model WaiterCall {
   orderItems  Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId, status])
+}
+
+model PassSignal {
+  id           String           @id @default(cuid())
+  venueId      String
+  station      PassStation
+  tableNumber  String?
+  roomNumber   String?
+  sunbedNumber String?
+  message      String?          @db.VarChar(80)
+  status       PassSignalStatus @default(READY)
+  readyAt      DateTime         @default(now())
+  pickedUpAt   DateTime?
+  deliveredAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
 

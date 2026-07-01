@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, Download, ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useState } from "react";
 import {
   formatVenueSpotLabelForLang,
   isValidVenueSpotLabel,
@@ -10,6 +10,9 @@ import {
   VENUE_SPOT_TYPES,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import { DemoBadge } from "@/components/dashboard/settings-demo-badge";
+import { TableGridPreview } from "@/components/dashboard/table-grid-preview";
+import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
 import {
   DashboardSectionTitle,
   DashboardToolbar,
@@ -20,25 +23,24 @@ import {
 } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { getSettingsDemo } from "@/content/settings-demo";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 type Venue = { id: string; name: string; slug: string };
-type Spot = { id: string; type: VenueSpotType; label: string };
 
-export function VenueSpotsManager({
+export function VenueSpotsSetup({
   venues,
   initialVenueId,
-  itemCountByVenue = {},
 }: {
   venues: Venue[];
   initialVenueId?: string;
-  itemCountByVenue?: Record<string, number>;
 }) {
   const { d, lang } = useDashboardCopy();
   const Q = d.pages.qr;
+  const S = d.pages.settings;
+  const demo = getSettingsDemo(lang);
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
-  const [spots, setSpots] = useState<Spot[]>([]);
-  const [loadingSpots, setLoadingSpots] = useState(false);
+  const { spots, loading, reload } = useVenueSpots(venueId);
   const [spotType, setSpotType] = useState<VenueSpotType>("TABLE");
   const [label, setLabel] = useState("");
   const [bulkFrom, setBulkFrom] = useState("1");
@@ -50,24 +52,6 @@ export function VenueSpotsManager({
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   const venue = venues.find((v) => v.id === venueId);
-  const itemCount = itemCountByVenue[venueId] ?? 0;
-
-  const loadSpots = useCallback(async () => {
-    if (!venueId) return;
-    setLoadingSpots(true);
-    try {
-      const res = await fetch(`/api/venues/${venueId}/spots`);
-      const data = await res.json();
-      if (res.ok) setSpots(data.spots ?? []);
-      else setSpots([]);
-    } finally {
-      setLoadingSpots(false);
-    }
-  }, [venueId]);
-
-  useEffect(() => {
-    void loadSpots();
-  }, [loadSpots]);
 
   async function addSpot(e: React.FormEvent) {
     e.preventDefault();
@@ -87,7 +71,7 @@ export function VenueSpotsManager({
       showFromResponse(data, res.ok);
       if (res.ok) {
         setLabel("");
-        await loadSpots();
+        await reload();
       }
     } finally {
       setBusy(null);
@@ -103,10 +87,7 @@ export function VenueSpotsManager({
       return;
     }
     if (to - from >= 200) {
-      setFlash({
-        type: "error",
-        text: Q.bulkLimit,
-      });
+      setFlash({ type: "error", text: Q.bulkLimit });
       return;
     }
     const prefix = bulkPrefix.trim();
@@ -128,43 +109,30 @@ export function VenueSpotsManager({
       });
       const data = await res.json();
       showFromResponse(data, res.ok);
-      if (res.ok) await loadSpots();
+      if (res.ok) await reload();
     } finally {
       setBusy(null);
     }
   }
 
-  async function removeSpot(spot: Spot) {
+  async function removeSpot(spotId: string, name: string) {
     if (!venueId) return;
-    const name = formatVenueSpotLabelForLang(spot.type, spot.label, lang);
-    if (!window.confirm(Q.deleteSpotConfirm(name))) {
-      return;
-    }
-    setBusy(spot.id);
+    if (!window.confirm(Q.deleteSpotConfirm(name))) return;
+    setBusy(spotId);
     try {
-      const res = await fetch(`/api/venues/${venueId}/spots/${spot.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/venues/${venueId}/spots/${spotId}`, { method: "DELETE" });
       const data = await res.json();
       showFromResponse(data, res.ok);
       if (res.ok) {
-        if (editingId === spot.id) {
+        if (editingId === spotId) {
           setEditingId(null);
           setEditLabel("");
         }
-        await loadSpots();
+        await reload();
       }
     } finally {
       setBusy(null);
     }
-  }
-
-  function startEditing(spot: Spot) {
-    setEditingId(spot.id);
-    setEditLabel(spot.label);
-  }
-
-  function cancelEditing() {
-    setEditingId(null);
-    setEditLabel("");
   }
 
   async function saveSpotLabel(spotId: string) {
@@ -183,47 +151,13 @@ export function VenueSpotsManager({
       const data = await res.json();
       showFromResponse(data, res.ok);
       if (res.ok) {
-        cancelEditing();
-        await loadSpots();
+        setEditingId(null);
+        setEditLabel("");
+        await reload();
       }
     } finally {
       setBusy(null);
     }
-  }
-
-  async function downloadQr(spot: Spot) {
-    if (!venueId) return;
-    setBusy(`qr-${spot.id}`);
-    try {
-      const params = new URLSearchParams({ venueId });
-      const q = spotToQueryParams(spot.type, spot.label);
-      if (q.table) params.set("table", q.table);
-      if (q.room) params.set("room", q.room);
-      if (q.sunbed) params.set("sunbed", q.sunbed);
-      const res = await fetch(`/api/qr?${params}`);
-      const data = await res.json();
-      if (!res.ok) {
-        showFromResponse(data, false);
-        return;
-      }
-      const a = document.createElement("a");
-      a.href = data.pngDataUrl;
-      a.download = `menuos-${spot.type.toLowerCase()}-${spot.label}.png`;
-      a.click();
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  function menuPathFor(spot: Spot): string {
-    if (!venue) return "#";
-    const params = new URLSearchParams();
-    const q = spotToQueryParams(spot.type, spot.label);
-    if (q.table) params.set("table", q.table);
-    if (q.room) params.set("room", q.room);
-    if (q.sunbed) params.set("sunbed", q.sunbed);
-    const qs = params.toString();
-    return `/m/${venue.slug}${qs ? `?${qs}` : ""}`;
   }
 
   if (venues.length === 0) {
@@ -238,31 +172,22 @@ export function VenueSpotsManager({
     );
   }
 
+  const realTiles = spots.slice(0, 12).map((s) => ({
+    label: s.label,
+    state: "idle" as const,
+  }));
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
-      {itemCount === 0 ? (
-        <div
-          role="alert"
-          className="rounded-card border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-        >
-          <p className="font-semibold">{Q.emptyCatalogTitle}</p>
-          <p className="mt-1">
-            {Q.emptyCatalogBeforeLink}{" "}
-            <a href={`/dashboard/menus?venue=${venueId}`} className="font-semibold underline">
-              {Q.catalogLink}
-            </a>{" "}
-            {Q.emptyCatalogAfterLink}
-          </p>
-        </div>
-      ) : null}
-
       <div className={dashboardCardClass}>
-        <DashboardSectionTitle
-          title={Q.spotsTitle}
-          description={Q.spotsDesc}
-        />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <DashboardSectionTitle title={S.tables.title} description={S.tables.description} />
+          <a href="/dashboard/qr" className="text-sm font-semibold text-brand-blue hover:underline">
+            {S.tables.qrLink}
+          </a>
+        </div>
 
         <DashboardToolbar className="mt-6">
           <label className="block min-w-[12rem] flex-1 sm:max-w-md">
@@ -271,7 +196,7 @@ export function VenueSpotsManager({
               value={venueId}
               onChange={(e) => {
                 setVenueId(e.target.value);
-                cancelEditing();
+                setEditingId(null);
               }}
               className={dashboardFieldClass}
             >
@@ -321,7 +246,6 @@ export function VenueSpotsManager({
                 max={999}
                 value={bulkFrom}
                 onChange={(e) => setBulkFrom(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.spotBulkFrom}
                 className={`${dashboardFieldClass} w-24`}
               />
             </label>
@@ -331,9 +255,9 @@ export function VenueSpotsManager({
                 type="number"
                 min={1}
                 max={999}
-                placeholder={FORM_PLACEHOLDERS.spotBulkTo}
                 value={bulkTo}
                 onChange={(e) => setBulkTo(e.target.value)}
+                placeholder={FORM_PLACEHOLDERS.spotBulkTo}
                 className={`${dashboardFieldClass} w-24`}
               />
             </label>
@@ -371,7 +295,7 @@ export function VenueSpotsManager({
           <button
             type="submit"
             disabled={busy !== null || !label.trim()}
-            className={`inline-flex h-10 w-full items-center justify-center gap-2 sm:w-auto sm:min-w-[9.5rem] ${buttonClass("primary", "md")}`}
+            className={`inline-flex h-10 items-center gap-2 ${buttonClass("primary", "md")}`}
           >
             <Plus className="h-4 w-4" />
             {Q.addSpot}
@@ -382,107 +306,96 @@ export function VenueSpotsManager({
       <div className={dashboardCardClass}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-semibold text-brand-navy">{Q.yourSpots(spots.length)}</h2>
-          {loadingSpots ? <span className="text-xs text-slate-500">{Q.loadingSpots}</span> : null}
+          {loading ? <span className="text-xs text-slate-500">{Q.loadingSpots}</span> : null}
         </div>
-
-        {spots.length === 0 && !loadingSpots ? (
-          <p className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm text-slate-500">
-            {Q.emptySpots}
-          </p>
+        {spots.length === 0 && !loading ? (
+          <p className="mt-6 text-center text-sm text-slate-500">{Q.emptySpots}</p>
         ) : (
-          <ul className="mt-6 space-y-3">
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {spots.map((spot) => (
               <li
                 key={spot.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/40 px-4 py-3.5"
+                className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2.5"
               >
-                <div className="min-w-0 flex-1">
-                  {editingId === spot.id ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <input
-                        value={editLabel}
-                        onChange={(e) => setEditLabel(e.target.value)}
-                        maxLength={20}
-                        className={`${dashboardFieldClass} max-w-xs`}
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") void saveSpotLabel(spot.id);
-                          if (e.key === "Escape") cancelEditing();
-                        }}
-                      />
-                      <button
-                        type="button"
-                        disabled={busy !== null || !editLabel.trim()}
-                        onClick={() => void saveSpotLabel(spot.id)}
-                        className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                        {Q.saveSpot}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy !== null}
-                        onClick={cancelEditing}
-                        className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                        {Q.cancelEdit}
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="font-medium text-brand-navy">
-                      {formatVenueSpotLabelForLang(spot.type, spot.label, lang)}
-                    </p>
-                  )}
-                  <p className="mt-0.5 truncate text-xs text-slate-500">{menuPathFor(spot)}</p>
-                  {editingId === spot.id ? (
-                    <p className="mt-1 text-xs text-amber-700">{Q.renameQrWarning}</p>
-                  ) : null}
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {editingId !== spot.id ? (
+                {editingId === spot.id ? (
+                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                    <input
+                      value={editLabel}
+                      onChange={(e) => setEditLabel(e.target.value)}
+                      maxLength={20}
+                      className={`${dashboardFieldClass} min-w-0 flex-1`}
+                      autoFocus
+                    />
                     <button
                       type="button"
-                      disabled={busy !== null}
-                      onClick={() => startEditing(spot)}
-                      className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+                      onClick={() => void saveSpotLabel(spot.id)}
+                      className={buttonClass("primary", "sm")}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
-                      {Q.editSpot}
+                      <Check className="h-3.5 w-3.5" />
                     </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    disabled={busy !== null}
-                    onClick={() => void downloadQr(spot)}
-                    className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    QR
-                  </button>
-                  <a
-                    href={menuPathFor(spot)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    {Q.previewSpot}
-                  </a>
-                  <button
-                    type="button"
-                    disabled={busy !== null}
-                    onClick={() => void removeSpot(spot)}
-                    className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
-                    aria-label={Q.deleteSpotLabel}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-red-600" />
-                  </button>
-                </div>
+                    <button type="button" onClick={() => setEditingId(null)} className={buttonClass("secondary", "sm")}>
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="truncate text-sm font-medium text-brand-navy">
+                      {formatVenueSpotLabelForLang(spot.type, spot.label, lang)}
+                    </span>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingId(spot.id);
+                          setEditLabel(spot.label);
+                        }}
+                        className={buttonClass("secondary", "sm")}
+                        aria-label={Q.editSpot}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void removeSpot(
+                            spot.id,
+                            formatVenueSpotLabelForLang(spot.type, spot.label, lang),
+                          )
+                        }
+                        className={buttonClass("secondary", "sm")}
+                        aria-label={Q.deleteSpotLabel}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </li>
             ))}
           </ul>
         )}
+      </div>
+
+      <div className={dashboardCardClass}>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="font-semibold text-brand-navy">{S.tables.gridPreview}</h2>
+          <DemoBadge>{S.demoBadge}</DemoBadge>
+        </div>
+        <p className="mt-2 text-sm text-slate-600">{S.tables.gridHint}</p>
+        <div className="mt-5">
+          <TableGridPreview tiles={demo.tableTiles} stateLabels={demo.tableStateLabels} />
+        </div>
+        {realTiles.length > 0 ? (
+          <div className="mt-6 border-t border-slate-100 pt-5">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {S.tables.yourVenueSpots(venue?.name ?? "", spots.length)}
+            </p>
+            <TableGridPreview
+              tiles={realTiles}
+              stateLabels={demo.tableStateLabels}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );

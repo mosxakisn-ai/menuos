@@ -12,6 +12,18 @@ export default async function SettingsPage() {
   const session = await getSession();
   const venues = await prisma.venue.findMany({
     where: { organizationId: session!.organizationId },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      logoUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
+      staffToken: true,
+      kitchenScreenToken: true,
+      barScreenToken: true,
+    },
     orderBy: { createdAt: "asc" },
   });
 
