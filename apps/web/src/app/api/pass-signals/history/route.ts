@@ -43,9 +43,19 @@ export async function GET(request: Request) {
       },
       orderBy: { deliveredAt: "desc" },
       take: limit,
+      include: {
+        stationScreen: { select: { label: true } },
+      },
     });
 
-    return NextResponse.json({ signals, days, limit });
+    return NextResponse.json({
+      signals: signals.map(({ stationScreen, ...signal }) => ({
+        ...signal,
+        stationScreenLabel: stationScreen?.label ?? null,
+      })),
+      days,
+      limit,
+    });
   } catch (err) {
     console.error("[menuos] pass-signals history GET failed", err);
     return NextResponse.json(

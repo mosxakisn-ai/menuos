@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
-import { passStationInputToDb, stationScreenUpdateSchema, zodFirstErrorMessage } from "@menuos/shared";
+import { stationScreenUpdateSchema, zodFirstErrorMessage } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { countStationScreens, syncLegacyVenueToken } from "@/lib/station-screens";
 import { getVenueForOrganization } from "@/lib/venue-access";
@@ -68,6 +68,23 @@ export async function DELETE(_request: Request, { params }: Params) {
   }
 
   await prisma.venueStationScreen.delete({ where: { id: screenId } });
+
+  const nextPrimary = await prisma.venueStationScreen.findFirst({
+    where: { venueId, station: owned.screen.station },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    select: { id: true, screenToken: true },
+  });
+  if (nextPrimary) {
+    const stationInput = owned.screen.station.toLowerCase() as "kitchen" | "bar" | "cold" | "dessert";
+    await syncLegacyVenueToken(venueId, stationInput, nextPrimary.screenToken);
+    if (owned.screen.sortOrder === 0) {
+      await prisma.venueStationScreen.update({
+        where: { id: nextPrimary.id },
+        data: { sortOrder: 0 },
+      });
+    }
+  }
+
   return NextResponse.json({ message: "Η οθόνη διαγράφηκε." });
 }
 
