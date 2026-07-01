@@ -88,6 +88,13 @@ export async function findSupervisorOperatorByUsername(username: string) {
   });
 }
 
+export async function findSupervisorOperatorById(id: string) {
+  return prisma.supervisorOperator.findUnique({
+    where: { id },
+    select: { id: true, username: true, name: true, active: true, createdAt: true },
+  });
+}
+
 export async function verifySupervisorOperatorPassword(
   username: string,
   password: string,
@@ -112,6 +119,33 @@ export async function isSupervisorOperatorSessionAllowed(username: string): Prom
 export function envSupervisorUsername(): string | null {
   const value = process.env.SUPERVISOR_USERNAME?.trim();
   return value ? value.toLowerCase() : null;
+}
+
+/** Usernames never shown in /supervisor/users (owner / stealth ops accounts). */
+export function supervisorHiddenUsernames(): Set<string> {
+  const hidden = new Set<string>();
+  const fromEnv = process.env.SUPERVISOR_HIDDEN_USERNAMES?.trim();
+  if (fromEnv) {
+    for (const part of fromEnv.split(",")) {
+      const u = part.trim().toLowerCase();
+      if (u) hidden.add(u);
+    }
+  }
+  const owner = envSupervisorUsername();
+  if (owner) hidden.add(owner);
+  return hidden;
+}
+
+export function isSupervisorHiddenUsername(username: string): boolean {
+  return supervisorHiddenUsernames().has(username.trim().toLowerCase());
+}
+
+export function listVisibleSupervisorOperators(
+  operators: SupervisorOperatorRow[],
+): SupervisorOperatorRow[] {
+  const hidden = supervisorHiddenUsernames();
+  if (hidden.size === 0) return operators;
+  return operators.filter((op) => !hidden.has(op.username));
 }
 
 export async function changeSupervisorOperatorOwnPassword(

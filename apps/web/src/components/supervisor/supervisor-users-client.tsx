@@ -317,7 +317,7 @@ export function SupervisorUsersClient() {
                   <tr>
                     <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
                       {canChangeOwnPassword
-                        ? "Δεν υπάρχουν άλλα μέλη — ο δικός σου λογαριασμός δεν εμφανίζεται εδώ."
+                        ? "Δεν υπάρχουν άλλα μέλη ομάδας."
                         : "Δεν υπάρχουν μέλη στη βάση — μόνο ο λογαριασμός .env."}
                     </td>
                   </tr>

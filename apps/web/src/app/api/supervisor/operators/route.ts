@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireSupervisor } from "@/lib/api-auth";
-import { addSupervisorOperator, findSupervisorOperatorByUsername, listSupervisorOperators } from "@/lib/supervisor-operator-service";
+import {
+  addSupervisorOperator,
+  findSupervisorOperatorByUsername,
+  isSupervisorHiddenUsername,
+  listSupervisorOperators,
+  listVisibleSupervisorOperators,
+} from "@/lib/supervisor-operator-service";
 import { supervisorAddOperatorSchema } from "@/lib/supervisor-schemas";
 
 export async function GET() {
@@ -9,7 +15,7 @@ export async function GET() {
 
   try {
     const current = auth.supervisor!.username.trim().toLowerCase();
-    const operators = (await listSupervisorOperators()).filter((op) => op.username !== current);
+    const operators = listVisibleSupervisorOperators(await listSupervisorOperators());
     const self = await findSupervisorOperatorByUsername(current);
     return NextResponse.json({
       operators,
@@ -43,6 +49,9 @@ export async function POST(request: Request) {
 
   try {
     const operator = await addSupervisorOperator(parsed.data);
+    if (isSupervisorHiddenUsername(operator.username)) {
+      return NextResponse.json({ message: "Προστέθηκε μέλος ομάδας." });
+    }
     return NextResponse.json({ operator, message: "Προστέθηκε μέλος ομάδας." });
   } catch (err) {
     if (err instanceof Error && err.message === "username_taken") {

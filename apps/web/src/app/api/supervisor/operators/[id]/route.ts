@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireSupervisor } from "@/lib/api-auth";
 import {
+  findSupervisorOperatorById,
   findSupervisorOperatorByUsername,
+  isSupervisorHiddenUsername,
   updateSupervisorOperator,
 } from "@/lib/supervisor-operator-service";
 import { supervisorUpdateOperatorSchema } from "@/lib/supervisor-schemas";
@@ -26,6 +28,14 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   try {
+    const existing = await findSupervisorOperatorById(id);
+    if (!existing) {
+      return NextResponse.json({ error: "Δεν βρέθηκε." }, { status: 404 });
+    }
+    if (isSupervisorHiddenUsername(existing.username)) {
+      return NextResponse.json({ error: "Δεν βρέθηκε." }, { status: 404 });
+    }
+
     if (parsed.data.active === false) {
       const target = await findSupervisorOperatorByUsername(auth.supervisor!.username);
       if (target?.id === id) {
@@ -37,6 +47,9 @@ export async function PATCH(request: Request, { params }: Params) {
     }
 
     const operator = await updateSupervisorOperator(id, parsed.data);
+    if (isSupervisorHiddenUsername(operator.username)) {
+      return NextResponse.json({ message: "Ενημερώθηκε." });
+    }
     return NextResponse.json({ operator, message: "Ενημερώθηκε." });
   } catch (err) {
     if (err instanceof Error && err.message === "not_found") {
