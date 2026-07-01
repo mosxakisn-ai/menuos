@@ -505,6 +505,12 @@ export const DASHBOARD_EL = {
       deleteScreenConfirm: (name: string) =>
         `Διαγραφή της οθόνης «${name}»;\n\nΤο link της θα σταματήσει να λειτουργεί.`,
       deleteScreenFailed: "Αποτυχία διαγραφής οθόνης.",
+      renameScreen: "Μετονομασία",
+      saveScreen: "Αποθήκευση",
+      savingScreen: "Αποθήκευση…",
+      cancelScreenEdit: "Άκυρο",
+      renameScreenFailed: "Αποτυχία μετονομασίας.",
+      screenNameTaken: "Υπάρχει ήδη οθόνη με αυτό το όνομα.",
       tables: {
         title: "Ταμπλό",
         description: "Ρύθμισε τραπέζια, δωμάτια και ξαπλώστρες. Τα QR κατεβαίνουν από τη σελίδα QR codes.",

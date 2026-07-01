@@ -499,6 +499,12 @@ export const DASHBOARD_EN = {
       deleteScreenConfirm: (name: string) =>
         `Delete screen «${name}»?\n\nIts link will stop working.`,
       deleteScreenFailed: "Could not delete screen.",
+      renameScreen: "Rename",
+      saveScreen: "Save",
+      savingScreen: "Saving…",
+      cancelScreenEdit: "Cancel",
+      renameScreenFailed: "Could not rename screen.",
+      screenNameTaken: "A screen with this name already exists.",
       tables: {
         title: "Tables",
         description: "Configure tables, rooms and sunbeds. Download QR codes from the QR codes page.",

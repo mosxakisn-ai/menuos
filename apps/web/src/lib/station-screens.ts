@@ -94,3 +94,22 @@ export function defaultStationScreenLabel(station: PassStationInput, index: numb
 export async function countStationScreens(venueId: string, station: PassStation): Promise<number> {
   return prisma.venueStationScreen.count({ where: { venueId, station } });
 }
+
+export async function isStationScreenLabelTaken(
+  venueId: string,
+  station: PassStationInput,
+  label: string,
+  excludeScreenId?: string,
+): Promise<boolean> {
+  const dbStation = passStationInputToDb(station);
+  const normalized = label.trim().toLowerCase();
+  const rows = await prisma.venueStationScreen.findMany({
+    where: {
+      venueId,
+      station: dbStation,
+      ...(excludeScreenId ? { id: { not: excludeScreenId } } : {}),
+    },
+    select: { label: true },
+  });
+  return rows.some((row) => row.label.trim().toLowerCase() === normalized);
+}

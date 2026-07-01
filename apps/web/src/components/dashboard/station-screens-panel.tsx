@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, Copy, ExternalLink, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Check, Copy, ExternalLink, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import type { PassStationInput } from "@menuos/shared";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
@@ -43,6 +43,9 @@ export function StationScreensPanel({
   const [adding, setAdding] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const venue = venues.find((v) => v.id === venueId);
 
@@ -136,9 +139,46 @@ export function StationScreensPanel({
         window.alert(typeof data.error === "string" ? data.error : S.deleteScreenFailed);
         return;
       }
+      if (editingId === screen.id) {
+        setEditingId(null);
+        setEditLabel("");
+      }
       await loadScreens();
     } finally {
       setBusyId(null);
+    }
+  }
+
+  function startEdit(screen: StationScreenRow) {
+    setEditingId(screen.id);
+    setEditLabel(screen.label);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditLabel("");
+  }
+
+  async function saveEdit(screenId: string) {
+    const label = editLabel.trim();
+    if (!label) return;
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/venues/${venueId}/station-screens/${screenId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        window.alert(typeof data.error === "string" ? data.error : S.renameScreenFailed);
+        return;
+      }
+      setEditingId(null);
+      setEditLabel("");
+      await loadScreens();
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -180,12 +220,57 @@ export function StationScreensPanel({
           screens.map((screen) => {
             const url = venue ? buildScreenUrl(station, venue.slug, screen.screenToken) : "";
             const busy = busyId === screen.id;
+            const editing = editingId === screen.id;
             return (
               <div
                 key={screen.id}
                 className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-4"
               >
-                <p className="font-semibold text-brand-navy">{screen.label}</p>
+                {editing ? (
+                  <div className="flex flex-wrap items-end gap-3">
+                    <label className="block min-w-[200px] flex-1">
+                      <span className={dashboardLabelClass}>{S.screenNameLabel}</span>
+                      <input
+                        value={editLabel}
+                        onChange={(e) => setEditLabel(e.target.value)}
+                        maxLength={40}
+                        className={dashboardFieldClass}
+                        autoFocus
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={savingEdit || !editLabel.trim()}
+                      onClick={() => void saveEdit(screen.id)}
+                      className={`inline-flex h-10 items-center gap-1 ${buttonClass("primary", "sm")}`}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      {savingEdit ? S.savingScreen : S.saveScreen}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={savingEdit}
+                      onClick={cancelEdit}
+                      className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "sm")}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      {S.cancelScreenEdit}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-semibold text-brand-navy">{screen.label}</p>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => startEdit(screen)}
+                      className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      {S.renameScreen}
+                    </button>
+                  </div>
+                )}
                 <code className="mt-2 block break-all rounded-lg bg-white px-3 py-2 text-xs text-slate-700">
                   {url || "…"}
                 </code>

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
-import { stationScreenUpdateSchema, zodFirstErrorMessage } from "@menuos/shared";
+import { passStationDbToInput, stationScreenUpdateSchema, zodFirstErrorMessage } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
-import { countStationScreens, syncLegacyVenueToken } from "@/lib/station-screens";
+import { countStationScreens, isStationScreenLabelTaken, syncLegacyVenueToken } from "@/lib/station-screens";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ venueId: string; screenId: string }> };
@@ -38,6 +38,17 @@ export async function PATCH(request: Request, { params }: Params) {
   const parsed = stationScreenUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: zodFirstErrorMessage(parsed.error) }, { status: 400 });
+  }
+
+  if (
+    await isStationScreenLabelTaken(
+      venueId,
+      passStationDbToInput(owned.screen.station),
+      parsed.data.label,
+      screenId,
+    )
+  ) {
+    return NextResponse.json({ error: "Υπάρχει ήδη οθόνη με αυτό το όνομα." }, { status: 400 });
   }
 
   const screen = await prisma.venueStationScreen.update({

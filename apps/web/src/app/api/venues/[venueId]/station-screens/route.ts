@@ -9,7 +9,7 @@ import {
   zodFirstErrorMessage,
 } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
-import { countStationScreens, listStationScreens, nextStationScreenSortOrder } from "@/lib/station-screens";
+import { countStationScreens, isStationScreenLabelTaken, listStationScreens, nextStationScreenSortOrder } from "@/lib/station-screens";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ venueId: string }> };
@@ -63,6 +63,10 @@ export async function POST(request: Request, { params }: Params) {
       { error: `Μέγιστο ${STATION_SCREENS_MAX_PER_STATION} οθόνες ανά τμήμα.` },
       { status: 400 },
     );
+  }
+
+  if (await isStationScreenLabelTaken(venueId, parsed.data.station, parsed.data.label)) {
+    return NextResponse.json({ error: "Υπάρχει ήδη οθόνη με αυτό το όνομα." }, { status: 400 });
   }
 
   const sortOrder = await nextStationScreenSortOrder(venueId, dbStation);
