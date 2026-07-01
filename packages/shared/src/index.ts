@@ -23,6 +23,7 @@ export * from "./plans";
 export * from "./trial";
 export * from "./item-labels";
 export * from "./menu-languages";
+export * from "./menu-auto-translate";
 export * from "./menu-pdf-parser";
 export * from "./demo-venue";
 export * from "./menu-cart";

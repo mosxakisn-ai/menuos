@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { categoryCreateSchema, buildMenuNameTranslations } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
+import { autoFillMenuNames } from "@/lib/menu-translation-service";
 import { getMenuForOrganization } from "@/lib/venue-access";
 
 export async function POST(request: Request) {
@@ -20,6 +21,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Συμπλήρωσε όνομα κατηγορίας (Ελληνικά)." }, { status: 400 });
   }
 
+  const names = await autoFillMenuNames(parsed.data);
+
   const menu = await getMenuForOrganization(parsed.data.menuId, auth.session!.organizationId);
   if (!menu) {
     return NextResponse.json({ error: "Ο κατάλογος δεν βρέθηκε." }, { status: 404 });
@@ -30,7 +33,7 @@ export async function POST(request: Request) {
     _max: { sortOrder: true },
   });
 
-  const translations = buildMenuNameTranslations(parsed.data);
+  const translations = buildMenuNameTranslations(names);
 
   const category = await prisma.category.create({
     data: {

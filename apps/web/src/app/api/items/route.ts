@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { itemCreateSchema, buildMenuNameTranslations } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
+import { autoFillMenuNames, translateMenuTextFromGreek } from "@/lib/menu-translation-service";
 import {
   assertCanAddItemsInTransaction,
   planLimitErrorResponse,
@@ -30,6 +31,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Η κατηγορία δεν βρέθηκε." }, { status: 404 });
   }
 
+  const names = await autoFillMenuNames(parsed.data);
+  let descriptionEn = parsed.data.descriptionEn?.trim();
+  if (parsed.data.descriptionGr?.trim() && !descriptionEn) {
+    const translated = await translateMenuTextFromGreek(parsed.data.descriptionGr, ["EN"], 1000);
+    descriptionEn = translated.EN;
+  }
+
   try {
     const item = await prisma.$transaction(async (tx) => {
       await assertCanAddItemsInTransaction(tx, auth.session!.organizationId, 1);
@@ -39,7 +47,7 @@ export async function POST(request: Request) {
         _max: { sortOrder: true },
       });
 
-      const nameTranslations = buildMenuNameTranslations(parsed.data);
+      const nameTranslations = buildMenuNameTranslations(names);
 
       return tx.item.create({
         data: {
@@ -58,7 +66,7 @@ export async function POST(request: Request) {
                 row.language === "GR"
                   ? parsed.data.descriptionGr?.trim() || null
                   : row.language === "EN"
-                    ? parsed.data.descriptionEn?.trim() || null
+                    ? descriptionEn || null
                     : null,
               ingredients: row.language === "GR" ? parsed.data.ingredientsGr?.trim() || null : null,
               allergens: row.language === "GR" ? parsed.data.allergensGr?.trim() || null : null,

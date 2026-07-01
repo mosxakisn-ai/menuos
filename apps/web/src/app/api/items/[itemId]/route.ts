@@ -3,6 +3,7 @@ import type { SupportedLanguage } from "@menuos/db";
 import { prisma } from "@menuos/db";
 import { itemPatchSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
+import { autoFillMenuNames } from "@/lib/menu-translation-service";
 import { getItemForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ itemId: string }> };
@@ -47,7 +48,16 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Μη έγκυρα δεδομένα πιάτου." }, { status: 400 });
   }
 
-  const { nameGr, nameEn, nameDe, nameFr, available, price, label, photoUrl, extras } = parsed.data;
+  let { nameGr, nameEn, nameDe, nameFr, available, price, label, photoUrl, extras } = parsed.data;
+
+  if (nameGr !== undefined) {
+    const filled = await autoFillMenuNames({ nameGr, nameEn, nameDe, nameFr });
+    nameGr = filled.nameGr;
+    const retranslateAll = nameEn === undefined && nameDe === undefined && nameFr === undefined;
+    nameEn = retranslateAll ? (filled.nameEn ?? "") : (filled.nameEn ?? undefined);
+    nameDe = retranslateAll ? (filled.nameDe ?? "") : (filled.nameDe ?? undefined);
+    nameFr = retranslateAll ? (filled.nameFr ?? "") : (filled.nameFr ?? undefined);
+  }
 
   const normalizedPhoto =
     photoUrl === undefined

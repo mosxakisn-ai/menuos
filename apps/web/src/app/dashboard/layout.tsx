@@ -111,18 +111,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 className="hidden h-11 w-11 shrink-0 rounded-xl border border-slate-200/80 bg-slate-50 object-cover sm:block"
               />
             ) : null}
-            <div className="min-w-0 space-y-1">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Καλώς ήρθες</p>
-              <p className="truncate text-lg font-semibold leading-snug text-primary">{business.name}</p>
-              <p className="truncate text-sm leading-relaxed text-slate-500">
-                {session.name !== business.name ? (
-                  <>
-                    <span className="text-slate-600">{session.name}</span>
-                    <span className="text-slate-300"> · </span>
-                  </>
-                ) : null}
-                {session.email}
+            <div className="flex min-w-0 flex-col justify-center gap-0.5">
+              <p className="text-[11px] font-medium uppercase tracking-wide leading-none text-slate-400">
+                Καλώς ήρθες
               </p>
+              <p className="truncate text-lg font-semibold leading-tight text-primary">{business.name}</p>
               {org && subscriptionSummary.expiryLine ? (
                 <p className="flex items-center gap-1.5 truncate text-xs text-slate-400 md:hidden">
                   <span

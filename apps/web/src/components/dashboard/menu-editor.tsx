@@ -68,17 +68,11 @@ export function MenuEditor({
   }, [welcome, setFlash]);
 
   const [catNameGr, setCatNameGr] = useState("");
-  const [catNameEn, setCatNameEn] = useState("");
-  const [catNameDe, setCatNameDe] = useState("");
-  const [catNameFr, setCatNameFr] = useState("");
   const [addingCat, setAddingCat] = useState(false);
 
   const [itemCategoryId, setItemCategoryId] = useState<string | null>(null);
   const [itemForm, setItemForm] = useState({
     nameGr: "",
-    nameEn: "",
-    nameDe: "",
-    nameFr: "",
     price: "",
     descriptionGr: "",
     label: "" as "" | ItemLabel,
@@ -134,18 +128,12 @@ export function MenuEditor({
         body: JSON.stringify({
           menuId,
           nameGr: catNameGr.trim(),
-          nameEn: catNameEn.trim() || undefined,
-          nameDe: catNameDe.trim() || undefined,
-          nameFr: catNameFr.trim() || undefined,
         }),
       });
       const data = await res.json();
       showFromResponse(data, res.ok);
       if (res.ok) {
         setCatNameGr("");
-        setCatNameEn("");
-        setCatNameDe("");
-        setCatNameFr("");
         await loadMenus();
       }
     } finally {
@@ -169,9 +157,6 @@ export function MenuEditor({
         body: JSON.stringify({
           categoryId: itemCategoryId,
           nameGr: itemForm.nameGr.trim(),
-          nameEn: itemForm.nameEn.trim() || undefined,
-          nameDe: itemForm.nameDe.trim() || undefined,
-          nameFr: itemForm.nameFr.trim() || undefined,
           price,
           descriptionGr: itemForm.descriptionGr.trim() || undefined,
           label: itemForm.label || undefined,
@@ -181,7 +166,7 @@ export function MenuEditor({
       const data = await res.json();
       showFromResponse(data, res.ok);
       if (res.ok) {
-        setItemForm({ nameGr: "", nameEn: "", nameDe: "", nameFr: "", price: "", descriptionGr: "", label: "", photoUrl: "" });
+        setItemForm({ nameGr: "", price: "", descriptionGr: "", label: "", photoUrl: "" });
         setItemCategoryId(null);
         await loadMenus();
       }
@@ -337,6 +322,7 @@ export function MenuEditor({
   }
 
   function startEditingItem(item: Item) {
+    setItemCategoryId(null);
     setEditingItemId(item.id);
     setEditNameGr(tName(item.translations));
     setEditPrice(item.price.toString());
@@ -475,38 +461,20 @@ export function MenuEditor({
           <Card>
             <h2 className="font-semibold text-brand-navy">Νέα κατηγορία</h2>
             <p className="mt-1 text-xs text-slate-500">
-              Ελληνικά υποχρεωτικά · EN / DE / FR προαιρετικά για το QR menu
+              Βάλε μόνο ελληνικά — αυτόματη μετάφραση σε EN / DE / FR για το QR menu
             </p>
-            <form onSubmit={addCategory} className={cn(dashboardFormGridClass, "mt-4")}>
+            <form onSubmit={addCategory} className="mt-4 flex flex-wrap items-end gap-2">
               <input
                 required
                 placeholder={`${FORM_PLACEHOLDERS.categoryGr} *`}
                 value={catNameGr}
                 onChange={(e) => setCatNameGr(e.target.value)}
-                className={dashboardFieldClass}
-              />
-              <input
-                placeholder={FORM_PLACEHOLDERS.categoryEn}
-                value={catNameEn}
-                onChange={(e) => setCatNameEn(e.target.value)}
-                className={dashboardFieldClass}
-              />
-              <input
-                placeholder={FORM_PLACEHOLDERS.categoryDe}
-                value={catNameDe}
-                onChange={(e) => setCatNameDe(e.target.value)}
-                className={dashboardFieldClass}
-              />
-              <input
-                placeholder={FORM_PLACEHOLDERS.categoryFr}
-                value={catNameFr}
-                onChange={(e) => setCatNameFr(e.target.value)}
-                className={dashboardFieldClass}
+                className={`min-w-[200px] flex-1 ${dashboardFieldClass}`}
               />
               <button
                 type="submit"
                 disabled={addingCat}
-                className={`sm:col-span-2 inline-flex w-fit items-center gap-1 ${buttonClass("primary", "sm")}`}
+                className={`inline-flex w-fit items-center gap-1 ${buttonClass("primary", "sm")}`}
               >
                 <Plus className="h-4 w-4" />
                 {addingCat ? "Προσθήκη..." : "Προσθήκη κατηγορίας"}
@@ -515,72 +483,191 @@ export function MenuEditor({
           </Card>
 
           {activeMenu?.categories.map((cat) => (
-            <Card key={cat.id}>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h3 className="font-bold text-brand-navy">{tName(cat.translations)}</h3>
-                  <p className="text-xs text-slate-500">{cat.items.length} πιάτα</p>
+            <Card key={cat.id} className="overflow-hidden p-0">
+              <div className="flex items-start justify-between gap-3 border-b border-slate-200/80 bg-gradient-to-r from-slate-50 to-white px-5 py-4 sm:px-6 sm:py-5">
+                <div className="min-w-0">
+                  <h3 className="font-serif text-xl font-bold tracking-tight text-brand-navy sm:text-2xl">
+                    {tName(cat.translations)}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {cat.items.length} {cat.items.length === 1 ? "πιάτο" : "πιάτα"}
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => deleteCategory(cat.id)}
-                  className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                  className="shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
                   title="Διαγραφή κατηγορίας"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
 
-              <ul className="mt-4 divide-y divide-slate-100">
+              <div className="space-y-3 p-4 sm:p-5">
                 {cat.items.length === 0 ? (
-                  <li className="py-3 text-sm text-slate-500">Δεν υπάρχουν πιάτα — πρόσθεσε το πρώτο.</li>
+                  <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-6 text-center text-sm text-slate-500">
+                    Δεν υπάρχουν πιάτα — πρόσθεσε το πρώτο.
+                  </p>
                 ) : (
-                  cat.items.map((item) => (
-                    <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                      <div className="min-w-0 flex-1">
-                        {editingItemId === item.id ? (
-                          <div className="space-y-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <input
-                                value={editNameGr}
-                                onChange={(e) => setEditNameGr(e.target.value)}
-                                placeholder={FORM_PLACEHOLDERS.itemNameGr}
-                                className="min-w-[8rem] flex-1 rounded border border-slate-200 px-2 py-1 text-sm"
-                                autoFocus
-                              />
-                              <label className="flex items-center gap-1.5 text-sm text-brand-navy">
-                                <span className="font-medium">€</span>
+                  cat.items.map((item) => {
+                    const isEditing = editingItemId === item.id;
+                    const extrasCount = parseItemExtras(item.extras).length;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={cn(
+                          "rounded-xl border bg-white transition-shadow",
+                          isEditing
+                            ? "border-brand-blue/30 shadow-md ring-2 ring-brand-blue/10"
+                            : "border-slate-200/80 shadow-sm hover:border-slate-300/80",
+                        )}
+                      >
+                        <div className="flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
+                          {item.photoUrl && !isEditing ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.photoUrl}
+                              alt=""
+                              className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 object-cover sm:h-14 sm:w-14"
+                            />
+                          ) : !isEditing ? (
+                            <div
+                              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:h-14 sm:w-14"
+                              aria-hidden
+                            >
+                              —
+                            </div>
+                          ) : null}
+
+                          <div className="min-w-0 flex-1">
+                            {isEditing ? (
+                              <div className="flex flex-wrap items-center gap-2">
                                 <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  value={editPrice}
-                                  onChange={(e) => setEditPrice(e.target.value)}
-                                  placeholder={FORM_PLACEHOLDERS.itemPrice}
-                                  className="w-24 rounded border border-slate-200 px-2 py-1 text-sm"
+                                  value={editNameGr}
+                                  onChange={(e) => setEditNameGr(e.target.value)}
+                                  placeholder={FORM_PLACEHOLDERS.itemNameGr}
+                                  className="min-w-[8rem] flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                  autoFocus
                                 />
-                              </label>
+                                <label className="flex items-center gap-1.5 text-sm text-brand-navy">
+                                  <span className="font-medium">€</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={editPrice}
+                                    onChange={(e) => setEditPrice(e.target.value)}
+                                    placeholder={FORM_PLACEHOLDERS.itemPrice}
+                                    className="w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                  />
+                                </label>
+                                <button
+                                  type="button"
+                                  disabled={savingName}
+                                  onClick={() => void saveItemEdit(item.id)}
+                                  className={buttonClass("primary", "sm")}
+                                >
+                                  {savingName ? "..." : "OK"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingItemId(null)}
+                                  className={buttonClass("secondary", "sm")}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <p
+                                    className={cn(
+                                      "truncate text-base font-semibold sm:text-[1.05rem]",
+                                      item.available ? "text-brand-navy" : "text-slate-400 line-through",
+                                    )}
+                                  >
+                                    {tName(item.translations)}
+                                  </p>
+                                  {isItemLabel(item.label) ? (
+                                    <span
+                                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${ITEM_LABEL_STYLES[item.label]}`}
+                                    >
+                                      {ITEM_LABEL_OPTIONS.find((o) => o.value === item.label)?.dashboardGr}
+                                    </span>
+                                  ) : null}
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditingItem(item)}
+                                    className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-brand-blue"
+                                    title="Επεξεργασία πιάτου"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditingItem(item)}
+                                    className="text-sm font-semibold tabular-nums text-brand-blue hover:underline"
+                                    title="Αλλαγή τιμής"
+                                  >
+                                    €{item.price.toString()}
+                                  </button>
+                                  {extrasCount > 0 ? (
+                                    <span className="text-xs text-slate-500">{extrasCount} επιλογές QR</span>
+                                  ) : null}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {!isEditing ? (
+                            <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+                              <select
+                                value={item.label ?? ""}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  void setItemLabel(item.id, v ? (v as ItemLabel) : null);
+                                }}
+                                className="max-w-[8.5rem] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-brand-navy"
+                                title="Ετικέτα στο QR menu"
+                              >
+                                <option value="">Χωρίς ετικέτα</option>
+                                {ITEM_LABEL_OPTIONS.map((opt) => (
+                                  <option key={opt.value} value={opt.value}>
+                                    {opt.dashboardGr}
+                                  </option>
+                                ))}
+                              </select>
                               <button
                                 type="button"
-                                disabled={savingName}
-                                onClick={() => void saveItemEdit(item.id)}
-                                className={buttonClass("primary", "sm")}
+                                onClick={() => toggleItem(item)}
+                                className={cn(
+                                  "rounded-lg px-2.5 py-1.5 text-xs font-semibold",
+                                  item.available
+                                    ? "bg-emerald-50 text-emerald-700"
+                                    : "bg-slate-100 text-slate-500",
+                                )}
                               >
-                                {savingName ? "..." : "OK"}
+                                {item.available ? "Ενεργό" : "Ανενεργό"}
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setEditingItemId(null)}
-                                className={buttonClass("secondary", "sm")}
+                                onClick={() => deleteItem(item.id)}
+                                className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                title="Διαγραφή πιάτου"
                               >
-                                ✕
+                                <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
-                            <PhotoUploadField
-                              value={editPhotoUrl}
-                              onChange={setEditPhotoUrl}
-                            />
-                            <div className="space-y-2 rounded-lg border border-slate-100 bg-slate-50/80 p-3">
+                          ) : null}
+                        </div>
+
+                        {isEditing ? (
+                          <div className="space-y-3 border-t border-slate-100 bg-slate-50/40 px-3 py-4 sm:px-4">
+                            <PhotoUploadField value={editPhotoUrl} onChange={setEditPhotoUrl} />
+                            <div className="space-y-2 rounded-lg border border-slate-200/80 bg-white p-3">
                               <p className="text-xs font-semibold text-brand-navy">Επιλογές πελάτη</p>
                               <p className="text-[11px] leading-snug text-slate-500">
                                 Ο πελάτης τις επιλέγει στο QR menu. Προαιρετικά βάλε extra χρέωση (π.χ. +€1,50).
@@ -595,7 +682,7 @@ export function MenuEditor({
                                       setEditExtras(next);
                                     }}
                                     placeholder={FORM_PLACEHOLDERS.extraOption}
-                                    className="min-w-0 flex-1 rounded border border-slate-200 px-2 py-1.5 text-sm"
+                                    className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
                                   />
                                   <input
                                     type="text"
@@ -620,13 +707,13 @@ export function MenuEditor({
                                       setEditExtras(next);
                                     }}
                                     placeholder={FORM_PLACEHOLDERS.extraPrice}
-                                    className="w-[4.5rem] shrink-0 rounded border border-slate-200 px-2 py-1.5 text-sm"
+                                    className="w-[4.5rem] shrink-0 rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
                                     title="Extra χρέωση (προαιρετικό)"
                                   />
                                   <button
                                     type="button"
                                     onClick={() => setEditExtras(editExtras.filter((_, j) => j !== i))}
-                                    className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                    className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
                                     title="Αφαίρεση"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
@@ -647,61 +734,58 @@ export function MenuEditor({
                               ) : null}
                             </div>
                           </div>
-                        ) : (
-                          <div className="flex flex-wrap items-center gap-2">
-                            {item.photoUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={item.photoUrl}
-                                alt=""
-                                className="h-9 w-9 shrink-0 rounded-md border border-slate-200 object-cover"
-                              />
-                            ) : null}
-                            <p className={`font-medium ${item.available ? "text-brand-navy" : "text-slate-400 line-through"}`}>
-                              {tName(item.translations)}
-                            </p>
-                            {isItemLabel(item.label) ? (
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${ITEM_LABEL_STYLES[item.label]}`}
-                              >
-                                {ITEM_LABEL_OPTIONS.find((o) => o.value === item.label)?.dashboardGr}
-                              </span>
-                            ) : null}
-                            <button
-                              type="button"
-                              onClick={() => startEditingItem(item)}
-                              className="rounded p-1 text-slate-400 hover:text-brand-blue"
-                              title="Επεξεργασία πιάτου"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        )}
-                        {editingItemId !== item.id ? (
-                          <button
-                            type="button"
-                            onClick={() => startEditingItem(item)}
-                            className="mt-0.5 text-sm text-brand-blue hover:underline"
-                            title="Αλλαγή τιμής"
-                          >
-                            €{item.price.toString()}
-                          </button>
-                        ) : null}
-                        {parseItemExtras(item.extras).length > 0 ? (
-                          <p className="text-[11px] text-slate-500">
-                            {parseItemExtras(item.extras).length} επιλογές QR
-                          </p>
                         ) : null}
                       </div>
-                      <div className="flex shrink-0 flex-wrap items-center gap-1">
+                    );
+                  })
+                )}
+
+                {itemCategoryId === cat.id ? (
+                  <form
+                    onSubmit={addItem}
+                    className="space-y-3 rounded-xl border border-brand-blue/20 bg-brand-surface p-4 sm:p-5"
+                  >
+                    <p className="text-sm font-semibold text-brand-navy">Νέο πιάτο</p>
+                    <p className="text-xs text-slate-500">
+                      Όνομα και περιγραφή μόνο στα ελληνικά — μετάφραση αυτόματα στο QR menu
+                    </p>
+                    <div className={dashboardFormGridClass}>
+                      <input
+                        required
+                        placeholder={`${FORM_PLACEHOLDERS.itemNameGr} *`}
+                        value={itemForm.nameGr}
+                        onChange={(e) => setItemForm((f) => ({ ...f, nameGr: e.target.value }))}
+                        className={dashboardInputClass}
+                      />
+                      <input
+                        required
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder={`${FORM_PLACEHOLDERS.itemPrice} *`}
+                        value={itemForm.price}
+                        onChange={(e) => setItemForm((f) => ({ ...f, price: e.target.value }))}
+                        className={dashboardInputClass}
+                      />
+                      <input
+                        placeholder={FORM_PLACEHOLDERS.itemDescription}
+                        value={itemForm.descriptionGr}
+                        onChange={(e) => setItemForm((f) => ({ ...f, descriptionGr: e.target.value }))}
+                        className={`${dashboardInputClass} sm:col-span-2`}
+                      />
+                      <PhotoUploadField
+                        value={itemForm.photoUrl}
+                        onChange={(url) => setItemForm((f) => ({ ...f, photoUrl: url }))}
+                        className="sm:col-span-2"
+                      />
+                      <label className="block sm:col-span-2">
+                        <span className={dashboardLabelClass}>Ετικέτα στο QR menu</span>
                         <select
-                          value={item.label ?? ""}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            void setItemLabel(item.id, v ? (v as ItemLabel) : null);
-                          }}
-                          className="max-w-[8.5rem] rounded border border-slate-200 px-2 py-1 text-xs text-brand-navy"
-                          title="Ετικέτα στο QR menu"
+                          value={itemForm.label}
+                          onChange={(e) =>
+                            setItemForm((f) => ({ ...f, label: e.target.value as "" | ItemLabel }))
+                          }
+                          className={dashboardFieldClass}
                         >
                           <option value="">Χωρίς ετικέτα</option>
                           {ITEM_LABEL_OPTIONS.map((opt) => (
@@ -710,119 +794,35 @@ export function MenuEditor({
                             </option>
                           ))}
                         </select>
-                        <button
-                          type="button"
-                          onClick={() => toggleItem(item)}
-                          className={`rounded px-2 py-1 text-xs font-medium ${
-                            item.available ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {item.available ? "Ενεργό" : "Ανενεργό"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteItem(item.id)}
-                          className="rounded p-1 text-slate-400 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ul>
-
-              {itemCategoryId === cat.id ? (
-                <form onSubmit={addItem} className="mt-4 space-y-3 rounded-lg bg-brand-surface p-4">
-                  <p className="text-sm font-semibold text-brand-navy">Νέο πιάτο</p>
-                  <div className={dashboardFormGridClass}>
-                    <input
-                      required
-                      placeholder={`${FORM_PLACEHOLDERS.itemNameGr} *`}
-                      value={itemForm.nameGr}
-                      onChange={(e) => setItemForm((f) => ({ ...f, nameGr: e.target.value }))}
-                      className={dashboardInputClass}
-                    />
-                    <input
-                      placeholder={FORM_PLACEHOLDERS.itemNameEn}
-                      value={itemForm.nameEn}
-                      onChange={(e) => setItemForm((f) => ({ ...f, nameEn: e.target.value }))}
-                      className={dashboardInputClass}
-                    />
-                    <input
-                      placeholder={FORM_PLACEHOLDERS.itemNameDe}
-                      value={itemForm.nameDe}
-                      onChange={(e) => setItemForm((f) => ({ ...f, nameDe: e.target.value }))}
-                      className={dashboardInputClass}
-                    />
-                    <input
-                      placeholder={FORM_PLACEHOLDERS.itemNameFr}
-                      value={itemForm.nameFr}
-                      onChange={(e) => setItemForm((f) => ({ ...f, nameFr: e.target.value }))}
-                      className={dashboardInputClass}
-                    />
-                    <input
-                      required
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder={`${FORM_PLACEHOLDERS.itemPrice} *`}
-                      value={itemForm.price}
-                      onChange={(e) => setItemForm((f) => ({ ...f, price: e.target.value }))}
-                      className={dashboardInputClass}
-                    />
-                    <input
-                      placeholder={FORM_PLACEHOLDERS.itemDescription}
-                      value={itemForm.descriptionGr}
-                      onChange={(e) => setItemForm((f) => ({ ...f, descriptionGr: e.target.value }))}
-                      className={`${dashboardInputClass} sm:col-span-2`}
-                    />
-                        <PhotoUploadField
-                          value={itemForm.photoUrl}
-                          onChange={(url) => setItemForm((f) => ({ ...f, photoUrl: url }))}
-                          className="sm:col-span-2"
-                        />
-                    <label className="block sm:col-span-2">
-                      <span className={dashboardLabelClass}>Ετικέτα στο QR menu</span>
-                      <select
-                        value={itemForm.label}
-                        onChange={(e) =>
-                          setItemForm((f) => ({ ...f, label: e.target.value as "" | ItemLabel }))
-                        }
-                        className={dashboardFieldClass}
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="submit" disabled={addingItem} className={buttonClass("primary", "sm")}>
+                        {addingItem ? "Αποθήκευση..." : "Αποθήκευση πιάτου"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setItemCategoryId(null)}
+                        className={buttonClass("secondary", "sm")}
                       >
-                        <option value="">Χωρίς ετικέτα</option>
-                        {ITEM_LABEL_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.dashboardGr}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <div className="flex gap-2">
-                    <button type="submit" disabled={addingItem} className={buttonClass("primary", "sm")}>
-                      {addingItem ? "Αποθήκευση..." : "Αποθήκευση πιάτου"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setItemCategoryId(null)}
-                      className={buttonClass("secondary", "sm")}
-                    >
-                      Ακύρωση
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setItemCategoryId(cat.id)}
-                  className={`mt-4 inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
-                >
-                  <Plus className="h-4 w-4" />
-                  Προσθήκη πιάτου
-                </button>
-              )}
+                        Ακύρωση
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingItemId(null);
+                      setItemCategoryId(cat.id);
+                    }}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-brand-blue/40 hover:bg-brand-blue/5 hover:text-brand-blue"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Προσθήκη πιάτου
+                  </button>
+                )}
+              </div>
             </Card>
           ))}
 
