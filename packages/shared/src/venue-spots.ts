@@ -24,7 +24,7 @@ export function venueSpotTypeLabel(type: VenueSpotType): string {
   return venueSpotTypeLabelForLang(type, "GR");
 }
 
-/** Pure numbers get a type prefix (e.g. «Τραπέζι 12»); custom ids show as-is (e.g. «sala-1»). */
+/** Pure numbers get a type prefix (e.g. «Τραπέζι 12»); custom ids show as-is (e.g. «Αυλή-1»). */
 export function formatVenueSpotLabelForLang(
   type: VenueSpotType,
   label: string,
@@ -47,7 +47,7 @@ export function isValidVenueSpotLabel(label: string): boolean {
 }
 
 export const VENUE_SPOT_LABEL_HINT =
-  "Μόνο γράμματα, αριθμοί, παύλα και κάτω παύλα (π.χ. 12, sala-1).";
+  "Μόνο γράμματα, αριθμοί, παύλα και κάτω παύλα (π.χ. 12, Αυλή-1).";
 
 function formatLocationValue(typeLabel: string, value: string): string {
   const trimmed = value.trim();

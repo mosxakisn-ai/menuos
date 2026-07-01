@@ -40,7 +40,7 @@ export const FORM_PLACEHOLDERS = {
   maxVenues: "π.χ. 3",
   spotBulkFrom: "1",
   spotBulkTo: "120",
-  spotPrefix: "sala-",
+  spotPrefix: "Αυλή-",
   qrTable: "12",
   qrRoom: "204",
   importCategory: "π.χ. Σαλάτες",
