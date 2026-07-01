@@ -3,10 +3,14 @@ import { prisma } from "@menuos/db";
 import type { PassStationInput } from "@menuos/shared";
 import {
   filterVenueSpotsForScreen,
+  isPrimaryStationScreen,
+  passLocationMatchesScreenSpotPrefix,
+  passSignalStationScreenWhere,
   passStationInputSchema,
   passStationInputToDb,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
+import { resolvePrimaryStationScreen } from "@/lib/station-screens";
 import { startOfTodayAthens } from "@/lib/athens-day";
 
 export async function GET(request: Request) {
@@ -41,13 +45,20 @@ export async function GET(request: Request) {
 
   const filtered = filterVenueSpotsForScreen(spots, auth.stationScreen?.spotPrefix);
 
+  const primaryScreen = await resolvePrimaryStationScreen(auth.venue.id, station);
+  const isPrimary = isPrimaryStationScreen(auth.stationScreen?.id, primaryScreen?.id);
+  const screenFilter = passSignalStationScreenWhere({
+    stationScreenId: auth.stationScreen?.id,
+    isPrimaryScreen: isPrimary,
+  });
+
   const dbStation = passStationInputToDb(station);
-  const activeSignals = await prisma.passSignal.findMany({
+  const activeSignalsRaw = await prisma.passSignal.findMany({
     where: {
       venueId: auth.venue.id,
       station: dbStation,
       status: { in: ["READY", "PICKED_UP"] },
-      ...(auth.stationScreen?.id ? { stationScreenId: auth.stationScreen.id } : {}),
+      ...screenFilter,
     },
     orderBy: { readyAt: "desc" },
     take: 24,
@@ -62,7 +73,16 @@ export async function GET(request: Request) {
     },
   });
 
-  const screenFilter = auth.stationScreen?.id ? { stationScreenId: auth.stationScreen.id } : {};
+  const activeSignals = activeSignalsRaw.filter((signal) =>
+    passLocationMatchesScreenSpotPrefix(
+      {
+        tableNumber: signal.tableNumber ?? undefined,
+        roomNumber: signal.roomNumber ?? undefined,
+        sunbedNumber: signal.sunbedNumber ?? undefined,
+      },
+      auth.stationScreen?.spotPrefix,
+    ),
+  );
   const todayStart = startOfTodayAthens();
   const todayCount = await prisma.passSignal.count({
     where: {

@@ -34,5 +34,6 @@ export * from "./waiter-table-grid";
 export * from "./venue-staff-member";
 export * from "./organization-activity";
 export * from "./station-screen";
+export * from "./station-screen-signals";
 export * from "./station-screen-spots";
 export * from "./station-spot-zones";
