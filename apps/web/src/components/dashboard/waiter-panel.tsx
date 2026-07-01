@@ -4,14 +4,13 @@ import { Bell, Check, Clock } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatWaiterCallLocationForLang, formatOrderLineDetail, passStationDbToInput, type OrderLine, type VenueSpotType } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
-import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { WaiterTableGrid } from "@/components/dashboard/waiter-table-grid";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
 
-type Venue = { id: string; name: string; slug?: string; staffToken?: string };
+type Venue = { id: string; name: string; slug?: string };
 type OrderPayload = {
   lines: OrderLine[];
   total: string;
@@ -49,13 +48,11 @@ export function WaiterPanel({
   initialVenueId,
   staffKey,
   staffViaCookie = false,
-  showShareLink = true,
 }: {
   venues: Venue[];
   initialVenueId?: string;
   staffKey?: string;
   staffViaCookie?: boolean;
-  showShareLink?: boolean;
 }) {
   const { d, lang } = useDashboardCopy();
   const W = d.waiter;
@@ -64,9 +61,6 @@ export function WaiterPanel({
       ? initialVenueId
       : (venues[0]?.id ?? "");
   const [venueId, setVenueId] = useState(resolvedInitial);
-  const [staffTokens, setStaffTokens] = useState<Record<string, string>>(() =>
-    Object.fromEntries(venues.filter((v) => v.staffToken).map((v) => [v.id, v.staffToken!])),
-  );
   const [calls, setCalls] = useState<WaiterCall[]>([]);
   const [spots, setSpots] = useState<VenueSpot[]>([]);
   const [passSignals, setPassSignals] = useState<PassSignal[]>([]);
@@ -232,27 +226,10 @@ export function WaiterPanel({
   }
 
   const activeVenue = venues.find((v) => v.id === venueId);
-  const activeStaffToken = activeVenue ? (staffTokens[activeVenue.id] ?? activeVenue.staffToken) : undefined;
 
   return (
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
-
-      {showShareLink && activeVenue?.slug && activeStaffToken ? (
-        <WaiterShareLink
-          venueSlug={activeVenue.slug}
-          staffToken={activeStaffToken}
-          venueId={staffKey ? undefined : activeVenue.id}
-          onStaffTokenRotated={
-            staffKey
-              ? undefined
-              : (newToken) => {
-                  setStaffTokens((prev) => ({ ...prev, [activeVenue.id]: newToken }));
-                  setFlash({ type: "success", text: d.waiter.rotateSuccess });
-                }
-          }
-        />
-      ) : null}
 
       <div className="flex flex-wrap items-center gap-4">
         {staffViaCookie || staffKey || venues.length === 1 ? (

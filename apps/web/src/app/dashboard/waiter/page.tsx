@@ -18,7 +18,7 @@ export default async function WaiterPage({ searchParams }: Props) {
   const sp = await searchParams;
   const venues = await prisma.venue.findMany({
     where: { organizationId: session!.organizationId },
-    select: { id: true, name: true, slug: true, staffToken: true },
+    select: { id: true, name: true, slug: true },
     orderBy: { createdAt: "asc" },
   });
 

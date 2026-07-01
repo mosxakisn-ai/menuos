@@ -394,7 +394,8 @@ export const DASHBOARD_EN = {
     waiter: {
       title: "Waiter calls",
       description:
-        "Customers call from the QR menu. Updates automatically. Send the link to the waiter's phone — no login — and enable notifications there.",
+        "Live calls and pass signals — updates automatically. Waiter link and access code are managed under Settings → Services.",
+      setupLink: "Settings → Services",
     },
     billing: {
       title: "Subscription",

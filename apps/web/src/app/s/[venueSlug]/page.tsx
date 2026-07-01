@@ -60,7 +60,6 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
           venues={[{ id: venue.id, name: venue.name, slug: venue.slug }]}
           initialVenueId={venue.id}
           staffViaCookie
-          showShareLink={false}
         />
       </main>
     </div>
