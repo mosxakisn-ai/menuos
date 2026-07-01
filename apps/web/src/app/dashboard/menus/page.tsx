@@ -25,7 +25,7 @@ export default async function MenusPage({ searchParams }: Props) {
     <DashboardPage>
       <DashboardPageHeader
         title="Κατάλογος"
-        description="Πρόσθεσε κατηγορίες και πιάτα — υποστηρίζονται πολλαπλές γλώσσες στο QR menu."
+        description="Πρόσθεσε κατηγορίες και είδη — υποστηρίζονται πολλαπλές γλώσσες στο QR menu."
       />
       <MenuEditor
         venues={venues}

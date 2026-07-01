@@ -9,6 +9,7 @@ import {
   serializableTransaction,
 } from "@/lib/plan-limits";
 import { getCategoryForOrganization } from "@/lib/venue-access";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 export async function POST(request: Request) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       item,
-      message: `Το πιάτο «${parsed.data.nameGr}» προστέθηκε στον κατάλογο.`,
+      message: DASHBOARD_EL.catalogEntry.added(parsed.data.nameGr),
     });
   } catch (err) {
     const limit = planLimitErrorResponse(err);

@@ -5,6 +5,7 @@ import { itemPatchSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { autoFillMenuNames } from "@/lib/menu-translation-service";
 import { getItemForOrganization } from "@/lib/venue-access";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 type Params = { params: Promise<{ itemId: string }> };
 
@@ -33,7 +34,7 @@ export async function PATCH(request: Request, { params }: Params) {
   const { itemId } = await params;
   const existing = await getItemForOrganization(itemId, auth.session!.organizationId);
   if (!existing) {
-    return NextResponse.json({ error: "Το πιάτο δεν βρέθηκε." }, { status: 404 });
+    return NextResponse.json({ error: DASHBOARD_EL.catalogEntry.notFound }, { status: 404 });
   }
 
   let body: unknown;
@@ -45,7 +46,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const parsed = itemPatchSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Μη έγκυρα δεδομένα πιάτου." }, { status: 400 });
+    return NextResponse.json({ error: DASHBOARD_EL.catalogEntry.invalidData }, { status: 400 });
   }
 
   let { nameGr, nameEn, nameDe, nameFr, available, price, label, photoUrl, extras } = parsed.data;
@@ -92,7 +93,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
   return NextResponse.json({
     item,
-    message: available === false ? "Το πιάτο απενεργοποιήθηκε." : "Το πιάτο ενημερώθηκε.",
+    message: available === false ? DASHBOARD_EL.catalogEntry.deactivated : DASHBOARD_EL.catalogEntry.updated,
   });
 }
 
@@ -103,9 +104,9 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { itemId } = await params;
   const existing = await getItemForOrganization(itemId, auth.session!.organizationId);
   if (!existing) {
-    return NextResponse.json({ error: "Το πιάτο δεν βρέθηκε." }, { status: 404 });
+    return NextResponse.json({ error: DASHBOARD_EL.catalogEntry.notFound }, { status: 404 });
   }
 
   await prisma.item.delete({ where: { id: itemId } });
-  return NextResponse.json({ ok: true, message: "Το πιάτο διαγράφηκε." });
+  return NextResponse.json({ ok: true, message: DASHBOARD_EL.catalogEntry.deleted });
 }

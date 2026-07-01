@@ -17,6 +17,7 @@ import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-mes
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 
 type Venue = {
   id: string;
@@ -142,7 +143,7 @@ export function MenuImportWizard({
       .filter((c) => c.items.length > 0);
 
     if (categories.length === 0) {
-      setFlash({ type: "error", text: "Επίλεξε τουλάχιστον ένα πιάτο." });
+      setFlash({ type: "error", text: `Επίλεξε τουλάχιστον ένα ${DASHBOARD_EL.catalogEntry.one}.` });
       return;
     }
 
@@ -290,7 +291,7 @@ export function MenuImportWizard({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="font-semibold text-brand-navy">
-                  {selectedCounts.categories} κατηγορίες · {selectedCounts.items} πιάτα επιλεγμένα
+                  {selectedCounts.categories} κατηγορίες · {DASHBOARD_EL.catalogEntry.count(selectedCounts.items)} επιλεγμένα
                 </p>
                 <p className="text-xs text-slate-500">
                   Από {draft.stats.filesProcessed} PDF · {draft.stats.itemsWithPrice} τιμές ·{" "}
@@ -338,7 +339,7 @@ export function MenuImportWizard({
                   <thead>
                     <tr className="border-b border-slate-100 text-left text-xs text-slate-500">
                       <th className="pb-2 pr-2">✓</th>
-                      <th className="pb-2 pr-2">Πιάτο (GR)</th>
+                      <th className="pb-2 pr-2">Είδος (GR)</th>
                       <th className="pb-2 pr-2">EN</th>
                       <th className="pb-2 pr-2">Τιμή €</th>
                       <th className="pb-2">Σημειώσεις</th>
@@ -409,7 +410,7 @@ export function MenuImportWizard({
                 className={`inline-flex items-center gap-2 ${buttonClass("primary")}`}
               >
                 {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
-                {importing ? "Εισαγωγή..." : `Εισαγωγή ${selectedCounts.items} πιάτων`}
+                {importing ? "Εισαγωγή..." : `Εισαγωγή ${DASHBOARD_EL.catalogEntry.count(selectedCounts.items)}`}
               </button>
             </div>
           </Card>

@@ -80,11 +80,14 @@ export function MenuEditor({
   });
   const [addingItem, setAddingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editCategoryNameGr, setEditCategoryNameGr] = useState("");
   const [editNameGr, setEditNameGr] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editPhotoUrl, setEditPhotoUrl] = useState("");
   const [editExtras, setEditExtras] = useState<ItemExtra[]>([]);
   const [savingName, setSavingName] = useState(false);
+  const [savingCategory, setSavingCategory] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string>("");
   const [newMenuName, setNewMenuName] = useState("");
   const [addingMenu, setAddingMenu] = useState(false);
@@ -296,7 +299,7 @@ export function MenuEditor({
   }
 
   async function deleteItem(id: string) {
-    if (!window.confirm("Διαγραφή του πιάτου;\n\nΕίσαι σίγουρος; Η ενέργεια δεν αναιρείται.")) return;
+    if (!window.confirm(DASHBOARD_EL.catalogEntry.deleteConfirm)) return;
     const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
     const data = await res.json();
     showFromResponse(data, res.ok);
@@ -307,7 +310,7 @@ export function MenuEditor({
     if (cat.items.length > 0) {
       setFlash({
         type: "error",
-        text: "Δεν μπορείς να διαγράψεις κατηγορία που έχει πιάτα. Διέγραψε πρώτα όλα τα πιάτα.",
+        text: DASHBOARD_EL.catalogEntry.categoryHasEntries,
       });
       return;
     }
@@ -324,7 +327,38 @@ export function MenuEditor({
     return translations.find((t) => t.language === "GR")?.name ?? translations[0]?.name ?? "—";
   }
 
+  function startEditingCategory(cat: Category) {
+    setEditingItemId(null);
+    setItemCategoryId(null);
+    setEditingCategoryId(cat.id);
+    setEditCategoryNameGr(tName(cat.translations));
+  }
+
+  async function saveCategoryEdit(categoryId: string) {
+    if (!editCategoryNameGr.trim()) {
+      setFlash({ type: "error", text: "Βάλε όνομα κατηγορίας." });
+      return;
+    }
+    setSavingCategory(true);
+    try {
+      const res = await fetch(`/api/categories/${categoryId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nameGr: editCategoryNameGr.trim() }),
+      });
+      const data = await res.json();
+      showFromResponse(data, res.ok);
+      if (res.ok) {
+        setEditingCategoryId(null);
+        await loadMenus();
+      }
+    } finally {
+      setSavingCategory(false);
+    }
+  }
+
   function startEditingItem(item: Item) {
+    setEditingCategoryId(null);
     setItemCategoryId(null);
     setEditingItemId(item.id);
     setEditNameGr(tName(item.translations));
@@ -340,7 +374,7 @@ export function MenuEditor({
       <Card>
         <p className="font-semibold text-brand-navy">Δεν έχεις ακόμα κατάστημα</p>
         <p className="mt-2 text-sm text-slate-600">
-          Πρώτα φτιάξε το κατάστημά σου (εστιατόριο, bar ή ξενοδοχείο) και μετά πρόσθεσε πιάτα.
+          Πρώτα φτιάξε το κατάστημά σου (εστιατόριο, bar ή ξενοδοχείο) και μετά πρόσθεσε είδη στον κατάλογο.
         </p>
         <a href="/dashboard/venues/new" className={`mt-4 inline-flex ${buttonClass("primary")}`}>
           {DASHBOARD_EL.addVenue}
@@ -488,12 +522,56 @@ export function MenuEditor({
           {activeMenu?.categories.map((cat) => (
             <Card key={cat.id} className="overflow-hidden p-0">
               <div className="flex items-start justify-between gap-3 border-b border-slate-200/80 bg-gradient-to-r from-slate-50 to-white px-5 py-4 sm:px-6 sm:py-5">
-                <div className="min-w-0">
-                  <h3 className="font-serif text-xl font-bold tracking-tight text-brand-navy sm:text-2xl">
-                    {tName(cat.translations)}
-                  </h3>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    Κατηγορία
+                  </p>
+                  {editingCategoryId === cat.id ? (
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <input
+                        value={editCategoryNameGr}
+                        onChange={(e) => setEditCategoryNameGr(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") void saveCategoryEdit(cat.id);
+                          if (e.key === "Escape") setEditingCategoryId(null);
+                        }}
+                        placeholder={FORM_PLACEHOLDERS.categoryGr}
+                        className="min-w-[10rem] flex-1 rounded-lg border border-slate-200 px-3 py-2 font-serif text-lg font-bold text-brand-navy"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        disabled={savingCategory}
+                        onClick={() => void saveCategoryEdit(cat.id)}
+                        className={buttonClass("primary", "sm")}
+                      >
+                        {savingCategory ? "..." : "OK"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingCategoryId(null)}
+                        className={buttonClass("secondary", "sm")}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-0.5 flex min-w-0 items-center gap-2">
+                      <h3 className="truncate font-serif text-xl font-bold tracking-tight text-brand-navy sm:text-2xl">
+                        {tName(cat.translations)}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => startEditingCategory(cat)}
+                        className="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-brand-blue"
+                        title="Μετονομασία κατηγορίας"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                   <p className="mt-1 text-sm text-slate-500">
-                    {cat.items.length} {cat.items.length === 1 ? "πιάτο" : "πιάτα"}
+                    {DASHBOARD_EL.catalogEntry.count(cat.items.length)}
                   </p>
                 </div>
                 <button
@@ -508,7 +586,7 @@ export function MenuEditor({
                   )}
                   title={
                     cat.items.length > 0
-                      ? "Διέγραψε πρώτα όλα τα πιάτα της κατηγορίας"
+                      ? DASHBOARD_EL.catalogEntry.categoryDeleteHint
                       : "Διαγραφή κενής κατηγορίας"
                   }
                 >
@@ -519,7 +597,7 @@ export function MenuEditor({
               <div className="space-y-3 p-4 sm:p-5">
                 {cat.items.length === 0 ? (
                   <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-6 text-center text-sm text-slate-500">
-                    Δεν υπάρχουν πιάτα — πρόσθεσε το πρώτο.
+                    {DASHBOARD_EL.catalogEntry.empty}
                   </p>
                 ) : (
                   cat.items.map((item) => {
@@ -613,7 +691,7 @@ export function MenuEditor({
                                     type="button"
                                     onClick={() => startEditingItem(item)}
                                     className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-brand-blue"
-                                    title="Επεξεργασία πιάτου"
+                                    title={DASHBOARD_EL.catalogEntry.editTitle}
                                   >
                                     <Pencil className="h-3.5 w-3.5" />
                                   </button>
@@ -669,7 +747,7 @@ export function MenuEditor({
                                 type="button"
                                 onClick={() => deleteItem(item.id)}
                                 className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                                title="Διαγραφή πιάτου"
+                                title={DASHBOARD_EL.catalogEntry.deleteTitle}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -758,7 +836,7 @@ export function MenuEditor({
                     onSubmit={addItem}
                     className="space-y-3 rounded-xl border border-brand-blue/20 bg-brand-surface p-4 sm:p-5"
                   >
-                    <p className="text-sm font-semibold text-brand-navy">Νέο πιάτο</p>
+                    <p className="text-sm font-semibold text-brand-navy">{DASHBOARD_EL.catalogEntry.new}</p>
                     <p className="text-xs text-slate-500">
                       Μόνο ελληνικά — EN / DE / FR δημιουργούνται αυτόματα για το QR menu
                     </p>
@@ -811,7 +889,7 @@ export function MenuEditor({
                     </div>
                     <div className="flex gap-2">
                       <button type="submit" disabled={addingItem} className={buttonClass("primary", "sm")}>
-                        {addingItem ? "Αποθήκευση..." : "Αποθήκευση πιάτου"}
+                        {addingItem ? "Αποθήκευση..." : DASHBOARD_EL.catalogEntry.save}
                       </button>
                       <button
                         type="button"
@@ -826,13 +904,13 @@ export function MenuEditor({
                   <button
                     type="button"
                     onClick={() => {
-                      setEditingItemId(null);
+                      setEditingCategoryId(null);
                       setItemCategoryId(cat.id);
                     }}
                     className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-brand-blue/40 hover:bg-brand-blue/5 hover:text-brand-blue"
                   >
                     <Plus className="h-4 w-4" />
-                    Προσθήκη πιάτου
+                    {DASHBOARD_EL.catalogEntry.add}
                   </button>
                 )}
               </div>

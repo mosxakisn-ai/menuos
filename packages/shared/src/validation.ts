@@ -179,6 +179,22 @@ export const categoryCreateSchema = z.object({
   nameFr: z.string().max(120).optional(),
 });
 
+export const categoryPatchSchema = z
+  .object({
+    nameGr: z.string().min(1).max(120).optional(),
+    nameEn: z.string().max(120).optional(),
+    nameDe: z.string().max(120).optional(),
+    nameFr: z.string().max(120).optional(),
+  })
+  .refine(
+    (d) =>
+      d.nameGr !== undefined ||
+      d.nameEn !== undefined ||
+      d.nameDe !== undefined ||
+      d.nameFr !== undefined,
+    { message: "Nothing to update" },
+  );
+
 export const itemLabelSchema = z.enum(["OFFER", "BEST", "NEW"]).nullable();
 
 export const itemCreateSchema = z.object({
@@ -295,6 +311,7 @@ export type ItemPatchInput = z.infer<typeof itemPatchSchema>;
 export type MenuCreateInput = z.infer<typeof menuCreateSchema>;
 export type MenuImportApplyInput = z.infer<typeof menuImportApplySchema>;
 export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
+export type CategoryPatchInput = z.infer<typeof categoryPatchSchema>;
 export type ItemCreateInput = z.infer<typeof itemCreateSchema>;
 export type VenueUpdateInput = z.infer<typeof venueUpdateSchema>;
 

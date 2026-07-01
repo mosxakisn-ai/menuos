@@ -4,7 +4,6 @@ import { prisma } from "@menuos/db";
 import { Logo } from "@/components/brand/logo";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { DashboardMobileNav } from "@/components/dashboard/dashboard-mobile-nav";
-import { DashboardSidebarBrand } from "@/components/dashboard/dashboard-sidebar-brand";
 import { DashboardSidebarSubscription } from "@/components/dashboard/dashboard-sidebar-subscription";
 import { DashboardSidebarNav } from "@/components/dashboard/dashboard-sidebar-nav";
 import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
@@ -92,10 +91,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <aside className="hidden min-h-screen w-64 shrink-0 flex-col bg-sidebar-gradient p-6 text-white md:flex">
         <Logo href="/dashboard" dark showTagline markSize={36} />
         <p className="mt-2 text-xs text-slate-400">Διαχείριση menu</p>
-        {org ? (
-          <DashboardSidebarBrand organizationName={business.name} logoUrl={business.logoUrl} />
-        ) : null}
-        <div className="mt-8 flex min-h-0 flex-1 flex-col">
+        <div className="mt-6 flex min-h-0 flex-1 flex-col">
           <DashboardSidebarNav initialPendingCount={pendingWaiterCount} />
         </div>
         {org ? <DashboardSidebarSubscription subscription={subscription} /> : null}
