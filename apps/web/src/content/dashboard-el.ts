@@ -227,6 +227,7 @@ export const DASHBOARD_EL = {
     copied: "Αντιγράφηκε!",
     newItems: "Νέα είδη",
     needVenueFirst: "Φτιάξε πρώτα κατάστημα για να λαμβάνεις κλήσεις από πελάτες.",
+    managerViewBadge: "Προβολή: όλο το κατάστημα",
     pendingCount: (n: number) => `${n} σε αναμονή`,
     refreshHint: "Ανανέωση κάθε 5 δευτ.",
     loadFailed: "Δεν φορτώθηκαν οι κλήσεις. Κάνε refresh ή άνοιξε ξανά το link από το dashboard.",

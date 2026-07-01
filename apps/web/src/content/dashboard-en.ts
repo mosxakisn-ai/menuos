@@ -224,6 +224,7 @@ export const DASHBOARD_EN = {
     copied: "Copied!",
     newItems: "New items",
     needVenueFirst: "Create a venue first to receive calls from customers.",
+    managerViewBadge: "View: entire venue",
     pendingCount: (n: number) => `${n} pending`,
     refreshHint: "Refreshes every 5 sec.",
     loadFailed: "Could not load calls. Refresh the page or open the link from the dashboard again.",

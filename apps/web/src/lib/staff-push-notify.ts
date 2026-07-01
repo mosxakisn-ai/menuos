@@ -42,6 +42,7 @@ export async function notifyStaffWaiterCall(input: {
 
   await pushWaiterCallToStaff({
     organizationId: input.organizationId,
+    venueId: input.venue.id,
     venue: { slug: input.venue.slug, staffToken: input.venue.staffToken },
     payload,
   });

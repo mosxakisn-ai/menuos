@@ -54,6 +54,7 @@ async function notifyStaffPassSignal(
 
   await pushPassSignalToStaff({
     organizationId: venue.organizationId,
+    venueId: venue.id,
     venue: { slug: venue.slug, staffToken: venue.staffToken },
     station: signal.station,
     payload,

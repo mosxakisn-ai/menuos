@@ -110,19 +110,19 @@ export async function GET(request: Request) {
   if (auth.response) return auth.response;
 
   const member = auth.access.staffMember;
-  if (member && !waiterCallsVisibleToStaffMember(member.stations)) {
-    return NextResponse.json({ calls: [], pendingCount: 0, spots: [], staffMember: { id: member.id, name: member.name } });
-  }
+  const canSeeWaiterCalls = !member || waiterCallsVisibleToStaffMember(member.stations);
 
   const [calls, spots] = await Promise.all([
-    prisma.waiterCall.findMany({
-      where: {
-        venueId,
-        status: { in: ["PENDING", "ACKNOWLEDGED"] },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    }),
+    canSeeWaiterCalls
+      ? prisma.waiterCall.findMany({
+          where: {
+            venueId,
+            status: { in: ["PENDING", "ACKNOWLEDGED"] },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 50,
+        })
+      : Promise.resolve([]),
     prisma.venueSpot.findMany({
       where: { venueId },
       orderBy: [{ type: "asc" }, { sortOrder: "asc" }, { label: "asc" }],

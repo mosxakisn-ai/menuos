@@ -227,10 +227,17 @@ export function WaiterPanel({
   }
 
   const activeVenue = venues.find((v) => v.id === venueId);
+  const isManagerView = !staffViaCookie && !staffKey;
 
   return (
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
+
+      {isManagerView ? (
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+          {W.managerViewBadge}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-4">
         {staffViaCookie || staffKey || venues.length === 1 ? (

@@ -9,11 +9,13 @@ export type PushSubRow = {
   endpoint: string;
   p256dh: string;
   auth: string;
+  venueId: string | null;
   staffMemberId: string | null;
 };
 
 type StaffMemberPushRow = {
   id: string;
+  venueId: string;
   memberToken: string;
   stations: string[];
 };
@@ -34,16 +36,19 @@ function pushUrlForSub(
 function filterSubsForPassSignal(
   subs: PushSubRow[],
   membersById: Map<string, StaffMemberPushRow>,
+  venueId: string,
   station: PassStation,
   venueSlug: string,
   venueStaffToken: string,
 ): Array<PushSubRow & { url: string }> {
   return subs
     .filter((sub) => {
-      if (!sub.staffMemberId) return true;
-      const member = membersById.get(sub.staffMemberId);
-      if (!member) return false;
-      return passSignalVisibleToStaffMember(station, member.stations);
+      if (sub.staffMemberId) {
+        const member = membersById.get(sub.staffMemberId);
+        if (!member || member.venueId !== venueId) return false;
+        return passSignalVisibleToStaffMember(station, member.stations);
+      }
+      return sub.venueId === null || sub.venueId === venueId;
     })
     .map((sub) => ({
       ...sub,
@@ -54,15 +59,18 @@ function filterSubsForPassSignal(
 function filterSubsForWaiterCall(
   subs: PushSubRow[],
   membersById: Map<string, StaffMemberPushRow>,
+  venueId: string,
   venueSlug: string,
   venueStaffToken: string,
 ): Array<PushSubRow & { url: string }> {
   return subs
     .filter((sub) => {
-      if (!sub.staffMemberId) return true;
-      const member = membersById.get(sub.staffMemberId);
-      if (!member) return false;
-      return waiterCallsVisibleToStaffMember(member.stations);
+      if (sub.staffMemberId) {
+        const member = membersById.get(sub.staffMemberId);
+        if (!member || member.venueId !== venueId) return false;
+        return waiterCallsVisibleToStaffMember(member.stations);
+      }
+      return sub.venueId === null || sub.venueId === venueId;
     })
     .map((sub) => ({
       ...sub,
@@ -74,7 +82,7 @@ async function loadMembersById(staffMemberIds: string[]): Promise<Map<string, St
   if (staffMemberIds.length === 0) return new Map();
   const rows = await prisma.venueStaffMember.findMany({
     where: { id: { in: staffMemberIds } },
-    select: { id: true, memberToken: true, stations: true },
+    select: { id: true, venueId: true, memberToken: true, stations: true },
   });
   return new Map(rows.map((row) => [row.id, row]));
 }
@@ -115,13 +123,17 @@ export async function sendWebPushPayload(
 
 export async function pushPassSignalToStaff(input: {
   organizationId: string;
+  venueId: string;
   venue: { slug: string; staffToken: string };
   station: PassStation;
   payload: string;
 }): Promise<void> {
   const subscriptions = await prisma.pushSubscription.findMany({
-    where: { organizationId: input.organizationId },
-    select: { endpoint: true, p256dh: true, auth: true, staffMemberId: true },
+    where: {
+      organizationId: input.organizationId,
+      OR: [{ venueId: null }, { venueId: input.venueId }],
+    },
+    select: { endpoint: true, p256dh: true, auth: true, venueId: true, staffMemberId: true },
   });
   if (subscriptions.length === 0) return;
 
@@ -133,6 +145,7 @@ export async function pushPassSignalToStaff(input: {
   const targets = filterSubsForPassSignal(
     subscriptions,
     membersById,
+    input.venueId,
     input.station,
     input.venue.slug,
     input.venue.staffToken,
@@ -142,12 +155,16 @@ export async function pushPassSignalToStaff(input: {
 
 export async function pushWaiterCallToStaff(input: {
   organizationId: string;
+  venueId: string;
   venue: { slug: string; staffToken: string };
   payload: string;
 }): Promise<void> {
   const subscriptions = await prisma.pushSubscription.findMany({
-    where: { organizationId: input.organizationId },
-    select: { endpoint: true, p256dh: true, auth: true, staffMemberId: true },
+    where: {
+      organizationId: input.organizationId,
+      OR: [{ venueId: null }, { venueId: input.venueId }],
+    },
+    select: { endpoint: true, p256dh: true, auth: true, venueId: true, staffMemberId: true },
   });
   if (subscriptions.length === 0) return;
 
@@ -159,6 +176,7 @@ export async function pushWaiterCallToStaff(input: {
   const targets = filterSubsForWaiterCall(
     subscriptions,
     membersById,
+    input.venueId,
     input.venue.slug,
     input.venue.staffToken,
   );
