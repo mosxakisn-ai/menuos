@@ -59,18 +59,23 @@ const STAFF = [
 ];
 
 const PASS_ACTIVE = [
-  { station: "KITCHEN", table: "8", message: "2 μουσακάς — έλα πάσο", screenLabel: "Κουζίνα", minutesAgo: 2 },
-  { station: "BAR", table: "5", message: "Ξέχασες τον πάγο", screenLabel: "Μπαρ", minutesAgo: 4 },
-  { station: "BAR", table: "3", message: "2 μπύρες — παραλία", screenLabel: "Παραλία", minutesAgo: 3 },
-  { station: "COLD", table: "12", message: "Χωριάτικη έτοιμη", screenLabel: "Κρύα", minutesAgo: 5 },
-  { station: "DESSERT", table: "7", message: "Παγωτό παρφέ", screenLabel: "Γλυκά", minutesAgo: 6 },
+  { station: "KITCHEN", table: "8", message: "2 μουσακάς — έλα πάσο", screenLabel: "Κουζίνα", minutesAgo: 2, status: "READY" },
+  { station: "BAR", table: "5", message: "Ξέχασες τον πάγο", screenLabel: "Μπαρ", minutesAgo: 4, status: "READY" },
+  { station: "BAR", table: "Αυλή-2", message: "2 μπύρες — παραλία", screenLabel: "Παραλία", minutesAgo: 3, status: "READY" },
+  { station: "COLD", table: "12", message: "Χωριάτικη έτοιμη", screenLabel: "Κρύα", minutesAgo: 5, status: "READY" },
+  { station: "DESSERT", table: "7", message: "Παγωτό παρφέ", screenLabel: "Γλυκά", minutesAgo: 6, status: "READY" },
+  { station: "KITCHEN", table: "Όροφος-1", message: "Σουβλάκι — πήρα", screenLabel: "Κουζίνα", minutesAgo: 1, status: "PICKED_UP" },
 ];
 
 const PASS_HISTORY = [
   { station: "KITCHEN", table: "12", message: "Σουβλάκι", hoursAgo: 2, deliveryMins: 3 },
   { station: "BAR", table: "5", message: "Κρασί λευκό", hoursAgo: 5, deliveryMins: 2 },
-  { station: "BAR", table: "1", message: "Φραπέ παραλίας", hoursAgo: 8, deliveryMins: 4, screenLabel: "Παραλία" },
+  { station: "BAR", table: "Αυλή-1", message: "Φραπέ παραλίας", hoursAgo: 8, deliveryMins: 4, screenLabel: "Παραλία" },
   { station: "DESSERT", table: "9", message: "Γαλακτομπούρεκο", hoursAgo: 24, deliveryMins: 5 },
+  { station: "COLD", table: "3", message: "Τζατζίκι + πίτα", hoursAgo: 3, deliveryMins: 2 },
+  { station: "KITCHEN", table: "Όροφος-2", message: "Ψητή τσιπούρα", hoursAgo: 12, deliveryMins: 6 },
+  { station: "BAR", table: "10", message: "Μοχίτο x2", hoursAgo: 48, deliveryMins: 3, screenLabel: "Μπαρ" },
+  { station: "DESSERT", table: "Αυλή-3", message: "Μπακλαβάς", hoursAgo: 72, deliveryMins: 4 },
 ];
 
 const WAITER_CALLS = [
@@ -79,6 +84,7 @@ const WAITER_CALLS = [
   {
     type: "ORDER",
     table: "8",
+    status: "PENDING",
     orderItems: {
       lines: [
         { name: "Μουσακάς", qty: 2, unitPrice: "12.00", lineTotal: "24.00", detail: null },
@@ -87,6 +93,26 @@ const WAITER_CALLS = [
       total: "33.50",
     },
   },
+  { type: "WAITER", table: "Αυλή-2" },
+  { type: "BILL", table: "Όροφος-1", status: "ACKNOWLEDGED" },
+  { type: "WAITER", sunbed: "paralia-1" },
+  { type: "BILL", room: "101" },
+];
+
+/** Spots always upserted — not skipped when venue already has tables. */
+const SPOT_ROWS = [
+  ...Array.from({ length: 12 }, (_, i) => ({ type: "TABLE", label: String(i + 1) })),
+  { type: "TABLE", label: "Αυλή-1" },
+  { type: "TABLE", label: "Αυλή-2" },
+  { type: "TABLE", label: "Αυλή-3" },
+  { type: "TABLE", label: "Όροφος-1" },
+  { type: "TABLE", label: "Όροφος-2" },
+  { type: "TABLE", label: "Όροφος-3" },
+  { type: "SUNBED", label: "paralia-1" },
+  { type: "SUNBED", label: "paralia-2" },
+  { type: "SUNBED", label: "paralia-3" },
+  { type: "ROOM", label: "101" },
+  { type: "ROOM", label: "102" },
 ];
 
 async function resolveVenueSlugs() {
@@ -105,22 +131,35 @@ async function resolveVenueSlugs() {
 }
 
 async function ensureSpots(venueId) {
-  const existing = await prisma.venueSpot.count({ where: { venueId } });
-  if (existing >= 10) return existing;
-
-  const labels = [];
-  for (let n = 1; n <= 12; n++) labels.push(String(n));
-  labels.push("paralia-1", "paralia-2", "paralia-3");
-
   let sort = 0;
-  for (const label of labels) {
+  for (const row of SPOT_ROWS) {
     await prisma.venueSpot.upsert({
-      where: { venueId_type_label: { venueId, type: "TABLE", label } },
-      create: { venueId, type: "TABLE", label, sortOrder: sort++ },
-      update: {},
+      where: { venueId_type_label: { venueId, type: row.type, label: row.label } },
+      create: { venueId, type: row.type, label: row.label, sortOrder: sort++ },
+      update: { sortOrder: sort++ },
     });
   }
-  return labels.length;
+  return SPOT_ROWS.length;
+}
+
+async function ensureVenueSettings(venueId, venueName) {
+  await prisma.venueSetting.upsert({
+    where: { venueId },
+    create: {
+      venueId,
+      brandName: venueName,
+      openingHours: {
+        mon: "12:00–00:00",
+        tue: "12:00–00:00",
+        wed: "12:00–00:00",
+        thu: "12:00–00:00",
+        fri: "12:00–01:00",
+        sat: "12:00–01:00",
+        sun: "12:00–00:00",
+      },
+    },
+    update: {},
+  });
 }
 
 async function ensureStationScreens(venueId) {
@@ -185,7 +224,16 @@ async function clearActive(venueId, slug) {
   if (!canRefresh) return;
 
   await prisma.passSignal.deleteMany({
-    where: { venueId, status: { in: ["READY", "PICKED_UP"] } },
+    where: {
+      venueId,
+      OR: [
+        { status: { in: ["READY", "PICKED_UP"] } },
+        {
+          status: "DELIVERED",
+          deliveredAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60_000) },
+        },
+      ],
+    },
   });
   await prisma.waiterCall.deleteMany({
     where: { venueId, status: { in: ["PENDING", "ACKNOWLEDGED"] } },
@@ -202,15 +250,19 @@ async function seedPassSignals(venueId, screens) {
     const screenId = row.screenLabel
       ? screenByKey.get(`${row.station}:${row.screenLabel}`) ?? null
       : null;
+    const status = row.status ?? "READY";
     await prisma.passSignal.create({
       data: {
         venueId,
         station: row.station,
         stationScreenId: screenId,
-        tableNumber: row.table,
+        tableNumber: row.table ?? undefined,
+        roomNumber: row.room ?? undefined,
+        sunbedNumber: row.sunbed ?? undefined,
         message: row.message,
-        status: "READY",
+        status,
         readyAt,
+        ...(status === "PICKED_UP" ? { pickedUpAt: new Date(readyAt.getTime() + 30_000) } : {}),
       },
     });
   }
@@ -243,8 +295,10 @@ async function seedWaiterCalls(venueId) {
       data: {
         venueId,
         type: row.type,
-        tableNumber: row.table,
-        status: "PENDING",
+        tableNumber: row.table ?? undefined,
+        roomNumber: row.room ?? undefined,
+        sunbedNumber: row.sunbed ?? undefined,
+        status: row.status ?? "PENDING",
         orderItems: row.orderItems ?? undefined,
       },
     });
@@ -261,6 +315,7 @@ async function seedVenue(slug) {
   }
 
   await clearActive(venue.id, slug);
+  await ensureVenueSettings(venue.id, venue.name);
   const spots = await ensureSpots(venue.id);
   const screens = await ensureStationScreens(venue.id);
   const staff = await ensureStaff(venue.id);

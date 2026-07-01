@@ -45,3 +45,21 @@ docker run --rm --network menuos_default \
 
 docker compose -f docker-compose.prod.yml up -d menuos-web
 echo "Showcase seed done. Restarted web to pick up DEMO_SHOWCASE_UNTIL."
+
+echo "==> Backfill demo menu photos..."
+docker run --rm --network menuos_default \
+  -e DATABASE_URL="$DB_URL" \
+  -v /opt/menuos/scripts/backfill-demo-photos.mjs:/backfill.mjs:ro \
+  -v /opt/menuos/scripts/lib/demo-photos.mjs:/lib/demo-photos.mjs:ro \
+  -v /opt/menuos/packages/db/prisma:/prisma:ro \
+  -w /tmp \
+  node:20-alpine sh -c '
+    mkdir -p lib
+    cp /backfill.mjs backfill.mjs
+    cp /lib/demo-photos.mjs lib/demo-photos.mjs
+    cp -r /prisma ./prisma
+    npm install @prisma/client@6.19.3 prisma@6.19.3 --silent
+    npx prisma generate --schema=./prisma/schema.prisma
+    node backfill.mjs
+  '
+echo "Demo showcase complete (data + photos)."
