@@ -34,7 +34,7 @@ export const DASHBOARD_EN = {
       "Analyze — server reads text from digital pages; scanned pages use OCR if needed.",
       "Structure — categories and items are detected from the text.",
       "Review — edit the draft, then save to your catalog.",
-    ],
+    ] as string[],
     analyzeButton: "Analyze & preview",
     processingTitle: "Analyzing catalog PDF",
     pipeline: {
