@@ -30,6 +30,8 @@ export async function POST(_req: Request, { params }: Params) {
     data: { memberToken },
   });
 
+  await prisma.pushSubscription.deleteMany({ where: { staffMemberId: memberId } });
+
   return NextResponse.json({
     member,
     memberToken,

@@ -4,7 +4,7 @@ import type { PassStationInput } from "@menuos/shared";
 import { getSession } from "@/lib/auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 import { getOrganizationPlanContext } from "@/lib/billing";
-import { resolveStaffKey, resolveVenueByStaffKey, type StaffVenueContext } from "@/lib/staff-auth";
+import type { StaffVenueContext } from "@/lib/staff-auth";
 import { legacyVenueTokenMatches, resolvePrimaryStationScreen, resolveStationScreenByToken } from "@/lib/station-screens";
 
 export type PassSignalVenue = StaffVenueContext & {
@@ -55,7 +55,7 @@ async function loadVenueBySlug(slug: string): Promise<PassSignalVenue | null> {
 
 const SCREEN_STATIONS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
 
-/** Dashboard session, waiter staff key, or department screen token. */
+/** Dashboard session or department screen token (KDS/BDS). */
 export async function authorizePassSignalCreate(
   request: Request,
   input: {
@@ -110,12 +110,6 @@ export async function authorizePassSignalCreate(
   if (session) {
     const owned = await getVenueForOrganization(venue.id, session.organizationId);
     if (owned) return { venue, stationScreen: null, response: null };
-  }
-
-  const staffKey = await resolveStaffKey(request, venue.id);
-  if (staffKey) {
-    const staffVenue = await resolveVenueByStaffKey(venue.id, staffKey);
-    if (staffVenue) return { venue, stationScreen: null, response: null };
   }
 
   return {

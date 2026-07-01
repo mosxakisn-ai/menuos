@@ -3,7 +3,7 @@ import { prisma } from "@menuos/db";
 import { pushSubscriptionSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { isPushEnabled } from "@/lib/push-config";
-import { resolveVenueByStaffKey, resolveStaffKey } from "@/lib/staff-auth";
+import { resolveStaffAuthByKey, resolveStaffKey } from "@/lib/staff-auth";
 
 export async function POST(request: Request) {
   if (!isPushEnabled()) {
@@ -27,18 +27,20 @@ export async function POST(request: Request) {
   let organizationId: string;
   let userId: string | null = null;
   let venueId: string | null = null;
+  let staffMemberId: string | null = null;
 
   if (parsed.data.venueId) {
     const staffKey = parsed.data.staffKey ?? (await resolveStaffKey(request, parsed.data.venueId));
     if (!staffKey) {
       return NextResponse.json({ error: "Μη έγκυρο link σερβιτόρου." }, { status: 401 });
     }
-    const venue = await resolveVenueByStaffKey(parsed.data.venueId, staffKey);
-    if (!venue) {
+    const auth = await resolveStaffAuthByKey(parsed.data.venueId, staffKey);
+    if (!auth) {
       return NextResponse.json({ error: "Μη έγκυρο link σερβιτόρου." }, { status: 401 });
     }
-    organizationId = venue.organizationId;
-    venueId = venue.id;
+    organizationId = auth.venue.organizationId;
+    venueId = auth.venue.id;
+    staffMemberId = auth.staffMember?.id ?? null;
   } else {
     const auth = await requireActiveSubscription();
     if (auth.response) return auth.response;
@@ -60,6 +62,7 @@ export async function POST(request: Request) {
       userId,
       organizationId,
       venueId,
+      staffMemberId,
       endpoint: parsed.data.endpoint,
       p256dh: parsed.data.keys.p256dh,
       auth: parsed.data.keys.auth,
@@ -69,6 +72,7 @@ export async function POST(request: Request) {
       userId,
       organizationId,
       venueId,
+      staffMemberId,
       p256dh: parsed.data.keys.p256dh,
       auth: parsed.data.keys.auth,
       userAgent,
