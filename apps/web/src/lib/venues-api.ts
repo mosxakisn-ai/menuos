@@ -60,7 +60,7 @@ export async function createVenueHandler(request: Request, organizationId: strin
   } catch (err) {
     const limit = planLimitErrorResponse(err);
     if (limit) {
-      return NextResponse.json({ error: limit.error, code: limit.code }, { status: limit.status });
+      return NextResponse.json({ code: limit.code }, { status: limit.status });
     }
     const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
     if (code === "P2002") {

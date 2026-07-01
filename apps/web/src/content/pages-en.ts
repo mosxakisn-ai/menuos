@@ -6,7 +6,7 @@ export const PAGES_EN = {
     servicesLink: "View all services →",
     howItWorksLink: "Workflow details →",
     learnMore: "Learn more",
-    startFreeTrial: "Start free 7-day trial",
+    startFreeTrial: "Start free {trialDaysAdj} trial",
     createAccount: "Create account",
   },
   services: {
@@ -15,7 +15,7 @@ export const PAGES_EN = {
     cta: {
       title: "Want to see it live?",
       description: "Create a free account, set up your first venue and test the QR with your team — in under an hour.",
-      primary: "Start free 7-day trial",
+      primary: "Start free {trialDaysAdj} trial",
       secondary: "How it works",
     },
     items: [
@@ -65,8 +65,8 @@ export const PAGES_EN = {
     heroTitle: "How it works",
     eyebrow: "The process",
     sectionTitle: "From sign-up to live menu",
-    sectionDesc: "Six simple steps. No install, no printed menu, no IT department.",
-    ctaButton: "Start now — free 7 days",
+    sectionDesc: "Six simple steps. No install, no reprints — set up from the dashboard.",
+    ctaButton: "Start now — free {trialDays}",
     cta: {
       title: "Want a demo first?",
       description: "Call 210 700 0925 or email info@b-os.gr — we'll walk you through live.",
@@ -76,7 +76,7 @@ export const PAGES_EN = {
     steps: [
       {
         title: "Sign up & trial",
-        body: "Create an account with email, business name and OTP. 7 days free — no credit card.",
+        body: "Create an account with email, business name and OTP. {trialDays} free — no credit card.",
         detail: "After sign-up you're in the dashboard on trial plan.",
       },
       {
@@ -130,7 +130,7 @@ export const PAGES_EN = {
     ],
     cta: {
       title: "Ready for a premium QR menu?",
-      description: "Build your first menu today. 7 days free, no credit card.",
+      description: "Build your first menu today. {trialDays} free, no credit card.",
       primary: "Create account",
       secondary: "View pricing",
     },
@@ -170,10 +170,10 @@ export const PAGES_EN = {
     missionBody:
       "Digital menu should be as easy as changing a price — but more beautiful and guest-friendly.",
     missionNote: "Support in Greece — phone, email, personal contact.",
-    trialButton: "7-day trial",
+    trialButton: "{trialDaysAdj} trial",
     cta: {
       title: "Let's build your menu",
-      description: "7 days free. No credit card.",
+      description: "{trialDays} free. No credit card.",
       primary: "Create account",
       secondary: "Services",
     },
@@ -187,7 +187,7 @@ export const PAGES_EN = {
     faqTitle: "Pricing questions",
     faqDesc: "What you need to know before you start.",
     trustItems: [
-      "Free 7-day trial — no card",
+      "Free {trialDaysAdj} trial — no card",
       "Monthly billing, cancel anytime",
       "Support in Greek",
       "Secure Stripe payments",
@@ -195,7 +195,7 @@ export const PAGES_EN = {
     demoCta: "View live demo menu",
     cta: {
       title: "Start free today",
-      description: "7-day trial. No credit card.",
+      description: "{trialDaysAdj} trial. No credit card.",
       primary: "Create account",
       secondary: "Ask us",
     },
@@ -203,7 +203,7 @@ export const PAGES_EN = {
       {
         name: "Trial",
         price: "€0",
-        period: " / 7 days",
+        period: " / {trialDays}",
         description: "Try the platform before choosing a plan.",
         features: ["1 venue", "1 menu", "50 items", "QR codes", "Multiple languages", "No card"],
         cta: "Sign up",
@@ -239,7 +239,7 @@ export const PAGES_EN = {
       { title: "WhatsApp", description: "Quick message — great for small businesses:", label: "Send message" },
     ],
     newCustomerTitle: "New customer?",
-    newCustomerBody: "Free sign-up is fastest — 7 days without card. Create a venue and test QR.",
+    newCustomerBody: "Free sign-up is fastest — {trialDays} without card. Create a venue and test QR.",
     enterpriseTitle: "Enterprise & chains",
     enterpriseBody: "Multiple locations, white-label, custom domain — contact for a tailored quote.",
     enterpriseBullets: ["Custom plans & SLA", "Onboarding help", "Billing from dashboard"],
@@ -254,9 +254,25 @@ export const PAGES_EN = {
   home: {
     trialCardTitle: "Start without risk",
     trialCardBody: "Create a venue, add items and test QR with your team before choosing a plan.",
-    trialBadge: "7-day trial",
+    trialBadge: "{trialDaysAdj} trial",
   },
   auth: {
+    errors: {
+      bad_request: "Invalid request.",
+      invalid_input: "Invalid details.",
+      invalid_email: "Invalid email.",
+      rate_limited: "Too many attempts. Try again later.",
+      invalid_credentials: "Wrong email or password.",
+      email_taken: "This email is already registered.",
+      otp_missing: "No code found. Send a new code to your email.",
+      otp_expired: "Code expired. Send a new code to your email.",
+      otp_locked: "Too many wrong attempts. Send a new code.",
+      otp_invalid: "Wrong code. Check your email.",
+      cooldown: "Wait {s}s before resending the code.",
+      mail_failed: "Could not send email. Try again shortly.",
+      duplicate: "This email or organization already exists.",
+      server_error: "Server issue. Try again shortly or email info@b-os.gr.",
+    },
     login: {
       title: "Welcome back",
       subtitle: "Sign in to your dashboard for menus, QR codes and billing.",

@@ -29,7 +29,7 @@ export const MARKETING_EN = {
       titleAccent: "on your guest's phone",
       subtitle:
         "For restaurants, hotels, beach bars and room service. Guests scan a QR → see items, prices and photos. You update from the dashboard — no reprints, no app download.",
-      ctaTrial: "Start free 7-day trial",
+      ctaTrial: "Start free {trialDaysAdj} trial",
       ctaPricing: "View pricing",
       ctaDemo: "See how it looks",
       trust: ["No app for guests", "Multiple QR languages", "Setup ~60 min", "Waiter call & table orders"],
@@ -89,7 +89,7 @@ export const MARKETING_EN = {
         {
           step: "1",
           title: "Create your account",
-          text: "Sign up in minutes. Free 7-day trial — no credit card.",
+          text: "Sign up in minutes. Free {trialDaysAdj} trial — no credit card.",
         },
         {
           step: "2",
@@ -175,7 +175,7 @@ export const MARKETING_EN = {
         },
         {
           q: "How fast can I go live?",
-          a: "With a basic menu, usually under one hour. Trial is 7 days.",
+          a: "With a basic menu, usually under one hour. Trial is {trialDays}.",
         },
         {
           q: "Can I have multiple locations?",
@@ -208,7 +208,7 @@ export const MARKETING_EN = {
       },
       {
         title: "Setup in ~60 minutes",
-        text: "No guest app, no IT team — browser only.",
+        text: "Simple setup from the dashboard — guests open the menu via QR, no app needed.",
       },
     ],
     hub: {
@@ -263,9 +263,9 @@ export const MARKETING_EN = {
     },
     howItWorks: {
       badge: "Step by step",
-      hero: "From sign-up to QR on the table — clear flow, no IT team.",
+      hero: "From sign-up to QR on the table — simple steps, no special setup.",
       introParagraphs: [
-        "Setting up MenuOS does not require an IT team or special hardware. After free sign-up, you create a venue, add categories and items, and download print-ready QR codes — in under an hour for a full menu.",
+        "After free sign-up, you create a venue, add categories and items, and download print-ready QR codes — in under an hour for a full menu.",
         "Each QR can include a table (?table=12), room (?room=101) or sunbed number — so waiter calls and orders reach the right spot. Guests open the menu on their phone, no app required; you update prices and availability live from the dashboard.",
       ],
     },
@@ -292,13 +292,13 @@ export const MARKETING_EN = {
     },
     pricing: {
       badge: "Pricing",
-      hero: "Start free for 7 days. Upgrade as you grow — no multi-year lock-in.",
+      hero: "Start free for {trialDays}. Upgrade as you grow — no multi-year lock-in.",
       introParagraphs: [
-        "MenuOS plans are simple and transparent: a free 7-day trial with no credit card, then Basic or Pro with monthly billing you can cancel anytime. No hidden fees, setup charges or annual lock-in — you only pay while you use the service.",
+        "MenuOS plans are simple and transparent: a free {trialDaysAdj} trial with no credit card, then Basic or Pro with monthly billing you can cancel anytime. No hidden fees, setup charges or annual lock-in — you only pay while you use the service.",
         "Basic fits one venue with up to 3 menus. Pro adds multiple venues, unlimited menus, PDF menu import and priority support. For chains and hotel groups with custom domain or white-label, contact us for Enterprise.",
       ],
       faq: [
-        { q: "Need a credit card for the trial?", a: "No. The 7-day trial starts with email and OTP verification." },
+        { q: "Need a credit card for the trial?", a: "No. The {trialDaysAdj} trial starts with email and OTP verification." },
         { q: "Can I change plan later?", a: "Yes. Upgrade Basic or Pro from billing. Enterprise — contact us." },
         { q: "What's in Enterprise?", a: "Custom domain, white-label, multiple venues, priority support — quote per project." },
         { q: "Any commitment?", a: "No. Monthly subscription, cancel anytime." },

@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  getDashboardCopy,
+  type DashboardLang,
+} from "@/content/dashboard-i18n";
+
 export type PdfPageKind = "digital" | "scan" | "cover";
 
 export type PdfPagePreview = {
@@ -26,21 +31,23 @@ function classifyPage(
   textLength: number,
   pageNumber: number,
   totalPages: number,
+  lang: DashboardLang = "EN",
 ): { kind: PdfPageKind; skipReason?: string; selected: boolean } {
+  const skip = getDashboardCopy(lang).importWizard;
   if (textLength < COVER_MAX_CHARS) {
     const reason =
       pageNumber === 1
-        ? "Cover / logo — παραλείπεται αυτόματα"
+        ? skip.skipCoverFirst
         : pageNumber === totalPages
-          ? "Τελευταία σελίδα — πιθανό back cover"
-          : "Λίγο ή καθόλου κείμενο";
+          ? skip.skipCoverLast
+          : skip.skipLowText;
     return { kind: "cover", skipReason: reason, selected: false };
   }
 
   if (pageNumber === 1 && textLength < MIN_DIGITAL_CHARS) {
     return {
       kind: "cover",
-      skipReason: "Πρώτη σελίδα — banner/logo",
+      skipReason: skip.skipBanner,
       selected: false,
     };
   }
@@ -48,7 +55,7 @@ function classifyPage(
   if (textLength < MIN_DIGITAL_CHARS) {
     return {
       kind: "scan",
-      skipReason: "Εικόνα/σάρωση — OCR",
+      skipReason: skip.skipScan,
       selected: true,
     };
   }
@@ -89,6 +96,7 @@ export async function loadPdfPagePreviews(
   file: File,
   fileIndex: number,
   onProgress?: (current: number, total: number) => void,
+  lang: DashboardLang = "EN",
 ): Promise<PdfPagePreview[]> {
   const pdfjs = await getPdfJs();
   const data = new Uint8Array(await file.arrayBuffer());
@@ -103,7 +111,7 @@ export async function loadPdfPagePreviews(
       renderPageThumbnail(page),
       pageTextLength(page),
     ]);
-    const classified = classifyPage(textLength, pageNumber, totalPages);
+    const classified = classifyPage(textLength, pageNumber, totalPages, lang);
     pages.push({
       id: `${fileIndex}-${pageNumber}`,
       fileName: file.name,
@@ -124,12 +132,16 @@ export async function loadPdfPagePreviews(
 export async function loadAllPdfPagePreviews(
   files: File[],
   onProgress?: (fileIndex: number, fileName: string, page: number, totalPages: number) => void,
+  lang: DashboardLang = "EN",
 ): Promise<PdfPagePreview[]> {
   const all: PdfPagePreview[] = [];
   for (let i = 0; i < files.length; i += 1) {
     const file = files[i]!;
-    const pages = await loadPdfPagePreviews(file, i, (page, total) =>
-      onProgress?.(i, file.name, page, total),
+    const pages = await loadPdfPagePreviews(
+      file,
+      i,
+      (page, total) => onProgress?.(i, file.name, page, total),
+      lang,
     );
     all.push(...pages);
   }

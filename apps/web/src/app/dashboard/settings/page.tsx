@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
 import { SettingsPageContent } from "@/components/dashboard/settings-page-content";
 import { getSession } from "@/lib/auth";
-import { buildPrivatePageMetadata } from "@/lib/seo";
+import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
-export const metadata: Metadata = buildPrivatePageMetadata("Settings", "/dashboard/settings");
+export async function generateMetadata(): Promise<Metadata> {
+  return buildDashboardPageMetadata("settings", "/dashboard/settings");
+}
 
 export default async function SettingsPage() {
   const session = await getSession();

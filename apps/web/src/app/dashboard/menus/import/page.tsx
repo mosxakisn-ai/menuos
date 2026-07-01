@@ -6,12 +6,11 @@ import { MenuImportPageIntro } from "@/components/dashboard/menu-import-page-int
 import { MenuImportWizard } from "@/components/dashboard/menu-import-wizard";
 import { getSession } from "@/lib/auth";
 import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
-import { buildPrivatePageMetadata } from "@/lib/seo";
+import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
-export const metadata: Metadata = buildPrivatePageMetadata(
-  "Import from PDF",
-  "/dashboard/menus/import",
-);
+export async function generateMetadata(): Promise<Metadata> {
+  return buildDashboardPageMetadata("import", "/dashboard/menus/import");
+}
 
 type Props = { searchParams: Promise<{ venue?: string }> };
 

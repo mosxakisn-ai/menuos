@@ -126,7 +126,7 @@ export async function POST(request: Request) {
   } catch (err) {
     const limit = planLimitErrorResponse(err);
     if (limit) {
-      return NextResponse.json({ error: limit.error, code: limit.code }, { status: limit.status });
+      return NextResponse.json({ code: limit.code }, { status: limit.status });
     }
     throw err;
   }

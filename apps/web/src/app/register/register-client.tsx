@@ -8,6 +8,7 @@ import { PasswordField } from "@/components/ui/password-field";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { useI18n } from "@/i18n/context";
 import { formatMessage } from "@/lib/format-message";
+import { resolveAuthError } from "@/lib/resolve-auth-error";
 import {
   type RegisterPlanIntent,
   registerSubmitLabel,
@@ -24,6 +25,7 @@ export default function RegisterPageClient({
   const router = useRouter();
   const { m } = useI18n();
   const R = m.pages.auth.register;
+  const authErrors = m.pages.auth.errors;
   const otpExpiredMsg = R.otpExpired;
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -95,11 +97,11 @@ export default function RegisterPageClient({
       try {
         data = (await res.json()) as typeof data;
       } catch {
-        setError(res.status >= 500 ? R.serverError : R.sendOtpFailed);
+        setError(res.status >= 500 ? authErrors.server_error : resolveAuthError(data, authErrors, R.sendOtpFailed));
         return;
       }
       if (!res.ok) {
-        setError(data.error ?? R.sendOtpFailed);
+        setError(resolveAuthError(data, authErrors, R.sendOtpFailed));
         if (data.retryAfterSeconds) setResendIn(data.retryAfterSeconds);
         return;
       }
@@ -143,11 +145,11 @@ export default function RegisterPageClient({
       try {
         data = (await res.json()) as typeof data;
       } catch {
-        setError(res.status >= 500 ? R.serverError : R.registerFailed);
+        setError(res.status >= 500 ? authErrors.server_error : resolveAuthError(data, authErrors, R.registerFailed));
         return;
       }
       if (!res.ok) {
-        setError(data.error ?? R.registerFailed);
+        setError(resolveAuthError(data, authErrors, R.registerFailed));
         if (data.code === "otp_expired" || data.code === "otp_missing" || data.code === "otp_locked") {
           setOtpSent(false);
           setOtpExpiresAt(null);

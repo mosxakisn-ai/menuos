@@ -77,7 +77,7 @@ export function MenuImportWizard({
   venues: Venue[];
   initialVenueId?: string;
 }) {
-  const { d } = useDashboardCopy();
+  const { d, lang } = useDashboardCopy();
   const W = d.importWizard;
   const initialPipeline = useMemo<PipelineStep[]>(
     () => [
@@ -163,7 +163,9 @@ export function MenuImportWizard({
 
     try {
       if (loadedPages.length === 0) {
-        loadedPages = await loadAllPdfPagePreviews(files, (fileIndex, fileName, page, total) => {
+        loadedPages = await loadAllPdfPagePreviews(
+          files,
+          (fileIndex, fileName, page, total) => {
           setPipeline((p) =>
             setStepStatus(p, "scan", {
               detail: W.loadingScanFile(fileName, page, total),
@@ -171,7 +173,9 @@ export function MenuImportWizard({
           );
           const fileWeight = 35 / files.length;
           setProgress(Math.min(35, 5 + fileIndex * fileWeight + (page / total) * fileWeight));
-        });
+        },
+          lang,
+        );
         loadedPages = selectMenuPagesOnly(loadedPages);
         setPages(loadedPages);
       }
@@ -254,7 +258,7 @@ export function MenuImportWizard({
       const detail = err instanceof Error && err.message.trim() ? err.message : W.parseFailed;
       setFlash({ type: "error", text: detail });
     }
-  }, [menuId, files, pages, showFromResponse, setFlash, initialPipeline, W]);
+  }, [menuId, files, pages, showFromResponse, setFlash, initialPipeline, W, lang]);
 
   function updateCategory(catId: string, patch: Partial<ParsedMenuCategoryDraft>) {
     setDraft((d) =>

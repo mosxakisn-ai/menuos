@@ -219,7 +219,7 @@ export function getSeoLandingCopy(
   const subject = buildSubject(config, locale);
   const context = buildContextPhrase(config, locale);
   const isEl = locale === "el";
-  const trial = trialDayLabels(trialDays);
+  const trial = trialDayLabels(trialDays, locale);
 
   const metaTitle =
     config.kind === "product"
@@ -232,7 +232,7 @@ export function getSeoLandingCopy(
 
   const metaDescription = isEl
     ? `Φτιάξτε ${product} για ${context}. Πολυγλωσσικό menu, ενημέρωση τιμών online, QR codes — δωρεάν δοκιμή ${trial.trialDaysGen}.`
-    : `Create a ${product} for ${context}. Multilingual menu, online price updates, QR codes — free 7-day trial.`;
+    : `Create a ${product} for ${context}. Multilingual menu, online price updates, QR codes — free ${trial.trialDaysAdj} trial.`;
 
   const h1 =
     config.kind === "product"
@@ -266,7 +266,7 @@ export function getSeoLandingCopy(
           : verticalSeo
             ? `Built for ${context} — premium look, multiple QR languages, ${verticalSeo.qrPlacementEn.toLowerCase()}.`
             : `Built for ${context} that want a premium look, multiple QR languages, and simple management without technical skills.`,
-        "Start with a free 7-day trial — no credit card. Download QR codes and go live the same day.",
+        `Start with a free ${trial.trialDaysAdj} trial — no credit card. Download QR codes and go live the same day.`,
       ];
 
   const bullets = isEl
@@ -361,7 +361,7 @@ export function getSeoLandingCopy(
     ctaTitle: isEl ? "Ξεκίνα δωρεάν σήμερα" : "Start free today",
     ctaDescription: isEl
       ? `${trial.trialDays} δοκιμή. Χωρίς κάρτα. Φτιάξε κατάλογο και δοκίμασε το QR.`
-      : "7-day trial. No credit card. Build your menu and test the QR.",
+      : `${trial.trialDaysAdj} trial. No credit card. Build your menu and test the QR.`,
     keywords,
   };
 }

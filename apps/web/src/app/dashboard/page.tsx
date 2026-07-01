@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
-import { isTrialPlan, getTrialPeriodDays } from "@menuos/shared";
+import { getTrialPeriodDays } from "@menuos/shared";
 import { DashboardOverviewContent } from "@/components/dashboard/dashboard-overview-content";
 import { DashboardPage as DashboardPageShell } from "@/components/dashboard/dashboard-page";
 import { getSession } from "@/lib/auth";
+import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
-import { buildPrivatePageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = buildPrivatePageMetadata("Επισκόπηση", "/dashboard");
+export async function generateMetadata(): Promise<Metadata> {
+  return buildDashboardPageMetadata("overview", "/dashboard");
+}
 
 type Props = { searchParams: Promise<{ welcome?: string }> };
 

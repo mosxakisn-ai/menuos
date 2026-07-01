@@ -126,7 +126,7 @@ export async function assertCanAddItemsInTransaction(
 
 export function planLimitErrorResponse(err: unknown) {
   if (err instanceof PlanLimitError) {
-    return { error: err.message, code: err.code, status: 403 as const };
+    return { code: err.code, status: 403 as const };
   }
   return null;
 }

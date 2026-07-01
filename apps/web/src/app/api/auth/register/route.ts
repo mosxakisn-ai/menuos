@@ -16,12 +16,12 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
+    return NextResponse.json({ code: "bad_request" }, { status: 400 });
   }
 
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Μη έγκυρα στοιχεία." }, { status: 400 });
+    return NextResponse.json({ code: "invalid_input" }, { status: 400 });
   }
 
   const { name, email, password, businessName, otp } = parsed.data;
@@ -33,10 +33,7 @@ export async function POST(request: Request) {
     return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
   }
   if (ipLimit === "limited") {
-    return NextResponse.json(
-      { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
-      { status: 429 },
-    );
+    return NextResponse.json({ code: "rate_limited" }, { status: 429 });
   }
 
   const emailLimit = await checkRateLimitOutcome(`register:email:${normalizedEmail}`, 10, 60 * 60 * 1000);
@@ -44,20 +41,17 @@ export async function POST(request: Request) {
     return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
   }
   if (emailLimit === "limited") {
-    return NextResponse.json(
-      { error: "Πολλές προσπάθειες για αυτό το email. Δοκίμασε αργότερα.", code: "rate_limited" },
-      { status: 429 },
-    );
+    return NextResponse.json({ code: "rate_limited" }, { status: 429 });
   }
 
   const otpCheck = await verifyRegistrationOtp(normalizedEmail, otp);
   if (!otpCheck.ok) {
-    return NextResponse.json({ error: otpCheck.error, code: otpCheck.code }, { status: 400 });
+    return NextResponse.json({ code: otpCheck.code }, { status: 400 });
   }
 
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
   if (existing) {
-    return NextResponse.json({ error: "Αυτό το email είναι ήδη εγγεγραμμένο.", code: "email_taken" }, { status: 409 });
+    return NextResponse.json({ code: "email_taken" }, { status: 409 });
   }
 
   let orgSlug = slugifyOrFallback(businessName, "org");
@@ -127,25 +121,13 @@ export async function POST(request: Request) {
   } catch (err) {
     const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
     if (code === "P2002") {
-      return NextResponse.json({ error: "Το email ή ο οργανισμός υπάρχει ήδη." }, { status: 409 });
+      return NextResponse.json({ code: "duplicate" }, { status: 409 });
     }
     console.error("[menuos] register create failed", err);
-    return NextResponse.json(
-      {
-        error: "Η εγγραφή απέτυχε. Στείλε νέο κωδικό στο email και δοκίμασε ξανά.",
-        code: "server_error",
-      },
-      { status: 503 },
-    );
+    return NextResponse.json({ code: "server_error" }, { status: 503 });
   }
   } catch (err) {
     console.error("[menuos] register failed", err);
-    return NextResponse.json(
-      {
-        error: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr.",
-        code: "server_error",
-      },
-      { status: 503 },
-    );
+    return NextResponse.json({ code: "server_error" }, { status: 503 });
   }
 }

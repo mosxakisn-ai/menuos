@@ -18,11 +18,9 @@ const CATALOG: Record<Locale, MenuOsMessages> = {
 
 export async function getMessages(locale: Locale): Promise<MenuOsMessages> {
   const base = CATALOG[locale] ?? CATALOG.el;
-  if (locale !== "el") return base;
-
   const trialDays = await getTrialDaysFromCatalog();
   return {
-    marketing: applyTrialDayPlaceholdersDeep(base.marketing, trialDays),
-    pages: applyTrialDayPlaceholdersDeep(base.pages, trialDays),
+    marketing: applyTrialDayPlaceholdersDeep(base.marketing, trialDays, locale),
+    pages: applyTrialDayPlaceholdersDeep(base.pages, trialDays, locale),
   };
 }

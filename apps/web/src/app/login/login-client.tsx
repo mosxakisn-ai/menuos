@@ -8,11 +8,13 @@ import { PasswordField } from "@/components/ui/password-field";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { useI18n } from "@/i18n/context";
 import { formatMessage } from "@/lib/format-message";
+import { resolveAuthError } from "@/lib/resolve-auth-error";
 
 export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string }) {
   const router = useRouter();
   const { m } = useI18n();
   const L = m.pages.auth.login;
+  const authErrors = m.pages.auth.errors;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -32,7 +34,7 @@ export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string
     const data = await res.json();
     setLoading(false);
     if (!res.ok) {
-      setError(data.error ?? L.failed);
+      setError(resolveAuthError(data, authErrors, L.failed));
       return;
     }
     router.push("/dashboard");

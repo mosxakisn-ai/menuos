@@ -11,9 +11,11 @@ import { UpgradeReasonBanner } from "@/components/dashboard/upgrade-reason-banne
 import { getSession } from "@/lib/auth";
 import { organizationHasActiveSubscription } from "@/lib/billing";
 import { getEnterprisePlanEntrySafe, listPlanCatalogEntriesSafe } from "@/lib/plan-catalog-service";
-import { buildPrivatePageMetadata } from "@/lib/seo";
+import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
-export const metadata: Metadata = buildPrivatePageMetadata("Συνδρομή", "/dashboard/billing");
+export async function generateMetadata(): Promise<Metadata> {
+  return buildDashboardPageMetadata("billing", "/dashboard/billing");
+}
 
 type Props = { searchParams: Promise<{ inactive?: string; trial?: string }> };
 

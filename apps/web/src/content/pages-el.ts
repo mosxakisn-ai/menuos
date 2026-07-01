@@ -70,7 +70,7 @@ export const PAGES_EL = {
     heroTitle: "Πώς λειτουργεί",
     eyebrow: "Η διαδικασία",
     sectionTitle: "Από την εγγραφή μέχρι το menu στο τραπέζι",
-    sectionDesc: "Έξι απλά βήματα. Χωρίς εγκατάσταση, χωρίς επανεκτύπωση, χωρίς τεχνικό τμήμα.",
+    sectionDesc: "Έξι απλά βήματα. Χωρίς εγκατάσταση, χωρίς επανεκτύπωση — ρύθμιση από το dashboard.",
     ctaButton: "Ξεκίνα τώρα — δωρεάν {trialDays}",
     cta: {
       title: "Θέλεις να το δεις πριν ξεκινήσεις;",
@@ -266,6 +266,22 @@ export const PAGES_EL = {
     trialBadge: "Δοκιμή {trialDaysGen}",
   },
   auth: {
+    errors: {
+      bad_request: "Λάθος αίτημα.",
+      invalid_input: "Μη έγκυρα στοιχεία.",
+      invalid_email: "Μη έγκυρο email.",
+      rate_limited: "Πολλές προσπάθειες. Δοκίμασε αργότερα.",
+      invalid_credentials: "Λάθος email ή κωδικός.",
+      email_taken: "Αυτό το email είναι ήδη εγγεγραμμένο.",
+      otp_missing: "Δεν βρέθηκε κωδικός. Στείλε νέο κωδικό στο email σου.",
+      otp_expired: "Ο κωδικός έληξε. Στείλε νέο κωδικό στο email σου.",
+      otp_locked: "Πολλές λανθασμένες προσπάθειες. Στείλε νέο κωδικό.",
+      otp_invalid: "Λάθος κωδικός. Έλεγξε το email σου.",
+      cooldown: "Περίμενε {s} δευτ. πριν ξαναστείλεις κωδικό.",
+      mail_failed: "Δεν ήταν δυνατή η αποστολή email. Δοκίμασε ξανά σε λίγο.",
+      duplicate: "Το email ή ο οργανισμός υπάρχει ήδη.",
+      server_error: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr.",
+    },
     login: {
       title: "Καλώς ήρθες πίσω",
       subtitle: "Σύνδεση στο dashboard σου για menus, QR και billing.",

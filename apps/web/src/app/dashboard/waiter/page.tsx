@@ -5,9 +5,11 @@ import { DashboardPage } from "@/components/dashboard/dashboard-page";
 import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { getSession } from "@/lib/auth";
-import { buildPrivatePageMetadata } from "@/lib/seo";
+import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
-export const metadata: Metadata = buildPrivatePageMetadata("Κλήσεις σερβιτόρου", "/dashboard/waiter");
+export async function generateMetadata(): Promise<Metadata> {
+  return buildDashboardPageMetadata("waiter", "/dashboard/waiter");
+}
 
 type Props = { searchParams: Promise<{ venue?: string }> };
 

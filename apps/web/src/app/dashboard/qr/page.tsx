@@ -5,9 +5,11 @@ import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-d
 import { VenueSpotsManager } from "@/components/dashboard/venue-spots-manager";
 import { MarkQrOnboarding } from "@/components/dashboard/mark-qr-onboarding";
 import { getSession } from "@/lib/auth";
-import { buildPrivatePageMetadata } from "@/lib/seo";
+import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
-export const metadata: Metadata = buildPrivatePageMetadata("Κωδικοί QR", "/dashboard/qr");
+export async function generateMetadata(): Promise<Metadata> {
+  return buildDashboardPageMetadata("qr", "/dashboard/qr");
+}
 
 type Props = { searchParams: Promise<{ venue?: string }> };
 

@@ -10,12 +10,12 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
+    return NextResponse.json({ code: "bad_request" }, { status: 400 });
   }
 
   const parsed = loginSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Μη έγκυρα στοιχεία." }, { status: 400 });
+    return NextResponse.json({ code: "invalid_input" }, { status: 400 });
   }
 
   const ip = clientIp(request);
@@ -24,30 +24,24 @@ export async function POST(request: Request) {
     return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
   }
   if (ipLimit === "limited") {
-    return NextResponse.json(
-      { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
-      { status: 429 },
-    );
+    return NextResponse.json({ code: "rate_limited" }, { status: 429 });
   }
   const emailLimit = await checkRateLimitOutcome(`login:email:${parsed.data.email}`, 10, 15 * 60 * 1000);
   if (emailLimit === "unavailable") {
     return NextResponse.json(RATE_LIMIT_SERVER_ERROR, { status: 503 });
   }
   if (emailLimit === "limited") {
-    return NextResponse.json(
-      { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
-      { status: 429 },
-    );
+    return NextResponse.json({ code: "rate_limited" }, { status: 429 });
   }
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (!user) {
-    return NextResponse.json({ error: "Λάθος email ή κωδικός." }, { status: 401 });
+    return NextResponse.json({ code: "invalid_credentials" }, { status: 401 });
   }
 
   const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
   if (!valid) {
-    return NextResponse.json({ error: "Λάθος email ή κωδικός." }, { status: 401 });
+    return NextResponse.json({ code: "invalid_credentials" }, { status: 401 });
   }
 
   const token = await createSessionToken({
