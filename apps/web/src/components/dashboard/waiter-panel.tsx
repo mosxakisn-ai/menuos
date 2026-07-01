@@ -2,12 +2,17 @@
 
 import { Bell } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { formatStaffStationsForLang, type OrderPayload, type VenueSpotType } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
-import { WaiterTableGrid } from "@/components/dashboard/waiter-table-grid";
+import {
+  WaiterTableGrid,
+  type MonitorViewTab,
+  type PassStationFilter,
+} from "@/components/dashboard/waiter-table-grid";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
-import type { OrderPayload, VenueSpotType } from "@menuos/shared";
+import { cn } from "@/lib/utils";
 
 type Venue = { id: string; name: string; slug?: string };
 type VenueSpot = { id: string; type: VenueSpotType; label: string };
@@ -39,13 +44,15 @@ export function WaiterPanel({
   initialVenueId,
   staffKey,
   staffViaCookie = false,
+  staffMember,
 }: {
   venues: Venue[];
   initialVenueId?: string;
   staffKey?: string;
   staffViaCookie?: boolean;
+  staffMember?: { name: string; stations: string[] } | null;
 }) {
-  const { d } = useDashboardCopy();
+  const { d, lang } = useDashboardCopy();
   const W = d.waiter;
   const resolvedInitial =
     initialVenueId && venues.some((v) => v.id === initialVenueId)
@@ -59,6 +66,8 @@ export function WaiterPanel({
   const [passCount, setPassCount] = useState(0);
   const [updatingCallId, setUpdatingCallId] = useState<string | null>(null);
   const [updatingPassId, setUpdatingPassId] = useState<string | null>(null);
+  const [monitorTab, setMonitorTab] = useState<MonitorViewTab>("all");
+  const [passStationFilter, setPassStationFilter] = useState<PassStationFilter>("all");
   const prevPendingRef = useRef<number | null>(null);
   const prevPassRef = useRef<number | null>(null);
   const prevCallsRef = useRef<WaiterCall[]>([]);
@@ -219,6 +228,20 @@ export function WaiterPanel({
   const activeVenue = venues.find((v) => v.id === venueId);
   const isManagerView = !staffViaCookie && !staffKey;
 
+  const monitorTabs: { id: MonitorViewTab; label: string }[] = [
+    { id: "all", label: W.monitorTabAll },
+    { id: "calls", label: W.monitorTabCalls },
+    { id: "pass", label: W.monitorTabPass },
+  ];
+
+  const passStationFilters: { id: PassStationFilter; label: string }[] = [
+    { id: "all", label: W.passFilterAll },
+    { id: "kitchen", label: W.passStation.kitchen },
+    { id: "bar", label: W.passStation.bar },
+    { id: "cold", label: W.passStation.cold },
+    { id: "dessert", label: W.passStation.dessert },
+  ];
+
   return (
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
@@ -226,6 +249,10 @@ export function WaiterPanel({
       {isManagerView ? (
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
           {W.managerViewBadge}
+        </p>
+      ) : staffMember ? (
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+          {W.staffViewBadge(staffMember.name, formatStaffStationsForLang(staffMember.stations, lang))}
         </p>
       ) : null}
 
@@ -263,6 +290,44 @@ export function WaiterPanel({
         )}
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        {monitorTabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setMonitorTab(tab.id)}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-sm font-medium transition",
+              monitorTab === tab.id
+                ? "bg-brand-navy text-white shadow-sm"
+                : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {monitorTab === "pass" ? (
+        <div className="flex flex-wrap gap-2">
+          {passStationFilters.map((filter) => (
+            <button
+              key={filter.id}
+              type="button"
+              onClick={() => setPassStationFilter(filter.id)}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-xs font-medium transition",
+                passStationFilter === filter.id
+                  ? "bg-orange-100 text-orange-900 ring-1 ring-orange-200"
+                  : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+              )}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       {spots.length === 0 ? (
         <Card className="border-dashed text-center">
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
@@ -274,6 +339,8 @@ export function WaiterPanel({
           spots={spots}
           calls={calls}
           passSignals={passSignals}
+          viewTab={monitorTab}
+          passStationFilter={passStationFilter}
           updatingCallId={updatingCallId}
           updatingPassId={updatingPassId}
           onUpdateCall={(callId, status) => void updateStatus(callId, status)}

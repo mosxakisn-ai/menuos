@@ -43,12 +43,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const cookieStore = await cookies();
   const initialLang = parseDashboardLang(cookieStore.get(DASHBOARD_LANG_COOKIE)?.value);
 
-  const pendingWaiterCount = await prisma.waiterCall.count({
-    where: {
-      venue: { organizationId: session.organizationId },
-      status: "PENDING",
-    },
-  });
+  const [pendingWaiterCount, passSignalCount] = await Promise.all([
+    prisma.waiterCall.count({
+      where: {
+        venue: { organizationId: session.organizationId },
+        status: "PENDING",
+      },
+    }),
+    prisma.passSignal.count({
+      where: {
+        venue: { organizationId: session.organizationId },
+        status: { in: ["READY", "PICKED_UP"] },
+      },
+    }),
+  ]);
+  const initialMonitorCount = pendingWaiterCount + passSignalCount;
 
   const org = await prisma.organization.findUnique({
     where: { id: session.organizationId },
@@ -93,7 +102,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <DashboardLocaleProvider initialLang={initialLang}>
       <div className="dashboard-shell flex min-h-screen bg-brand-surface">
-        <DashboardSidebar initialPendingCount={pendingWaiterCount} subscription={subscription} />
+        <DashboardSidebar initialPendingCount={initialMonitorCount} subscription={subscription} />
         <div className="flex min-w-0 flex-1 flex-col">
           <DashboardHeader
             businessName={business.name}
@@ -113,7 +122,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
           </main>
         </div>
-        <DashboardMobileNav initialPendingCount={pendingWaiterCount} />
+        <DashboardMobileNav initialPendingCount={initialMonitorCount} />
       </div>
     </DashboardLocaleProvider>
   );

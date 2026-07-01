@@ -228,6 +228,13 @@ export const DASHBOARD_EL = {
     newItems: "Νέα είδη",
     needVenueFirst: "Φτιάξε πρώτα κατάστημα για να λαμβάνεις κλήσεις από πελάτες.",
     managerViewBadge: "Προβολή: όλο το κατάστημα",
+    staffViewBadge: (name: string, stations: string) => `Προβολή: ${name} · ${stations}`,
+    monitorTabAll: "Χάρτης",
+    monitorTabCalls: "Κλήσεις",
+    monitorTabPass: "Πάσο",
+    passFilterAll: "Όλα",
+    emptyCallsTab: "Καμία ενεργή κλήση αυτή τη στιγμή.",
+    emptyPassTab: "Καμία ενεργή ειδοποίηση πάσου.",
     pendingCount: (n: number) => `${n} σε αναμονή`,
     refreshHint: "Ανανέωση κάθε 5 δευτ.",
     loadFailed: "Δεν φορτώθηκαν οι κλήσεις. Κάνε refresh ή άνοιξε ξανά το link από το dashboard.",
@@ -318,9 +325,9 @@ export const DASHBOARD_EL = {
   },
   nav: {
     overview: "Επισκόπηση",
-    waiter: "Σερβιτόρος",
+    waiter: "Οθόνες",
     qrShort: "QR",
-    callsShort: "Κλήσεις",
+    callsShort: "Οθόνες",
   },
   pages: {
     menus: {
@@ -401,10 +408,10 @@ export const DASHBOARD_EL = {
       } as Record<string, string>,
     },
     waiter: {
-      title: "Κλήσεις σερβιτόρου",
+      title: "Οθόνες",
       description:
-        "Live κλήσεις και πάσο — ενημερώνεται αυτόματα. Το link και ο κωδικός σερβιτόρου ρυθμίζονται από Ρυθμίσεις → Υπηρεσίες.",
-      setupLink: "Ρυθμίσεις → Υπηρεσίες",
+        "Live χάρτης θέσεων, κλήσεις και πάσο — ενημερώνεται αυτόματα. Τα links προσωπικού ρυθμίζονται από Ρυθμίσεις → Προσωπικό.",
+      setupLink: "Ρυθμίσεις → Προσωπικό",
     },
     billing: {
       title: "Συνδρομή",
@@ -538,7 +545,7 @@ export const DASHBOARD_EL = {
         description: "Link σερβιτόρου, push ειδοποιήσεις και live πάσα — κλήσεις πελάτη + μηνύματα τμημάτων.",
         passTitle: "Live πάσα",
         passHint: "Μένει μέχρι ο σερβιτόρος πατήσει «Παρέδωσα». Ο χάρτης θέσεων ενημερώνεται live στον πίνακα σερβιτόρου.",
-        livePanelLink: "Άνοιγμα live πίνακα σερβιτόρου →",
+        livePanelLink: "Άνοιγμα live οθονών →",
         minutesAgo: (n: number) => `πριν ${n} λεπ.`,
         tableLabel: (n: string) => `Τραπέζι ${n}`,
         historyTitle: "Ιστορικό πάσου",
@@ -688,7 +695,7 @@ export const DASHBOARD_EL = {
     menus: "Κατάλογος",
     import: "Εισαγωγή από PDF",
     qr: "QR Codes",
-    waiter: "Κλήσεις σερβιτόρου",
+    waiter: "Οθόνες",
     billing: "Συνδρομή",
     settings: "Ρυθμίσεις",
     newVenue: "Νέο κατάστημα",

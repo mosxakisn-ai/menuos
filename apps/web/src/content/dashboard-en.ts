@@ -225,6 +225,13 @@ export const DASHBOARD_EN = {
     newItems: "New items",
     needVenueFirst: "Create a venue first to receive calls from customers.",
     managerViewBadge: "View: entire venue",
+    staffViewBadge: (name: string, stations: string) => `View: ${name} · ${stations}`,
+    monitorTabAll: "Map",
+    monitorTabCalls: "Calls",
+    monitorTabPass: "Pass",
+    passFilterAll: "All",
+    emptyCallsTab: "No active calls right now.",
+    emptyPassTab: "No active pass notifications.",
     pendingCount: (n: number) => `${n} pending`,
     refreshHint: "Refreshes every 5 sec.",
     loadFailed: "Could not load calls. Refresh the page or open the link from the dashboard again.",
@@ -315,9 +322,9 @@ export const DASHBOARD_EN = {
   },
   nav: {
     overview: "Overview",
-    waiter: "Waiter",
+    waiter: "Screens",
     qrShort: "QR",
-    callsShort: "Calls",
+    callsShort: "Screens",
   },
   pages: {
     menus: {
@@ -396,10 +403,10 @@ export const DASHBOARD_EN = {
       } as Record<string, string>,
     },
     waiter: {
-      title: "Waiter calls",
+      title: "Screens",
       description:
-        "Live calls and pass signals — updates automatically. Waiter link and access code are managed under Settings → Services.",
-      setupLink: "Settings → Services",
+        "Live spot map, calls and pass — updates automatically. Personal staff links are set in Settings → Personnel.",
+      setupLink: "Settings → Personnel",
     },
     billing: {
       title: "Subscription",
@@ -532,7 +539,7 @@ export const DASHBOARD_EN = {
         description: "Waiter link, push alerts and live pass — guest calls plus department messages.",
         passTitle: "Live pass",
         passHint: "Stays visible until the waiter taps “Delivered”. The spot map updates live on the waiter panel.",
-        livePanelLink: "Open live waiter panel →",
+        livePanelLink: "Open live screens →",
         minutesAgo: (n: number) => `${n} min ago`,
         tableLabel: (n: string) => `Table ${n}`,
         historyTitle: "Pass history",
@@ -681,7 +688,7 @@ export const DASHBOARD_EN = {
     menus: "Catalog",
     import: "Import from PDF",
     qr: "QR Codes",
-    waiter: "Waiter calls",
+    waiter: "Screens",
     billing: "Subscription",
     settings: "Settings",
     newVenue: "New venue",

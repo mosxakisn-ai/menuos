@@ -155,7 +155,7 @@ export function DashboardOverviewContent({
                 {d.qrCodes}
               </Link>
               <Link href="/dashboard/waiter" className={buttonClass("secondary")}>
-                {d.calls} {d.overview.callsWaiterSuffix}
+                {d.nav.waiter}
               </Link>
               {firstVenueSlug ? (
                 <a

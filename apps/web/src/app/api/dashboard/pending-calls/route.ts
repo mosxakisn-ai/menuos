@@ -6,12 +6,26 @@ export async function GET() {
   const auth = await requireActiveSubscription();
   if (auth.response) return auth.response;
 
-  const pendingCount = await prisma.waiterCall.count({
-    where: {
-      venue: { organizationId: auth.session!.organizationId },
-      status: "PENDING",
-    },
-  });
+  const organizationId = auth.session!.organizationId;
 
-  return NextResponse.json({ pendingCount });
+  const [pendingCount, passCount] = await Promise.all([
+    prisma.waiterCall.count({
+      where: {
+        venue: { organizationId },
+        status: "PENDING",
+      },
+    }),
+    prisma.passSignal.count({
+      where: {
+        venue: { organizationId },
+        status: { in: ["READY", "PICKED_UP"] },
+      },
+    }),
+  ]);
+
+  return NextResponse.json({
+    pendingCount,
+    passCount,
+    activeCount: pendingCount + passCount,
+  });
 }

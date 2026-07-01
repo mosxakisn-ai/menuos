@@ -6,6 +6,7 @@ import {
   buildTableGridTiles,
   formatOrderLineDetail,
   passStationDbToInput,
+  passStationInputToDb,
   type TableGridCall,
   type TableGridPassSignal,
   type TableGridSpot,
@@ -16,6 +17,9 @@ import { TableGridLegend, TABLE_TILE_STYLES } from "@/components/dashboard/table
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+export type MonitorViewTab = "all" | "calls" | "pass";
+export type PassStationFilter = "all" | "kitchen" | "bar" | "cold" | "dessert";
 
 function isOrderUpdated(call: TableGridCall): boolean {
   if (call.type !== "ORDER" || !call.createdAt || !call.updatedAt) return false;
@@ -32,8 +36,19 @@ function formatOrderSummary(call: TableGridCall): string | null {
   return `${head} +${lines.length - 1}`;
 }
 
+function filterPasses(
+  passes: TableGridPassSignal[],
+  passStationFilter: PassStationFilter,
+): TableGridPassSignal[] {
+  if (passStationFilter === "all") return passes;
+  const dbStation = passStationInputToDb(passStationFilter);
+  return passes.filter((pass) => pass.station === dbStation);
+}
+
 function WaiterSpotTile({
   tile,
+  viewTab,
+  passStationFilter,
   callTypeLabels,
   passStationLabels,
   callStatusLabels,
@@ -44,6 +59,8 @@ function WaiterSpotTile({
   onUpdatePass,
 }: {
   tile: TableGridTile;
+  viewTab: MonitorViewTab;
+  passStationFilter: PassStationFilter;
   callTypeLabels: Record<string, string>;
   passStationLabels: Record<string, string>;
   callStatusLabels: Record<string, string>;
@@ -60,7 +77,10 @@ function WaiterSpotTile({
   onUpdateCall: (callId: string, status: "ACKNOWLEDGED" | "COMPLETED") => void;
   onUpdatePass: (signalId: string, status: "PICKED_UP" | "DELIVERED") => void;
 }) {
-  const hasActivity = tile.activeCalls.length > 0 || tile.activePasses.length > 0;
+  const visibleCalls = viewTab === "pass" ? [] : tile.activeCalls;
+  const visiblePasses =
+    viewTab === "calls" ? [] : filterPasses(tile.activePasses, passStationFilter);
+  const hasActivity = visibleCalls.length > 0 || visiblePasses.length > 0;
 
   return (
     <div
@@ -81,7 +101,7 @@ function WaiterSpotTile({
 
       {hasActivity ? (
         <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-          {tile.activeCalls.map((call, index) => (
+          {visibleCalls.map((call, index) => (
             <div
               key={call.id ?? `call-${index}`}
               className="rounded-lg border border-black/5 bg-white/60 p-1.5"
@@ -136,7 +156,7 @@ function WaiterSpotTile({
             </div>
           ))}
 
-          {tile.activePasses.map((pass, index) => {
+          {visiblePasses.map((pass, index) => {
             const stationKey = passStationDbToInput(pass.station);
             const baseStationLabel =
               passStationLabels[stationKey as keyof typeof passStationLabels] ?? pass.station;
@@ -186,10 +206,22 @@ function WaiterSpotTile({
   );
 }
 
+function tileMatchesView(
+  tile: TableGridTile,
+  viewTab: MonitorViewTab,
+  passStationFilter: PassStationFilter,
+): boolean {
+  if (viewTab === "all") return true;
+  if (viewTab === "calls") return tile.activeCalls.length > 0;
+  return filterPasses(tile.activePasses, passStationFilter).length > 0;
+}
+
 export function WaiterTableGrid({
   spots,
   calls,
   passSignals,
+  viewTab,
+  passStationFilter,
   updatingCallId,
   updatingPassId,
   onUpdateCall,
@@ -198,6 +230,8 @@ export function WaiterTableGrid({
   spots: TableGridSpot[];
   calls: TableGridCall[];
   passSignals: TableGridPassSignal[];
+  viewTab: MonitorViewTab;
+  passStationFilter: PassStationFilter;
   updatingCallId: string | null;
   updatingPassId: string | null;
   onUpdateCall: (callId: string, status: "ACKNOWLEDGED" | "COMPLETED") => void;
@@ -206,42 +240,56 @@ export function WaiterTableGrid({
   const { d } = useDashboardCopy();
   const W = d.waiter;
 
-  const tiles = useMemo(
-    () => buildTableGridTiles(spots, calls, passSignals),
-    [spots, calls, passSignals],
-  );
+  const tiles = useMemo(() => {
+    const built = buildTableGridTiles(spots, calls, passSignals);
+    return built.filter((tile) => tileMatchesView(tile, viewTab, passStationFilter));
+  }, [spots, calls, passSignals, viewTab, passStationFilter]);
 
   if (spots.length === 0) return null;
 
   const stateLabels = W.tableStateLabels as Record<TableTileState, string>;
+  const emptyMessage =
+    viewTab === "calls"
+      ? W.emptyCallsTab
+      : viewTab === "pass"
+        ? W.emptyPassTab
+        : null;
 
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold text-brand-navy">{W.tableGridTitle}</h2>
       <TableGridLegend stateLabels={stateLabels} />
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        {tiles.map((tile) => (
-          <WaiterSpotTile
-            key={tile.spotId}
-            tile={tile}
-            callTypeLabels={W.callType}
-            passStationLabels={W.passStation}
-            callStatusLabels={W.callStatus}
-            labels={{
-              goButton: W.goButton,
-              completeButton: W.completeButton,
-              passPickedUp: W.passPickedUp,
-              passDelivered: W.passDelivered,
-              newItems: W.newItems,
-              orderTotal: W.orderTotal,
-            }}
-            updatingCallId={updatingCallId}
-            updatingPassId={updatingPassId}
-            onUpdateCall={onUpdateCall}
-            onUpdatePass={onUpdatePass}
-          />
-        ))}
-      </div>
+      {tiles.length === 0 && emptyMessage ? (
+        <p className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
+          {emptyMessage}
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {tiles.map((tile) => (
+            <WaiterSpotTile
+              key={tile.spotId}
+              tile={tile}
+              viewTab={viewTab}
+              passStationFilter={passStationFilter}
+              callTypeLabels={W.callType}
+              passStationLabels={W.passStation}
+              callStatusLabels={W.callStatus}
+              labels={{
+                goButton: W.goButton,
+                completeButton: W.completeButton,
+                passPickedUp: W.passPickedUp,
+                passDelivered: W.passDelivered,
+                newItems: W.newItems,
+                orderTotal: W.orderTotal,
+              }}
+              updatingCallId={updatingCallId}
+              updatingPassId={updatingPassId}
+              onUpdateCall={onUpdateCall}
+              onUpdatePass={onUpdatePass}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
