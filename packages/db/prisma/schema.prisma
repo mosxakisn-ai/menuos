@@ -185,6 +185,7 @@ model Venue {
   waiterCalls       WaiterCall[]
   passSignals       PassSignal[]
   spots             VenueSpot[]
+  staffMembers      VenueStaffMember[]
   settings          VenueSetting?
   pushSubscriptions PushSubscription[]
 
@@ -215,6 +216,21 @@ model VenueSpot {
   venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@unique([venueId, type, label])
+  @@index([venueId, sortOrder])
+}
+
+model VenueStaffMember {
+  id        String   @id @default(cuid())
+  venueId   String
+  name      String   @db.VarChar(60)
+  roleLabel String   @db.VarChar(40)
+  stations  String[]
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
   @@index([venueId, sortOrder])
 }
 

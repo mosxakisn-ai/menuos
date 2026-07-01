@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Check, Copy, ExternalLink, RefreshCw } from "lucide-react";
-import { DemoBadge } from "@/components/dashboard/settings-demo-badge";
 import { PassSignalHistoryPanel } from "@/components/dashboard/pass-signal-history-panel";
 import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
+import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
 import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
-import { getSettingsDemo } from "@/content/settings-demo";
 import { clientShareOrigin } from "@/lib/client-share-origin";
 import type { SettingsVenue } from "@/components/dashboard/settings-form";
 
@@ -44,48 +43,8 @@ function buildScreenUrl(path: "/kds" | "/bds" | "/cold" | "/dessert", slug: stri
   return u.toString();
 }
 
-export function SettingsPersonnelPanel() {
-  const { d, lang } = useDashboardCopy();
-  const S = d.pages.settings;
-  const demo = getSettingsDemo(lang);
-
-  return (
-    <div className="space-y-5">
-      <div className={dashboardCardClass}>
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold text-primary">{S.personnel.title}</h2>
-          <DemoBadge>{S.demoBadge}</DemoBadge>
-        </div>
-        <p className="mt-2 text-sm text-slate-600">{S.personnel.description}</p>
-        <button type="button" disabled className={`mt-4 ${buttonClass("secondary", "md")}`}>
-          {S.personnel.addStaff}
-        </button>
-      </div>
-
-      <div className={dashboardCardClass}>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[480px] text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 text-left text-slate-500">
-                <th className="pb-3 pr-4 font-medium">{S.personnel.colName}</th>
-                <th className="pb-3 pr-4 font-medium">{S.personnel.colRole}</th>
-                <th className="pb-3 font-medium">{S.personnel.colStations}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {demo.staff.map((row) => (
-                <tr key={row.id}>
-                  <td className="py-3 pr-4 font-medium text-brand-navy">{row.name}</td>
-                  <td className="py-3 pr-4 text-slate-700">{row.role}</td>
-                  <td className="py-3 text-slate-600">{row.stations.join(", ")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+export function SettingsPersonnelPanel({ venues }: { venues: VenueSpotVenue[] }) {
+  return <VenueStaffSetup venues={venues} />;
 }
 
 function StationScreenPanel({

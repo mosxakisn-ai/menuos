@@ -89,7 +89,7 @@ function SettingsPageBody({
       case "general":
         return <SettingsGeneralTab email={email} name={name} role={role} venues={venues} />;
       case "personnel":
-        return <SettingsPersonnelPanel />;
+        return <SettingsPersonnelPanel venues={spotVenues} />;
       case "kitchen":
         return <SettingsKitchenPanel venues={venues} />;
       case "bar":
