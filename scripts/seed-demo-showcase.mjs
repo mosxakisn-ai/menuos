@@ -79,7 +79,7 @@ const PASS_HISTORY = [
 ];
 
 const WAITER_CALLS = [
-  { type: "WAITER", table: "15" },
+  { type: "WAITER", table: "11" },
   { type: "BILL", table: "5" },
   {
     type: "ORDER",
@@ -163,6 +163,24 @@ async function ensureVenueSettings(venueId, venueName) {
 }
 
 async function ensureStationScreens(venueId) {
+  const venue = await prisma.venue.findUnique({
+    where: { id: venueId },
+    select: {
+      kitchenScreenToken: true,
+      barScreenToken: true,
+      coldScreenToken: true,
+      dessertScreenToken: true,
+    },
+  });
+  if (!venue) return [];
+
+  const legacyTokens = {
+    KITCHEN: venue.kitchenScreenToken,
+    BAR: venue.barScreenToken,
+    COLD: venue.coldScreenToken,
+    DESSERT: venue.dessertScreenToken,
+  };
+
   const stations = [
     { station: "KITCHEN", label: "Κουζίνα" },
     { station: "BAR", label: "Μπαρ" },
@@ -171,8 +189,7 @@ async function ensureStationScreens(venueId) {
     { station: "DESSERT", label: "Γλυκά" },
   ];
 
-  for (let i = 0; i < stations.length; i++) {
-    const { station, label } = stations[i];
+  for (const { station, label } of stations) {
     const found = await prisma.venueStationScreen.findFirst({
       where: { venueId, station, label },
     });
@@ -183,7 +200,7 @@ async function ensureStationScreens(venueId) {
           venueId,
           station,
           label,
-          screenToken: randomUUID(),
+          screenToken: count === 0 ? legacyTokens[station] : randomUUID(),
           sortOrder: count,
         },
       });

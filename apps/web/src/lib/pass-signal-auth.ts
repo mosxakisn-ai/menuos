@@ -5,8 +5,7 @@ import { getSession } from "@/lib/auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 import { getOrganizationPlanContext } from "@/lib/billing";
 import { resolveStaffKey, resolveVenueByStaffKey, type StaffVenueContext } from "@/lib/staff-auth";
-import { legacyVenueTokenMatches, resolveStationScreenByToken, countStationScreens } from "@/lib/station-screens";
-import { passStationInputToDb } from "@menuos/shared";
+import { legacyVenueTokenMatches, resolvePrimaryStationScreen, resolveStationScreenByToken } from "@/lib/station-screens";
 
 export type PassSignalVenue = StaffVenueContext & {
   kitchenScreenToken: string;
@@ -97,20 +96,8 @@ export async function authorizePassSignalCreate(
       return { venue, stationScreen, response: null };
     }
     if (legacyVenueTokenMatches(venue, input.station, key)) {
-      const dbStation = passStationInputToDb(input.station);
-      const screenCount = await countStationScreens(venue.id, dbStation);
-      if (screenCount === 0) {
-        return { venue, stationScreen: null, response: null };
-      }
-      const matched = await resolveStationScreenByToken(venue.id, input.station, key);
-      if (!matched) {
-        return {
-          venue: null,
-          stationScreen: null,
-          response: NextResponse.json({ error: "Μη εξουσιοδοτημένο.", code: "unauthorized" }, { status: 401 }),
-        };
-      }
-      return { venue, stationScreen: matched, response: null };
+      const primary = await resolvePrimaryStationScreen(venue.id, input.station);
+      return { venue, stationScreen: primary, response: null };
     }
     return {
       venue: null,

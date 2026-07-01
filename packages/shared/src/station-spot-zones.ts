@@ -95,6 +95,15 @@ export function groupVenueSpotsByZone(spots: ZoneSpotInput[]): SpotZoneGroup[] {
     });
 }
 
+export function findZoneIdForSpot(groups: SpotZoneGroup[], spot: ZoneSpotInput): string | null {
+  for (const group of groups) {
+    if (group.spots.some((entry) => entry.spot.type === spot.type && entry.spot.label === spot.label)) {
+      return group.id;
+    }
+  }
+  return null;
+}
+
 export function pickDefaultZoneId(groups: SpotZoneGroup[]): string | null {
   return groups[0]?.id ?? null;
 }

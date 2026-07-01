@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
+  findZoneIdForSpot,
   groupVenueSpotsByZone,
   pickDefaultZoneId,
   type PassStationInput,
@@ -63,6 +64,8 @@ const COPY = {
 
 export type StationScreenKind = keyof typeof COPY;
 
+const EMPTY_SPOTS: ScreenSpot[] = [];
+
 function spotSelected(selected: ScreenSpot | null, spot: ScreenSpot): boolean {
   return selected?.type === spot.type && selected.label === spot.label;
 }
@@ -103,7 +106,10 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     void load();
   }, [load]);
 
-  const spots = ctx?.spots?.length ? ctx.spots : [];
+  const spots = useMemo(
+    () => (ctx?.spots?.length ? ctx.spots : EMPTY_SPOTS),
+    [ctx?.spots],
+  );
   const zoneGroups = useMemo(() => groupVenueSpotsByZone(spots), [spots]);
 
   useEffect(() => {
@@ -113,6 +119,19 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const activeZone = zoneGroups.find((z) => z.id === activeZoneId) ?? zoneGroups[0];
   const visibleSpots = activeZone?.spots ?? [];
+
+  function selectSpot(spot: ScreenSpot) {
+    setTable(spot);
+    const zoneId = findZoneIdForSpot(zoneGroups, spot);
+    if (zoneId) setActiveZoneId(zoneId);
+  }
+
+  function selectZone(zoneId: string) {
+    setActiveZoneId(zoneId);
+    if (table && findZoneIdForSpot(zoneGroups, table) !== zoneId) {
+      setTable(null);
+    }
+  }
 
   async function send() {
     const manual = manualTable.trim();
@@ -187,7 +206,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                         type="button"
                         role="tab"
                         aria-selected={activeZone?.id === zone.id}
-                        onClick={() => setActiveZoneId(zone.id)}
+                        onClick={() => selectZone(zone.id)}
                         className={cn(
                           "shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
                           activeZone?.id === zone.id
@@ -209,7 +228,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                       <button
                         key={`${spot.type}-${spot.label}`}
                         type="button"
-                        onClick={() => setTable(spot)}
+                        onClick={() => selectSpot(spot)}
                         className={cn(
                           "flex min-h-[5.25rem] flex-col items-center justify-center rounded-2xl border-2 px-2 py-3 transition sm:min-h-[6rem]",
                           selected

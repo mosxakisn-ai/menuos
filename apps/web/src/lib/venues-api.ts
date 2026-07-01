@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { venueSchema, venueUpdateSchema } from "@menuos/shared";
+import {
+  DEFAULT_STATION_SCREEN_LABELS_EL,
+  passStationInputToDb,
+  venueSchema,
+  venueUpdateSchema,
+  type PassStationInput,
+} from "@menuos/shared";
 import { canOrganizationAddVenue } from "@/lib/billing";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 import {
@@ -8,7 +14,10 @@ import {
   planLimitErrorResponse,
   serializableTransaction,
 } from "@/lib/plan-limits";
+import { legacyVenueScreenToken } from "@/lib/station-screens";
 import { allocateGlobalVenueSlug, baseVenueSlug } from "@/lib/venue-slug";
+
+const DEFAULT_STATION_SCREENS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
 
 export async function createVenueHandler(request: Request, organizationId: string) {
   const copy = dashboardCopyFromRequest(request);
@@ -41,7 +50,7 @@ export async function createVenueHandler(request: Request, organizationId: strin
   try {
     const venue = await prisma.$transaction(async (tx) => {
       await assertCanAddVenueInTransaction(tx, organizationId);
-      return tx.venue.create({
+      const created = await tx.venue.create({
         data: {
           organizationId,
           name: parsed.data.name,
@@ -57,6 +66,20 @@ export async function createVenueHandler(request: Request, organizationId: strin
         },
         include: { menus: true },
       });
+
+      for (const station of DEFAULT_STATION_SCREENS) {
+        await tx.venueStationScreen.create({
+          data: {
+            venueId: created.id,
+            station: passStationInputToDb(station),
+            label: DEFAULT_STATION_SCREEN_LABELS_EL[station],
+            screenToken: legacyVenueScreenToken(created, station),
+            sortOrder: 0,
+          },
+        });
+      }
+
+      return created;
     }, serializableTransaction);
 
     return NextResponse.json({ venue, message: copy.venueCreated });

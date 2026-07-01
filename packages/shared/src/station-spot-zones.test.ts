@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupVenueSpotsByZone, pickDefaultZoneId } from "./station-spot-zones";
+import { findZoneIdForSpot, groupVenueSpotsByZone, pickDefaultZoneId } from "./station-spot-zones";
 
 describe("groupVenueSpotsByZone", () => {
   it("groups plain tables under Σαλόνι", () => {
@@ -31,6 +31,16 @@ describe("groupVenueSpotsByZone", () => {
       { type: "ROOM", label: "101" },
     ]);
     expect(groups.map((g) => g.label)).toEqual(["Σαλόνι", "Ξαπλώστρες", "Δωμάτια"]);
+  });
+});
+
+describe("findZoneIdForSpot", () => {
+  it("returns zone id for a spot", () => {
+    const groups = groupVenueSpotsByZone([
+      { type: "TABLE", label: "5" },
+      { type: "TABLE", label: "Αυλή-1" },
+    ]);
+    expect(findZoneIdForSpot(groups, { type: "TABLE", label: "Αυλή-1" })).toBe("prefix:αυλή");
   });
 });
 

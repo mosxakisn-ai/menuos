@@ -9,7 +9,7 @@ import {
   zodFirstErrorMessage,
 } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
-import { countStationScreens, isStationScreenLabelTaken, listStationScreens, nextStationScreenSortOrder } from "@/lib/station-screens";
+import { countStationScreens, isStationScreenLabelTaken, legacyVenueScreenToken, listStationScreens, nextStationScreenSortOrder, syncLegacyVenueToken } from "@/lib/station-screens";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ venueId: string }> };
@@ -70,16 +70,36 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const sortOrder = await nextStationScreenSortOrder(venueId, dbStation);
+  const isFirst = count === 0;
+  const venueRow = isFirst
+    ? await prisma.venue.findUnique({
+        where: { id: venueId },
+        select: {
+          kitchenScreenToken: true,
+          barScreenToken: true,
+          coldScreenToken: true,
+          dessertScreenToken: true,
+        },
+      })
+    : null;
+  const screenToken = isFirst && venueRow
+    ? legacyVenueScreenToken(venueRow, parsed.data.station)
+    : randomUUID();
+
   const screen = await prisma.venueStationScreen.create({
     data: {
       venueId,
       station: dbStation,
       label: parsed.data.label,
-      screenToken: randomUUID(),
+      screenToken,
       sortOrder,
     },
     select: { id: true, label: true, screenToken: true, sortOrder: true },
   });
+
+  if (isFirst) {
+    await syncLegacyVenueToken(venueId, parsed.data.station, screenToken);
+  }
 
   return NextResponse.json({ screen, message: "Η οθόνη προστέθηκε." });
 }

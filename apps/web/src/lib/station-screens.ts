@@ -54,12 +54,41 @@ export async function resolveStationScreenByToken(
   });
 }
 
+export async function resolvePrimaryStationScreen(
+  venueId: string,
+  station: PassStationInput,
+): Promise<{ id: string; label: string } | null> {
+  const dbStation = passStationInputToDb(station);
+  return prisma.venueStationScreen.findFirst({
+    where: { venueId, station: dbStation },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    select: { id: true, label: true },
+  });
+}
+
+export function legacyVenueScreenToken(
+  venue: {
+    kitchenScreenToken: string;
+    barScreenToken: string;
+    coldScreenToken: string;
+    dessertScreenToken: string;
+  },
+  station: PassStationInput,
+): string {
+  return venue[LEGACY_TOKEN_FIELDS[station]];
+}
+
 export function legacyVenueTokenMatches(
-  venue: Record<string, string>,
+  venue: {
+    kitchenScreenToken: string;
+    barScreenToken: string;
+    coldScreenToken: string;
+    dessertScreenToken: string;
+  },
   station: PassStationInput,
   screenToken: string,
 ): boolean {
-  return venue[LEGACY_TOKEN_FIELDS[station]] === screenToken;
+  return legacyVenueScreenToken(venue, station) === screenToken;
 }
 
 export async function syncLegacyVenueToken(
