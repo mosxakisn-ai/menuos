@@ -3,11 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { resolveVenueByStaffKey, resolveVenueByStaffSlug } from "@/lib/staff-auth";
-import {
-  clearStaffSessionCookie,
-  readStaffSessionFromCookies,
-  setStaffSessionCookie,
-} from "@/lib/staff-session";
+import { readStaffSessionFromCookies } from "@/lib/staff-session";
 
 export const metadata: Metadata = {
   title: "Σερβιτόρος — MenuOS",
@@ -27,8 +23,8 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   if (incomingKey) {
     const venue = await resolveVenueByStaffSlug(venueSlug, incomingKey);
     if (!venue) notFound();
-    await setStaffSessionCookie(venue.id, incomingKey);
-    redirect(`/s/${venueSlug}`);
+    const params = new URLSearchParams({ venueSlug, key: incomingKey });
+    redirect(`/api/staff/session?${params.toString()}`);
   }
 
   const session = await readStaffSessionFromCookies();
@@ -36,7 +32,6 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
 
   const venue = await resolveVenueByStaffKey(session.venueId, session.staffToken);
   if (!venue || venue.slug !== venueSlug) {
-    await clearStaffSessionCookie();
     notFound();
   }
 

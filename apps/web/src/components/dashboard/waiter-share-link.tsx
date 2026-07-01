@@ -26,7 +26,8 @@ export function WaiterShareLink({
 
   useEffect(() => {
     if (!venueSlug || !staffToken) return;
-    const u = new URL(`/s/${venueSlug}`, window.location.origin);
+    const u = new URL("/api/staff/session", window.location.origin);
+    u.searchParams.set("venueSlug", venueSlug);
     u.searchParams.set("key", staffToken);
     setUrl(u.toString());
   }, [venueSlug, staffToken]);
