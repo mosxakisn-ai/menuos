@@ -1,0 +1,90 @@
+const OCR_SPACE_URL = "https://api.ocr.space/parse/image";
+const MAX_IMAGE_BYTES = 980_000;
+
+export class OcrSpaceError extends Error {
+  constructor(
+    message: string,
+    readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "OcrSpaceError";
+  }
+}
+
+type OcrSpaceResponse = {
+  OCRExitCode?: number;
+  IsErroredOnProcessing?: boolean;
+  ErrorMessage?: string | string[];
+  ParsedResults?: Array<{ ParsedText?: string }>;
+};
+
+export function isOcrSpaceConfigured(): boolean {
+  return Boolean(process.env.OCR_SPACE_API_KEY?.trim());
+}
+
+function ocrApiUrl(): string {
+  return process.env.OCR_SPACE_API_URL?.trim() || OCR_SPACE_URL;
+}
+
+function ocrEngine(): string {
+  return process.env.OCR_SPACE_ENGINE?.trim() || "2";
+}
+
+function ocrLanguage(): string {
+  return process.env.OCR_SPACE_LANGUAGE?.trim() || "auto";
+}
+
+function formatOcrError(data: OcrSpaceResponse): string {
+  const raw = data.ErrorMessage;
+  if (Array.isArray(raw)) return raw.join("; ");
+  if (typeof raw === "string" && raw.trim()) return raw.trim();
+  return "Αποτυχία OCR.";
+}
+
+/** OCR.space — 1 image buffer → plain text (free tier: 1MB, 500 req/day). */
+export async function ocrImageBuffer(imageBuffer: Buffer, fileName: string): Promise<string> {
+  const apiKey = process.env.OCR_SPACE_API_KEY?.trim();
+  if (!apiKey) {
+    throw new OcrSpaceError("Δεν έχει ρυθμιστεί OCR_SPACE_API_KEY.");
+  }
+  if (imageBuffer.length > MAX_IMAGE_BYTES) {
+    throw new OcrSpaceError(
+      `Η εικόνα «${fileName}» είναι πολύ μεγάλη για το δωρεάν OCR (max ~1MB).`,
+    );
+  }
+
+  const form = new FormData();
+  form.append(
+    "file",
+    new Blob([new Uint8Array(imageBuffer)], { type: "image/jpeg" }),
+    fileName.endsWith(".jpg") ? fileName : `${fileName}.jpg`,
+  );
+  form.append("language", ocrLanguage());
+  form.append("isTable", "true");
+  form.append("scale", "true");
+  form.append("detectOrientation", "true");
+  form.append("OCREngine", ocrEngine());
+  form.append("filetype", "JPG");
+
+  const res = await fetch(ocrApiUrl(), {
+    method: "POST",
+    headers: { apikey: apiKey },
+    body: form,
+  });
+
+  if (!res.ok) {
+    throw new OcrSpaceError(`OCR API HTTP ${res.status}`, res.status);
+  }
+
+  const data = (await res.json()) as OcrSpaceResponse;
+  if (data.IsErroredOnProcessing || data.OCRExitCode !== 1) {
+    throw new OcrSpaceError(formatOcrError(data));
+  }
+
+  return (
+    data.ParsedResults?.map((r) => r.ParsedText?.trim() ?? "")
+      .filter(Boolean)
+      .join("\n\n")
+      .trim() ?? ""
+  );
+}

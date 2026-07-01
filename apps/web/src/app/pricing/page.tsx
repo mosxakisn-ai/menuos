@@ -73,7 +73,11 @@ export default async function PricingPage() {
               description={plan.description}
               features={[...plan.features]}
               cta={plan.cta}
-              href="/register"
+              href={
+                plan.planId === "ENTERPRISE"
+                  ? "/epikoinonia"
+                  : `/register?plan=${encodeURIComponent(plan.planId.toLowerCase())}`
+              }
               highlighted={"highlighted" in plan ? !!plan.highlighted : false}
               badge={"badge" in plan ? plan.badge : undefined}
             />

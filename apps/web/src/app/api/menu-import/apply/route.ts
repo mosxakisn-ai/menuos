@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { menuImportApplySchema, buildMenuNameTranslations } from "@menuos/shared";
 import { requirePdfImportPlan } from "@/lib/api-auth";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 import {
   assertCanAddItemsInTransaction,
   planLimitErrorResponse,
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   );
 
   if (selectedItems.length === 0) {
-    return NextResponse.json({ error: "Επίλεξε τουλάχιστον ένα πιάτο." }, { status: 400 });
+    return NextResponse.json({ error: `Επίλεξε τουλάχιστον ένα ${DASHBOARD_EL.catalogEntry.one}.` }, { status: 400 });
   }
 
   const currentCount = await prisma.item.count({
@@ -130,6 +131,6 @@ export async function POST(request: Request) {
     createdCategories,
     createdItems,
     previousItemCount: currentCount,
-    message: `Εισήχθησαν ${createdItems} πιάτα σε ${createdCategories} κατηγορίες. Μπορείς να τα επεξεργαστείς (φωτο, τιμές) από τον κατάλογο.`,
+    message: `Εισήχθησαν ${DASHBOARD_EL.catalogEntry.count(createdItems)} σε ${createdCategories} κατηγορίες. Μπορείς να τα επεξεργαστείς (φωτο, τιμές) από τον κατάλογο.`,
   });
 }

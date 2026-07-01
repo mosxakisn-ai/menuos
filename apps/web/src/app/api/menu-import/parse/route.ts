@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { requirePdfImportPlan } from "@/lib/api-auth";
+import { DASHBOARD_EL } from "@/content/dashboard-el";
 import {
+  OcrSpaceError,
   PdfTextExtractionError,
   parseUploadedPdfFiles,
+  parsePageSelectionMap,
   readPdfFilesFromFormData,
   validatePdfUploadFiles,
 } from "@/lib/pdf-extract";
@@ -33,24 +36,25 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await parseUploadedPdfFiles(files);
+    const pageSelections = parsePageSelectionMap(formData.get("pageSelections"));
+    const result = await parseUploadedPdfFiles(files, pageSelections);
+    const entry = DASHBOARD_EL.catalogEntry;
     return NextResponse.json({
       ...result,
       menu: { id: menu.id, name: menu.name, venueName: menu.venue.name },
       message:
         result.stats.itemsFound > 0
-          ? `Βρέθηκαν ${result.stats.itemsFound} πιάτα σε ${result.stats.categoriesFound} κατηγορίες. Έλεγξέ τα πριν την εισαγωγή.`
-          : "Δεν βρέθηκαν πιάτα — δοκίμασε άλλο PDF ή πρόσθεσε χειροκίνητα.",
+          ? `Βρέθηκαν ${entry.count(result.stats.itemsFound)} σε ${result.stats.categoriesFound} κατηγορίες. Έλεγξέ τα πριν την εισαγωγή.`
+          : `Δεν βρέθηκαν ${entry.many} — δοκίμασε άλλο PDF ή πρόσθεσε χειροκίνητα.`,
     });
   } catch (err) {
     console.error("menu-import parse", err);
-    if (err instanceof PdfTextExtractionError) {
+    if (err instanceof PdfTextExtractionError || err instanceof OcrSpaceError) {
       return NextResponse.json({ error: err.message }, { status: 422 });
     }
     return NextResponse.json(
       {
-        error:
-          "Αποτυχία ανάγνωσης PDF. Δοκίμασε ξανά ή πρόσθεσε τον κατάλογο χειροκίνητα.",
+        error: "Αποτυχία ανάγνωσης PDF. Δοκίμασε ξανά ή πρόσθεσε τον κατάλογο χειροκίνητα.",
       },
       { status: 422 },
     );

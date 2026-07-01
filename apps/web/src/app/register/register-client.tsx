@@ -6,8 +6,19 @@ import { AuthFooterLink, AuthShell } from "@/components/marketing/marketing-layo
 import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
+import {
+  type RegisterPlanIntent,
+  registerSubmitLabel,
+  registerSubtitle,
+} from "@/lib/register-plan-intent";
 
-export default function RegisterPageClient({ trialDaysGen }: { trialDaysGen: string }) {
+export default function RegisterPageClient({
+  trialDaysGen,
+  planIntent,
+}: {
+  trialDaysGen: string;
+  planIntent: RegisterPlanIntent;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -138,6 +149,26 @@ export default function RegisterPageClient({ trialDaysGen }: { trialDaysGen: str
         }
         return;
       }
+
+      if (planIntent.checkoutPlanId) {
+        const billingRes = await fetch("/api/billing", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            planId: planIntent.checkoutPlanId,
+            returnPath: "/dashboard/billing",
+          }),
+        });
+        const billingData = (await billingRes.json()) as { checkoutUrl?: string; error?: string };
+        if (billingRes.ok && billingData.checkoutUrl) {
+          window.location.href = billingData.checkoutUrl;
+          return;
+        }
+        router.push(`/dashboard/billing?upgrade=${planIntent.checkoutPlanId.toLowerCase()}`);
+        router.refresh();
+        return;
+      }
+
       router.push("/dashboard?welcome=1");
       router.refresh();
     } catch {
@@ -150,7 +181,7 @@ export default function RegisterPageClient({ trialDaysGen }: { trialDaysGen: str
   return (
     <AuthShell
       title="Δημιουργία λογαριασμού"
-      subtitle={`Δωρεάν δοκιμή ${trialDaysGen}. Θα σου στείλουμε κωδικό επιβεβαίωσης στο email (ισχύει 30 λεπτά).`}
+      subtitle={registerSubtitle(planIntent, trialDaysGen)}
       footer={
         <AuthFooterLink text="Έχεις ήδη λογαριασμό;" linkText="Σύνδεση" href="/login" />
       }
@@ -242,7 +273,7 @@ export default function RegisterPageClient({ trialDaysGen }: { trialDaysGen: str
           disabled={loading || !otpSent}
           className={`w-full ${buttonClass("primary")}`}
         >
-          {loading ? "Δημιουργία..." : "Δημιουργία λογαριασμού"}
+          {loading ? "Δημιουργία..." : registerSubmitLabel(planIntent)}
         </button>
       </form>
     </AuthShell>

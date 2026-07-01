@@ -66,7 +66,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       <WelcomeTrialCard show={sp.welcome === "1"} trialEndsAt={trialEndsAt} trialPeriodDays={trialPeriodDays} />
       <DashboardPageHeader
         title={org?.name ?? "Επισκόπηση"}
-        description={`Πλάνο: ${planLabel(planId)} · ${venueCount} ${venueCount === 1 ? DASHBOARD_EL.venue.toLowerCase() : DASHBOARD_EL.venues.toLowerCase()} · ${menuCount} ${menuCount === 1 ? "κατάλογος" : "κατάλογοι"} · ${itemCount} πιάτα`}
+        description={`Πλάνο: ${planLabel(planId)} · ${venueCount} ${venueCount === 1 ? DASHBOARD_EL.venue.toLowerCase() : DASHBOARD_EL.venues.toLowerCase()} · ${menuCount} ${menuCount === 1 ? "κατάλογος" : "κατάλογοι"} · ${DASHBOARD_EL.catalogEntry.count(itemCount)}`}
       />
 
       <TrialLimitsHint plan={planId} itemCount={itemCount} />

@@ -310,17 +310,17 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
     const names = cat.items.map((i) => i.nameGr.toLowerCase());
     const dupes = names.filter((n, idx) => names.indexOf(n) !== idx);
     if (dupes.length > 0) {
-      cat.warnings.push("Υπάρχουν διπλότυπα πιάτα — έλεγξέ τα.");
+      cat.warnings.push("Υπάρχουν διπλότυπα είδη — έλεγξέ τα.");
     }
     if (cat.items.length === 0) {
-      cat.warnings.push("Η κατηγορία δεν έχει πιάτα.");
+      cat.warnings.push("Η κατηγορία δεν έχει είδη.");
       cat.selected = false;
     }
   }
 
   if (categories.length === 0) {
     globalWarnings.push(
-      "Δεν βρέθηκαν κατηγορίες/πιάτα. Αν το PDF είναι σαρωμένη εικόνα, χρειάζεται digital PDF ή χειροκίνητη εισαγωγή.",
+      "Δεν βρέθηκαν κατηγορίες/είδη. Αν το PDF είναι σαρωμένη εικόνα, χρειάζεται OCR ή χειροκίνητη εισαγωγή.",
     );
   }
 
@@ -328,8 +328,8 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
   if (itemsFound > 0 && itemsWithoutPrice > 0) {
     globalWarnings.push(
       itemsWithoutPrice === itemsFound
-        ? "Δεν βρέθηκαν τιμές στο PDF — τα πιάτα εισάγονται χωρίς τιμή (€0). Μπορείς να τις συμπληρώσεις μετά."
-        : `${itemsWithoutPrice} πιάτα χωρίς τιμή — έλεγξέ τα πριν την εισαγωγή.`,
+        ? "Δεν βρέθηκαν τιμές στο PDF — τα είδη εισάγονται χωρίς τιμή (€0). Μπορείς να τις συμπληρώσεις μετά."
+        : `${itemsWithoutPrice} είδη χωρίς τιμή — έλεγξέ τα πριν την εισαγωγή.`,
     );
   }
 

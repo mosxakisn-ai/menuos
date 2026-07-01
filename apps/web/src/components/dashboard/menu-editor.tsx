@@ -3,6 +3,7 @@
 import { ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
+import { LoadingSkeleton, LoadingState } from "@/components/ui/loading-state";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
   dashboardCardClass,
@@ -433,7 +434,15 @@ export function MenuEditor({
       </DashboardToolbar>
 
       {loading ? (
-        <p className="text-sm text-slate-500">{DASHBOARD_EL.loadingCatalog}</p>
+        <Card className="overflow-hidden">
+          <LoadingState
+            variant="catalog"
+            size="md"
+            title={DASHBOARD_EL.loadingCatalog}
+            subtitle="Φόρτωση κατηγοριών και ειδών"
+          />
+          <LoadingSkeleton rows={2} className="mt-2 px-4 pb-4" />
+        </Card>
       ) : (
         <>
           {menus.length > 0 ? (

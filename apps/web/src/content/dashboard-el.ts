@@ -27,6 +27,36 @@ export const DASHBOARD_EL = {
   importPdf: "Εισαγωγή από PDF",
   importPdfPro: "Εισαγωγή PDF (μόνο Pro)",
   loadingCatalog: "Φόρτωση καταλόγου...",
+  importWizard: {
+    hint:
+      "Ανέβασε PDF καταλόγου — αναλύουμε αυτόματα (digital + OCR για εικόνες). Έλεγξε τα αποτελέσματα πριν την αποθήκευση.",
+    analyzeButton: "Ανάλυση & προεπισκόπηση",
+    processingTitle: "Ανάλυση PDF καταλόγου",
+    pipeline: {
+      scan: "Σάρωση PDF",
+      extract: "Ανάλυση σελίδων",
+      ocr: "OCR εικόνων",
+      parse: "Κατηγορίες & είδη",
+      done: "Έτοιμο",
+    },
+    loadingScanFile: (file: string, page: number, total: number) =>
+      `${file} — σελίδα ${page}/${total}`,
+    loadingImport: "Εισαγωγή στον κατάλογο...",
+    advancedTitle: "Προχωρημένα — επιλογή σελίδων",
+    advancedHint:
+      "Cover/logo παραλείπονται αυτόματα. Άλλαξε ποιες σελίδες μπαίνουν στην ανάλυση αν κάτι λείπει.",
+    pageKind: {
+      digital: "Digital",
+      scan: "OCR",
+      cover: "Cover",
+    },
+    selectMenuPages: "Μόνο μενού",
+    selectAll: "Όλες",
+    deselectAll: "Καμία",
+    reanalyze: "Ξανά ανάλυση",
+    ocrUsed: (n: number) =>
+      n === 1 ? "1 σελίδα μέσω OCR" : `${n} σελίδες μέσω OCR`,
+  },
   previewCatalog: "Προεπισκόπηση",
   newCatalogPlaceholder: "Νέος κατάλογος (π.χ. Pool Bar)",
   addCatalog: "+ Κατάλογος",

@@ -5,25 +5,76 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
   CheckCircle2,
+  ChevronDown,
   FileUp,
-  Loader2,
+  ImageIcon,
   Pencil,
+  Sparkles,
+  Type,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import type { MenuPdfParseResult, ParsedMenuCategoryDraft, ParsedMenuItemDraft } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import {
+  ImportPipelineProgress,
+  type PipelineStep,
+} from "@/components/dashboard/import-pipeline-progress";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { LoadingState } from "@/components/ui/loading-state";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { DASHBOARD_EL } from "@/content/dashboard-el";
+import {
+  buildPageSelectionMap,
+  loadAllPdfPagePreviews,
+  pageSelectionStats,
+  selectMenuPagesOnly,
+  type PdfPagePreview,
+} from "@/lib/pdf-page-preview";
+import { cn } from "@/lib/utils";
 
 type Venue = {
   id: string;
   name: string;
   menus: { id: string; name: string }[];
 };
+
+type Phase = "upload" | "processing" | "review";
+
+const W = DASHBOARD_EL.importWizard;
+
+const INITIAL_PIPELINE: PipelineStep[] = [
+  { id: "scan", label: W.pipeline.scan, status: "pending" },
+  { id: "extract", label: W.pipeline.extract, status: "pending" },
+  { id: "parse", label: W.pipeline.parse, status: "pending" },
+  { id: "done", label: W.pipeline.done, status: "pending" },
+];
+
+function PageKindBadge({ kind }: { kind: PdfPagePreview["kind"] }) {
+  const styles = {
+    digital: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+    scan: "bg-violet-50 text-violet-800 ring-violet-200",
+    cover: "bg-slate-100 text-slate-600 ring-slate-200",
+  };
+  const icons = { digital: Type, scan: ImageIcon, cover: ImageIcon };
+  const Icon = icons[kind];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ring-1",
+        styles[kind],
+      )}
+    >
+      <Icon className="h-3 w-3" />
+      {W.pageKind[kind]}
+    </span>
+  );
+}
+
+function setStepStatus(steps: PipelineStep[], id: string, patch: Partial<PipelineStep>): PipelineStep[] {
+  return steps.map((s) => (s.id === id ? { ...s, ...patch } : s));
+}
 
 export function MenuImportWizard({
   venues,
@@ -33,15 +84,20 @@ export function MenuImportWizard({
   initialVenueId?: string;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [phase, setPhase] = useState<Phase>("upload");
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
   const venue = venues.find((v) => v.id === venueId);
   const [menuId, setMenuId] = useState(venue?.menus[0]?.id ?? "");
   const [files, setFiles] = useState<File[]>([]);
-  const [parsing, setParsing] = useState(false);
+  const [pages, setPages] = useState<PdfPagePreview[]>([]);
+  const [pipeline, setPipeline] = useState<PipelineStep[]>(INITIAL_PIPELINE);
+  const [progress, setProgress] = useState(0);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [draft, setDraft] = useState<MenuPdfParseResult | null>(null);
+  const [draft, setDraft] = useState<(MenuPdfParseResult & { ocrPagesUsed?: number }) | null>(null);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
+
+  const pageStats = useMemo(() => pageSelectionStats(pages), [pages]);
 
   const selectedCounts = useMemo(() => {
     if (!draft) return { categories: 0, items: 0 };
@@ -52,54 +108,142 @@ export function MenuImportWizard({
     return { categories, items };
   }, [draft]);
 
+  function resetAll() {
+    setDraft(null);
+    setPages([]);
+    setPhase("upload");
+    setPipeline(INITIAL_PIPELINE);
+    setProgress(0);
+    setAdvancedOpen(false);
+  }
+
   function onVenueChange(id: string) {
     setVenueId(id);
     const v = venues.find((x) => x.id === id);
     setMenuId(v?.menus[0]?.id ?? "");
-    setDraft(null);
-    setStep(1);
+    resetAll();
   }
 
   function onFilesSelected(list: FileList | null) {
     if (!list) return;
     setFiles(Array.from(list));
-    setDraft(null);
-    setStep(1);
+    resetAll();
   }
 
-  const parsePdfs = useCallback(async () => {
+  function togglePage(id: string) {
+    setPages((prev) => prev.map((p) => (p.id === id ? { ...p, selected: !p.selected } : p)));
+  }
+
+  const runAnalysis = useCallback(async () => {
     if (!menuId || files.length === 0) {
       setFlash({ type: "error", text: "Επίλεξε κατάλογο και τουλάχιστον ένα PDF." });
       return;
     }
-    setParsing(true);
+
+    setPhase("processing");
     setFlash(null);
+    setPipeline(INITIAL_PIPELINE.map((s) => ({ ...s, status: s.id === "scan" ? "active" : "pending" })));
+    setProgress(5);
+
+    let loadedPages = pages;
+
     try {
+      if (loadedPages.length === 0) {
+        loadedPages = await loadAllPdfPagePreviews(files, (fileIndex, fileName, page, total) => {
+          setPipeline((p) =>
+            setStepStatus(p, "scan", {
+              detail: W.loadingScanFile(fileName, page, total),
+            }),
+          );
+          const fileWeight = 35 / files.length;
+          setProgress(Math.min(35, 5 + fileIndex * fileWeight + (page / total) * fileWeight));
+        });
+        loadedPages = selectMenuPagesOnly(loadedPages);
+        setPages(loadedPages);
+      }
+
+      if (!pageSelectionStats(loadedPages).canAnalyze) {
+        setPipeline((p) =>
+          p.map((s) => ({
+            ...s,
+            status: s.id === "scan" ? "error" : s.status,
+            detail: s.id === "scan" ? "Δεν βρέθηκαν σελίδες μενού" : s.detail,
+          })),
+        );
+        setPhase("upload");
+        setAdvancedOpen(true);
+        setFlash({
+          type: "error",
+          text: "Δεν βρέθηκαν σελίδες μενού. Άνοιξε «Προχωρημένα» και επίλεξε σελίδες χειροκίνητα.",
+        });
+        return;
+      }
+
+      setPipeline((p) =>
+        p.map((s) => {
+          if (s.id === "scan") return { ...s, status: "done", detail: undefined };
+          if (s.id === "extract") return { ...s, status: "active", detail: "Digital + OCR..." };
+          return s;
+        }),
+      );
+      setProgress(40);
+
       const form = new FormData();
       form.set("menuId", menuId);
+      form.set("pageSelections", JSON.stringify(buildPageSelectionMap(loadedPages)));
       for (const file of files) form.append("files", file);
+
       const res = await fetch("/api/menu-import/parse", { method: "POST", body: form });
       const data = await res.json();
+
       if (!res.ok) {
+        setPipeline((p) =>
+          p.map((s) => ({
+            ...s,
+            status: s.id === "extract" ? "error" : s.status === "done" ? "done" : "pending",
+            detail: s.id === "extract" ? (data.error as string) : s.detail,
+          })),
+        );
+        setPhase("upload");
+        setAdvancedOpen(true);
         showFromResponse(data, false);
         return;
       }
-      setDraft(data as MenuPdfParseResult);
-      setStep(2);
+
+      const ocrUsed = (data.ocrPagesUsed as number | undefined) ?? 0;
+
+      setPipeline((p) =>
+        p.map((s) => {
+          if (s.id === "extract") {
+            return {
+              ...s,
+              status: "done",
+              detail: ocrUsed > 0 ? W.ocrUsed(ocrUsed) : undefined,
+            };
+          }
+          if (s.id === "parse") return { ...s, status: "done" };
+          if (s.id === "done") return { ...s, status: "done" };
+          return s;
+        }),
+      );
+      setProgress(100);
+
+      await new Promise((r) => setTimeout(r, 400));
+
+      setDraft(data as MenuPdfParseResult & { ocrPagesUsed?: number });
+      setPhase("review");
       showFromResponse(data, true);
-    } finally {
-      setParsing(false);
+    } catch (err) {
+      console.error("import pipeline", err);
+      setPipeline((p) => p.map((s) => (s.status === "active" ? { ...s, status: "error" } : s)));
+      setPhase("upload");
+      setFlash({ type: "error", text: "Αποτυχία ανάλυσης. Δοκίμασε ξανά ή μικρότερο PDF." });
     }
-  }, [menuId, files, showFromResponse, setFlash]);
+  }, [menuId, files, pages, showFromResponse, setFlash]);
 
   function updateCategory(catId: string, patch: Partial<ParsedMenuCategoryDraft>) {
     setDraft((d) =>
-      d
-        ? {
-            ...d,
-            categories: d.categories.map((c) => (c.id === catId ? { ...c, ...patch } : c)),
-          }
-        : d,
+      d ? { ...d, categories: d.categories.map((c) => (c.id === catId ? { ...c, ...patch } : c)) } : d,
     );
   }
 
@@ -110,10 +254,7 @@ export function MenuImportWizard({
             ...d,
             categories: d.categories.map((c) =>
               c.id === catId
-                ? {
-                    ...c,
-                    items: c.items.map((i) => (i.id === itemId ? { ...i, ...patch } : i)),
-                  }
+                ? { ...c, items: c.items.map((i) => (i.id === itemId ? { ...i, ...patch } : i)) }
                 : c,
             ),
           }
@@ -185,15 +326,20 @@ export function MenuImportWizard({
       <Card className="border-brand-blue/20 bg-brand-blue/5">
         <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">Import από PDF</p>
         <h2 className="mt-1 text-lg font-bold text-brand-navy">
-          Βήμα {step} από 2 — {step === 1 ? "Ανέβασμα PDF" : "Έλεγχος & εισαγωγή"}
+          {phase === "upload" && "Ανέβασμα PDF"}
+          {phase === "processing" && W.processingTitle}
+          {phase === "review" && "Έλεγχος & εισαγωγή"}
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Ανέβασε ένα ή περισσότερα PDF καταλόγων. Μετά ελέγχεις/διορθώνεις κατηγορίες και τιμές πριν
-          την αποθήκευση. Μετά μπορείς να αλλάξεις φωτο, τιμές και περιγραφές χειροκίνητα.
-        </p>
+        <p className="mt-2 text-sm text-slate-600">{W.hint}</p>
       </Card>
 
-      {step === 1 ? (
+      {phase === "processing" ? (
+        <Card className="overflow-hidden border-brand-blue/15 py-4">
+          <ImportPipelineProgress steps={pipeline} progress={progress} title={W.processingTitle} />
+        </Card>
+      ) : null}
+
+      {phase === "upload" ? (
         <>
           <Card>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -231,12 +377,9 @@ export function MenuImportWizard({
           <Card>
             <h3 className="font-semibold text-brand-navy">PDF αρχεία (έως 10)</h3>
             <p className="mt-1 text-sm text-slate-600">
-              Ιδανικά digital PDF (όχι σαρωμένη φωτο). Λειτουργεί και με PDF χωρίς τιμές (all-inclusive κ.λπ.) —
-              συμπληρώνεις τιμές μετά. Κάθε PDF μπορεί να είναι ξεχωριστός κατάλογος.
+              Digital PDF και σαρωμένες εικόνες (OCR). Cover/logo παραλείπονται αυτόματα.
             </p>
-            <label
-              className={`mt-4 flex cursor-pointer flex-col items-center rounded-card border-2 border-dashed border-slate-200 bg-white px-6 py-10 text-center hover:border-brand-blue/40`}
-            >
+            <label className="mt-4 flex cursor-pointer flex-col items-center rounded-card border-2 border-dashed border-slate-200 bg-white px-6 py-10 text-center transition hover:border-brand-blue/40 hover:bg-brand-blue/[0.02]">
               <FileUp className="h-10 w-10 text-brand-blue" />
               <span className="mt-3 font-medium text-brand-navy">Επίλεξε ή σύρε PDF εδώ</span>
               <span className="mt-1 text-xs text-slate-500">Max 10MB ανά αρχείο</span>
@@ -251,7 +394,7 @@ export function MenuImportWizard({
             {files.length > 0 ? (
               <ul className="mt-4 space-y-1 text-sm text-slate-600">
                 {files.map((f) => (
-                  <li key={f.name}>
+                  <li key={`${f.name}-${f.size}`}>
                     {f.name} ({Math.round(f.size / 1024)} KB)
                   </li>
                 ))}
@@ -259,18 +402,112 @@ export function MenuImportWizard({
             ) : null}
             <button
               type="button"
-              onClick={parsePdfs}
-              disabled={parsing || files.length === 0}
+              onClick={runAnalysis}
+              disabled={files.length === 0}
               className={`mt-4 inline-flex items-center gap-2 ${buttonClass("primary")}`}
             >
-              {parsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-              {parsing ? "Ανάλυση PDF..." : "Ανάλυση & προεπισκόπηση"}
+              <Sparkles className="h-4 w-4" />
+              {W.analyzeButton}
             </button>
           </Card>
+
+          {files.length > 0 ? (
+            <Card className="overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setAdvancedOpen((o) => !o)}
+                className="flex w-full items-center justify-between gap-3 text-left"
+              >
+                <div>
+                  <p className="font-semibold text-brand-navy">{W.advancedTitle}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{W.advancedHint}</p>
+                </div>
+                <ChevronDown
+                  className={cn("h-5 w-5 shrink-0 text-slate-400 transition", advancedOpen && "rotate-180")}
+                />
+              </button>
+
+              {advancedOpen ? (
+                <div className="mt-4 border-t border-slate-100 pt-4">
+                  {pages.length === 0 ? (
+                    <p className="text-sm text-slate-500">
+                      Πάτα «{W.analyzeButton}» πρώτα για preview σελίδων — ή ξανατρέξε ανάλυση.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm text-slate-600">
+                          {pageStats.selectedCount} επιλεγμένες · {pageStats.digitalCount} digital ·{" "}
+                          {pageStats.scanSelectedCount} OCR · {pageStats.coverTotalCount} cover
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPages(selectMenuPagesOnly(pages))}
+                            className={buttonClass("secondary", "sm")}
+                          >
+                            {W.selectMenuPages}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPages((p) => p.map((x) => ({ ...x, selected: false })))}
+                            className={buttonClass("secondary", "sm")}
+                          >
+                            {W.deselectAll}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                        {pages.map((p) => (
+                          <label
+                            key={p.id}
+                            className={cn(
+                              "cursor-pointer overflow-hidden rounded-card border-2 bg-white shadow-card transition",
+                              p.selected ? "border-brand-blue ring-2 ring-brand-blue/20" : "border-slate-100 opacity-70",
+                            )}
+                          >
+                            <div className="relative aspect-[3/4] bg-slate-50">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={p.thumbnailUrl}
+                                alt={`Σελίδα ${p.pageNumber}`}
+                                className="h-full w-full object-contain"
+                              />
+                              <input
+                                type="checkbox"
+                                checked={p.selected}
+                                onChange={() => togglePage(p.id)}
+                                className="absolute left-2 top-2 h-4 w-4 accent-brand-blue"
+                              />
+                            </div>
+                            <div className="space-y-1 p-2">
+                              <p className="text-[10px] text-slate-500">
+                                Σελ. {p.pageNumber}/{p.totalPages}
+                              </p>
+                              <PageKindBadge kind={p.kind} />
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={runAnalysis}
+                        disabled={!pageStats.canAnalyze}
+                        className={`mt-4 inline-flex items-center gap-2 ${buttonClass("secondary")}`}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        {W.reanalyze}
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : null}
+            </Card>
+          ) : null}
         </>
       ) : null}
 
-      {step === 2 && draft ? (
+      {phase === "review" && draft ? (
         <>
           {draft.warnings.length > 0 ? (
             <div className="space-y-2">
@@ -291,14 +528,16 @@ export function MenuImportWizard({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="font-semibold text-brand-navy">
-                  {selectedCounts.categories} κατηγορίες · {DASHBOARD_EL.catalogEntry.count(selectedCounts.items)} επιλεγμένα
+                  {selectedCounts.categories} κατηγορίες ·{" "}
+                  {DASHBOARD_EL.catalogEntry.count(selectedCounts.items)} επιλεγμένα
                 </p>
                 <p className="text-xs text-slate-500">
                   Από {draft.stats.filesProcessed} PDF · {draft.stats.itemsWithPrice} τιμές ·{" "}
-                  {draft.stats.itemsFound - draft.stats.itemsWithPrice} χωρίς τιμή (€0)
+                  {draft.stats.itemsFound - draft.stats.itemsWithPrice} χωρίς τιμή
+                  {(draft.ocrPagesUsed ?? 0) > 0 ? ` · ${W.ocrUsed(draft.ocrPagesUsed!)}` : ""}
                 </p>
               </div>
-              <button type="button" onClick={() => setStep(1)} className={buttonClass("secondary", "sm")}>
+              <button type="button" onClick={resetAll} className={buttonClass("secondary", "sm")}>
                 <ArrowLeft className="mr-1 inline h-4 w-4" />
                 Νέα ανάλυση
               </button>
@@ -397,11 +636,16 @@ export function MenuImportWizard({
             </Card>
           ))}
 
-          <Card className="border-emerald-200 bg-emerald-50/50">
+          <Card className="relative overflow-hidden border-emerald-200 bg-emerald-50/50">
+            {importing ? (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                <LoadingState variant="import" size="md" title={W.loadingImport} />
+              </div>
+            ) : null}
             <div className="flex flex-wrap items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               <p className="flex-1 text-sm text-emerald-900">
-                Μετά την εισαγωγή, άνοιξε τον κατάλογο για φωτογραφίες, διόρθωση τιμών και διαθεσιμότητα.
+                Μετά την εισαγωγή, άνοιξε τον κατάλογο για φωτο, τιμές και διαθεσιμότητα.
               </p>
               <button
                 type="button"
@@ -409,8 +653,10 @@ export function MenuImportWizard({
                 disabled={importing || selectedCounts.items === 0}
                 className={`inline-flex items-center gap-2 ${buttonClass("primary")}`}
               >
-                {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
-                {importing ? "Εισαγωγή..." : `Εισαγωγή ${DASHBOARD_EL.catalogEntry.count(selectedCounts.items)}`}
+                <Pencil className="h-4 w-4" />
+                {importing
+                  ? W.loadingImport
+                  : `Εισαγωγή ${DASHBOARD_EL.catalogEntry.count(selectedCounts.items)}`}
               </button>
             </div>
           </Card>

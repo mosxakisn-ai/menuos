@@ -1,4 +1,6 @@
 import type { MenuPdfParseResult } from "@menuos/shared";
+import { isOcrSpaceConfigured, ocrImageBuffer, OcrSpaceError } from "@/lib/ocr-space";
+import { renderPdfPageToJpeg } from "@/lib/pdf-page-render";
 
 const MAX_FILES = 10;
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -50,40 +52,110 @@ function tablesToText(tableResult: TableResultLike): string {
   return lines.join("\n").trim();
 }
 
+/** Key: `${fileIndex}:${fileName}` or legacy `fileName` only */
+export type PageSelectionMap = Record<string, number[]>;
+
+function resolveSelectedPages(
+  fileIndex: number,
+  fileName: string,
+  pageSelections?: PageSelectionMap,
+): number[] | undefined {
+  if (!pageSelections) return undefined;
+  const keyed = pageSelections[`${fileIndex}:${fileName}`];
+  if (keyed?.length) return keyed;
+  return pageSelections[fileName];
+}
+
 async function createPdfParser(buffer: Buffer) {
   const { PDFParse } = await import("pdf-parse");
   return new PDFParse({ data: new Uint8Array(buffer) });
 }
 
-export async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
+export async function extractTextFromPdfBuffer(buffer: Buffer, pages?: number[]): Promise<string> {
   const parser = await createPdfParser(buffer);
+  const partial = pages && pages.length > 0 ? pages : undefined;
   const candidates: string[] = [];
 
   try {
     const primary = await parser.getText({
       cellSeparator: "\t",
       lineEnforce: true,
-      pageJoiner: "",
+      pageJoiner: "\n",
+      ...(partial ? { partial } : {}),
     });
     if (primary.text?.trim()) candidates.push(primary.text.trim());
 
     if ((primary.text?.trim().length ?? 0) < 120) {
-      const loose = await parser.getText({ lineEnforce: false, pageJoiner: "" });
+      const loose = await parser.getText({
+        lineEnforce: false,
+        pageJoiner: "\n",
+        ...(partial ? { partial } : {}),
+      });
       if (loose.text?.trim()) candidates.push(loose.text.trim());
     }
 
-    try {
-      const tables = await parser.getTable();
-      const tableText = tablesToText(tables);
-      if (tableText.length > 0) candidates.push(tableText);
-    } catch (tableErr) {
-      console.warn("pdf-extract getTable skipped", tableErr);
+    if (!partial) {
+      try {
+        const tables = await parser.getTable();
+        const tableText = tablesToText(tables);
+        if (tableText.length > 0) candidates.push(tableText);
+      } catch (tableErr) {
+        console.warn("pdf-extract getTable skipped", tableErr);
+      }
     }
   } finally {
     await parser.destroy().catch(() => undefined);
   }
 
   return pickBestMenuText(candidates);
+}
+
+async function extractTextForPage(
+  buffer: Buffer,
+  pageNumber: number,
+  fileName: string,
+): Promise<{ text: string; usedOcr: boolean }> {
+  let text = await extractTextFromPdfBuffer(buffer, [pageNumber]);
+  if (text.length >= MIN_TEXT_CHARS) {
+    return { text, usedOcr: false };
+  }
+
+  if (!isOcrSpaceConfigured()) {
+    return { text: "", usedOcr: false };
+  }
+
+  try {
+    const jpeg = await renderPdfPageToJpeg(buffer, pageNumber);
+    text = await ocrImageBuffer(jpeg, `${fileName}-p${pageNumber}.jpg`);
+    return { text, usedOcr: true };
+  } catch (err) {
+    console.warn("pdf-extract OCR page", fileName, pageNumber, err);
+    return { text: "", usedOcr: true };
+  }
+}
+
+async function extractSelectedPagesText(
+  buffer: Buffer,
+  fileName: string,
+  selectedPages?: number[],
+): Promise<{ text: string; ocrPages: number }> {
+  if (!selectedPages || selectedPages.length === 0) {
+    const text = await extractTextFromPdfBuffer(buffer);
+    return { text, ocrPages: 0 };
+  }
+
+  const parts: string[] = [];
+  let ocrPages = 0;
+
+  for (const pageNum of selectedPages) {
+    const { text, usedOcr } = await extractTextForPage(buffer, pageNum, fileName);
+    if (usedOcr) ocrPages += 1;
+    if (text.trim().length >= MIN_TEXT_CHARS) {
+      parts.push(text.trim());
+    }
+  }
+
+  return { text: parts.join("\n\n"), ocrPages };
 }
 
 export function readPdfFilesFromFormData(formData: FormData): File[] {
@@ -111,15 +183,46 @@ export function validatePdfUploadFiles(files: File[]): string | null {
   return null;
 }
 
-export async function parseUploadedPdfFiles(files: File[]): Promise<MenuPdfParseResult> {
+export function parsePageSelectionMap(raw: unknown): PageSelectionMap | undefined {
+  if (typeof raw !== "string" || !raw.trim()) return undefined;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return undefined;
+    const map: PageSelectionMap = {};
+    for (const [fileName, pages] of Object.entries(parsed)) {
+      if (!Array.isArray(pages)) continue;
+      const nums = pages.filter((p): p is number => typeof p === "number" && p >= 1);
+      if (nums.length > 0) map[fileName] = [...new Set(nums)].sort((a, b) => a - b);
+    }
+    return Object.keys(map).length > 0 ? map : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function parseUploadedPdfFiles(
+  files: File[],
+  pageSelections?: PageSelectionMap,
+): Promise<MenuPdfParseResult & { ocrPagesUsed?: number }> {
   const { parseMultipleMenuPdfTexts } = await import("@menuos/shared");
   const extracted: { name: string; text: string }[] = [];
+  let totalOcrPages = 0;
 
-  for (const file of files) {
+  for (let fileIndex = 0; fileIndex < files.length; fileIndex += 1) {
+    const file = files[fileIndex]!;
+    const selectedPages = resolveSelectedPages(fileIndex, file.name, pageSelections);
+    if (pageSelections && (!selectedPages || selectedPages.length === 0)) {
+      continue;
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
     let text: string;
+    let ocrPages = 0;
+
     try {
-      text = await extractTextFromPdfBuffer(buffer);
+      const result = await extractSelectedPagesText(buffer, file.name, selectedPages);
+      text = result.text;
+      ocrPages = result.ocrPages;
     } catch (err) {
       console.error("pdf-extract", file.name, err);
       throw new PdfTextExtractionError(
@@ -127,14 +230,35 @@ export async function parseUploadedPdfFiles(files: File[]): Promise<MenuPdfParse
         file.name,
       );
     }
+
+    totalOcrPages += ocrPages;
+
     if (text.length < MIN_TEXT_CHARS) {
+      const pageHint = selectedPages?.length
+        ? ` (σελίδες ${selectedPages.join(", ")})`
+        : "";
+      const ocrHint = isOcrSpaceConfigured()
+        ? " Το OCR δεν βρήκε κείμενο — δοκίμασε άλλες σελίδες ή χειροκίνητη εισαγωγή."
+        : " Βάλε OCR_SPACE_API_KEY στο server για σαρωμένα PDF.";
       throw new PdfTextExtractionError(
-        `Το «${file.name}» δεν έχει εξαγόμενο κείμενο — συνήθως είναι σαρωμένη εικόνα, όχι digital PDF.`,
+        `Το «${file.name}» δεν έδωσε αναγνωρίσιμο κείμενο${pageHint}.${ocrHint}`,
         file.name,
       );
     }
+
     extracted.push({ name: file.name, text });
   }
 
-  return parseMultipleMenuPdfTexts(extracted);
+  if (extracted.length === 0) {
+    throw new PdfTextExtractionError(
+      isOcrSpaceConfigured()
+        ? "Δεν βρέθηκε κείμενο στις επιλεγμένες σελίδες. Δοκίμασε «Προχωρημένα → Επιλογή σελίδων»."
+        : "Δεν βρέθηκε digital κείμενο. Ρύθμισε OCR_SPACE_API_KEY για σαρωμένα PDF.",
+    );
+  }
+
+  const parsed = parseMultipleMenuPdfTexts(extracted);
+  return { ...parsed, ocrPagesUsed: totalOcrPages };
 }
+
+export { OcrSpaceError };
