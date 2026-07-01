@@ -88,9 +88,16 @@ function StatusPill({ label, value, tone }: { label: string; value: number; tone
   );
 }
 
+function greetingFirstName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return "";
+  return trimmed.split(/\s+/)[0] ?? trimmed;
+}
+
 export function SupervisorOverviewClient() {
   const [data, setData] = useState<SupervisorOverview | null>(null);
   const [recentOrgs, setRecentOrgs] = useState<SupervisorOrganizationRow[]>([]);
+  const [operatorName, setOperatorName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -99,15 +106,20 @@ export function SupervisorOverviewClient() {
     setLoading(true);
     setError(false);
     try {
-      const [overviewRes, orgsRes] = await Promise.all([
+      const [overviewRes, orgsRes, meRes] = await Promise.all([
         fetch("/api/supervisor/overview", { credentials: "same-origin" }),
         fetch("/api/supervisor/organizations", { credentials: "same-origin" }),
+        fetch("/api/supervisor/me", { credentials: "same-origin" }),
       ]);
       if (!overviewRes.ok) throw new Error("failed");
       setData(await overviewRes.json());
       if (orgsRes.ok) {
         const orgData = (await orgsRes.json()) as { organizations: SupervisorOrganizationRow[] };
         setRecentOrgs(orgData.organizations.filter((o) => !o.isDemo).slice(0, 5));
+      }
+      if (meRes.ok) {
+        const me = (await meRes.json()) as { name?: string | null };
+        if (me.name?.trim()) setOperatorName(greetingFirstName(me.name));
       }
       setUpdatedAt(new Date());
     } catch {
@@ -151,7 +163,7 @@ export function SupervisorOverviewClient() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-brand-blue/80">MenuOS Ops</p>
           <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-brand-navy sm:text-4xl">
-            {greeting}
+            {operatorName ? `${greeting}, ${operatorName}` : greeting}
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
             Επισκόπηση πλατφόρμας — πελάτες, έσοδα και κατάσταση συνδρομών (χωρίς demo).
