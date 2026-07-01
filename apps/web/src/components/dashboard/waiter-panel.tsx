@@ -1,20 +1,15 @@
 "use client";
 
-import { Bell, Check, Clock } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatWaiterCallLocationForLang, formatOrderLineDetail, passStationDbToInput, type OrderLine, type VenueSpotType } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { WaiterTableGrid } from "@/components/dashboard/waiter-table-grid";
-import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
+import type { OrderPayload, VenueSpotType } from "@menuos/shared";
 
 type Venue = { id: string; name: string; slug?: string };
-type OrderPayload = {
-  lines: OrderLine[];
-  total: string;
-};
 type VenueSpot = { id: string; type: VenueSpotType; label: string };
 type PassSignal = {
   id: string;
@@ -39,11 +34,6 @@ type WaiterCall = {
   orderItems?: OrderPayload | null;
 };
 
-function isOrderUpdated(call: WaiterCall): boolean {
-  if (call.type !== "ORDER") return false;
-  return new Date(call.updatedAt).getTime() - new Date(call.createdAt).getTime() > 1500;
-}
-
 export function WaiterPanel({
   venues,
   initialVenueId,
@@ -55,7 +45,7 @@ export function WaiterPanel({
   staffKey?: string;
   staffViaCookie?: boolean;
 }) {
-  const { d, lang } = useDashboardCopy();
+  const { d } = useDashboardCopy();
   const W = d.waiter;
   const resolvedInitial =
     initialVenueId && venues.some((v) => v.id === initialVenueId)
@@ -261,7 +251,7 @@ export function WaiterPanel({
             </select>
           </label>
         )}
-        {(pendingCount > 0 || passCount > 0) ? (
+        {pendingCount > 0 || passCount > 0 ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">
             <Bell className="h-4 w-4" />
             {pendingCount > 0 ? W.pendingCount(pendingCount) : null}
@@ -273,154 +263,22 @@ export function WaiterPanel({
         )}
       </div>
 
-      <WaiterTableGrid spots={spots} calls={calls} passSignals={passSignals} />
-
-      {passSignals.length > 0 ? (
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-brand-navy">{W.passSection}</h2>
-          <ul className="space-y-3">
-            {passSignals.map((signal) => {
-              const stationKey = passStationDbToInput(signal.station);
-              const baseStationLabel =
-                W.passStation[stationKey as keyof typeof W.passStation] ?? signal.station;
-              const stationLabel = signal.stationScreenLabel?.trim()
-                ? `${baseStationLabel} (${signal.stationScreenLabel.trim()})`
-                : baseStationLabel;
-              return (
-                <li key={signal.id}>
-                  <Card className="border-orange-200 bg-orange-50/60">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-bold text-brand-navy">
-                          {stationLabel}
-                          {" · "}
-                          {formatWaiterCallLocationForLang(signal, lang)}
-                        </p>
-                        {signal.message ? (
-                          <p className="mt-1 text-sm text-slate-700">{signal.message}</p>
-                        ) : null}
-                        <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-                          <Clock className="h-3 w-3" />
-                          {new Date(signal.readyAt).toLocaleString(lang === "EN" ? "en-GB" : "el-GR")}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        {signal.status === "READY" ? (
-                          <button
-                            type="button"
-                            disabled={updatingPassId !== null}
-                            onClick={() => void updatePassStatus(signal.id, "PICKED_UP")}
-                            className={buttonClass("secondary", "sm")}
-                          >
-                            {W.passPickedUp}
-                          </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          disabled={updatingPassId !== null}
-                          onClick={() => void updatePassStatus(signal.id, "DELIVERED")}
-                          className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
-                        >
-                          <Check className="h-3.5 w-3.5" />
-                          {W.passDelivered}
-                        </button>
-                      </div>
-                    </div>
-                  </Card>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ) : null}
-
-      {calls.length === 0 && passSignals.length === 0 && spots.length === 0 ? (
+      {spots.length === 0 ? (
         <Card className="border-dashed text-center">
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 font-medium text-brand-navy">{W.emptyTitle}</p>
           <p className="mt-1 text-sm text-slate-500">{W.emptyDesc}</p>
         </Card>
       ) : (
-        <ul className="space-y-3">
-          {calls.map((call) => (
-            <li key={call.id}>
-              <Card
-                className={
-                  call.status === "PENDING" ? "border-amber-200 bg-amber-50/50" : "border-slate-200"
-                }
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-bold text-brand-navy">
-                      {W.callType[call.type as keyof typeof W.callType] ?? call.type}
-                      {" · "}
-                      {formatWaiterCallLocationForLang(call, lang)}
-                    </p>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-                      <Clock className="h-3 w-3" />
-                      {new Date(call.createdAt).toLocaleString(lang === "EN" ? "en-GB" : "el-GR")}
-                    </p>
-                    <p className="mt-1 text-xs font-medium text-slate-500">
-                      {W.callStatus[call.status as keyof typeof W.callStatus] ?? call.status}
-                      {isOrderUpdated(call) && call.status === "PENDING" ? (
-                        <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
-                          {W.newItems}
-                        </span>
-                      ) : null}
-                    </p>
-                    {call.type === "ORDER" && call.orderItems?.lines?.length ? (
-                      <ul className="mt-3 space-y-1 rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm text-slate-700">
-                        {call.orderItems.lines.map((line, i) => {
-                          const detail = formatOrderLineDetail(line);
-                          return (
-                          <li key={`${line.name}-${i}`} className="flex justify-between gap-2">
-                            <span>
-                              {line.quantity}× {line.name}
-                              {detail ? (
-                                <span className="mt-0.5 block text-xs font-normal text-slate-500">{detail}</span>
-                              ) : null}
-                            </span>
-                            <span className="shrink-0 font-medium">
-                              €{(Number(line.unitPrice) * line.quantity).toFixed(2)}
-                            </span>
-                          </li>
-                          );
-                        })}
-                        <li className="flex justify-between border-t border-slate-100 pt-1 font-bold text-brand-navy">
-                          <span>{W.orderTotal}</span>
-                          <span>€{call.orderItems.total}</span>
-                        </li>
-                      </ul>
-                    ) : null}
-                  </div>
-                  <div className="flex gap-2">
-                    {call.status === "PENDING" ? (
-                      <button
-                        type="button"
-                        disabled={updatingCallId !== null}
-                        onClick={() => void updateStatus(call.id, "ACKNOWLEDGED")}
-                        className={buttonClass("primary", "sm")}
-                      >
-                        {W.goButton}
-                      </button>
-                    ) : null}
-                    {call.status !== "COMPLETED" ? (
-                      <button
-                        type="button"
-                        disabled={updatingCallId !== null}
-                        onClick={() => void updateStatus(call.id, "COMPLETED")}
-                        className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                        {W.completeButton}
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              </Card>
-            </li>
-          ))}
-        </ul>
+        <WaiterTableGrid
+          spots={spots}
+          calls={calls}
+          passSignals={passSignals}
+          updatingCallId={updatingCallId}
+          updatingPassId={updatingPassId}
+          onUpdateCall={(callId, status) => void updateStatus(callId, status)}
+          onUpdatePass={(signalId, status) => void updatePassStatus(signalId, status)}
+        />
       )}
     </div>
   );

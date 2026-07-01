@@ -1,4 +1,5 @@
 import { spotToQueryParams, waiterCallLocationMatches, type VenueSpotType, type WaiterCallLocation } from "./venue-spots";
+import type { OrderPayload } from "./menu-cart";
 
 export const TABLE_TILE_STATES = ["idle", "guest_call", "kitchen_ready", "bar_ready", "both"] as const;
 export type TableTileState = (typeof TABLE_TILE_STATES)[number];
@@ -6,27 +7,35 @@ export type TableTileState = (typeof TABLE_TILE_STATES)[number];
 export type TableGridSpot = { id: string; type: VenueSpotType; label: string };
 
 export type TableGridCall = {
+  id?: string;
   type: string;
   status: string;
   tableNumber?: string | null;
   roomNumber?: string | null;
   sunbedNumber?: string | null;
+  orderItems?: OrderPayload | null;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type TableGridPassSignal = {
+  id?: string;
   station: string;
+  status?: string;
+  stationScreenLabel?: string | null;
   tableNumber?: string | null;
   roomNumber?: string | null;
   sunbedNumber?: string | null;
   message?: string | null;
+  readyAt?: string;
 };
 
 export type TableGridTile = {
   spotId: string;
   label: string;
   state: TableTileState;
-  activeCalls: Pick<TableGridCall, "type" | "status">[];
-  activePasses: Pick<TableGridPassSignal, "station" | "message">[];
+  activeCalls: TableGridCall[];
+  activePasses: TableGridPassSignal[];
 };
 
 const ACTIVE_CALL_STATUSES = new Set(["PENDING", "ACKNOWLEDGED"]);
@@ -87,8 +96,8 @@ export function buildTableGridTiles(
       spotId: spot.id,
       label: spot.label,
       state: resolveTileState(hasGuest, hasKitchen, hasBar),
-      activeCalls: spotCalls.map((c) => ({ type: c.type, status: c.status })),
-      activePasses: spotPasses.map((p) => ({ station: p.station, message: p.message ?? null })),
+      activeCalls: spotCalls.map((c) => ({ ...c })),
+      activePasses: spotPasses.map((p) => ({ ...p, message: p.message ?? null })),
     };
   });
 }
