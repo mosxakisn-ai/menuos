@@ -1,10 +1,22 @@
 /**
  * End-to-end staff waiter flow simulation against production (or local).
+ * ONLY targets demo-taverna by default — never real customer venues on production.
  * Usage: node scripts/simulate-waiter-flow.mjs [baseUrl] [venueSlug] [staffKey]
  */
 const base = (process.argv[2] ?? "https://menuos.gr").replace(/\/$/, "");
-const venueSlug = process.argv[3] ?? "asterousia";
-const staffKey = process.argv[4] ?? "e2b53974-0c52-4c97-8efb-0673dcb0bb87";
+const venueSlug = process.argv[3] ?? "demo-taverna";
+const staffKey = process.argv[4] ?? "";
+
+if (!staffKey) {
+  console.error("Usage: node scripts/simulate-waiter-flow.mjs [baseUrl] demo-taverna <staffKey>");
+  console.error("Pass the demo venue staff key explicitly — do not use customer venue slugs on production.");
+  process.exit(1);
+}
+
+if (base.includes("menuos.gr") && venueSlug !== "demo-taverna" && process.env.ALLOW_CUSTOMER_SIMULATION !== "1") {
+  console.error("Refusing customer venue simulation on production. Set ALLOW_CUSTOMER_SIMULATION=1 to override.");
+  process.exit(1);
+}
 
 const sessionUrl = `${base}/api/staff/session?venueSlug=${encodeURIComponent(venueSlug)}&key=${encodeURIComponent(staffKey)}`;
 
@@ -84,7 +96,7 @@ async function runOnce(run) {
   const waiterPost = await fetch(`${base}/api/waiter-call`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ venueSlug, type: "WAITER", tableNumber: "99" }),
+    body: JSON.stringify({ venueSlug, type: "WAITER", tableNumber: "12" }),
   });
   const waiterJson = await waiterPost.json().catch(() => ({}));
   console.log(`[guest call] ${waiterPost.status} id=${waiterJson.id ?? "?"}`);
