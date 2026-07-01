@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CreditCard, LayoutGrid, Monitor, QrCode, Settings, UtensilsCrossed } from "lucide-react";
+import { CreditCard, History, LayoutGrid, Monitor, QrCode, Settings, UtensilsCrossed } from "lucide-react";
 import { DashboardLanguageSwitcher } from "@/components/dashboard/dashboard-language-switcher";
 import { DashboardCountBadge } from "@/components/dashboard/dashboard-ui";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
@@ -19,6 +19,7 @@ export function DashboardMobileNav({ initialPendingCount = 0 }: { initialPending
     { href: "/dashboard/menus", label: d.menu, icon: UtensilsCrossed },
     { href: "/dashboard/qr", label: d.nav.qrShort, icon: QrCode },
     { href: "/dashboard/waiter", label: d.nav.callsShort, icon: Monitor },
+    { href: "/dashboard/history", label: d.nav.history, icon: History },
     { href: "/dashboard/billing", label: d.subscription, icon: CreditCard },
     { href: "/dashboard/settings", label: d.settings, icon: Settings },
   ];

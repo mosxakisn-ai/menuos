@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CreditCard,
+  History,
   LayoutGrid,
   Monitor,
   QrCode,
@@ -24,6 +25,7 @@ const navItems: { href: string; icon: LucideIcon; match?: "exact" }[] = [
   { href: "/dashboard/menus", icon: UtensilsCrossed },
   { href: "/dashboard/qr", icon: QrCode },
   { href: "/dashboard/waiter", icon: Monitor },
+  { href: "/dashboard/history", icon: History },
   { href: "/dashboard/billing", icon: CreditCard },
   { href: "/dashboard/settings", icon: Settings },
 ];
@@ -38,6 +40,8 @@ function sidebarNavLabel(href: string, d: ReturnType<typeof useDashboardCopy>["d
       return d.qrCodes;
     case "/dashboard/waiter":
       return d.nav.waiter;
+    case "/dashboard/history":
+      return d.nav.history;
     case "/dashboard/billing":
       return d.subscription;
     case "/dashboard/settings":

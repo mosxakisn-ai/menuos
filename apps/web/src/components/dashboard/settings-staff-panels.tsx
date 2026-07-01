@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
-import { PassSignalHistoryPanel } from "@/components/dashboard/pass-signal-history-panel";
 import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
 import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
@@ -123,9 +122,16 @@ export function SettingsServicesPanel({
           </a>
         </div>
         <p className="mt-2 text-sm text-slate-600">{S.services.passHint}</p>
+        <p className="mt-3">
+          <a
+            href="/dashboard/history"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-brand-blue hover:underline"
+          >
+            {S.services.historyLink}
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        </p>
       </div>
-
-      <PassSignalHistoryPanel venues={venues} />
     </div>
   );
 }

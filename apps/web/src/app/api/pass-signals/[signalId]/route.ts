@@ -67,6 +67,7 @@ export async function PATCH(request: Request, { params }: Props) {
         ? {
             deliveredAt: now,
             ...(existing.status === "READY" ? { pickedUpAt: now } : {}),
+            ...(member ? { deliveredByStaffMemberId: member.id } : {}),
           }
         : {}),
     },

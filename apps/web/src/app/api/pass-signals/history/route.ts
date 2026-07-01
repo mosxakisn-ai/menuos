@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
+import type { Prisma } from "@menuos/db";
+import { passStationInputToDb, spotToQueryParams, type PassStationInput } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 const MAX_DAYS = 90;
 const DEFAULT_DAYS = 7;
-const MAX_LIMIT = 100;
-const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 200;
+const DEFAULT_LIMIT = 100;
+
+const STATION_INPUTS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
 
 export async function GET(request: Request) {
   const auth = await requireActiveSubscription();
@@ -34,24 +38,57 @@ export async function GET(request: Request) {
 
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
+  const where: Prisma.PassSignalWhereInput = {
+    venueId,
+    status: "DELIVERED",
+    deliveredAt: { gte: since },
+  };
+
+  const stationParam = searchParams.get("station")?.trim();
+  if (stationParam && STATION_INPUTS.includes(stationParam as PassStationInput)) {
+    where.station = passStationInputToDb(stationParam as PassStationInput);
+  }
+
+  const stationScreenId = searchParams.get("stationScreenId")?.trim();
+  if (stationScreenId) {
+    where.stationScreenId = stationScreenId;
+  }
+
+  const staffMemberId = searchParams.get("staffMemberId")?.trim();
+  if (staffMemberId) {
+    where.deliveredByStaffMemberId = staffMemberId;
+  }
+
+  const spotId = searchParams.get("spotId")?.trim();
+  if (spotId) {
+    const spot = await prisma.venueSpot.findFirst({
+      where: { id: spotId, venueId },
+      select: { type: true, label: true },
+    });
+    if (spot) {
+      const loc = spotToQueryParams(spot.type, spot.label);
+      where.tableNumber = loc.table ?? null;
+      where.roomNumber = loc.room ?? null;
+      where.sunbedNumber = loc.sunbed ?? null;
+    }
+  }
+
   try {
     const signals = await prisma.passSignal.findMany({
-      where: {
-        venueId,
-        status: "DELIVERED",
-        deliveredAt: { gte: since },
-      },
+      where,
       orderBy: { deliveredAt: "desc" },
       take: limit,
       include: {
         stationScreen: { select: { label: true } },
+        deliveredByStaffMember: { select: { name: true } },
       },
     });
 
     return NextResponse.json({
-      signals: signals.map(({ stationScreen, ...signal }) => ({
+      signals: signals.map(({ stationScreen, deliveredByStaffMember, ...signal }) => ({
         ...signal,
         stationScreenLabel: stationScreen?.label ?? null,
+        deliveredByStaffMemberName: deliveredByStaffMember?.name ?? null,
       })),
       days,
       limit,

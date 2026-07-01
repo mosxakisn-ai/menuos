@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Clock } from "lucide-react";
-import { formatWaiterCallLocationForLang, passStationDbToInput } from "@menuos/shared";
+import {
+  formatVenueSpotLabelForLang,
+  formatWaiterCallLocationForLang,
+  passStationDbToInput,
+  type PassStationInput,
+  type VenueSpotType,
+} from "@menuos/shared";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
@@ -15,9 +21,14 @@ type HistorySignal = {
   sunbedNumber: string | null;
   message: string | null;
   readyAt: string;
-  pickedUpAt: string | null;
   deliveredAt: string | null;
+  deliveredByStaffMemberName?: string | null;
 };
+
+type VenueSpot = { id: string; type: VenueSpotType; label: string };
+type StaffMember = { id: string; name: string };
+
+const STATION_FILTERS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
 
 function formatDurationMs(ms: number): string {
   if (ms < 60_000) return `${Math.max(1, Math.round(ms / 1000))}s`;
@@ -30,13 +41,18 @@ function formatDurationMs(ms: number): string {
 
 export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name: string }[] }) {
   const { d, lang } = useDashboardCopy();
-  const S = d.pages.settings.services;
+  const H = d.pages.history;
   const W = d.waiter;
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
   const [signals, setSignals] = useState<HistorySignal[]>([]);
+  const [spots, setSpots] = useState<VenueSpot[]>([]);
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [days, setDays] = useState(7);
+  const [spotId, setSpotId] = useState("");
+  const [station, setStation] = useState("");
+  const [staffMemberId, setStaffMemberId] = useState("");
 
   useEffect(() => {
     if (venues.length === 0) {
@@ -48,6 +64,35 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     }
   }, [venues, venueId]);
 
+  useEffect(() => {
+    if (!venueId) {
+      setSpots([]);
+      setStaffMembers([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const [spotsRes, staffRes] = await Promise.all([
+        fetch(`/api/venues/${venueId}/spots`),
+        fetch(`/api/venues/${venueId}/staff-members`),
+      ]);
+      if (cancelled) return;
+      const spotsData = spotsRes.ok ? ((await spotsRes.json()) as { spots?: VenueSpot[] }) : {};
+      const staffData = staffRes.ok ? ((await staffRes.json()) as { members?: StaffMember[] }) : {};
+      setSpots(spotsData.spots ?? []);
+      setStaffMembers(staffData.members ?? []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [venueId]);
+
+  useEffect(() => {
+    setSpotId("");
+    setStation("");
+    setStaffMemberId("");
+  }, [venueId]);
+
   const load = useCallback(async () => {
     if (!venueId) {
       setSignals([]);
@@ -58,6 +103,9 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     setLoadError(false);
     try {
       const params = new URLSearchParams({ venueId, days: String(days) });
+      if (spotId) params.set("spotId", spotId);
+      if (station) params.set("station", station);
+      if (staffMemberId) params.set("staffMemberId", staffMemberId);
       const res = await fetch(`/api/pass-signals/history?${params}`);
       const data = await res.json();
       if (!res.ok) {
@@ -72,7 +120,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     } finally {
       setLoading(false);
     }
-  }, [venueId, days]);
+  }, [venueId, days, spotId, station, staffMemberId]);
 
   useEffect(() => {
     void load();
@@ -84,9 +132,6 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
 
   return (
     <div className={dashboardCardClass}>
-      <h2 className="text-sm font-semibold text-primary">{S.historyTitle}</h2>
-      <p className="mt-2 text-sm text-slate-600">{S.historyHint}</p>
-
       <div className="mt-4 flex flex-wrap items-end gap-4">
         {venues.length > 1 ? (
           <label className="block min-w-[180px]">
@@ -105,35 +150,81 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
           </label>
         ) : null}
         <label className="block min-w-[140px]">
-          <span className={dashboardLabelClass}>{S.historyDaysLabel}</span>
+          <span className={dashboardLabelClass}>{H.daysLabel}</span>
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
             className={dashboardFieldClass}
           >
-            <option value={7}>{S.historyDays7}</option>
-            <option value={30}>{S.historyDays30}</option>
-            <option value={90}>{S.historyDays90}</option>
+            <option value={7}>{H.days7}</option>
+            <option value={30}>{H.days30}</option>
+            <option value={90}>{H.days90}</option>
+          </select>
+        </label>
+        <label className="block min-w-[160px]">
+          <span className={dashboardLabelClass}>{H.filterSpot}</span>
+          <select
+            value={spotId}
+            onChange={(e) => setSpotId(e.target.value)}
+            className={dashboardFieldClass}
+          >
+            <option value="">{H.filterAll}</option>
+            {spots.map((spot) => (
+              <option key={spot.id} value={spot.id}>
+                {formatVenueSpotLabelForLang(spot.type, spot.label, lang)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block min-w-[140px]">
+          <span className={dashboardLabelClass}>{H.filterStation}</span>
+          <select
+            value={station}
+            onChange={(e) => setStation(e.target.value)}
+            className={dashboardFieldClass}
+          >
+            <option value="">{H.filterAll}</option>
+            {STATION_FILTERS.map((key) => (
+              <option key={key} value={key}>
+                {W.passStation[key]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block min-w-[160px]">
+          <span className={dashboardLabelClass}>{H.filterStaff}</span>
+          <select
+            value={staffMemberId}
+            onChange={(e) => setStaffMemberId(e.target.value)}
+            className={dashboardFieldClass}
+          >
+            <option value="">{H.filterAll}</option>
+            {staffMembers.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name}
+              </option>
+            ))}
           </select>
         </label>
       </div>
 
       {loading ? (
-        <p className="mt-6 text-sm text-slate-500">{S.historyLoading}</p>
+        <p className="mt-6 text-sm text-slate-500">{H.loading}</p>
       ) : loadError ? (
-        <p className="mt-6 text-sm text-red-600">{S.historyFailed}</p>
+        <p className="mt-6 text-sm text-red-600">{H.failed}</p>
       ) : signals.length === 0 ? (
-        <p className="mt-6 text-sm text-slate-500">{S.historyEmpty}</p>
+        <p className="mt-6 text-sm text-slate-500">{H.empty}</p>
       ) : (
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-left text-slate-500">
-                <th className="pb-3 pr-4 font-medium">{S.historyColSpot}</th>
-                <th className="pb-3 pr-4 font-medium">{S.historyColStation}</th>
-                <th className="pb-3 pr-4 font-medium">{S.historyColMessage}</th>
-                <th className="pb-3 pr-4 font-medium">{S.historyColReady}</th>
-                <th className="pb-3 font-medium">{S.historyColDuration}</th>
+                <th className="pb-3 pr-4 font-medium">{H.colSpot}</th>
+                <th className="pb-3 pr-4 font-medium">{H.colStation}</th>
+                <th className="pb-3 pr-4 font-medium">{H.colMessage}</th>
+                <th className="pb-3 pr-4 font-medium">{H.colStaff}</th>
+                <th className="pb-3 pr-4 font-medium">{H.colReady}</th>
+                <th className="pb-3 font-medium">{H.colDuration}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -158,6 +249,9 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
                     </td>
                     <td className="py-3 pr-4 text-slate-700">{stationLabel}</td>
                     <td className="py-3 pr-4 text-slate-600">{signal.message?.trim() || "—"}</td>
+                    <td className="py-3 pr-4 text-slate-600">
+                      {signal.deliveredByStaffMemberName?.trim() || "—"}
+                    </td>
                     <td className="py-3 pr-4 text-slate-600">
                       <span className="inline-flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5 text-slate-400" />
