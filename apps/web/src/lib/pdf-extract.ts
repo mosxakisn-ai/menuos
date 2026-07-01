@@ -1,4 +1,5 @@
 import type { MenuPdfParseResult } from "@menuos/shared";
+import { getDashboardCopy, type DashboardLang } from "@/content/dashboard-i18n";
 import { isOcrSpaceConfigured, ocrImageBuffer, OcrSpaceError } from "@/lib/ocr-space";
 import { renderPdfPageToJpeg } from "@/lib/pdf-page-render";
 
@@ -167,16 +168,17 @@ export function readPdfFilesFromFormData(formData: FormData): File[] {
   return files;
 }
 
-export function validatePdfUploadFiles(files: File[]): string | null {
-  if (files.length === 0) return "Επίλεξε τουλάχιστον ένα PDF.";
-  if (files.length > MAX_FILES) return `Μέγιστο ${MAX_FILES} PDF ανά φορά.`;
+export function validatePdfUploadFiles(files: File[], lang: DashboardLang = "EN"): string | null {
+  const P = getDashboardCopy(lang).api.pdf;
+  if (files.length === 0) return P.noFiles;
+  if (files.length > MAX_FILES) return P.tooMany(MAX_FILES);
 
   for (const file of files) {
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      return `Το «${file.name}» δεν είναι PDF.`;
+      return P.notPdf(file.name);
     }
     if (file.size > MAX_BYTES) {
-      return `Το «${file.name}» είναι πολύ μεγάλο (max 10MB).`;
+      return P.tooLarge(file.name);
     }
   }
 
@@ -203,7 +205,9 @@ export function parsePageSelectionMap(raw: unknown): PageSelectionMap | undefine
 export async function parseUploadedPdfFiles(
   files: File[],
   pageSelections?: PageSelectionMap,
+  lang: DashboardLang = "EN",
 ): Promise<MenuPdfParseResult & { ocrPagesUsed?: number }> {
+  const P = getDashboardCopy(lang).api.pdf;
   const { parseMultipleMenuPdfTexts } = await import("@menuos/shared");
   const extracted: { name: string; text: string }[] = [];
   let totalOcrPages = 0;
@@ -225,25 +229,15 @@ export async function parseUploadedPdfFiles(
       ocrPages = result.ocrPages;
     } catch (err) {
       console.error("pdf-extract", file.name, err);
-      throw new PdfTextExtractionError(
-        `Αδυναμία ανάγνωσης «${file.name}». Το αρχείο μπορεί να είναι κλειδωμένο ή κατεστραμμένο.`,
-        file.name,
-      );
+      throw new PdfTextExtractionError(P.readFailed(file.name), file.name);
     }
 
     totalOcrPages += ocrPages;
 
     if (text.length < MIN_TEXT_CHARS) {
-      const pageHint = selectedPages?.length
-        ? ` (σελίδες ${selectedPages.join(", ")})`
-        : "";
-      const ocrHint = isOcrSpaceConfigured()
-        ? " Το OCR δεν βρήκε κείμενο — δοκίμασε άλλες σελίδες ή χειροκίνητη εισαγωγή."
-        : " Βάλε OCR_SPACE_API_KEY στο server για σαρωμένα PDF.";
-      throw new PdfTextExtractionError(
-        `Το «${file.name}» δεν έδωσε αναγνωρίσιμο κείμενο${pageHint}.${ocrHint}`,
-        file.name,
-      );
+      const pageHint = selectedPages?.length ? P.pagesHint(selectedPages) : "";
+      const ocrHint = isOcrSpaceConfigured() ? P.ocrNoText : P.ocrNotConfigured;
+      throw new PdfTextExtractionError(P.noText(file.name, pageHint, ocrHint), file.name);
     }
 
     extracted.push({ name: file.name, text });
@@ -251,9 +245,7 @@ export async function parseUploadedPdfFiles(
 
   if (extracted.length === 0) {
     throw new PdfTextExtractionError(
-      isOcrSpaceConfigured()
-        ? "Δεν βρέθηκε κείμενο στις επιλεγμένες σελίδες. Δοκίμασε «Προχωρημένα → Επιλογή σελίδων»."
-        : "Δεν βρέθηκε digital κείμενο. Ρύθμισε OCR_SPACE_API_KEY για σαρωμένα PDF.",
+      isOcrSpaceConfigured() ? P.noPagesSelectedOcr : P.noPagesSelectedNoOcr,
     );
   }
 

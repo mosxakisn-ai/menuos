@@ -14,9 +14,10 @@ import {
   DashboardToolbar,
 } from "@/components/dashboard/dashboard-page";
 import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
+import { DashboardScrollRow } from "@/components/dashboard/dashboard-ui";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { cn } from "@/lib/utils";
 
@@ -58,15 +59,16 @@ export function MenuEditor({
   const [venue, setVenue] = useState<Venue | null>(null);
   const [loading, setLoading] = useState(false);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
+  const { d } = useDashboardCopy();
 
   useEffect(() => {
     if (welcome) {
       setFlash({
         type: "info",
-        text: DASHBOARD_EL.venueCreated,
+        text: d.venueCreated,
       });
     }
-  }, [welcome, setFlash]);
+  }, [welcome, setFlash, d.venueCreated]);
 
   const [catNameGr, setCatNameGr] = useState("");
   const [addingCat, setAddingCat] = useState(false);
@@ -150,7 +152,7 @@ export function MenuEditor({
     if (!itemCategoryId || !itemForm.nameGr.trim() || !itemForm.price) return;
     const price = parseMenuPrice(itemForm.price);
     if (!Number.isFinite(price) || price < 0) {
-      setFlash({ type: "error", text: "Βάλε έγκυρη τιμή (π.χ. 4.50)." });
+      setFlash({ type: "error", text: d.menuEditor.invalidPrice });
       return;
     }
     setAddingItem(true);
@@ -211,14 +213,14 @@ export function MenuEditor({
 
   async function deleteMenu(menu: Menu) {
     if (menuHasData(menu)) {
-      setFlash({ type: "error", text: DASHBOARD_EL.deleteCatalogHasData });
+      setFlash({ type: "error", text: d.deleteCatalogHasData });
       return;
     }
     if (menus.length <= 1) {
-      setFlash({ type: "error", text: DASHBOARD_EL.deleteCatalogLast });
+      setFlash({ type: "error", text: d.deleteCatalogLast });
       return;
     }
-    if (!window.confirm(DASHBOARD_EL.deleteCatalogConfirm(menu.name))) return;
+    if (!window.confirm(d.deleteCatalogConfirm(menu.name))) return;
 
     setDeletingMenuId(menu.id);
     try {
@@ -252,7 +254,7 @@ export function MenuEditor({
     if (!editNameGr.trim()) return;
     const price = parseMenuPrice(editPrice);
     if (!Number.isFinite(price) || price < 0) {
-      setFlash({ type: "error", text: "Βάλε έγκυρη τιμή (π.χ. 4.50)." });
+      setFlash({ type: "error", text: d.menuEditor.invalidPrice });
       return;
     }
     const extras = editExtras
@@ -300,7 +302,7 @@ export function MenuEditor({
   }
 
   async function deleteItem(id: string) {
-    if (!window.confirm(DASHBOARD_EL.catalogEntry.deleteConfirm)) return;
+    if (!window.confirm(d.catalogEntry.deleteConfirm)) return;
     const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
     const data = await res.json();
     showFromResponse(data, res.ok);
@@ -311,11 +313,11 @@ export function MenuEditor({
     if (cat.items.length > 0) {
       setFlash({
         type: "error",
-        text: DASHBOARD_EL.catalogEntry.categoryHasEntries,
+        text: d.catalogEntry.categoryHasEntries,
       });
       return;
     }
-    if (!window.confirm("Διαγραφή της κατηγορίας;\n\nΕίσαι σίγουρος; Η ενέργεια δεν αναιρείται.")) {
+    if (!window.confirm(d.menuEditor.deleteCategoryConfirm)) {
       return;
     }
     const res = await fetch(`/api/categories/${cat.id}`, { method: "DELETE" });
@@ -337,7 +339,7 @@ export function MenuEditor({
 
   async function saveCategoryEdit(categoryId: string) {
     if (!editCategoryNameGr.trim()) {
-      setFlash({ type: "error", text: "Βάλε όνομα κατηγορίας." });
+      setFlash({ type: "error", text: d.menuEditor.categoryNameRequired });
       return;
     }
     setSavingCategory(true);
@@ -373,12 +375,10 @@ export function MenuEditor({
   if (venues.length === 0) {
     return (
       <Card>
-        <p className="font-semibold text-brand-navy">Δεν έχεις ακόμα κατάστημα</p>
-        <p className="mt-2 text-sm text-slate-600">
-          Πρώτα φτιάξε το κατάστημά σου (εστιατόριο, bar ή ξενοδοχείο) και μετά πρόσθεσε είδη στον κατάλογο.
-        </p>
+        <p className="font-semibold text-brand-navy">{d.menuEditor.noVenueTitle}</p>
+        <p className="mt-2 text-sm text-slate-600">{d.menuEditor.noVenueDesc}</p>
         <a href="/dashboard/venues/new" className={`mt-4 inline-flex ${buttonClass("primary")}`}>
-          {DASHBOARD_EL.addVenue}
+          {d.addVenue}
         </a>
       </Card>
     );
@@ -390,7 +390,7 @@ export function MenuEditor({
 
       <DashboardToolbar>
         <label className="block min-w-[12rem] flex-1 sm:max-w-xs">
-          <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
+          <span className={dashboardLabelClass}>{d.venue}</span>
           <select
             value={venueId}
             onChange={(e) => setVenueId(e.target.value)}
@@ -410,14 +410,14 @@ export function MenuEditor({
                 href={`/dashboard/menus/import?venue=${venueId}`}
                 className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
               >
-                {DASHBOARD_EL.importPdf}
+                {d.importPdf}
               </a>
             ) : (
               <a
                 href="/dashboard/billing?upgrade=pdf-import"
                 className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
               >
-                {DASHBOARD_EL.importPdfPro}
+                {d.importPdfPro}
               </a>
             )}
             <a
@@ -426,7 +426,7 @@ export function MenuEditor({
               rel="noopener noreferrer"
               className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
             >
-              {DASHBOARD_EL.previewCatalog}
+              {d.previewCatalog}
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </>
@@ -438,8 +438,8 @@ export function MenuEditor({
           <LoadingState
             variant="catalog"
             size="md"
-            title={DASHBOARD_EL.loadingCatalog}
-            subtitle="Φόρτωση κατηγοριών και ειδών"
+            title={d.loadingCatalog}
+            subtitle={d.menuEditor.loadingSubtitle}
           />
           <LoadingSkeleton rows={2} className="mt-2 px-4 pb-4" />
         </Card>
@@ -447,8 +447,8 @@ export function MenuEditor({
         <>
           {menus.length > 0 ? (
             <Card>
-              <h2 className="font-semibold text-brand-navy">{DASHBOARD_EL.menus}</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <h2 className="font-semibold text-brand-navy">{d.menus}</h2>
+              <DashboardScrollRow className="mt-3" innerClassName="flex gap-2 pb-0.5">
                 {menus.map((m) => {
                   const isActive = activeMenu?.id === m.id;
                   const deletable = canDeleteMenu(m);
@@ -456,10 +456,10 @@ export function MenuEditor({
                     <div
                       key={m.id}
                       className={cn(
-                        "inline-flex items-stretch overflow-hidden rounded-full text-sm font-semibold",
+                        "inline-flex shrink-0 items-stretch overflow-hidden rounded-full text-sm font-semibold",
                         isActive
-                          ? "bg-brand-gradient text-white"
-                          : "bg-brand-surface text-brand-navy ring-1 ring-slate-200",
+                          ? "bg-brand-gradient text-white shadow-glow"
+                          : "bg-brand-surface text-brand-navy ring-1 ring-slate-200/90",
                       )}
                     >
                       <button
@@ -480,8 +480,8 @@ export function MenuEditor({
                               ? "border-white/30 hover:bg-white/15"
                               : "border-slate-200 hover:bg-slate-100",
                           )}
-                          aria-label={DASHBOARD_EL.deleteCatalog}
-                          title={DASHBOARD_EL.deleteCatalog}
+                          aria-label={d.deleteCatalog}
+                          title={d.deleteCatalog}
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -489,26 +489,24 @@ export function MenuEditor({
                     </div>
                   );
                 })}
-              </div>
+              </DashboardScrollRow>
               <form onSubmit={addMenu} className="mt-4 flex flex-wrap items-end gap-2">
                 <input
-                  placeholder={DASHBOARD_EL.newCatalogPlaceholder}
+                  placeholder={d.newCatalogPlaceholder}
                   value={newMenuName}
                   onChange={(e) => setNewMenuName(e.target.value)}
                   className={`min-w-[200px] flex-1 ${dashboardInputClass}`}
                 />
                 <button type="submit" disabled={addingMenu} className={buttonClass("secondary", "sm")}>
-                  {addingMenu ? "..." : DASHBOARD_EL.addCatalog}
+                  {addingMenu ? "..." : d.addCatalog}
                 </button>
               </form>
             </Card>
           ) : null}
 
           <Card>
-            <h2 className="font-semibold text-brand-navy">Νέα κατηγορία</h2>
-            <p className="mt-1 text-xs text-slate-500">
-              Μόνο ελληνικά — EN / DE / FR δημιουργούνται αυτόματα για το QR menu
-            </p>
+            <h2 className="font-semibold text-brand-navy">{d.menuEditor.categoryNew}</h2>
+            <p className="mt-1 text-xs text-slate-500">{d.menuEditor.categoryHint}</p>
             <form onSubmit={addCategory} className="mt-4 flex flex-wrap items-end gap-2">
               <input
                 required
@@ -523,7 +521,7 @@ export function MenuEditor({
                 className={`inline-flex w-fit items-center gap-1 ${buttonClass("primary", "sm")}`}
               >
                 <Plus className="h-4 w-4" />
-                {addingCat ? "Προσθήκη..." : "Προσθήκη κατηγορίας"}
+                {addingCat ? d.menuEditor.addingCategory : d.menuEditor.addCategory}
               </button>
             </form>
           </Card>
@@ -533,7 +531,7 @@ export function MenuEditor({
               <div className="flex items-start justify-between gap-3 border-b border-slate-200/80 bg-gradient-to-r from-slate-50 to-white px-5 py-4 sm:px-6 sm:py-5">
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                    Κατηγορία
+                    {d.menuEditor.categoryLabel}
                   </p>
                   {editingCategoryId === cat.id ? (
                     <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -573,14 +571,14 @@ export function MenuEditor({
                         type="button"
                         onClick={() => startEditingCategory(cat)}
                         className="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-brand-blue"
-                        title="Μετονομασία κατηγορίας"
+                        title={d.menuEditor.renameCategory}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
                     </div>
                   )}
                   <p className="mt-1 text-sm text-slate-500">
-                    {DASHBOARD_EL.catalogEntry.count(cat.items.length)}
+                    {d.catalogEntry.count(cat.items.length)}
                   </p>
                 </div>
                 <button
@@ -595,8 +593,8 @@ export function MenuEditor({
                   )}
                   title={
                     cat.items.length > 0
-                      ? DASHBOARD_EL.catalogEntry.categoryDeleteHint
-                      : "Διαγραφή κενής κατηγορίας"
+                      ? d.catalogEntry.categoryDeleteHint
+                      : d.menuEditor.deleteEmptyCategory
                   }
                 >
                   <Trash2 className="h-4 w-4" />
@@ -606,7 +604,7 @@ export function MenuEditor({
               <div className="space-y-3 p-4 sm:p-5">
                 {cat.items.length === 0 ? (
                   <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-6 text-center text-sm text-slate-500">
-                    {DASHBOARD_EL.catalogEntry.empty}
+                    {d.catalogEntry.empty}
                   </p>
                 ) : (
                   cat.items.map((item) => {
@@ -700,7 +698,7 @@ export function MenuEditor({
                                     type="button"
                                     onClick={() => startEditingItem(item)}
                                     className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-brand-blue"
-                                    title={DASHBOARD_EL.catalogEntry.editTitle}
+                                    title={d.catalogEntry.editTitle}
                                   >
                                     <Pencil className="h-3.5 w-3.5" />
                                   </button>
@@ -710,12 +708,12 @@ export function MenuEditor({
                                     type="button"
                                     onClick={() => startEditingItem(item)}
                                     className="text-sm font-semibold tabular-nums text-brand-blue hover:underline"
-                                    title="Αλλαγή τιμής"
+                                    title={d.menuEditor.editPrice}
                                   >
                                     €{item.price.toString()}
                                   </button>
                                   {extrasCount > 0 ? (
-                                    <span className="text-xs text-slate-500">{extrasCount} επιλογές QR</span>
+                                    <span className="text-xs text-slate-500">{d.menuEditor.qrExtrasCount(extrasCount)}</span>
                                   ) : null}
                                 </div>
                               </>
@@ -731,9 +729,9 @@ export function MenuEditor({
                                   void setItemLabel(item.id, v ? (v as ItemLabel) : null);
                                 }}
                                 className="max-w-[8.5rem] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-brand-navy"
-                                title="Ετικέτα στο QR menu"
+                                title={d.menuEditor.qrBadge}
                               >
-                                <option value="">Χωρίς ετικέτα</option>
+                                <option value="">{d.menuEditor.noBadge}</option>
                                 {ITEM_LABEL_OPTIONS.map((opt) => (
                                   <option key={opt.value} value={opt.value}>
                                     {opt.dashboardGr}
@@ -750,13 +748,13 @@ export function MenuEditor({
                                     : "bg-slate-100 text-slate-500",
                                 )}
                               >
-                                {item.available ? "Ενεργό" : "Ανενεργό"}
+                                {item.available ? d.menuEditor.active : d.menuEditor.inactive}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => deleteItem(item.id)}
                                 className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                                title={DASHBOARD_EL.catalogEntry.deleteTitle}
+                                title={d.catalogEntry.deleteTitle}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -768,10 +766,8 @@ export function MenuEditor({
                           <div className="space-y-3 border-t border-slate-100 bg-slate-50/40 px-3 py-4 sm:px-4">
                             <PhotoUploadField value={editPhotoUrl} onChange={setEditPhotoUrl} />
                             <div className="space-y-2 rounded-lg border border-slate-200/80 bg-white p-3">
-                              <p className="text-xs font-semibold text-brand-navy">Επιλογές πελάτη</p>
-                              <p className="text-[11px] leading-snug text-slate-500">
-                                Ο πελάτης τις επιλέγει στο QR menu. Προαιρετικά βάλε extra χρέωση (π.χ. +€1,50).
-                              </p>
+                              <p className="text-xs font-semibold text-brand-navy">{d.menuEditor.qrExtrasTitle}</p>
+                              <p className="text-[11px] leading-snug text-slate-500">{d.menuEditor.qrExtrasHint}</p>
                               {editExtras.map((ex, i) => (
                                 <div key={ex.id} className="flex items-center gap-2">
                                   <input
@@ -808,13 +804,13 @@ export function MenuEditor({
                                     }}
                                     placeholder={FORM_PLACEHOLDERS.extraPrice}
                                     className="w-[4.5rem] shrink-0 rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                                    title="Extra χρέωση (προαιρετικό)"
+                                    title={d.menuEditor.extraChargePlaceholder}
                                   />
                                   <button
                                     type="button"
                                     onClick={() => setEditExtras(editExtras.filter((_, j) => j !== i))}
                                     className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                                    title="Αφαίρεση"
+                                    title={d.menuEditor.remove}
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </button>
@@ -829,7 +825,7 @@ export function MenuEditor({
                                   className="inline-flex items-center gap-1 text-xs font-semibold text-brand-blue"
                                 >
                                   <Plus className="h-3.5 w-3.5" />
-                                  Προσθήκη επιλογής
+                                  {d.menuEditor.addExtraOption}
                                 </button>
                               ) : null}
                             </div>
@@ -845,9 +841,9 @@ export function MenuEditor({
                     onSubmit={addItem}
                     className="space-y-3 rounded-xl border border-brand-blue/20 bg-brand-surface p-4 sm:p-5"
                   >
-                    <p className="text-sm font-semibold text-brand-navy">{DASHBOARD_EL.catalogEntry.new}</p>
+                    <p className="text-sm font-semibold text-brand-navy">{d.catalogEntry.new}</p>
                     <p className="text-xs text-slate-500">
-                      Μόνο ελληνικά — EN / DE / FR δημιουργούνται αυτόματα για το QR menu
+                      {d.menuEditor.autoTranslateHint}
                     </p>
                     <div className={dashboardFormGridClass}>
                       <input
@@ -879,7 +875,7 @@ export function MenuEditor({
                         className="sm:col-span-2"
                       />
                       <label className="block sm:col-span-2">
-                        <span className={dashboardLabelClass}>Ετικέτα στο QR menu</span>
+                        <span className={dashboardLabelClass}>{d.menuEditor.qrBadge}</span>
                         <select
                           value={itemForm.label}
                           onChange={(e) =>
@@ -887,7 +883,7 @@ export function MenuEditor({
                           }
                           className={dashboardFieldClass}
                         >
-                          <option value="">Χωρίς ετικέτα</option>
+                          <option value="">{d.menuEditor.noBadge}</option>
                           {ITEM_LABEL_OPTIONS.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                               {opt.dashboardGr}
@@ -898,14 +894,14 @@ export function MenuEditor({
                     </div>
                     <div className="flex gap-2">
                       <button type="submit" disabled={addingItem} className={buttonClass("primary", "sm")}>
-                        {addingItem ? "Αποθήκευση..." : DASHBOARD_EL.catalogEntry.save}
+                        {addingItem ? d.menuEditor.saving : d.catalogEntry.save}
                       </button>
                       <button
                         type="button"
                         onClick={() => setItemCategoryId(null)}
                         className={buttonClass("secondary", "sm")}
                       >
-                        Ακύρωση
+                        {d.menuEditor.cancel}
                       </button>
                     </div>
                   </form>
@@ -919,7 +915,7 @@ export function MenuEditor({
                     className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-brand-blue/40 hover:bg-brand-blue/5 hover:text-brand-blue"
                   >
                     <Plus className="h-4 w-4" />
-                    {DASHBOARD_EL.catalogEntry.add}
+                    {d.catalogEntry.add}
                   </button>
                 )}
               </div>
@@ -929,7 +925,7 @@ export function MenuEditor({
           {activeMenu?.categories.length === 0 ? (
             <Card className="border-dashed">
               <p className="text-center text-sm text-slate-500">
-                Δεν υπάρχουν κατηγορίες. Πρόσθεσε την πρώτη παραπάνω για να ξεκινήσεις.
+                {d.menuEditor.emptyCategories}
               </p>
             </Card>
           ) : null}

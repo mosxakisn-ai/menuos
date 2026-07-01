@@ -28,7 +28,7 @@ export const MARKETING_EN = {
       title: "Your menu,",
       titleAccent: "on your guest's phone",
       subtitle:
-        "For restaurants, hotels, beach bars and room service. Guests scan a QR → see dishes, prices and photos. You update from the dashboard — no reprints, no app download.",
+        "For restaurants, hotels, beach bars and room service. Guests scan a QR → see items, prices and photos. You update from the dashboard — no reprints, no app download.",
       ctaTrial: "Start free 7-day trial",
       ctaPricing: "View pricing",
       ctaDemo: "See how it looks",
@@ -50,7 +50,7 @@ export const MARKETING_EN = {
       venueTagline: "Mediterranean cuisine",
       venueSubtitle: "Main menu",
       tableTentTitle: "Scan for the menu",
-      tableTentBody: "See dishes, prices and allergens — no app needed.",
+      tableTentBody: "See items, prices and allergens — no app needed.",
       poweredBy: "Powered by",
     },
     whatWeDo: {
@@ -58,7 +58,7 @@ export const MARKETING_EN = {
       body:
         "MenuOS is an online platform for restaurants, hotels, beach bars and any hospitality venue. Instead of printed menus, you give guests a modern digital menu that opens instantly on mobile — no app install.",
       body2:
-        "You sign in to the dashboard, add categories and dishes, and download QR codes for tables or rooms. When you change a price or item, guests see it immediately.",
+        "You sign in to the dashboard, add categories and items, and download QR codes for tables or rooms. When you change a price or item, guests see it immediately.",
       body3:
         "When a guest calls the waiter, asks for the bill or orders from the menu, staff get a push notification on their phone — with table or room number. Send the staff link to their mobile, tap Enable once — no login required.",
     },
@@ -94,7 +94,7 @@ export const MARKETING_EN = {
         {
           step: "2",
           title: "Build your menu",
-          text: "Add categories, dishes, photos and prices. Multiple languages on the QR menu.",
+          text: "Add categories, items, photos and prices. Multiple languages on the QR menu.",
         },
         {
           step: "3",
@@ -120,7 +120,7 @@ export const MARKETING_EN = {
         },
         {
           title: "Management dashboard",
-          text: "Change prices, add dishes and manage venues from one panel.",
+          text: "Change prices, add items and manage venues from one panel.",
         },
         {
           title: "Multiple menus",
@@ -196,7 +196,7 @@ export const MARKETING_EN = {
 
   footer: {
     about:
-      "Digital QR menus for restaurants, hotels, beach bars and room service. Guests scan on their phone — you update dishes and prices from the dashboard, no reprints.",
+      "Digital QR menus for restaurants, hotels, beach bars and room service. Guests scan on their phone — you update items and prices from the dashboard, no reprints.",
     highlights: [
       {
         title: "Call waiter & table orders",
@@ -258,14 +258,14 @@ export const MARKETING_EN = {
         "MenuOS is not just «PDF with QR». It's a live menu with photos, multiple languages, call waiter and instant price updates — built for the Greek hospitality market.",
       introParagraphs: [
         "MenuOS combines a digital catalog, QR codes per table or room, waiter calls with push notifications, and online management from any device. Ideal for restaurants, tavernas, hotels, beach bars, pool bars and room service — with no app install for guests.",
-        "Instead of reprinting every season, you change prices and dishes in seconds. Tourists see the menu in their language, with photos and descriptions. Staff get notified when someone calls the waiter or orders — with the exact table or room number from the QR link.",
+        "Instead of reprinting every season, you change prices and items in seconds. Tourists see the menu in their language, with photos and descriptions. Staff get notified when someone calls the waiter or orders — with the exact table or room number from the QR link.",
       ],
     },
     howItWorks: {
       badge: "Step by step",
       hero: "From sign-up to QR on the table — clear flow, no IT team.",
       introParagraphs: [
-        "Setting up MenuOS does not require an IT team or special hardware. After free sign-up, you create a venue, add categories and dishes, and download print-ready QR codes — in under an hour for a full menu.",
+        "Setting up MenuOS does not require an IT team or special hardware. After free sign-up, you create a venue, add categories and items, and download print-ready QR codes — in under an hour for a full menu.",
         "Each QR can include a table (?table=12), room (?room=101) or sunbed number — so waiter calls and orders reach the right spot. Guests open the menu on their phone, no app required; you update prices and availability live from the dashboard.",
       ],
     },

@@ -3,11 +3,9 @@
 import { Check, Download, ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import {
-  formatVenueSpotLabel,
+  formatVenueSpotLabelForLang,
   isValidVenueSpotLabel,
   spotToQueryParams,
-  VENUE_SPOT_LABEL_HINT,
-  venueSpotTypeLabel,
   type VenueSpotType,
   VENUE_SPOT_TYPES,
 } from "@menuos/shared";
@@ -21,7 +19,7 @@ import {
   dashboardLabelClass,
 } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 type Venue = { id: string; name: string; slug: string };
@@ -36,6 +34,8 @@ export function VenueSpotsManager({
   initialVenueId?: string;
   itemCountByVenue?: Record<string, number>;
 }) {
+  const { d, lang } = useDashboardCopy();
+  const Q = d.pages.qr;
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
   const [spots, setSpots] = useState<Spot[]>([]);
   const [loadingSpots, setLoadingSpots] = useState(false);
@@ -73,7 +73,7 @@ export function VenueSpotsManager({
     e.preventDefault();
     if (!venueId || !label.trim()) return;
     if (!isValidVenueSpotLabel(label)) {
-      setFlash({ type: "error", text: VENUE_SPOT_LABEL_HINT });
+      setFlash({ type: "error", text: Q.labelHint });
       return;
     }
     setBusy("add");
@@ -99,19 +99,19 @@ export function VenueSpotsManager({
     const from = Number(bulkFrom);
     const to = Number(bulkTo);
     if (!Number.isFinite(from) || !Number.isFinite(to) || to < from || from < 1 || to > 999) {
-      setFlash({ type: "error", text: "Βάλε έγκυρο εύρος από 1 έως 999 (π.χ. από 1 έως 120)." });
+      setFlash({ type: "error", text: Q.invalidRange });
       return;
     }
     if (to - from >= 200) {
       setFlash({
         type: "error",
-        text: "Μέγιστο 200 θέσεις ανά φορά. Για περισσότερες, κάνε δεύτερη προσθήκη (π.χ. 201–400).",
+        text: Q.bulkLimit,
       });
       return;
     }
     const prefix = bulkPrefix.trim();
     if (prefix && !isValidVenueSpotLabel(`${prefix}1`)) {
-      setFlash({ type: "error", text: `Άκυρο πρόθεμα. ${VENUE_SPOT_LABEL_HINT}` });
+      setFlash({ type: "error", text: Q.invalidPrefix(Q.labelHint) });
       return;
     }
     setBusy("bulk");
@@ -136,12 +136,8 @@ export function VenueSpotsManager({
 
   async function removeSpot(spot: Spot) {
     if (!venueId) return;
-    const name = formatVenueSpotLabel(spot.type, spot.label);
-    if (
-      !window.confirm(
-        `Διαγραφή της θέσης «${name}»;\n\nΑν έχεις ήδη τυπώσει QR, δεν θα λειτουργεί πλέον. Η ενέργεια δεν αναιρείται.`,
-      )
-    ) {
+    const name = formatVenueSpotLabelForLang(spot.type, spot.label, lang);
+    if (!window.confirm(Q.deleteSpotConfirm(name))) {
       return;
     }
     setBusy(spot.id);
@@ -174,7 +170,7 @@ export function VenueSpotsManager({
   async function saveSpotLabel(spotId: string) {
     if (!venueId || !editLabel.trim()) return;
     if (!isValidVenueSpotLabel(editLabel)) {
-      setFlash({ type: "error", text: VENUE_SPOT_LABEL_HINT });
+      setFlash({ type: "error", text: Q.labelHint });
       return;
     }
     setBusy(`edit-${spotId}`);
@@ -233,10 +229,10 @@ export function VenueSpotsManager({
   if (venues.length === 0) {
     return (
       <div className={dashboardCardClass}>
-        <p className="font-semibold text-brand-navy">Χρειάζεσαι πρώτα κατάστημα</p>
-        <p className="mt-2 text-sm text-slate-600">Φτιάξε κατάστημα και πρόσθεσε πιάτα πριν βγάλεις QR.</p>
+        <p className="font-semibold text-brand-navy">{Q.needVenueTitle}</p>
+        <p className="mt-2 text-sm text-slate-600">{Q.needVenueDesc}</p>
         <a href="/dashboard/venues/new" className={`mt-4 inline-flex ${buttonClass("primary")}`}>
-          {DASHBOARD_EL.addVenue}
+          {d.addVenue}
         </a>
       </div>
     );
@@ -251,26 +247,26 @@ export function VenueSpotsManager({
           role="alert"
           className="rounded-card border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
         >
-          <p className="font-semibold">Ο κατάλογος είναι άδειος</p>
+          <p className="font-semibold">{Q.emptyCatalogTitle}</p>
           <p className="mt-1">
-            Πρόσθεσε πιάτα στον{" "}
+            {Q.emptyCatalogBeforeLink}{" "}
             <a href={`/dashboard/menus?venue=${venueId}`} className="font-semibold underline">
-              κατάλογο
+              {Q.catalogLink}
             </a>{" "}
-            πριν μοιράσεις QR.
+            {Q.emptyCatalogAfterLink}
           </p>
         </div>
       ) : null}
 
       <div className={dashboardCardClass}>
         <DashboardSectionTitle
-          title="Τραπέζια, δωμάτια & ξαπλώστρες"
-          description="Πρόσθεσε κάθε θέση μία φορά. Κάθε QR «δένει» τον αριθμό — ο σερβιτόρος βλέπει ακριβώς από πού καλούν."
+          title={Q.spotsTitle}
+          description={Q.spotsDesc}
         />
 
         <DashboardToolbar className="mt-6">
           <label className="block min-w-[12rem] flex-1 sm:max-w-md">
-            <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
+            <span className={dashboardLabelClass}>{d.venue}</span>
             <select
               value={venueId}
               onChange={(e) => {
@@ -287,7 +283,7 @@ export function VenueSpotsManager({
             </select>
           </label>
           <label className="block w-full sm:w-40">
-            <span className={dashboardLabelClass}>Τύπος</span>
+            <span className={dashboardLabelClass}>{Q.spotTypeLabel}</span>
             <select
               value={spotType}
               onChange={(e) => setSpotType(e.target.value as VenueSpotType)}
@@ -295,7 +291,7 @@ export function VenueSpotsManager({
             >
               {VENUE_SPOT_TYPES.map((t) => (
                 <option key={t} value={t}>
-                  {venueSpotTypeLabel(t)}
+                  {Q.spotTypes[t] ?? t}
                 </option>
               ))}
             </select>
@@ -303,16 +299,11 @@ export function VenueSpotsManager({
         </DashboardToolbar>
 
         <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-5">
-          <p className="text-sm font-semibold text-brand-navy">Μαζική προσθήκη</p>
-          <p className="mt-1 text-sm leading-relaxed text-slate-600">
-            Όσα τραπέζια, δωμάτια ή ξαπλώστρες χρειάζεσαι — χωρίς όριο πλάνου. Έως 200 θέσεις κάθε φορά
-            (για περισσότερες, επανάλαβε με νέο εύρος). Προαιρετικό πρόθεμα για ζώνες (π.χ.{" "}
-            <span className="font-medium text-slate-700">sala-</span>,{" "}
-            <span className="font-medium text-slate-700">kipos-</span>).
-          </p>
+          <p className="text-sm font-semibold text-brand-navy">{Q.bulkTitle}</p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">{Q.bulkDesc}</p>
           <div className="mt-4 flex flex-wrap items-end gap-4">
             <label className="block">
-              <span className={dashboardLabelClass}>Πρόθεμα (προαιρετικό)</span>
+              <span className={dashboardLabelClass}>{Q.prefixLabel}</span>
               <input
                 type="text"
                 value={bulkPrefix}
@@ -323,7 +314,7 @@ export function VenueSpotsManager({
               />
             </label>
             <label className="block">
-              <span className={dashboardLabelClass}>Από</span>
+              <span className={dashboardLabelClass}>{Q.fromLabel}</span>
               <input
                 type="number"
                 min={1}
@@ -335,7 +326,7 @@ export function VenueSpotsManager({
               />
             </label>
             <label className="block">
-              <span className={dashboardLabelClass}>Έως</span>
+              <span className={dashboardLabelClass}>{Q.toLabel}</span>
               <input
                 type="number"
                 min={1}
@@ -352,7 +343,7 @@ export function VenueSpotsManager({
               onClick={() => void bulkAdd()}
               className={`h-10 ${buttonClass("secondary", "md")}`}
             >
-              {busy === "bulk" ? "Προσθήκη..." : "Προσθήκη όλων"}
+              {busy === "bulk" ? Q.bulkAdding : Q.bulkAddAll}
             </button>
           </div>
         </div>
@@ -362,12 +353,16 @@ export function VenueSpotsManager({
           className={`${dashboardFormGridClass} mt-6 items-end border-t border-slate-100 pt-6 sm:grid-cols-[minmax(0,1fr)_auto]`}
         >
           <label className="block">
-            <span className={dashboardLabelClass}>Αριθμός / όνομα</span>
+            <span className={dashboardLabelClass}>{Q.spotNameLabel}</span>
             <input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder={
-                spotType === "ROOM" ? "204 ή vip-1" : spotType === "SUNBED" ? "A12 ή paralia-3" : "12 ή sala-1"
+                spotType === "ROOM"
+                  ? Q.spotPlaceholderRoom
+                  : spotType === "SUNBED"
+                    ? Q.spotPlaceholderSunbed
+                    : Q.spotPlaceholderTable
               }
               maxLength={20}
               className={dashboardFieldClass}
@@ -379,22 +374,20 @@ export function VenueSpotsManager({
             className={`inline-flex h-10 w-full items-center justify-center gap-2 sm:w-auto sm:min-w-[9.5rem] ${buttonClass("primary", "md")}`}
           >
             <Plus className="h-4 w-4" />
-            Προσθήκη
+            {Q.addSpot}
           </button>
         </form>
       </div>
 
       <div className={dashboardCardClass}>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-semibold text-brand-navy">
-            Οι θέσεις σου {spots.length > 0 ? `(${spots.length})` : ""}
-          </h2>
-          {loadingSpots ? <span className="text-xs text-slate-500">Φόρτωση...</span> : null}
+          <h2 className="font-semibold text-brand-navy">{Q.yourSpots(spots.length)}</h2>
+          {loadingSpots ? <span className="text-xs text-slate-500">{Q.loadingSpots}</span> : null}
         </div>
 
         {spots.length === 0 && !loadingSpots ? (
           <p className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm text-slate-500">
-            Δεν έχεις ακόμα θέσεις. Πρόσθεσε μία θέση ή κάνε μαζική προσθήκη (π.χ. 1–120).
+            {Q.emptySpots}
           </p>
         ) : (
           <ul className="mt-6 space-y-3">
@@ -424,7 +417,7 @@ export function VenueSpotsManager({
                         className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
                       >
                         <Check className="h-3.5 w-3.5" />
-                        Αποθήκευση
+                        {Q.saveSpot}
                       </button>
                       <button
                         type="button"
@@ -433,17 +426,17 @@ export function VenueSpotsManager({
                         className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
                       >
                         <X className="h-3.5 w-3.5" />
-                        Άκυρο
+                        {Q.cancelEdit}
                       </button>
                     </div>
                   ) : (
-                    <p className="font-medium text-brand-navy">{formatVenueSpotLabel(spot.type, spot.label)}</p>
+                    <p className="font-medium text-brand-navy">
+                      {formatVenueSpotLabelForLang(spot.type, spot.label, lang)}
+                    </p>
                   )}
                   <p className="mt-0.5 truncate text-xs text-slate-500">{menuPathFor(spot)}</p>
                   {editingId === spot.id ? (
-                    <p className="mt-1 text-xs text-amber-700">
-                      Αλλάζοντας το όνομα, αλλάζει και το URL του QR — ξανατύπωσε QR αν χρειάζεται.
-                    </p>
+                    <p className="mt-1 text-xs text-amber-700">{Q.renameQrWarning}</p>
                   ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -455,7 +448,7 @@ export function VenueSpotsManager({
                       className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
                     >
                       <Pencil className="h-3.5 w-3.5" />
-                      Επεξεργασία
+                      {Q.editSpot}
                     </button>
                   ) : null}
                   <button
@@ -474,14 +467,14 @@ export function VenueSpotsManager({
                     className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
-                    Preview
+                    {Q.previewSpot}
                   </a>
                   <button
                     type="button"
                     disabled={busy !== null}
                     onClick={() => void removeSpot(spot)}
                     className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
-                    aria-label="Διαγραφή"
+                    aria-label={Q.deleteSpotLabel}
                   >
                     <Trash2 className="h-3.5 w-3.5 text-red-600" />
                   </button>

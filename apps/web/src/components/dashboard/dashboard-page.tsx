@@ -109,10 +109,18 @@ export function DashboardStatCard({
   hint?: string;
 }) {
   return (
-    <div className={cn(dashboardCardClass, "flex flex-col items-center justify-center text-center")}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+    <div
+      className={cn(
+        dashboardCardClass,
+        "relative flex flex-col items-center justify-center overflow-hidden text-center",
+      )}
+    >
+      <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-brand-blue/[0.04]" aria-hidden />
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
       <p className="mt-2 font-serif text-3xl font-bold tabular-nums leading-none text-primary">{value}</p>
-      {hint ? <p className="mt-2 text-xs font-medium text-brand-blue">{hint}</p> : null}
+      {hint ? (
+        <p className="mt-2.5 text-xs font-medium text-brand-blue">{hint}</p>
+      ) : null}
     </div>
   );
 }

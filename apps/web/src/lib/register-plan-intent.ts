@@ -1,9 +1,12 @@
 import { isPaidPlan, type PaidSubscriptionPlanId } from "@menuos/shared";
+import type { MenuOsMessages } from "@/i18n/get-messages";
 
 export type RegisterPlanIntent = {
   checkoutPlanId: PaidSubscriptionPlanId | null;
   isTrial: boolean;
 };
+
+type RegisterAuth = MenuOsMessages["pages"]["auth"]["register"];
 
 /** Plan from /register?plan=basic|pro|trial */
 export function parseRegisterPlanIntent(raw: string | null | undefined): RegisterPlanIntent {
@@ -20,17 +23,14 @@ export function parseRegisterPlanIntent(raw: string | null | undefined): Registe
 export function registerSubtitle(
   intent: RegisterPlanIntent,
   trialDaysGen: string,
+  auth: RegisterAuth,
 ): string {
-  if (intent.checkoutPlanId === "BASIC") {
-    return "Δημιούργησε λογαριασμό και συνέχισε στην ασφαλή πληρωμή Basic (Stripe). Χρειάζεται κάρτα.";
-  }
-  if (intent.checkoutPlanId === "PRO") {
-    return "Δημιούργησε λογαριασμό και συνέχισε στην ασφαλή πληρωμή Pro (Stripe). Χρειάζεται κάρτα.";
-  }
-  return `Δωρεάν δοκιμή ${trialDaysGen} — χωρίς κάρτα. Θα σου στείλουμε κωδικό επιβεβαίωσης στο email (ισχύει 30 λεπτά).`;
+  if (intent.checkoutPlanId === "BASIC") return auth.subtitleBasic;
+  if (intent.checkoutPlanId === "PRO") return auth.subtitlePro;
+  return auth.subtitleTrial(trialDaysGen);
 }
 
-export function registerSubmitLabel(intent: RegisterPlanIntent): string {
-  if (intent.checkoutPlanId) return "Συνέχεια στην πληρωμή";
-  return "Δημιουργία λογαριασμού";
+export function registerSubmitLabel(intent: RegisterPlanIntent, auth: RegisterAuth): string {
+  if (intent.checkoutPlanId) return auth.submitCheckout;
+  return auth.submitCreate;
 }

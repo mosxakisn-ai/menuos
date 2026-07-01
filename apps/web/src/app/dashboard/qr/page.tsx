@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
-import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
+import { DashboardPage } from "@/components/dashboard/dashboard-page";
+import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
 import { VenueSpotsManager } from "@/components/dashboard/venue-spots-manager";
 import { MarkQrOnboarding } from "@/components/dashboard/mark-qr-onboarding";
 import { getSession } from "@/lib/auth";
@@ -39,10 +40,7 @@ export default async function QrPage({ searchParams }: Props) {
   return (
     <DashboardPage>
       <MarkQrOnboarding />
-      <DashboardPageHeader
-        title="QR Codes"
-        description="Πρόσθεσε τραπέζια, δωμάτια ή ξαπλώστρες και κατέβασε QR για κάθε θέση. Ο σερβιτόρος βλέπει τον αριθμό στην κλήση."
-      />
+      <LocalizedDashboardPageHeader page="qr" />
       <VenueSpotsManager venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />
     </DashboardPage>
   );

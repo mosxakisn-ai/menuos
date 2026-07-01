@@ -5,6 +5,7 @@ import { getServerLocale } from "@/i18n/server";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { applyTrialDayPlaceholdersDeep } from "@/lib/trial-marketing";
 import { APP_NAME, APP_URL, SITE_DESCRIPTION } from "@/lib/config";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/types";
 
 export function absoluteUrl(path = "/"): string {
   return new URL(path, APP_URL).toString();
@@ -20,16 +21,18 @@ function mergeKeywords(pageKeywords?: string[]): string[] {
   return [...new Set([...pageKeywords, ...base])];
 }
 
-/** Greek canonical URL + English alternate via ?lang=en (cookie-based UI locale). */
+/** Locale alternates — default site language is English (cookie overrides per visit). */
 export function buildHreflangAlternates(path = "/"): NonNullable<Metadata["alternates"]> {
   const canonical = absoluteUrl(path);
-  const enUrl = path === "/" ? `${canonical}?lang=en` : `${canonical}?lang=en`;
+  const elUrl = `${canonical}?lang=el`;
+  const enUrl = `${canonical}?lang=en`;
+  const defaultIsEn = DEFAULT_LOCALE === "en";
   return {
     canonical,
     languages: {
-      "el-GR": canonical,
-      en: enUrl,
-      "x-default": canonical,
+      "el-GR": defaultIsEn ? elUrl : canonical,
+      en: defaultIsEn ? canonical : enUrl,
+      "x-default": defaultIsEn ? canonical : enUrl,
     },
   };
 }
@@ -93,20 +96,34 @@ export function buildPageMetadata(options: {
   };
 }
 
-export function buildRootMetadata(): Metadata {
+export function buildRootMetadata(locale: Locale = DEFAULT_LOCALE): Metadata {
   const googleVerification = process.env.GOOGLE_SITE_VERIFICATION;
+  const isEn = locale === "en";
+  const title = isEn ? SEO_SITE_EN.defaultTitle : SEO_SITE.defaultTitle;
+  const description = isEn ? SEO_SITE_EN.description : SITE_DESCRIPTION;
+
+  const base = buildPageMetadata({
+    title,
+    description,
+    path: "/",
+    keywords: [...SEO_SITE.keywords],
+  });
 
   return {
-    ...buildPageMetadata({
-      title: SEO_SITE.defaultTitle,
-      description: SITE_DESCRIPTION,
-      path: "/",
-      keywords: [...SEO_SITE.keywords],
-    }),
+    ...base,
     metadataBase: new URL(APP_URL),
     title: {
-      default: SEO_SITE.defaultTitle,
+      default: title,
       template: SEO_SITE.titleTemplate,
+    },
+    openGraph: {
+      ...base.openGraph,
+      locale: isEn ? SEO_SITE_EN.locale : SEO_SITE.locale,
+      alternateLocale: isEn ? ["el_GR"] : ["en_US"],
+    },
+    other: {
+      "geo.region": SEO_SITE.region,
+      "content-language": isEn ? SEO_SITE_EN.language : SEO_SITE.language,
     },
     applicationName: APP_NAME,
     authors: [{ name: APP_NAME, url: APP_URL }],

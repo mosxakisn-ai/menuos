@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
 export function BillingConfirmHandler({ organizationId }: { organizationId: string }) {
+  const { d } = useDashboardCopy();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
@@ -16,13 +17,13 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
     const sessionId = searchParams.get("session_id");
 
     if (billing === "cancelled") {
-      setMessage(DASHBOARD_EL.billing.cancelled);
+      setMessage(d.billing.cancelled);
       setIsError(true);
       return;
     }
 
     if (billing === "activated") {
-      setMessage(DASHBOARD_EL.billing.activatedDev);
+      setMessage(d.billing.activatedDev);
       setIsError(false);
       router.replace("/dashboard/billing");
       router.refresh();
@@ -33,7 +34,7 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
       if (confirmStarted.current) return;
       confirmStarted.current = true;
 
-      setMessage(DASHBOARD_EL.billing.confirming);
+      setMessage(d.billing.confirming);
       setIsError(false);
       fetch("/api/billing/confirm", {
         method: "POST",
@@ -46,22 +47,22 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
             subscription?: { status?: string; plan?: string };
           };
           if (!res.ok) {
-            setMessage(data.error ?? DASHBOARD_EL.billing.confirmFailed);
+            setMessage(data.error ?? d.billing.confirmFailed);
             setIsError(true);
             return;
           }
           if (data.subscription?.status !== "ACTIVE") {
-            setMessage(DASHBOARD_EL.billing.confirmFailed);
+            setMessage(d.billing.confirmFailed);
             setIsError(true);
             return;
           }
-          setMessage(DASHBOARD_EL.billing.activated);
+          setMessage(d.billing.activated);
           setIsError(false);
           router.replace("/dashboard/billing");
           router.refresh();
         })
         .catch(() => {
-          setMessage(DASHBOARD_EL.billing.confirmFailed);
+          setMessage(d.billing.confirmFailed);
           setIsError(true);
         });
     }

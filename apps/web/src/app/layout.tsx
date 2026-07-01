@@ -19,7 +19,10 @@ const playfair = Playfair_Display({
   weight: ["600", "700", "800"],
 });
 
-export const metadata: Metadata = buildRootMetadata();
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  return buildRootMetadata(locale);
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getServerLocale();

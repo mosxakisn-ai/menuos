@@ -6,6 +6,7 @@ import { AuthFooterLink, AuthShell } from "@/components/marketing/marketing-layo
 import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
+import { useI18n } from "@/i18n/context";
 import {
   type RegisterPlanIntent,
   registerSubmitLabel,
@@ -20,6 +21,9 @@ export default function RegisterPageClient({
   planIntent: RegisterPlanIntent;
 }) {
   const router = useRouter();
+  const { m } = useI18n();
+  const R = m.pages.auth.register;
+  const otpExpiredMsg = R.otpExpired;
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -47,17 +51,25 @@ export default function RegisterPageClient({
       if (remaining <= 0) {
         setOtpSent(false);
         setOtpExpiresAt(null);
-        setInfo("Ο κωδικός έληξε. Στείλε νέο κωδικό στο email σου.");
+        setInfo(otpExpiredMsg);
       }
     };
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [otpExpiresAt]);
+  }, [otpExpiresAt, otpExpiredMsg]);
+
+  function formatOtpCountdown(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (minutes <= 0) return R.otpSeconds(seconds);
+    if (seconds === 0) return R.otpMinutes(minutes);
+    return R.otpMinutesSeconds(minutes, seconds.toString().padStart(2, "0"));
+  }
 
   async function sendOtp() {
     if (!email.trim()) {
-      setError("Συμπλήρωσε πρώτα το email σου.");
+      setError(R.emailRequired);
       return;
     }
     setSendingOtp(true);
@@ -79,15 +91,11 @@ export default function RegisterPageClient({
       try {
         data = (await res.json()) as typeof data;
       } catch {
-        setError(
-          res.status >= 500
-            ? "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr."
-            : "Αποτυχία αποστολής κωδικού.",
-        );
+        setError(res.status >= 500 ? R.serverError : R.sendOtpFailed);
         return;
       }
       if (!res.ok) {
-        setError(data.error ?? "Αποτυχία αποστολής κωδικού.");
+        setError(data.error ?? R.sendOtpFailed);
         if (data.retryAfterSeconds) setResendIn(data.retryAfterSeconds);
         return;
       }
@@ -95,9 +103,9 @@ export default function RegisterPageClient({
       setResendIn(60);
       const ttl = data.expiresInSeconds ?? 30 * 60;
       setOtpExpiresAt(Date.now() + ttl * 1000);
-      setInfo(data.message ?? `Στείλαμε κωδικό στο email σου. Ισχύει για ${Math.round(ttl / 60)} λεπτά.`);
+      setInfo(data.message ?? R.otpSentSuccess(Math.round(ttl / 60)));
     } catch {
-      setError("Σφάλμα σύνδεσης. Έλεγξε το internet και δοκίμασε ξανά.");
+      setError(R.networkError);
     } finally {
       setSendingOtp(false);
     }
@@ -106,7 +114,7 @@ export default function RegisterPageClient({
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!otpSent) {
-      setError("Πρώτα στείλε και επιβεβαίωσε τον κωδικό στο email σου.");
+      setError(R.otpRequired);
       return;
     }
 
@@ -129,21 +137,12 @@ export default function RegisterPageClient({
       try {
         data = (await res.json()) as typeof data;
       } catch {
-        setError(
-          res.status >= 500
-            ? "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr."
-            : "Η εγγραφή απέτυχε.",
-        );
+        setError(res.status >= 500 ? R.serverError : R.registerFailed);
         return;
       }
       if (!res.ok) {
-        setError(data.error ?? "Η εγγραφή απέτυχε.");
-        if (
-          data.code === "otp_expired" ||
-          data.code === "otp_missing" ||
-          data.code === "otp_locked" ||
-          data.error?.includes("Στείλε νέο κωδικό")
-        ) {
+        setError(data.error ?? R.registerFailed);
+        if (data.code === "otp_expired" || data.code === "otp_missing" || data.code === "otp_locked") {
           setOtpSent(false);
           setOtpExpiresAt(null);
         }
@@ -172,7 +171,7 @@ export default function RegisterPageClient({
       router.push("/dashboard?welcome=1");
       router.refresh();
     } catch {
-      setError("Σφάλμα σύνδεσης. Έλεγξε το internet και δοκίμασε ξανά.");
+      setError(R.networkError);
     } finally {
       setLoading(false);
     }
@@ -180,22 +179,22 @@ export default function RegisterPageClient({
 
   return (
     <AuthShell
-      title="Δημιουργία λογαριασμού"
-      subtitle={registerSubtitle(planIntent, trialDaysGen)}
+      title={R.title}
+      subtitle={registerSubtitle(planIntent, trialDaysGen, R)}
       footer={
-        <AuthFooterLink text="Έχεις ήδη λογαριασμό;" linkText="Σύνδεση" href="/login" />
+        <AuthFooterLink text={R.hasAccount} linkText={R.loginLink} href="/login" />
       }
     >
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <Field
-          label="Το όνομά σου"
+          label={R.nameLabel}
           name="name"
           required
           autoComplete="name"
           placeholder={FORM_PLACEHOLDERS.personName}
         />
         <Field
-          label="Επωνυμία επιχείρησης"
+          label={R.businessLabel}
           name="businessName"
           required
           autoComplete="organization"
@@ -228,24 +227,24 @@ export default function RegisterPageClient({
             className={buttonClass("secondary", "sm")}
           >
             {sendingOtp
-              ? "Αποστολή..."
+              ? R.sendingOtp
               : resendIn > 0
-                ? `Ξανά σε ${resendIn}s`
+                ? R.resendIn(resendIn)
                 : otpSent
-                  ? "Ξαναστείλε κωδικό"
-                  : "Στείλε κωδικό"}
+                  ? R.resendOtp
+                  : R.sendOtp}
           </button>
           {otpSent ? (
             <span className="text-xs text-emerald-700">
-              Κωδικός στάλθηκε — έλεγξε και spam.
-              {otpExpiresIn > 0 ? ` Λήγει σε ${formatOtpCountdown(otpExpiresIn)}.` : null}
+              {R.otpSent}
+              {otpExpiresIn > 0 ? R.otpExpiresIn(formatOtpCountdown(otpExpiresIn)) : null}
             </span>
           ) : null}
         </div>
 
         {otpSent ? (
           <Field
-            label="Κωδικός από email (6 ψηφία)"
+            label={R.otpLabel}
             name="otp"
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -257,7 +256,7 @@ export default function RegisterPageClient({
         ) : null}
 
         <PasswordField
-          label="Κωδικός πρόσβασης"
+          label={R.passwordLabel}
           name="password"
           required
           minLength={8}
@@ -273,19 +272,11 @@ export default function RegisterPageClient({
           disabled={loading || !otpSent}
           className={`w-full ${buttonClass("primary")}`}
         >
-          {loading ? "Δημιουργία..." : registerSubmitLabel(planIntent)}
+          {loading ? R.creating : registerSubmitLabel(planIntent, R)}
         </button>
       </form>
     </AuthShell>
   );
-}
-
-function formatOtpCountdown(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  if (minutes <= 0) return `${seconds} δευτ.`;
-  if (seconds === 0) return `${minutes} λεπ.`;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 function Field(props: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {

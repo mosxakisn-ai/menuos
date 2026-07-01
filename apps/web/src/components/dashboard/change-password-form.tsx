@@ -4,10 +4,11 @@ import { useState } from "react";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
+  const { d } = useDashboardCopy();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,12 +29,12 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        setFlash({ type: "success", text: data.message ?? DASHBOARD_EL.changePassword.success });
+        setFlash({ type: "success", text: data.message ?? d.changePassword.success });
       } else {
         showFromResponse(data, false);
       }
     } catch {
-      setFlash({ type: "error", text: "Σφάλμα δικτύου." });
+      setFlash({ type: "error", text: d.billing.networkError });
     } finally {
       setSaving(false);
     }
@@ -51,7 +52,7 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
 
       <div className={compact ? "space-y-3" : "space-y-4"}>
         <label className="block text-sm">
-          <span className={dashboardLabelClass}>{DASHBOARD_EL.changePassword.current}</span>
+          <span className={dashboardLabelClass}>{d.changePassword.current}</span>
           <input
             className={dashboardFieldClass}
             type="password"
@@ -63,7 +64,7 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
           />
         </label>
         <label className="block text-sm">
-          <span className={dashboardLabelClass}>{DASHBOARD_EL.changePassword.new}</span>
+          <span className={dashboardLabelClass}>{d.changePassword.new}</span>
           <input
             className={dashboardFieldClass}
             type="password"
@@ -76,7 +77,7 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
           />
         </label>
         <label className="block text-sm">
-          <span className={dashboardLabelClass}>{DASHBOARD_EL.changePassword.confirm}</span>
+          <span className={dashboardLabelClass}>{d.changePassword.confirm}</span>
           <input
             className={dashboardFieldClass}
             type="password"
@@ -90,7 +91,7 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
         </label>
       </div>
       <button type="submit" disabled={saving || !canSubmit} className={`h-10 w-full sm:w-auto ${buttonClass("primary", "md")}`}>
-        {saving ? DASHBOARD_EL.changePassword.saving : DASHBOARD_EL.changePassword.submit}
+        {saving ? d.changePassword.saving : d.changePassword.submit}
       </button>
     </form>
   );

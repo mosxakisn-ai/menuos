@@ -57,11 +57,7 @@ function classifyPage(
 }
 
 async function getPdfJs() {
-  const pdfjs = await import("pdfjs-dist");
-  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
-  }
-  return pdfjs;
+  return import("pdfjs-dist/webpack.mjs");
 }
 
 async function renderPageThumbnail(

@@ -1,12 +1,10 @@
 import { organizationHasPaidPlan } from "@menuos/shared";
-import { planLabel } from "@/content/dashboard-el";
-
-const STATUS_GR: Record<string, string> = {
-  TRIALING: "Δοκιμή",
-  ACTIVE: "Ενεργή",
-  PAST_DUE: "Καθυστέρηση πληρωμής",
-  CANCELED: "Ακυρωμένη",
-};
+import {
+  formatDashboardDate,
+  getDashboardCopy,
+  planLabelForLang,
+  type DashboardLang,
+} from "@/content/dashboard-i18n";
 
 export type SubscriptionDisplayInput = {
   plan: string;
@@ -21,11 +19,16 @@ export type SubscriptionDisplaySummary = {
   expiryLine: string | null;
 };
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("el-GR");
+function formatDate(date: Date, lang: DashboardLang = "GR"): string {
+  return formatDashboardDate(lang, date);
 }
 
-export function formatSubscriptionSummary(sub: SubscriptionDisplayInput | null): SubscriptionDisplaySummary {
+export function formatSubscriptionSummary(
+  sub: SubscriptionDisplayInput | null,
+  lang: DashboardLang = "GR",
+): SubscriptionDisplaySummary {
+  const copy = getDashboardCopy(lang);
+  const statusCopy = copy.subscriptionStatus;
   const plan = sub?.plan ?? "TRIAL";
   const status = sub?.status ?? "TRIALING";
   const trialEndsAt = sub?.trialEndsAt ?? null;
@@ -38,22 +41,23 @@ export function formatSubscriptionSummary(sub: SubscriptionDisplayInput | null):
   });
 
   if (plan === "TRIAL") {
-    const statusText = active ? "Ενεργή δοκιμή" : "Ληγμένη";
+    const statusText = active ? statusCopy.trialActive : statusCopy.trialExpired;
     return {
       active,
-      statusLine: `${planLabel(plan)} · ${statusText}`,
-      expiryLine: trialEndsAt ? `Λήγει ${formatDate(trialEndsAt)}` : null,
+      statusLine: `${planLabelForLang(lang, plan)} · ${statusText}`,
+      expiryLine: trialEndsAt ? statusCopy.expiresOn(formatDate(trialEndsAt, lang)) : null,
     };
   }
 
-  const statusText = STATUS_GR[status] ?? status;
+  const statusText = statusCopy[status as keyof typeof statusCopy] ?? status;
+  const statusLabel = typeof statusText === "string" ? statusText : status;
   return {
     active,
-    statusLine: `${planLabel(plan)} · ${statusText}`,
+    statusLine: `${planLabelForLang(lang, plan)} · ${statusLabel}`,
     expiryLine: currentPeriodEnd
       ? active
-        ? `Ανανέωση ${formatDate(currentPeriodEnd)}`
-        : `Έληξε ${formatDate(currentPeriodEnd)}`
+        ? statusCopy.renewsOn(formatDate(currentPeriodEnd, lang))
+        : statusCopy.expiredOn(formatDate(currentPeriodEnd, lang))
       : null,
   };
 }

@@ -3,7 +3,7 @@
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
 type LogoutButtonProps = {
   variant?: "sidebar" | "header";
@@ -11,6 +11,7 @@ type LogoutButtonProps = {
 
 export function LogoutButton({ variant = "sidebar" }: LogoutButtonProps) {
   const router = useRouter();
+  const { d } = useDashboardCopy();
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "DELETE" });
@@ -32,7 +33,7 @@ export function LogoutButton({ variant = "sidebar" }: LogoutButtonProps) {
       )}
     >
       <LogOut className="h-4 w-4" />
-      {DASHBOARD_EL.logout}
+      {d.logout}
     </button>
   );
 }

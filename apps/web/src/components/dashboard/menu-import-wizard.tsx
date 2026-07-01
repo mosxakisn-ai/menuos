@@ -13,18 +13,19 @@ import {
   Sparkles,
   Type,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MenuPdfParseResult, ParsedMenuCategoryDraft, ParsedMenuItemDraft } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
   ImportPipelineProgress,
   type PipelineStep,
 } from "@/components/dashboard/import-pipeline-progress";
+import { DashboardScrollRow } from "@/components/dashboard/dashboard-ui";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-state";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import {
   buildPageSelectionMap,
   loadAllPdfPagePreviews,
@@ -42,16 +43,9 @@ type Venue = {
 
 type Phase = "upload" | "processing" | "review";
 
-const W = DASHBOARD_EL.importWizard;
-
-const INITIAL_PIPELINE: PipelineStep[] = [
-  { id: "scan", label: W.pipeline.scan, status: "pending" },
-  { id: "extract", label: W.pipeline.extract, status: "pending" },
-  { id: "parse", label: W.pipeline.parse, status: "pending" },
-  { id: "done", label: W.pipeline.done, status: "pending" },
-];
-
 function PageKindBadge({ kind }: { kind: PdfPagePreview["kind"] }) {
+  const { d } = useDashboardCopy();
+  const W = d.importWizard;
   const styles = {
     digital: "bg-emerald-50 text-emerald-800 ring-emerald-200",
     scan: "bg-violet-50 text-violet-800 ring-violet-200",
@@ -83,6 +77,17 @@ export function MenuImportWizard({
   venues: Venue[];
   initialVenueId?: string;
 }) {
+  const { d } = useDashboardCopy();
+  const W = d.importWizard;
+  const initialPipeline = useMemo<PipelineStep[]>(
+    () => [
+      { id: "scan", label: W.pipeline.scan, status: "pending" },
+      { id: "extract", label: W.pipeline.extract, status: "pending" },
+      { id: "parse", label: W.pipeline.parse, status: "pending" },
+      { id: "done", label: W.pipeline.done, status: "pending" },
+    ],
+    [W],
+  );
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("upload");
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
@@ -90,8 +95,17 @@ export function MenuImportWizard({
   const [menuId, setMenuId] = useState(venue?.menus[0]?.id ?? "");
   const [files, setFiles] = useState<File[]>([]);
   const [pages, setPages] = useState<PdfPagePreview[]>([]);
-  const [pipeline, setPipeline] = useState<PipelineStep[]>(INITIAL_PIPELINE);
+  const [pipeline, setPipeline] = useState<PipelineStep[]>(initialPipeline);
   const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    setPipeline((prev) =>
+      prev.map((step) => ({
+        ...step,
+        label: initialPipeline.find((s) => s.id === step.id)?.label ?? step.label,
+      })),
+    );
+  }, [initialPipeline]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [draft, setDraft] = useState<(MenuPdfParseResult & { ocrPagesUsed?: number }) | null>(null);
@@ -112,7 +126,7 @@ export function MenuImportWizard({
     setDraft(null);
     setPages([]);
     setPhase("upload");
-    setPipeline(INITIAL_PIPELINE);
+    setPipeline(initialPipeline);
     setProgress(0);
     setAdvancedOpen(false);
   }
@@ -136,13 +150,13 @@ export function MenuImportWizard({
 
   const runAnalysis = useCallback(async () => {
     if (!menuId || files.length === 0) {
-      setFlash({ type: "error", text: "Επίλεξε κατάλογο και τουλάχιστον ένα PDF." });
+      setFlash({ type: "error", text: W.selectCatalogAndPdf });
       return;
     }
 
     setPhase("processing");
     setFlash(null);
-    setPipeline(INITIAL_PIPELINE.map((s) => ({ ...s, status: s.id === "scan" ? "active" : "pending" })));
+    setPipeline(initialPipeline.map((s) => ({ ...s, status: s.id === "scan" ? "active" : "pending" })));
     setProgress(5);
 
     let loadedPages = pages;
@@ -167,14 +181,14 @@ export function MenuImportWizard({
           p.map((s) => ({
             ...s,
             status: s.id === "scan" ? "error" : s.status,
-            detail: s.id === "scan" ? "Δεν βρέθηκαν σελίδες μενού" : s.detail,
+            detail: s.id === "scan" ? W.noMenuPagesScanDetail : s.detail,
           })),
         );
         setPhase("upload");
         setAdvancedOpen(true);
         setFlash({
           type: "error",
-          text: "Δεν βρέθηκαν σελίδες μενού. Άνοιξε «Προχωρημένα» και επίλεξε σελίδες χειροκίνητα.",
+          text: W.noMenuPages,
         });
         return;
       }
@@ -182,7 +196,7 @@ export function MenuImportWizard({
       setPipeline((p) =>
         p.map((s) => {
           if (s.id === "scan") return { ...s, status: "done", detail: undefined };
-          if (s.id === "extract") return { ...s, status: "active", detail: "Digital + OCR..." };
+          if (s.id === "extract") return { ...s, status: "active", detail: W.extractDetail };
           return s;
         }),
       );
@@ -237,9 +251,10 @@ export function MenuImportWizard({
       console.error("import pipeline", err);
       setPipeline((p) => p.map((s) => (s.status === "active" ? { ...s, status: "error" } : s)));
       setPhase("upload");
-      setFlash({ type: "error", text: "Αποτυχία ανάλυσης. Δοκίμασε ξανά ή μικρότερο PDF." });
+      const detail = err instanceof Error && err.message.trim() ? err.message : W.parseFailed;
+      setFlash({ type: "error", text: detail });
     }
-  }, [menuId, files, pages, showFromResponse, setFlash]);
+  }, [menuId, files, pages, showFromResponse, setFlash, initialPipeline, W]);
 
   function updateCategory(catId: string, patch: Partial<ParsedMenuCategoryDraft>) {
     setDraft((d) =>
@@ -284,7 +299,7 @@ export function MenuImportWizard({
       .filter((c) => c.items.length > 0);
 
     if (categories.length === 0) {
-      setFlash({ type: "error", text: `Επίλεξε τουλάχιστον ένα ${DASHBOARD_EL.catalogEntry.one}.` });
+      setFlash({ type: "error", text: W.selectMinOneItem(d.catalogEntry.one) });
       return;
     }
 
@@ -311,9 +326,9 @@ export function MenuImportWizard({
   if (venues.length === 0) {
     return (
       <Card>
-        <p className="font-semibold text-brand-navy">Χρειάζεσαι κατάστημα πρώτα</p>
+        <p className="font-semibold text-brand-navy">{W.needVenueTitle}</p>
         <Link href="/dashboard/venues/new" className={`mt-4 inline-flex ${buttonClass("primary")}`}>
-          Προσθήκη καταστήματος
+          {d.addVenue}
         </Link>
       </Card>
     );
@@ -324,11 +339,11 @@ export function MenuImportWizard({
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       <Card className="border-brand-blue/20 bg-brand-blue/5">
-        <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">Import από PDF</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">{W.badge}</p>
         <h2 className="mt-1 text-lg font-bold text-brand-navy">
-          {phase === "upload" && "Ανέβασμα PDF"}
+          {phase === "upload" && W.phaseUpload}
           {phase === "processing" && W.processingTitle}
-          {phase === "review" && "Έλεγχος & εισαγωγή"}
+          {phase === "review" && W.phaseReview}
         </h2>
         <p className="mt-2 text-sm text-slate-600">{W.hint}</p>
       </Card>
@@ -344,7 +359,7 @@ export function MenuImportWizard({
           <Card>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm">
-                <span className="font-medium text-brand-navy">Κατάστημα</span>
+                <span className="font-medium text-brand-navy">{d.venue}</span>
                 <select
                   value={venueId}
                   onChange={(e) => onVenueChange(e.target.value)}
@@ -358,7 +373,7 @@ export function MenuImportWizard({
                 </select>
               </label>
               <label className="block text-sm">
-                <span className="font-medium text-brand-navy">Κατάλογος</span>
+                <span className="font-medium text-brand-navy">{d.menu}</span>
                 <select
                   value={menuId}
                   onChange={(e) => setMenuId(e.target.value)}
@@ -375,14 +390,12 @@ export function MenuImportWizard({
           </Card>
 
           <Card>
-            <h3 className="font-semibold text-brand-navy">PDF αρχεία (έως 10)</h3>
-            <p className="mt-1 text-sm text-slate-600">
-              Digital PDF και σαρωμένες εικόνες (OCR). Cover/logo παραλείπονται αυτόματα.
-            </p>
+            <h3 className="font-semibold text-brand-navy">{W.pdfFilesTitle}</h3>
+            <p className="mt-1 text-sm text-slate-600">{W.pdfFilesHint}</p>
             <label className="mt-4 flex cursor-pointer flex-col items-center rounded-card border-2 border-dashed border-slate-200 bg-white px-6 py-10 text-center transition hover:border-brand-blue/40 hover:bg-brand-blue/[0.02]">
               <FileUp className="h-10 w-10 text-brand-blue" />
-              <span className="mt-3 font-medium text-brand-navy">Επίλεξε ή σύρε PDF εδώ</span>
-              <span className="mt-1 text-xs text-slate-500">Max 10MB ανά αρχείο</span>
+              <span className="mt-3 font-medium text-brand-navy">{W.dropzoneTitle}</span>
+              <span className="mt-1 text-xs text-slate-500">{W.dropzoneHint}</span>
               <input
                 type="file"
                 accept="application/pdf,.pdf"
@@ -403,7 +416,7 @@ export function MenuImportWizard({
             <button
               type="button"
               onClick={runAnalysis}
-              disabled={files.length === 0}
+              disabled={files.length === 0 || !menuId}
               className={`mt-4 inline-flex items-center gap-2 ${buttonClass("primary")}`}
             >
               <Sparkles className="h-4 w-4" />
@@ -430,15 +443,17 @@ export function MenuImportWizard({
               {advancedOpen ? (
                 <div className="mt-4 border-t border-slate-100 pt-4">
                   {pages.length === 0 ? (
-                    <p className="text-sm text-slate-500">
-                      Πάτα «{W.analyzeButton}» πρώτα για preview σελίδων — ή ξανατρέξε ανάλυση.
-                    </p>
+                    <p className="text-sm text-slate-500">{W.previewPagesFirst(W.analyzeButton)}</p>
                   ) : (
                     <>
                       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <p className="text-sm text-slate-600">
-                          {pageStats.selectedCount} επιλεγμένες · {pageStats.digitalCount} digital ·{" "}
-                          {pageStats.scanSelectedCount} OCR · {pageStats.coverTotalCount} cover
+                          {W.pageStats(
+                            pageStats.selectedCount,
+                            pageStats.digitalCount,
+                            pageStats.scanSelectedCount,
+                            pageStats.coverTotalCount,
+                          )}
                         </p>
                         <div className="flex flex-wrap gap-2">
                           <button
@@ -470,7 +485,7 @@ export function MenuImportWizard({
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={p.thumbnailUrl}
-                                alt={`Σελίδα ${p.pageNumber}`}
+                                alt={W.pageAlt(p.pageNumber)}
                                 className="h-full w-full object-contain"
                               />
                               <input
@@ -482,7 +497,7 @@ export function MenuImportWizard({
                             </div>
                             <div className="space-y-1 p-2">
                               <p className="text-[10px] text-slate-500">
-                                Σελ. {p.pageNumber}/{p.totalPages}
+                                {W.pageNumber(p.pageNumber, p.totalPages)}
                               </p>
                               <PageKindBadge kind={p.kind} />
                             </div>
@@ -528,18 +543,23 @@ export function MenuImportWizard({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="font-semibold text-brand-navy">
-                  {selectedCounts.categories} κατηγορίες ·{" "}
-                  {DASHBOARD_EL.catalogEntry.count(selectedCounts.items)} επιλεγμένα
+                  {W.reviewSummary(
+                    selectedCounts.categories,
+                    d.catalogEntry.count(selectedCounts.items),
+                  )}
                 </p>
                 <p className="text-xs text-slate-500">
-                  Από {draft.stats.filesProcessed} PDF · {draft.stats.itemsWithPrice} τιμές ·{" "}
-                  {draft.stats.itemsFound - draft.stats.itemsWithPrice} χωρίς τιμή
+                  {W.reviewMeta(
+                    draft.stats.filesProcessed,
+                    draft.stats.itemsWithPrice,
+                    draft.stats.itemsFound - draft.stats.itemsWithPrice,
+                  )}
                   {(draft.ocrPagesUsed ?? 0) > 0 ? ` · ${W.ocrUsed(draft.ocrPagesUsed!)}` : ""}
                 </p>
               </div>
               <button type="button" onClick={resetAll} className={buttonClass("secondary", "sm")}>
                 <ArrowLeft className="mr-1 inline h-4 w-4" />
-                Νέα ανάλυση
+                {W.newAnalysis}
               </button>
             </div>
           </Card>
@@ -573,15 +593,15 @@ export function MenuImportWizard({
                 </div>
               </div>
 
-              <div className="mt-4 overflow-x-auto">
+              <DashboardScrollRow className="mt-4" innerClassName="pb-1">
                 <table className="w-full min-w-[640px] text-sm">
                   <thead>
                     <tr className="border-b border-slate-100 text-left text-xs text-slate-500">
                       <th className="pb-2 pr-2">✓</th>
-                      <th className="pb-2 pr-2">Είδος (GR)</th>
-                      <th className="pb-2 pr-2">EN</th>
-                      <th className="pb-2 pr-2">Τιμή €</th>
-                      <th className="pb-2">Σημειώσεις</th>
+                      <th className="pb-2 pr-2">{W.tableColItemGr}</th>
+                      <th className="pb-2 pr-2">{W.tableColEn}</th>
+                      <th className="pb-2 pr-2">{W.tableColPrice}</th>
+                      <th className="pb-2">{W.tableColNotes}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -632,7 +652,7 @@ export function MenuImportWizard({
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </DashboardScrollRow>
             </Card>
           ))}
 
@@ -644,9 +664,7 @@ export function MenuImportWizard({
             ) : null}
             <div className="flex flex-wrap items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-              <p className="flex-1 text-sm text-emerald-900">
-                Μετά την εισαγωγή, άνοιξε τον κατάλογο για φωτο, τιμές και διαθεσιμότητα.
-              </p>
+              <p className="flex-1 text-sm text-emerald-900">{W.afterImportHint}</p>
               <button
                 type="button"
                 onClick={applyImport}
@@ -656,7 +674,7 @@ export function MenuImportWizard({
                 <Pencil className="h-4 w-4" />
                 {importing
                   ? W.loadingImport
-                  : `Εισαγωγή ${DASHBOARD_EL.catalogEntry.count(selectedCounts.items)}`}
+                  : W.importButton(d.catalogEntry.count(selectedCounts.items))}
               </button>
             </div>
           </Card>
@@ -665,7 +683,7 @@ export function MenuImportWizard({
 
       <p className="text-center text-sm text-slate-500">
         <Link href={`/dashboard/menus?venue=${venueId}`} className="text-brand-blue hover:underline">
-          ← Χειροκίνητη επεξεργασία καταλόγου
+          {W.manualEditLink}
         </Link>
       </p>
     </div>

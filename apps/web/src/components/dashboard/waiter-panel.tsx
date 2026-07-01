@@ -2,26 +2,14 @@
 
 import { Bell, Check, Clock } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatWaiterCallLocation, formatOrderLineDetail, type OrderLine } from "@menuos/shared";
+import { formatWaiterCallLocationForLang, formatOrderLineDetail, type OrderLine } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
 
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: "Σε αναμονή",
-  ACKNOWLEDGED: "Σε εξέλιξη",
-  COMPLETED: "Ολοκληρώθηκε",
-  CANCELED: "Ακυρώθηκε",
-};
-
-const TYPE_LABELS: Record<string, string> = {
-  WAITER: "Κλήση σερβιτόρου",
-  BILL: "Λογαριασμός",
-  ORDER: "Παραγγελία",
-};
 type Venue = { id: string; name: string; slug?: string; staffToken?: string };
 type OrderPayload = {
   lines: OrderLine[];
@@ -57,6 +45,8 @@ export function WaiterPanel({
   staffViaCookie?: boolean;
   showShareLink?: boolean;
 }) {
+  const { d, lang } = useDashboardCopy();
+  const W = d.waiter;
   const resolvedInitial =
     initialVenueId && venues.some((v) => v.id === initialVenueId)
       ? initialVenueId
@@ -157,7 +147,7 @@ export function WaiterPanel({
   if (venues.length === 0) {
     return (
       <Card>
-        <p className="text-sm text-slate-600">Φτιάξε πρώτα κατάστημα για να λαμβάνεις κλήσεις από πελάτες.</p>
+        <p className="text-sm text-slate-600">{W.needVenueFirst}</p>
       </Card>
     );
   }
@@ -179,7 +169,7 @@ export function WaiterPanel({
               ? undefined
               : (newToken) => {
                   setStaffTokens((prev) => ({ ...prev, [activeVenue.id]: newToken }));
-                  setFlash({ type: "success", text: DASHBOARD_EL.waiter.rotateSuccess });
+                  setFlash({ type: "success", text: d.waiter.rotateSuccess });
                 }
           }
         />
@@ -188,12 +178,12 @@ export function WaiterPanel({
       <div className="flex flex-wrap items-center gap-4">
         {staffViaCookie || staffKey || venues.length === 1 ? (
           <p className="text-sm">
-            <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}: </span>
+            <span className="font-medium text-brand-navy">{d.venue}: </span>
             <span className="text-slate-700">{activeVenue?.name ?? "—"}</span>
           </p>
         ) : (
           <label className="block text-sm">
-            <span className="font-medium text-brand-navy">{DASHBOARD_EL.venue}</span>
+            <span className="font-medium text-brand-navy">{d.venue}</span>
             <select
               value={venueId}
               onChange={(e) => setVenueId(e.target.value)}
@@ -210,20 +200,18 @@ export function WaiterPanel({
         {pendingCount > 0 ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">
             <Bell className="h-4 w-4" />
-            {pendingCount} σε αναμονή
+            {W.pendingCount(pendingCount)}
           </span>
         ) : (
-          <span className="text-sm text-slate-500">Ανανέωση κάθε 5 δευτ.</span>
+          <span className="text-sm text-slate-500">{W.refreshHint}</span>
         )}
       </div>
 
       {calls.length === 0 ? (
         <Card className="border-dashed text-center">
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
-          <p className="mt-3 font-medium text-brand-navy">Καμία ενεργή κλήση</p>
-          <p className="mt-1 text-sm text-slate-500">
-            Όταν πελάτης στείλει παραγγελία, καλέσει σερβιτόρο ή ζητήσει λογαριασμό από το QR menu, θα εμφανιστεί εδώ.
-          </p>
+          <p className="mt-3 font-medium text-brand-navy">{W.emptyTitle}</p>
+          <p className="mt-1 text-sm text-slate-500">{W.emptyDesc}</p>
         </Card>
       ) : (
         <ul className="space-y-3">
@@ -237,19 +225,19 @@ export function WaiterPanel({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-bold text-brand-navy">
-                      {TYPE_LABELS[call.type] ?? call.type}
+                      {W.callType[call.type as keyof typeof W.callType] ?? call.type}
                       {" · "}
-                      {formatWaiterCallLocation(call)}
+                      {formatWaiterCallLocationForLang(call, lang)}
                     </p>
                     <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                       <Clock className="h-3 w-3" />
-                      {new Date(call.createdAt).toLocaleString("el-GR")}
+                      {new Date(call.createdAt).toLocaleString(lang === "EN" ? "en-GB" : "el-GR")}
                     </p>
                     <p className="mt-1 text-xs font-medium text-slate-500">
-                      {STATUS_LABELS[call.status] ?? call.status}
+                      {W.callStatus[call.status as keyof typeof W.callStatus] ?? call.status}
                       {isOrderUpdated(call) && call.status === "PENDING" ? (
                         <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
-                          Νέα πιάτα
+                          {W.newItems}
                         </span>
                       ) : null}
                     </p>
@@ -272,7 +260,7 @@ export function WaiterPanel({
                           );
                         })}
                         <li className="flex justify-between border-t border-slate-100 pt-1 font-bold text-brand-navy">
-                          <span>Σύνολο</span>
+                          <span>{W.orderTotal}</span>
                           <span>€{call.orderItems.total}</span>
                         </li>
                       </ul>
@@ -286,7 +274,7 @@ export function WaiterPanel({
                         onClick={() => void updateStatus(call.id, "ACKNOWLEDGED")}
                         className={buttonClass("primary", "sm")}
                       >
-                        Πήγαινε
+                        {W.goButton}
                       </button>
                     ) : null}
                     {call.status !== "COMPLETED" ? (
@@ -297,7 +285,7 @@ export function WaiterPanel({
                         className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
                       >
                         <Check className="h-3.5 w-3.5" />
-                        Ολοκλήρωση
+                        {W.completeButton}
                       </button>
                     ) : null}
                   </div>

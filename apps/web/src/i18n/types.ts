@@ -14,7 +14,7 @@ export const LOCALE_FLAGS: Record<Locale, string> = {
   en: "🇬🇧",
 };
 
-export const DEFAULT_LOCALE: Locale = "el";
+export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE = "menuos_lang";
 export const LOCALE_REQUEST_HEADER = "x-menuos-locale";
 

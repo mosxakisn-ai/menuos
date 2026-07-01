@@ -4,7 +4,7 @@ import { Check, Copy, Link2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
 export function WaiterShareLink({
   venueSlug,
@@ -17,10 +17,11 @@ export function WaiterShareLink({
   venueId?: string;
   onStaffTokenRotated?: (newToken: string) => void;
 }) {
+  const { d } = useDashboardCopy();
   const [url, setUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [rotating, setRotating] = useState(false);
-  const w = DASHBOARD_EL.waiter;
+  const w = d.waiter;
   const canRotate = Boolean(venueId && onStaffTokenRotated);
 
   useEffect(() => {

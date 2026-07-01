@@ -2,24 +2,16 @@
 
 import { CheckCircle2, Info, AlertTriangle, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import type { DashboardCopy } from "@/content/dashboard-i18n";
 import { cn } from "@/lib/utils";
 
-const API_ERROR_MESSAGES: Record<string, string> = {
-  subscription_inactive: "Η συνδρομή σου δεν είναι ενεργή. Αναβάθμισε για να συνεχίσεις.",
-  trial_expired: "Η δοκιμαστική περίοδος έληξε.",
-  unauthorized: "Συνδέσου ξανά.",
-  forbidden: "Δεν έχεις δικαίωμα.",
-  venue_limit: "Έφτασες το όριο καταστημάτων του πλάνου σου. Δες τα πλάνα στη Συνδρομή.",
-  menu_limit: "Έφτασες το όριο καταλόγων του πλάνου σου.",
-  item_limit: "Έφτασες το όριο πιάτων του πλάνου σου.",
-  not_found: "Δεν βρέθηκε.",
-  enterprise_contact: "Επικοινώνησε μαζί μας για Enterprise τιμολόγηση.",
-  stripe_not_configured: "Το σύστημα πληρωμών δεν είναι διαθέσιμο.",
-};
-
-export function resolveApiError(data: { error?: string; code?: string }): string {
-  if (data.code && API_ERROR_MESSAGES[data.code]) return API_ERROR_MESSAGES[data.code];
-  return data.error ?? "Κάτι πήγε στραβά.";
+export function resolveApiError(
+  data: { error?: string; code?: string },
+  flash: DashboardCopy["flash"],
+): string {
+  if (data.code && flash.codes[data.code]) return flash.codes[data.code]!;
+  return data.error ?? flash.genericError;
 }
 
 export type FlashMessage = {
@@ -34,6 +26,7 @@ export function FlashMessages({
   initial?: FlashMessage | null;
   onClear?: () => void;
 }) {
+  const { d } = useDashboardCopy();
   const [messages, setMessages] = useState<FlashMessage[]>(initial ? [initial] : []);
 
   useEffect(() => {
@@ -72,7 +65,7 @@ export function FlashMessages({
             type="button"
             onClick={() => dismiss(i)}
             className="shrink-0 rounded p-0.5 opacity-60 hover:opacity-100"
-            aria-label="Κλείσιμο"
+            aria-label={d.flash.close}
           >
             <X className="h-4 w-4" />
           </button>
@@ -83,6 +76,7 @@ export function FlashMessages({
 }
 
 export function useFlashMessage() {
+  const { d } = useDashboardCopy();
   const [flash, setFlash] = useState<FlashMessage | null>(null);
 
   const show = useCallback((type: FlashMessage["type"], text: string) => {
@@ -92,10 +86,10 @@ export function useFlashMessage() {
   const showFromResponse = useCallback(
     (data: { message?: string; error?: string; code?: string }, ok: boolean) => {
       if (data.message) setFlash({ type: "success", text: data.message });
-      else if (data.error || data.code) setFlash({ type: "error", text: resolveApiError(data) });
-      else if (ok) setFlash({ type: "success", text: "Επιτυχία!" });
+      else if (data.error || data.code) setFlash({ type: "error", text: resolveApiError(data, d.flash) });
+      else if (ok) setFlash({ type: "success", text: d.flash.success });
     },
-    [],
+    [d.flash],
   );
 
   return { flash, setFlash, show, showFromResponse };

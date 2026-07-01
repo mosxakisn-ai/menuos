@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Sparkles } from "lucide-react";
 import { PAID_SUBSCRIPTION_PLANS } from "@menuos/shared";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
-import { Card } from "@/components/ui/card";
+import { DashboardFeatureCheck, DashboardStatusDot } from "@/components/dashboard/dashboard-ui";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
 import type { PlanCatalogEntry } from "@/lib/plan-catalog-types";
 import { formatPlanPriceDisplay } from "@/lib/plan-catalog-types";
+import { displayPlanFeature } from "@/lib/plan-feature-display";
+import { formatDashboardDate } from "@/content/dashboard-i18n";
+import { cn } from "@/lib/utils";
 
 type Subscription = {
   plan: string;
@@ -16,24 +20,18 @@ type Subscription = {
   currentPeriodEnd: string | null;
 };
 
-const STATUS_GR: Record<string, string> = {
-  TRIALING: "Δοκιμή",
-  ACTIVE: "Ενεργή",
-  PAST_DUE: "Καθυστέρηση πληρωμής",
-  CANCELED: "Ακυρωμένη",
-};
-
 function planChangeButtonLabel(
   currentPlanId: string,
   targetPlanId: (typeof PAID_SUBSCRIPTION_PLANS)[number],
   plansById: Record<string, PlanCatalogEntry>,
+  d: ReturnType<typeof useDashboardCopy>["d"],
 ): string {
   const target = plansById[targetPlanId];
   const currentPrice = plansById[currentPlanId]?.priceMonthly ?? 0;
-  if (!target) return `Επιλογή ${targetPlanId}`;
-  if (target.priceMonthly > currentPrice) return `Αναβάθμιση σε ${target.name}`;
-  if (target.priceMonthly < currentPrice) return `Υποβάθμιση σε ${target.name}`;
-  return `Επιλογή ${target.name}`;
+  if (!target) return d.billing.selectPlan(targetPlanId);
+  if (target.priceMonthly > currentPrice) return d.billing.upgradeTo(target.name);
+  if (target.priceMonthly < currentPrice) return d.billing.downgradeTo(target.name);
+  return d.billing.selectPlan(target.name);
 }
 
 export function BillingPlans({
@@ -49,6 +47,8 @@ export function BillingPlans({
   plans: PlanCatalogEntry[];
   enterprisePlan: PlanCatalogEntry | null;
 }) {
+  const { d, lang } = useDashboardCopy();
+  const B = d.billing;
   const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +69,7 @@ export function BillingPlans({
         mode?: string;
       };
       if (!res.ok) {
-        setError(data.error ?? DASHBOARD_EL.billing.checkoutFailed);
+        setError(data.error ?? B.checkoutFailed);
         return;
       }
       if (data.checkoutUrl) {
@@ -81,100 +81,129 @@ export function BillingPlans({
         window.location.href = data.checkoutUrl;
       }
     } catch {
-      setError("Σφάλμα δικτύου");
+      setError(B.networkError);
     } finally {
       setLoadingPlan(null);
     }
   }
 
   const currentPlan = subscription?.plan ?? "TRIAL";
-  const statusLabel = STATUS_GR[subscription?.status ?? "TRIALING"] ?? subscription?.status ?? "Δοκιμή";
+  const statusKey = subscription?.status ?? "TRIALING";
+  const statusLabels = d.subscriptionStatus;
+  const statusLabel =
+    statusKey in statusLabels &&
+    typeof statusLabels[statusKey as keyof typeof statusLabels] === "string"
+      ? (statusLabels[statusKey as "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED"] as string)
+      : statusKey;
   const canCheckout = userRole !== "STAFF";
   const currentPlanEntry = plansById[currentPlan];
+  const isActive = statusKey === "ACTIVE" || statusKey === "TRIALING";
 
   return (
     <div className="space-y-6">
       {!canCheckout ? (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-          {DASHBOARD_EL.billing.staffNoCheckout}
+        <div className="rounded-card border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          {B.staffNoCheckout}
         </div>
       ) : null}
-      <Card>
-        <h2 className="font-semibold text-primary">Τρέχον πλάνο</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          <span className="font-medium text-primary">{currentPlanEntry?.name ?? currentPlan}</span>
-          {" · "}
-          Κατάσταση: {statusLabel}
-        </p>
-        {subscription?.trialEndsAt && currentPlan === "TRIAL" && (
-          <p className="mt-1 text-sm text-slate-500">
-            Δοκιμή έως: {new Date(subscription.trialEndsAt).toLocaleDateString("el-GR")}
-          </p>
-        )}
-        {subscription?.currentPeriodEnd && currentPlan !== "TRIAL" && (
-          <p className="mt-1 text-sm text-slate-500">
-            Τρέχουσα περίοδος έως:{" "}
-            {new Date(subscription.currentPeriodEnd).toLocaleDateString("el-GR")}
-          </p>
-        )}
-      </Card>
 
-      {error && (
+      <div className="premium-card p-5 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{B.currentPlan}</p>
+            <p className="mt-2 font-serif text-2xl font-bold text-primary">
+              {currentPlanEntry?.name ?? currentPlan}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm">
+            <DashboardStatusDot active={isActive} />
+            <span className="text-slate-600">
+              {B.statusLabel}: <span className="font-semibold text-primary">{statusLabel}</span>
+            </span>
+          </div>
+        </div>
+        {subscription?.trialEndsAt && currentPlan === "TRIAL" ? (
+          <p className="mt-3 text-sm text-slate-500">
+            {B.trialUntil}: {formatDashboardDate(lang, new Date(subscription.trialEndsAt))}
+          </p>
+        ) : null}
+        {subscription?.currentPeriodEnd && currentPlan !== "TRIAL" ? (
+          <p className="mt-3 text-sm text-slate-500">
+            {B.periodUntil}: {formatDashboardDate(lang, new Date(subscription.currentPeriodEnd))}
+          </p>
+        ) : null}
+      </div>
+
+      {error ? (
         <div className="rounded-button border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
-      )}
+      ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         {PAID_SUBSCRIPTION_PLANS.map((planId) => {
           const plan = plansById[planId];
           if (!plan) return null;
           const isCurrent = currentPlan === planId;
+          const isPro = planId === "PRO";
           return (
-            <Card key={planId} className={isCurrent ? "ring-2 ring-brand-blue/30" : ""}>
-              <p className="text-sm font-semibold uppercase tracking-wide text-brand-blue/70">
-                {plan.name}
-              </p>
-              <p className="mt-2 font-serif text-3xl font-bold text-primary">
+            <div
+              key={planId}
+              className={cn(
+                "premium-card relative flex flex-col p-5 sm:p-6",
+                isCurrent && "ring-2 ring-brand-blue/35",
+                isPro && !isCurrent && "border-brand-blue/20 bg-gradient-to-br from-brand-blue/[0.03] to-brand-cyan/[0.04]",
+              )}
+            >
+              {isPro ? (
+                <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-brand-gradient px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                  <Sparkles className="h-3 w-3" />
+                  Pro
+                </span>
+              ) : null}
+              <p className="text-sm font-semibold uppercase tracking-wide text-brand-blue/80">{plan.name}</p>
+              <p className="mt-3 font-serif text-3xl font-bold tabular-nums text-primary">
                 {formatPlanPriceDisplay(plan.priceMonthly, plan.priceDisplay)}
-                <span className="text-base font-normal text-slate-500">{plan.periodLabel}</span>
+                <span className="text-base font-normal text-slate-500">{B.perMonth}</span>
               </p>
               {plan.description ? (
-                <p className="mt-2 text-sm text-slate-600">{plan.description}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{plan.description}</p>
               ) : null}
-              <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
+              <ul className="mt-5 flex-1 space-y-2.5">
                 {plan.features.map((f) => (
-                  <li key={f}>✓ {f}</li>
+                  <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <DashboardFeatureCheck />
+                    <span>{displayPlanFeature(f, lang)}</span>
+                  </li>
                 ))}
               </ul>
               <button
                 type="button"
                 disabled={isCurrent || loadingPlan === planId || !canCheckout}
                 onClick={() => checkout(planId)}
-                className={`mt-6 w-full ${buttonClass(isCurrent ? "secondary" : "primary")}`}
+                className={cn("mt-6 w-full", buttonClass(isCurrent ? "secondary" : "primary"))}
               >
                 {loadingPlan === planId
-                  ? "Μετάβαση..."
+                  ? B.checkoutLoading
                   : isCurrent
-                    ? "Τρέχον πλάνο"
-                    : planChangeButtonLabel(currentPlan, planId, plansById)}
+                    ? B.currentPlanBtn
+                    : planChangeButtonLabel(currentPlan, planId, plansById, d)}
               </button>
-            </Card>
+            </div>
           );
         })}
       </div>
 
-      <Card>
+      <div className="premium-card p-5 sm:p-6">
         <h3 className="font-semibold text-primary">{enterprisePlan?.name ?? "Enterprise"}</h3>
-        <p className="mt-2 text-sm text-slate-600">
-          {enterprisePlan?.description ??
-            "Custom domain, white-label και προτεραιότητα υποστήριξης."}{" "}
-          Γράψε μας στο{" "}
-          <a href="mailto:info@b-os.gr" className="text-brand-blue hover:underline">
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          {enterprisePlan?.description ?? B.enterpriseFallback}{" "}
+          {B.contactUs}{" "}
+          <a href="mailto:info@b-os.gr" className="font-semibold text-brand-blue hover:underline">
             info@b-os.gr
           </a>
         </p>
-      </Card>
+      </div>
     </div>
   );
 }

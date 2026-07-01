@@ -74,6 +74,45 @@
     scroll-snap-align: start;
   }
 
+  .dashboard-scroll-x {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .dashboard-scroll-x::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dashboard-shell {
+    overflow-x: clip;
+  }
+
+  .dashboard-scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(203 213 225) transparent;
+  }
+
+  .dashboard-scroll-thin::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .dashboard-scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .dashboard-scroll-thin::-webkit-scrollbar-thumb {
+    background: rgb(203 213 225);
+    border-radius: 9999px;
+  }
+
+  .dashboard-scroll-thin::-webkit-scrollbar-thumb:hover {
+    background: rgb(148 163 184);
+  }
+
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;

@@ -275,8 +275,8 @@ export async function canOrganizationAddItems(
       ok: false,
       error:
         remaining > 0
-          ? `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxItems} πιάτα. Μπορείς να προσθέσεις ακόμα ${remaining}.`
-          : `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxItems} πιάτα.`,
+          ? `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxItems} είδη. Μπορείς να προσθέσεις ακόμα ${remaining}.`
+          : `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxItems} είδη.`,
       code: "item_limit",
     };
   }

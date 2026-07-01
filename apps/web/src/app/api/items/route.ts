@@ -9,27 +9,30 @@ import {
   serializableTransaction,
 } from "@/lib/plan-limits";
 import { getCategoryForOrganization } from "@/lib/venue-access";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
 export async function POST(request: Request) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
+  const copy = dashboardCopyFromRequest(request);
+  const A = copy.api;
+
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
+    return NextResponse.json({ error: A.badRequest }, { status: 400 });
   }
 
   const parsed = itemCreateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Συμπλήρωσε όνομα και τιμή." }, { status: 400 });
+    return NextResponse.json({ error: A.fillNameAndPrice }, { status: 400 });
   }
 
   const category = await getCategoryForOrganization(parsed.data.categoryId, auth.session!.organizationId);
   if (!category) {
-    return NextResponse.json({ error: "Η κατηγορία δεν βρέθηκε." }, { status: 404 });
+    return NextResponse.json({ error: A.categoryNotFound }, { status: 404 });
   }
 
   const names = await autoFillMenuNames(parsed.data);
@@ -80,7 +83,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       item,
-      message: DASHBOARD_EL.catalogEntry.added(parsed.data.nameGr),
+      message: copy.catalogEntry.added(parsed.data.nameGr),
     });
   } catch (err) {
     const limit = planLimitErrorResponse(err);

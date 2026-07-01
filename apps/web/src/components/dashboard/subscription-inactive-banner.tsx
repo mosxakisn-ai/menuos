@@ -1,17 +1,6 @@
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+"use client";
 
-export function getInactiveSubscriptionMessage(subscription: {
-  plan: string;
-  status: string;
-}): string {
-  if (subscription.plan === "TRIAL") {
-    return DASHBOARD_EL.trial.expired;
-  }
-  if (subscription.status === "CANCELED") {
-    return DASHBOARD_EL.billing.canceledInactive;
-  }
-  return DASHBOARD_EL.billing.inactiveGeneric;
-}
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
 export function SubscriptionInactiveBanner({
   show,
@@ -20,12 +9,20 @@ export function SubscriptionInactiveBanner({
   show: boolean;
   subscription: { plan: string; status: string } | null;
 }) {
+  const { d } = useDashboardCopy();
   if (!show || !subscription) return null;
+
+  const message =
+    subscription.plan === "TRIAL"
+      ? d.trial.expired
+      : subscription.status === "CANCELED"
+        ? d.billing.canceledInactive
+        : d.billing.inactiveGeneric;
 
   return (
     <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-4 text-sm leading-relaxed text-amber-950">
-      <p className="font-semibold">{DASHBOARD_EL.billing.inactiveTitle}</p>
-      <p className="mt-1.5">{getInactiveSubscriptionMessage(subscription)}</p>
+      <p className="font-semibold">{d.billing.inactiveTitle}</p>
+      <p className="mt-1.5">{message}</p>
     </div>
   );
 }

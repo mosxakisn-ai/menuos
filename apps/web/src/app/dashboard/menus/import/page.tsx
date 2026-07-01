@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@menuos/db";
+import { DashboardPage } from "@/components/dashboard/dashboard-page";
+import { MenuImportPageIntro } from "@/components/dashboard/menu-import-page-intro";
 import { MenuImportWizard } from "@/components/dashboard/menu-import-wizard";
 import { getSession } from "@/lib/auth";
 import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPrivatePageMetadata(
-  "Import από PDF",
+  "Import from PDF",
   "/dashboard/menus/import",
 );
 
@@ -33,17 +34,9 @@ export default async function MenuImportPage({ searchParams }: Props) {
   });
 
   return (
-    <div className="space-y-4">
-      <Link href={`/dashboard/menus${sp.venue ? `?venue=${sp.venue}` : ""}`} className="text-sm text-brand-blue hover:underline">
-        ← Πίσω στον κατάλογο
-      </Link>
-      <div>
-        <h1 className="font-serif text-2xl font-bold text-primary">Εισαγωγή από PDF</h1>
-        <p className="text-sm text-slate-600">
-          Ανέβασε PDF menu — ελέγχεις τα αποτελέσματα πριν τα αποθηκεύσεις στον κατάλογο.
-        </p>
-      </div>
+    <DashboardPage>
+      <MenuImportPageIntro venueId={sp.venue} />
       <MenuImportWizard venues={venues} initialVenueId={sp.venue} />
-    </div>
+    </DashboardPage>
   );
 }

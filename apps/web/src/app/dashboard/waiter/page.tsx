@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
-import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
+import { DashboardPage } from "@/components/dashboard/dashboard-page";
+import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { getSession } from "@/lib/auth";
 import { buildPrivatePageMetadata } from "@/lib/seo";
@@ -21,10 +22,7 @@ export default async function WaiterPage({ searchParams }: Props) {
 
   return (
     <DashboardPage>
-      <DashboardPageHeader
-        title="Κλήσεις σερβιτόρου"
-        description="Οι πελάτες καλούν από το QR menu. Ενημερώνεται αυτόματα. Στείλε το link στο κινητό του σερβιτόρου — χωρίς login — και ενεργοποίησε ειδοποιήσεις εκεί."
-      />
+      <LocalizedDashboardPageHeader page="waiter" />
       <PushNotificationsPrompt />
       <WaiterPanel
         venues={venues}

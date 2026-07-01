@@ -116,7 +116,7 @@ export function FeatureCard({
   bullets,
   href,
   className,
-  learnMoreLabel = "Μάθε περισσότερα",
+  learnMoreLabel = "Learn more",
 }: {
   icon: LucideIcon;
   title: string;

@@ -5,7 +5,7 @@ import { itemPatchSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { autoFillMenuNames } from "@/lib/menu-translation-service";
 import { getItemForOrganization } from "@/lib/venue-access";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
 type Params = { params: Promise<{ itemId: string }> };
 
@@ -31,22 +31,25 @@ export async function PATCH(request: Request, { params }: Params) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
+  const copy = dashboardCopyFromRequest(request);
+  const { catalogEntry } = copy;
+  const A = copy.api;
   const { itemId } = await params;
   const existing = await getItemForOrganization(itemId, auth.session!.organizationId);
   if (!existing) {
-    return NextResponse.json({ error: DASHBOARD_EL.catalogEntry.notFound }, { status: 404 });
+    return NextResponse.json({ error: catalogEntry.notFound }, { status: 404 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
+    return NextResponse.json({ error: A.badRequest }, { status: 400 });
   }
 
   const parsed = itemPatchSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: DASHBOARD_EL.catalogEntry.invalidData }, { status: 400 });
+    return NextResponse.json({ error: catalogEntry.invalidData }, { status: 400 });
   }
 
   let { nameGr, nameEn, nameDe, nameFr, available, price, label, photoUrl, extras } = parsed.data;
@@ -93,20 +96,22 @@ export async function PATCH(request: Request, { params }: Params) {
 
   return NextResponse.json({
     item,
-    message: available === false ? DASHBOARD_EL.catalogEntry.deactivated : DASHBOARD_EL.catalogEntry.updated,
+    message: available === false ? catalogEntry.deactivated : catalogEntry.updated,
   });
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(request: Request, { params }: Params) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
+  const copy = dashboardCopyFromRequest(request);
+  const { catalogEntry } = copy;
   const { itemId } = await params;
   const existing = await getItemForOrganization(itemId, auth.session!.organizationId);
   if (!existing) {
-    return NextResponse.json({ error: DASHBOARD_EL.catalogEntry.notFound }, { status: 404 });
+    return NextResponse.json({ error: catalogEntry.notFound }, { status: 404 });
   }
 
   await prisma.item.delete({ where: { id: itemId } });
-  return NextResponse.json({ ok: true, message: DASHBOARD_EL.catalogEntry.deleted });
+  return NextResponse.json({ ok: true, message: catalogEntry.deleted });
 }

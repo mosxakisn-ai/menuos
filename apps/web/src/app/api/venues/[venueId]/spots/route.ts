@@ -3,6 +3,7 @@ import { prisma } from "@menuos/db";
 import { venueSpotBulkCreateSchema, venueSpotCreateSchema, zodFirstErrorMessage } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
+import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
 type Params = { params: Promise<{ venueId: string }> };
 
@@ -32,17 +33,19 @@ export async function POST(request: Request, { params }: Params) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
+  const copy = dashboardCopyFromRequest(request);
+  const A = copy.api;
   const { venueId } = await params;
   const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
   if (!venue) {
-    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
+    return NextResponse.json({ error: A.venueNotFound }, { status: 404 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
+    return NextResponse.json({ error: A.badRequest }, { status: 400 });
   }
 
   const bulkResult = venueSpotBulkCreateSchema.safeParse(body);
@@ -71,7 +74,7 @@ export async function POST(request: Request, { params }: Params) {
     );
     return NextResponse.json({
       spots: created,
-      message: `Προστέθηκαν ${created.length} θέσεις.`,
+      message: A.spotsBulkAdded(created.length),
     });
   }
 
@@ -92,9 +95,9 @@ export async function POST(request: Request, { params }: Params) {
           sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
         },
       });
-      return NextResponse.json({ spot, message: "Η θέση προστέθηκε." });
+      return NextResponse.json({ spot, message: A.spotAdded });
     } catch {
-      return NextResponse.json({ error: "Η θέση υπάρχει ήδη." }, { status: 409 });
+      return NextResponse.json({ error: A.spotExists }, { status: 409 });
     }
   }
 

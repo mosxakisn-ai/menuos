@@ -3,7 +3,7 @@
 import { ImagePlus, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
 export function PhotoUploadField({
   value,
@@ -18,11 +18,12 @@ export function PhotoUploadField({
   label?: string;
   hint?: string;
 }) {
+  const { d } = useDashboardCopy();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploadEnabled, setUploadEnabled] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const p = DASHBOARD_EL.photos;
+  const p = d.photos;
   const displayLabel = label ?? p.label;
   const displayHint = hint ?? p.uploadHint;
 

@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@menuos/db";
 import { BillingConfirmHandler } from "@/components/dashboard/billing-confirm-handler";
 import { BillingPlans } from "@/components/dashboard/billing-plans";
-import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
+import { DashboardPage } from "@/components/dashboard/dashboard-page";
+import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
 import { SubscriptionInactiveBanner } from "@/components/dashboard/subscription-inactive-banner";
 import { UpgradeReasonBanner } from "@/components/dashboard/upgrade-reason-banner";
 import { getSession } from "@/lib/auth";
@@ -32,10 +33,7 @@ export default async function BillingPage({ searchParams: _searchParams }: Props
 
   return (
     <DashboardPage>
-      <DashboardPageHeader
-        title="Συνδρομή"
-        description="Διαχείριση συνδρομής MenuOS. Οι πληρωμές γίνονται με ασφάλεια online."
-      />
+      <LocalizedDashboardPageHeader page="billing" />
 
       <SubscriptionInactiveBanner
         show={showInactive}

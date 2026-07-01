@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, Circle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DashboardStepCircle, type StepCircleState } from "@/components/dashboard/dashboard-ui";
 
 export type PipelineStepStatus = "pending" | "active" | "done" | "error";
 
@@ -11,6 +11,10 @@ export type PipelineStep = {
   status: PipelineStepStatus;
   detail?: string;
 };
+
+function toCircleState(status: PipelineStepStatus): StepCircleState {
+  return status;
+}
 
 export function ImportPipelineProgress({
   steps,
@@ -23,35 +27,26 @@ export function ImportPipelineProgress({
 }) {
   return (
     <div className="space-y-6">
-      <p className="text-center text-base font-semibold text-brand-navy">{title}</p>
+      <p className="text-center font-serif text-lg font-bold text-brand-navy">{title}</p>
 
-      <ol className="mx-auto max-w-md space-y-3">
-        {steps.map((step) => (
+      <ol className="mx-auto max-w-md space-y-2.5">
+        {steps.map((step, i) => (
           <li
             key={step.id}
             className={cn(
               "flex items-start gap-3 rounded-card border px-4 py-3 transition-all duration-300",
-              step.status === "active" && "border-brand-blue/30 bg-brand-blue/5 shadow-soft",
-              step.status === "done" && "border-emerald-200 bg-emerald-50/60",
-              step.status === "error" && "border-red-200 bg-red-50",
-              step.status === "pending" && "border-slate-100 bg-white opacity-60",
+              step.status === "active" && "border-brand-blue/25 bg-brand-blue/[0.04] shadow-soft",
+              step.status === "done" && "border-emerald-100 bg-emerald-50/50",
+              step.status === "error" && "border-red-200 bg-red-50/80",
+              step.status === "pending" && "border-slate-100 bg-white/80 opacity-70",
             )}
           >
-            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center">
-              {step.status === "done" ? (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
-                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                </span>
-              ) : step.status === "active" ? (
-                <Loader2 className="h-5 w-5 animate-spin text-brand-blue" />
-              ) : step.status === "error" ? (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                  !
-                </span>
-              ) : (
-                <Circle className="h-5 w-5 text-slate-300" />
-              )}
-            </span>
+            <DashboardStepCircle
+              state={toCircleState(step.status)}
+              index={step.status === "active" ? undefined : i + 1}
+              size="sm"
+              className="mt-0.5"
+            />
             <div className="min-w-0 flex-1 text-left">
               <p
                 className={cn(
@@ -74,13 +69,15 @@ export function ImportPipelineProgress({
 
       {progress !== undefined ? (
         <div className="mx-auto w-full max-w-md space-y-1.5">
-          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
             <div
               className="h-full rounded-full bg-brand-gradient transition-all duration-500 ease-out"
               style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
             />
           </div>
-          <p className="text-center text-xs font-medium text-brand-blue">{Math.round(progress)}%</p>
+          <p className="text-center text-xs font-semibold tabular-nums text-brand-blue">
+            {Math.round(progress)}%
+          </p>
         </div>
       ) : null}
     </div>

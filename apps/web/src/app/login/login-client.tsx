@@ -1,15 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthFooterLink, AuthShell } from "@/components/marketing/marketing-layout";
 import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
+import { useI18n } from "@/i18n/context";
 
 export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string }) {
   const router = useRouter();
+  const { m } = useI18n();
+  const L = m.pages.auth.login;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +31,7 @@ export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string
     const data = await res.json();
     setLoading(false);
     if (!res.ok) {
-      setError(data.error ?? "Η σύνδεση απέτυχε.");
+      setError(data.error ?? L.failed);
       return;
     }
     router.push("/dashboard");
@@ -38,10 +40,14 @@ export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string
 
   return (
     <AuthShell
-      title="Καλώς ήρθες πίσω"
-      subtitle="Σύνδεση στο dashboard σου για menus, QR και billing."
+      title={L.title}
+      subtitle={L.subtitle}
       footer={
-        <AuthFooterLink text="Δεν έχεις λογαριασμό;" linkText={`Δωρεάν δοκιμή ${trialDaysGen}`} href="/register" />
+        <AuthFooterLink
+          text={L.noAccount}
+          linkText={L.freeTrial(trialDaysGen)}
+          href="/register"
+        />
       }
     >
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
@@ -54,7 +60,7 @@ export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string
           placeholder={FORM_PLACEHOLDERS.email}
         />
         <PasswordField
-          label="Κωδικός πρόσβασης"
+          label={L.password}
           name="password"
           required
           autoComplete="current-password"
@@ -62,7 +68,7 @@ export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string
         />
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <button type="submit" disabled={loading} className={`w-full ${buttonClass("primary")}`}>
-          {loading ? "Σύνδεση..." : "Σύνδεση"}
+          {loading ? L.submitting : L.submit}
         </button>
       </form>
     </AuthShell>

@@ -118,8 +118,8 @@ export async function assertCanAddItemsInTransaction(
     throw new PlanLimitError(
       "item_limit",
       remaining > 0
-        ? `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxItems} πιάτα. Μπορείς να προσθέσεις ακόμα ${remaining}.`
-        : `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxItems} πιάτα.`,
+          ? `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxItems} είδη. Μπορείς να προσθέσεις ακόμα ${remaining}.`
+          : `Το πλάνο ${ctx.plan.name} επιτρέπει μέχρι ${maxItems} είδη.`,
     );
   }
 }

@@ -6,7 +6,7 @@ import { QR_MENU_LANGUAGE_LABELS, type QrMenuLanguage } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 type Venue = { id: string; name: string; slug: string };
@@ -20,6 +20,8 @@ export function QrGenerator({
   initialVenueId?: string;
   itemCountByVenue?: Record<string, number>;
 }) {
+  const { d } = useDashboardCopy();
+  const Q = d.pages.qr;
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
   const [table, setTable] = useState("");
   const [room, setRoom] = useState("");
@@ -42,14 +44,14 @@ export function QrGenerator({
       if (res.ok) {
         setMenuUrl(data.menuUrl);
         setPngDataUrl(data.pngDataUrl);
-        setFlash({ type: "success", text: "Το QR δημιουργήθηκε! Κατέβασέ το ή εκτύπωσέ το." });
+        setFlash({ type: "success", text: Q.generatedSuccess });
       } else {
         showFromResponse(data, false);
       }
     } finally {
       setLoading(false);
     }
-  }, [venueId, table, room, lang, showFromResponse, setFlash]);
+  }, [venueId, table, room, lang, showFromResponse, setFlash, Q.generatedSuccess]);
 
   useEffect(() => {
     if (venueId) void generate();
@@ -69,10 +71,10 @@ export function QrGenerator({
   if (venues.length === 0) {
     return (
       <Card>
-        <p className="font-semibold text-brand-navy">Χρειάζεσαι πρώτα κατάστημα</p>
-        <p className="mt-2 text-sm text-slate-600">Φτιάξε κατάστημα και πρόσθεσε πιάτα πριν βγάλεις QR.</p>
+        <p className="font-semibold text-brand-navy">{Q.needVenueTitle}</p>
+        <p className="mt-2 text-sm text-slate-600">{Q.needVenueDesc}</p>
         <a href="/dashboard/venues/new" className={`mt-4 inline-flex ${buttonClass("primary")}`}>
-          {DASHBOARD_EL.addVenue}
+          {d.addVenue}
         </a>
       </Card>
     );
@@ -87,25 +89,23 @@ export function QrGenerator({
           role="alert"
           className="rounded-card border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
         >
-          <p className="font-semibold">Ο κατάλογος είναι άδειος</p>
+          <p className="font-semibold">{Q.emptyCatalogTitle}</p>
           <p className="mt-1">
-            Πρόσθεσε κατηγορίες και πιάτα στον{" "}
+            {Q.emptyCatalogBeforeLink}{" "}
             <a href={`/dashboard/menus?venue=${venueId}`} className="font-semibold underline">
-              κατάλογο
+              {Q.catalogLink}
             </a>{" "}
-            πριν μοιράσεις QR στους πελάτες.
+            {Q.emptyCatalogAfterLinkCustomers}
           </p>
         </div>
       ) : null}
 
       <Card>
-        <h2 className="font-semibold text-brand-navy">Ρυθμίσεις QR</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Κάθε QR ανοίγει τον online κατάλογο. Βάλε αριθμό τραπεζιού ή δωματίου — έτσι ξέρεις από πού σε καλούν.
-        </p>
+        <h2 className="font-semibold text-brand-navy">{Q.settingsTitle}</h2>
+        <p className="mt-1 text-sm text-slate-600">{Q.settingsDesc}</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block text-sm sm:col-span-2">
-            <span className="font-medium">{DASHBOARD_EL.venue}</span>
+            <span className="font-medium">{d.venue}</span>
             <select
               value={venueId}
               onChange={(e) => setVenueId(e.target.value)}
@@ -119,7 +119,7 @@ export function QrGenerator({
             </select>
           </label>
           <label className="block text-sm">
-            <span className="font-medium">Τραπέζι (προαιρετικό)</span>
+            <span className="font-medium">{Q.tableLabel}</span>
             <input
               value={table}
               onChange={(e) => setTable(e.target.value)}
@@ -128,7 +128,7 @@ export function QrGenerator({
             />
           </label>
           <label className="block text-sm">
-            <span className="font-medium">Δωμάτιο (προαιρετικό)</span>
+            <span className="font-medium">{Q.roomLabel}</span>
             <input
               value={room}
               onChange={(e) => setRoom(e.target.value)}
@@ -137,7 +137,7 @@ export function QrGenerator({
             />
           </label>
           <label className="block text-sm">
-            <span className="font-medium">Προεπιλεγμένη γλώσσα QR</span>
+            <span className="font-medium">{Q.defaultLangLabel}</span>
             <select
               value={lang}
               onChange={(e) => setLang(e.target.value as QrMenuLanguage)}
@@ -157,7 +157,7 @@ export function QrGenerator({
           disabled={loading}
           className={`mt-4 ${buttonClass("primary")}`}
         >
-          {loading ? "Δημιουργία..." : "Ενημέρωση QR"}
+          {loading ? Q.generating : Q.updateQr}
         </button>
       </Card>
 
@@ -168,7 +168,7 @@ export function QrGenerator({
           <div className="mt-4 flex flex-wrap justify-center gap-3">
             <button type="button" onClick={downloadPng} className={`inline-flex items-center gap-1 ${buttonClass("primary")}`}>
               <Download className="h-4 w-4" />
-              Κατέβασμα PNG
+              {Q.downloadPng}
             </button>
             <a
               href={menuUrl}
@@ -176,7 +176,7 @@ export function QrGenerator({
               rel="noopener noreferrer"
               className={`inline-flex items-center gap-1 ${buttonClass("secondary")}`}
             >
-              Άνοιγμα καταλόγου
+              {Q.openCatalog}
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>

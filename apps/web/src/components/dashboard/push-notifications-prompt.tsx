@@ -4,7 +4,7 @@ import { Bell, BellOff, CheckCircle2, Loader2, Smartphone } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { isInAppBrowser, isIosDevice } from "@/lib/waiter-alert";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,8 @@ export function PushNotificationsPrompt({
 }: {
   staffAuth?: { venueId: string; staffKey?: string };
 } = {}) {
+  const { d } = useDashboardCopy();
+  const p = d.push;
   const [state, setState] = useState<PushState>("loading");
   const [busy, setBusy] = useState(false);
   const [justEnabled, setJustEnabled] = useState(false);
@@ -160,13 +162,12 @@ export function PushNotificationsPrompt({
     }
   }
 
-  const p = DASHBOARD_EL.push;
   const canEnable = (state === "prompt" || state === "failed") && !inApp;
 
   if (state === "loading") {
     return (
       <Card className="border-slate-200 bg-white">
-        <p className="text-sm text-slate-500">Έλεγχος ειδοποιήσεων...</p>
+        <p className="text-sm text-slate-500">{p.checking}</p>
       </Card>
     );
   }

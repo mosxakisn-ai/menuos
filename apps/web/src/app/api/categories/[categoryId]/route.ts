@@ -5,7 +5,7 @@ import { categoryPatchSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { autoFillMenuNames } from "@/lib/menu-translation-service";
 import { getCategoryForOrganization } from "@/lib/venue-access";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
 type Params = { params: Promise<{ categoryId: string }> };
 
@@ -31,22 +31,24 @@ export async function PATCH(request: Request, { params }: Params) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
+  const copy = dashboardCopyFromRequest(request);
+  const A = copy.api;
   const { categoryId } = await params;
   const existing = await getCategoryForOrganization(categoryId, auth.session!.organizationId);
   if (!existing) {
-    return NextResponse.json({ error: "Η κατηγορία δεν βρέθηκε." }, { status: 404 });
+    return NextResponse.json({ error: A.categoryNotFound }, { status: 404 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
+    return NextResponse.json({ error: A.badRequest }, { status: 400 });
   }
 
   const parsed = categoryPatchSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Μη έγκυρο όνομα κατηγορίας." }, { status: 400 });
+    return NextResponse.json({ error: A.invalidCategoryName }, { status: 400 });
   }
 
   let { nameGr, nameEn, nameDe, nameFr } = parsed.data;
@@ -72,25 +74,27 @@ export async function PATCH(request: Request, { params }: Params) {
 
   return NextResponse.json({
     category,
-    message: nameGr ? `Η κατηγορία μετονομάστηκε σε «${nameGr}».` : "Η κατηγορία ενημερώθηκε.",
+    message: nameGr ? A.categoryRenamed(nameGr) : A.categoryUpdated,
   });
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(request: Request, { params }: Params) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
+  const copy = dashboardCopyFromRequest(request);
+  const A = copy.api;
   const { categoryId } = await params;
   const category = await getCategoryForOrganization(categoryId, auth.session!.organizationId);
   if (!category) {
-    return NextResponse.json({ error: "Η κατηγορία δεν βρέθηκε." }, { status: 404 });
+    return NextResponse.json({ error: A.categoryNotFound }, { status: 404 });
   }
 
   const itemCount = await prisma.item.count({ where: { categoryId } });
   if (itemCount > 0) {
     return NextResponse.json(
       {
-        error: DASHBOARD_EL.catalogEntry.categoryHasEntries,
+        error: copy.catalogEntry.categoryHasEntries,
         code: "category_has_items",
       },
       { status: 400 },
@@ -98,5 +102,5 @@ export async function DELETE(_req: Request, { params }: Params) {
   }
 
   await prisma.category.delete({ where: { id: categoryId } });
-  return NextResponse.json({ ok: true, message: "Η κατηγορία διαγράφηκε." });
+  return NextResponse.json({ ok: true, message: A.categoryDeleted });
 }

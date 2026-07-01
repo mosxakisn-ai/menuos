@@ -7,15 +7,36 @@ export const VENUE_SPOT_TYPE_LABELS_EL: Record<VenueSpotType, string> = {
   SUNBED: "Ξαπλώστρα",
 };
 
+export const VENUE_SPOT_TYPE_LABELS_EN: Record<VenueSpotType, string> = {
+  TABLE: "Table",
+  ROOM: "Room",
+  SUNBED: "Sunbed",
+};
+
+export type VenueSpotLang = "GR" | "EN";
+
+export function venueSpotTypeLabelForLang(type: VenueSpotType, lang: VenueSpotLang = "GR"): string {
+  const labels = lang === "EN" ? VENUE_SPOT_TYPE_LABELS_EN : VENUE_SPOT_TYPE_LABELS_EL;
+  return labels[type] ?? type;
+}
+
 export function venueSpotTypeLabel(type: VenueSpotType): string {
-  return VENUE_SPOT_TYPE_LABELS_EL[type] ?? type;
+  return venueSpotTypeLabelForLang(type, "GR");
 }
 
 /** Pure numbers get a type prefix (e.g. «Τραπέζι 12»); custom ids show as-is (e.g. «sala-1»). */
-export function formatVenueSpotLabel(type: VenueSpotType, label: string): string {
+export function formatVenueSpotLabelForLang(
+  type: VenueSpotType,
+  label: string,
+  lang: VenueSpotLang = "GR",
+): string {
   const trimmed = label.trim();
-  if (/^[0-9]+$/.test(trimmed)) return `${venueSpotTypeLabel(type)} ${trimmed}`;
+  if (/^[0-9]+$/.test(trimmed)) return `${venueSpotTypeLabelForLang(type, lang)} ${trimmed}`;
   return trimmed;
+}
+
+export function formatVenueSpotLabel(type: VenueSpotType, label: string): string {
+  return formatVenueSpotLabelForLang(type, label, "GR");
 }
 
 const venueSpotLabelPattern = /^[a-zA-Z0-9\u0370-\u03FF\u1F00-\u1FFF_-]+$/;
@@ -49,11 +70,20 @@ export type WaiterCallLocation = {
   sunbedNumber?: string | null;
 };
 
+export function formatWaiterCallLocationForLang(
+  call: WaiterCallLocation,
+  lang: VenueSpotLang = "GR",
+): string {
+  const labels = lang === "EN" ? VENUE_SPOT_TYPE_LABELS_EN : VENUE_SPOT_TYPE_LABELS_EL;
+  const noLocation = lang === "EN" ? "No location" : "Χωρίς θέση";
+  if (call.tableNumber) return formatLocationValue(labels.TABLE, call.tableNumber);
+  if (call.roomNumber) return formatLocationValue(labels.ROOM, call.roomNumber);
+  if (call.sunbedNumber) return formatLocationValue(labels.SUNBED, call.sunbedNumber);
+  return noLocation;
+}
+
 export function formatWaiterCallLocation(call: WaiterCallLocation): string {
-  if (call.tableNumber) return formatLocationValue(VENUE_SPOT_TYPE_LABELS_EL.TABLE, call.tableNumber);
-  if (call.roomNumber) return formatLocationValue(VENUE_SPOT_TYPE_LABELS_EL.ROOM, call.roomNumber);
-  if (call.sunbedNumber) return formatLocationValue(VENUE_SPOT_TYPE_LABELS_EL.SUNBED, call.sunbedNumber);
-  return "Χωρίς θέση";
+  return formatWaiterCallLocationForLang(call, "GR");
 }
 
 export function hasMenuLocation(

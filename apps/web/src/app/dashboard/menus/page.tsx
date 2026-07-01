@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
 import { MenuEditor } from "@/components/dashboard/menu-editor";
-import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
+import { DashboardPage } from "@/components/dashboard/dashboard-page";
+import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
 import { getSession } from "@/lib/auth";
 import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
 import { buildPrivatePageMetadata } from "@/lib/seo";
@@ -23,10 +24,7 @@ export default async function MenusPage({ searchParams }: Props) {
 
   return (
     <DashboardPage>
-      <DashboardPageHeader
-        title="Κατάλογος"
-        description="Πρόσθεσε κατηγορίες και είδη — υποστηρίζονται πολλαπλές γλώσσες στο QR menu."
-      />
+      <LocalizedDashboardPageHeader page="menus" />
       <MenuEditor
         venues={venues}
         initialVenueId={sp.venue}

@@ -3,17 +3,20 @@ import { prisma } from "@menuos/db";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { serializableTransaction } from "@/lib/plan-limits";
 import { getMenuForOrganization } from "@/lib/venue-access";
+import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
 type Params = { params: Promise<{ menuId: string }> };
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(request: Request, { params }: Params) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
+  const copy = dashboardCopyFromRequest(request);
+  const A = copy.api;
   const { menuId } = await params;
   const menu = await getMenuForOrganization(menuId, auth.session!.organizationId);
   if (!menu) {
-    return NextResponse.json({ error: "Ο κατάλογος δεν βρέθηκε." }, { status: 404 });
+    return NextResponse.json({ error: A.menuNotFound }, { status: 404 });
   }
 
   try {
@@ -31,7 +34,7 @@ export async function DELETE(_req: Request, { params }: Params) {
     if (err instanceof Error && err.message === "menu_has_data") {
       return NextResponse.json(
         {
-          error: "Δεν μπορείς να διαγράψεις κατάλογο που έχει κατηγορίες ή πιάτα.",
+          error: copy.deleteCatalogHasData,
           code: "menu_has_data",
         },
         { status: 400 },
@@ -40,7 +43,7 @@ export async function DELETE(_req: Request, { params }: Params) {
     if (err instanceof Error && err.message === "menu_last") {
       return NextResponse.json(
         {
-          error: "Πρέπει να υπάρχει τουλάχιστον ένας κατάλογος στο κατάστημα.",
+          error: copy.deleteCatalogLast,
           code: "menu_last",
         },
         { status: 400 },
@@ -49,5 +52,5 @@ export async function DELETE(_req: Request, { params }: Params) {
     throw err;
   }
 
-  return NextResponse.json({ ok: true, message: "Ο κατάλογος διαγράφηκε." });
+  return NextResponse.json({ ok: true, message: A.menuDeleted });
 }

@@ -12,11 +12,13 @@ import {
   dashboardTextareaClass,
 } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
-import { DASHBOARD_EL } from "@/content/dashboard-el";
+import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { cn } from "@/lib/utils";
 
-type Venue = {
+type Venue = SettingsVenue;
+
+export type SettingsVenue = {
   id: string;
   name: string;
   slug: string;
@@ -26,7 +28,8 @@ type Venue = {
   secondaryColor: string;
 };
 
-export function SettingsForm({ venues }: { venues: Venue[] }) {
+export function SettingsForm({ venues }: { venues: SettingsVenue[] }) {
+  const { d } = useDashboardCopy();
   const router = useRouter();
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
   const venue = venues.find((v) => v.id === venueId);
@@ -77,9 +80,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
   if (venues.length === 0) {
     return (
       <div className={dashboardCardClass}>
-        <p className="text-center text-sm text-slate-600 sm:text-left">
-          Φτιάξε πρώτα κατάστημα για να ρυθμίσεις χρώματα και εμφάνιση.
-        </p>
+        <p className="text-center text-sm text-slate-600 sm:text-left">{d.pages.settings.needVenueFirst}</p>
       </div>
     );
   }
@@ -91,13 +92,11 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
       <div className={dashboardCardClass}>
         <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-semibold text-brand-navy">Εμφάνιση καταλόγου</h2>
-            <p className="mt-1 text-sm leading-relaxed text-slate-500">
-              Logo, χρώματα και στοιχεία που βλέπουν οι πελάτες από το QR.
-            </p>
+            <h2 className="text-sm font-semibold text-brand-navy">{d.pages.settings.appearanceTitle}</h2>
+            <p className="mt-1 text-sm leading-relaxed text-slate-500">{d.pages.settings.appearanceDesc}</p>
           </div>
           <label className="block w-full sm:max-w-xs sm:shrink-0">
-            <span className={dashboardLabelClass}>{DASHBOARD_EL.venue}</span>
+            <span className={dashboardLabelClass}>{d.venue}</span>
             <select
               value={venueId}
               onChange={(e) => selectVenue(e.target.value)}
@@ -114,7 +113,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
 
         <form onSubmit={onSubmit} className={cn(dashboardFormGridClass, "mt-6")}>
           <label className="block sm:col-span-2">
-            <span className={dashboardLabelClass}>Όνομα καταστήματος</span>
+            <span className={dashboardLabelClass}>{d.pages.settings.venueNameLabel}</span>
             <input
               required
               value={name}
@@ -124,7 +123,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
             />
           </label>
           <label className="block sm:col-span-2">
-            <span className={dashboardLabelClass}>Περιγραφή</span>
+            <span className={dashboardLabelClass}>{d.pages.settings.descriptionLabel}</span>
             <textarea
               rows={2}
               value={description}
@@ -137,12 +136,12 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
             className="sm:col-span-2"
             value={logoUrl}
             onChange={setLogoUrl}
-            label={DASHBOARD_EL.photos.logoLabel}
-            hint={DASHBOARD_EL.photos.logoHint}
+            label={d.photos.logoLabel}
+            hint={d.photos.logoHint}
           />
-          <p className="sm:col-span-2 text-xs text-slate-500">{DASHBOARD_EL.photos.logoSaveHint}</p>
+          <p className="sm:col-span-2 text-xs text-slate-500">{d.photos.logoSaveHint}</p>
           <label className="block">
-            <span className={dashboardLabelClass}>Κύριο χρώμα</span>
+            <span className={dashboardLabelClass}>{d.pages.settings.primaryColor}</span>
             <input
               type="color"
               value={primaryColor}
@@ -151,7 +150,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
             />
           </label>
           <label className="block">
-            <span className={dashboardLabelClass}>Δευτερεύον</span>
+            <span className={dashboardLabelClass}>{d.pages.settings.secondaryColor}</span>
             <input
               type="color"
               value={secondaryColor}
@@ -161,7 +160,7 @@ export function SettingsForm({ venues }: { venues: Venue[] }) {
           </label>
           <div className="sm:col-span-2">
             <button type="submit" disabled={saving} className={`h-10 w-full sm:w-auto ${buttonClass("primary", "md")}`}>
-              {saving ? "Αποθήκευση..." : "Αποθήκευση ρυθμίσεων"}
+              {saving ? d.pages.settings.saving : d.pages.settings.save}
             </button>
           </div>
         </form>
