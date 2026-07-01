@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
-import type { PassStationInput } from "@menuos/shared";
+import { passStationInputToDb } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
@@ -36,9 +36,23 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Μη έγκυρη οθόνη." }, { status: 400 });
   }
 
-  const field = SCREEN_TOKEN_FIELDS[screen];
+  const dbStation = passStationInputToDb(screen);
   const screenToken = randomUUID();
 
+  const primary = await prisma.venueStationScreen.findFirst({
+    where: { venueId, station: dbStation },
+    orderBy: { sortOrder: "asc" },
+    select: { id: true },
+  });
+
+  if (primary) {
+    await prisma.venueStationScreen.update({
+      where: { id: primary.id },
+      data: { screenToken },
+    });
+  }
+
+  const field = SCREEN_TOKEN_FIELDS[screen];
   await prisma.venue.update({
     where: { id: venueId },
     data: { [field]: screenToken },

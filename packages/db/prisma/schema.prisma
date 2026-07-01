@@ -186,6 +186,7 @@ model Venue {
   passSignals       PassSignal[]
   spots             VenueSpot[]
   staffMembers      VenueStaffMember[]
+  stationScreens    VenueStationScreen[]
   settings          VenueSetting?
   pushSubscriptions PushSubscription[]
 
@@ -338,23 +339,41 @@ model WaiterCall {
 }
 
 model PassSignal {
-  id           String           @id @default(cuid())
-  venueId      String
-  station      PassStation
-  tableNumber  String?
-  roomNumber   String?
-  sunbedNumber String?
-  message      String?          @db.VarChar(80)
-  status       PassSignalStatus @default(READY)
-  readyAt      DateTime         @default(now())
-  pickedUpAt   DateTime?
-  deliveredAt  DateTime?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  id               String           @id @default(cuid())
+  venueId          String
+  station          PassStation
+  stationScreenId  String?
+  tableNumber      String?
+  roomNumber       String?
+  sunbedNumber     String?
+  message          String?          @db.VarChar(80)
+  status           PassSignalStatus @default(READY)
+  readyAt          DateTime         @default(now())
+  pickedUpAt       DateTime?
+  deliveredAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
-  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue         Venue               @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  stationScreen VenueStationScreen? @relation(fields: [stationScreenId], references: [id], onDelete: SetNull)
 
   @@index([venueId, status])
+}
+
+model VenueStationScreen {
+  id          String      @id @default(cuid())
+  venueId     String
+  station     PassStation
+  label       String      @db.VarChar(40)
+  screenToken String      @unique @default(cuid())
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  venue       Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  passSignals PassSignal[]
+
+  @@index([venueId, station, sortOrder])
 }
 
 model RegistrationOtp {

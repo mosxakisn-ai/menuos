@@ -13,6 +13,7 @@ type ScreenContext = {
   venueName: string;
   venueSlug: string;
   station: PassStationInput;
+  screenLabel?: string | null;
   spots: ScreenSpot[];
 };
 
@@ -138,7 +139,9 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     <div className="min-h-screen bg-slate-900 text-white">
       <header className="border-b border-white/10 px-4 py-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-cyan-400">MenuOS</p>
-        <h1 className="font-serif text-2xl font-bold">{C.title}</h1>
+        <h1 className="font-serif text-2xl font-bold">
+          {ctx?.screenLabel ? `${C.title} · ${ctx.screenLabel}` : C.title}
+        </h1>
         {ctx ? <p className="mt-1 text-sm text-slate-400">{ctx.venueName}</p> : null}
       </header>
 

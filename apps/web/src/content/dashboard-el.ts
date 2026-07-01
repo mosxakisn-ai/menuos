@@ -491,6 +491,20 @@ export const DASHBOARD_EL = {
       rotateScreenConfirm:
         "Να αλλάξει ο κωδικός; Το τρέχον link θα σταματήσει να λειτουργεί.",
       rotateScreenFailed: "Αποτυχία αλλαγής κωδικού οθόνης.",
+      multiScreenHint:
+        "Μπορείς να έχεις πολλές οθόνες ανά τμήμα (π.χ. μπαρ παραλίας και μπαρ καταστήματος) — κάθε μία με δικό της link.",
+      loadingScreens: "Φόρτωση οθονών…",
+      addScreenTitle: "Προσθήκη οθόνης",
+      addScreenHint: "Δώσε όνομα για να ξεχωρίζει (π.χ. Παραλία, Σαλόνι).",
+      screenNameLabel: "Όνομα οθόνης",
+      screenNamePlaceholder: "π.χ. Παραλία",
+      addScreenButton: "Προσθήκη",
+      addingScreen: "Προσθήκη…",
+      addScreenFailed: "Αποτυχία προσθήκης οθόνης.",
+      deleteScreen: "Διαγραφή",
+      deleteScreenConfirm: (name: string) =>
+        `Διαγραφή της οθόνης «${name}»;\n\nΤο link της θα σταματήσει να λειτουργεί.`,
+      deleteScreenFailed: "Αποτυχία διαγραφής οθόνης.",
       tables: {
         title: "Ταμπλό",
         description: "Ρύθμισε τραπέζια, δωμάτια και ξαπλώστρες. Τα QR κατεβαίνουν από τη σελίδα QR codes.",

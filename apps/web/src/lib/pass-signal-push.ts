@@ -23,14 +23,24 @@ function stationTitle(station: PassStation): string {
 
 export function pushStaffPassSignal(
   venue: { id: string; name: string; slug: string; staffToken: string; organizationId: string },
-  signal: Pick<PassSignal, "id" | "station" | "tableNumber" | "roomNumber" | "sunbedNumber" | "message">,
+  signal: Pick<
+    PassSignal,
+    "id" | "station" | "tableNumber" | "roomNumber" | "sunbedNumber" | "message"
+  > & {
+    stationScreen?: { label: string } | null;
+  },
 ) {
   fireStaffPushNotify(() => notifyStaffPassSignal(venue, signal));
 }
 
 async function notifyStaffPassSignal(
   venue: { id: string; name: string; slug: string; staffToken: string; organizationId: string },
-  signal: Pick<PassSignal, "id" | "station" | "tableNumber" | "roomNumber" | "sunbedNumber" | "message">,
+  signal: Pick<
+    PassSignal,
+    "id" | "station" | "tableNumber" | "roomNumber" | "sunbedNumber" | "message"
+  > & {
+    stationScreen?: { label: string } | null;
+  },
 ) {
   if (!isPushEnabled() || !configureWebPush()) return;
 
@@ -40,7 +50,8 @@ async function notifyStaffPassSignal(
   if (subscriptions.length === 0) return;
 
   const loc = formatWaiterCallLocation(signal);
-  const title = stationTitle(signal.station);
+  const stationName = signal.stationScreen?.label?.trim();
+  const title = stationName ? `${stationTitle(signal.station)} (${stationName})` : stationTitle(signal.station);
   const detail = signal.message?.trim();
   const body = detail ? `${loc} · ${detail}` : `${venue.name} · ${loc}`;
   const url = buildStaffWaiterUrl(venue.slug, venue.staffToken);

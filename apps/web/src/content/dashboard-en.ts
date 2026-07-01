@@ -485,6 +485,20 @@ export const DASHBOARD_EN = {
       rotatingScreen: "Rotating...",
       rotateScreenConfirm: "Rotate the screen code? The current link will stop working.",
       rotateScreenFailed: "Could not rotate screen code.",
+      multiScreenHint:
+        "You can add multiple screens per department (e.g. beach bar and main bar) — each with its own link.",
+      loadingScreens: "Loading screens…",
+      addScreenTitle: "Add screen",
+      addScreenHint: "Give it a name to tell them apart (e.g. Beach, Main room).",
+      screenNameLabel: "Screen name",
+      screenNamePlaceholder: "e.g. Beach",
+      addScreenButton: "Add",
+      addingScreen: "Adding…",
+      addScreenFailed: "Could not add screen.",
+      deleteScreen: "Delete",
+      deleteScreenConfirm: (name: string) =>
+        `Delete screen «${name}»?\n\nIts link will stop working.`,
+      deleteScreenFailed: "Could not delete screen.",
       tables: {
         title: "Tables",
         description: "Configure tables, rooms and sunbeds. Download QR codes from the QR codes page.",

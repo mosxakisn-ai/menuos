@@ -5,12 +5,27 @@ import { getSession } from "@/lib/auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 import { getOrganizationPlanContext } from "@/lib/billing";
 import { resolveStaffKey, resolveVenueByStaffKey, type StaffVenueContext } from "@/lib/staff-auth";
+import { legacyVenueTokenMatches, resolveStationScreenByToken } from "@/lib/station-screens";
 
 export type PassSignalVenue = StaffVenueContext & {
   kitchenScreenToken: string;
   barScreenToken: string;
   coldScreenToken: string;
   dessertScreenToken: string;
+};
+
+export type PassSignalStationScreen = { id: string; label: string };
+
+export type PassSignalAuthSuccess = {
+  venue: PassSignalVenue;
+  stationScreen: PassSignalStationScreen | null;
+  response: null;
+};
+
+export type PassSignalAuthFailure = {
+  venue: null;
+  stationScreen: null;
+  response: NextResponse;
 };
 
 const VENUE_SCREEN_SELECT = {
@@ -38,14 +53,6 @@ async function loadVenueBySlug(slug: string): Promise<PassSignalVenue | null> {
   });
 }
 
-function screenTokenMatches(venue: PassSignalVenue, station: PassStationInput, stationKey: string): boolean {
-  if (station === "kitchen") return venue.kitchenScreenToken === stationKey;
-  if (station === "bar") return venue.barScreenToken === stationKey;
-  if (station === "cold") return venue.coldScreenToken === stationKey;
-  if (station === "dessert") return venue.dessertScreenToken === stationKey;
-  return false;
-}
-
 const SCREEN_STATIONS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
 
 /** Dashboard session, waiter staff key, or department screen token. */
@@ -57,7 +64,7 @@ export async function authorizePassSignalCreate(
     station: PassStationInput;
     stationKey?: string;
   },
-): Promise<{ venue: PassSignalVenue; response: null } | { venue: null; response: NextResponse }> {
+): Promise<PassSignalAuthSuccess | PassSignalAuthFailure> {
   const venue =
     (input.venueId ? await loadVenueById(input.venueId) : null) ??
     (input.venueSlug ? await loadVenueBySlug(input.venueSlug.trim()) : null);
@@ -65,6 +72,7 @@ export async function authorizePassSignalCreate(
   if (!venue) {
     return {
       venue: null,
+      stationScreen: null,
       response: NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 }),
     };
   }
@@ -73,6 +81,7 @@ export async function authorizePassSignalCreate(
   if (!planCtx?.active) {
     return {
       venue: null,
+      stationScreen: null,
       response: NextResponse.json(
         { error: "Η συνδρομή δεν είναι ενεργή.", code: "subscription_inactive" },
         { status: 403 },
@@ -82,11 +91,16 @@ export async function authorizePassSignalCreate(
 
   const key = input.stationKey?.trim();
   if (key && SCREEN_STATIONS.includes(input.station)) {
-    if (screenTokenMatches(venue, input.station, key)) {
-      return { venue, response: null };
+    const stationScreen = await resolveStationScreenByToken(venue.id, input.station, key);
+    if (stationScreen) {
+      return { venue, stationScreen, response: null };
+    }
+    if (legacyVenueTokenMatches(venue, input.station, key)) {
+      return { venue, stationScreen: null, response: null };
     }
     return {
       venue: null,
+      stationScreen: null,
       response: NextResponse.json({ error: "Μη εξουσιοδοτημένο.", code: "unauthorized" }, { status: 401 }),
     };
   }
@@ -94,17 +108,18 @@ export async function authorizePassSignalCreate(
   const session = await getSession();
   if (session) {
     const owned = await getVenueForOrganization(venue.id, session.organizationId);
-    if (owned) return { venue, response: null };
+    if (owned) return { venue, stationScreen: null, response: null };
   }
 
   const staffKey = await resolveStaffKey(request, venue.id);
   if (staffKey) {
     const staffVenue = await resolveVenueByStaffKey(venue.id, staffKey);
-    if (staffVenue) return { venue, response: null };
+    if (staffVenue) return { venue, stationScreen: null, response: null };
   }
 
   return {
     venue: null,
+    stationScreen: null,
     response: NextResponse.json({ error: "Μη εξουσιοδοτημένο.", code: "unauthorized" }, { status: 401 }),
   };
 }

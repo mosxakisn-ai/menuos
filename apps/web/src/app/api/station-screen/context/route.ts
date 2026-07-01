@@ -39,6 +39,7 @@ export async function GET(request: Request) {
     venueName: auth.venue.name,
     venueSlug: auth.venue.slug,
     station,
+    screenLabel: auth.stationScreen?.label ?? null,
     spots,
   });
 }

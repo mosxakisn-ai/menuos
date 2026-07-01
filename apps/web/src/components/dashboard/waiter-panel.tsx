@@ -19,6 +19,7 @@ type VenueSpot = { id: string; type: VenueSpotType; label: string };
 type PassSignal = {
   id: string;
   station: string;
+  stationScreenLabel?: string | null;
   tableNumber: string | null;
   roomNumber: string | null;
   sunbedNumber: string | null;
@@ -273,8 +274,11 @@ export function WaiterPanel({
           <ul className="space-y-3">
             {passSignals.map((signal) => {
               const stationKey = passStationDbToInput(signal.station);
-              const stationLabel =
+              const baseStationLabel =
                 W.passStation[stationKey as keyof typeof W.passStation] ?? signal.station;
+              const stationLabel = signal.stationScreenLabel?.trim()
+                ? `${baseStationLabel} (${signal.stationScreenLabel.trim()})`
+                : baseStationLabel;
               return (
                 <li key={signal.id}>
                   <Card className="border-orange-200 bg-orange-50/60">

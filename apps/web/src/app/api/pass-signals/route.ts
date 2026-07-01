@@ -27,9 +27,18 @@ export async function GET(request: Request) {
       },
       orderBy: { readyAt: "desc" },
       take: 80,
+      include: {
+        stationScreen: { select: { label: true } },
+      },
     });
 
-    return NextResponse.json({ signals, activeCount: signals.length });
+    return NextResponse.json({
+      signals: signals.map(({ stationScreen, ...signal }) => ({
+        ...signal,
+        stationScreenLabel: stationScreen?.label ?? null,
+      })),
+      activeCount: signals.length,
+    });
   } catch (err) {
     console.error("[menuos] pass-signals GET failed", err);
     return NextResponse.json(
@@ -81,10 +90,14 @@ export async function POST(request: Request) {
       data: {
         venueId: auth.venue.id,
         station: passStationInputToDb(parsed.data.station),
+        stationScreenId: auth.stationScreen?.id ?? null,
         tableNumber: location.tableNumber,
         roomNumber: location.roomNumber,
         sunbedNumber: location.sunbedNumber,
         message,
+      },
+      include: {
+        stationScreen: { select: { label: true } },
       },
     });
 
@@ -96,7 +109,13 @@ export async function POST(request: Request) {
       pushStaffPassSignal(venueFull, signal);
     }
 
-    return NextResponse.json({ signal });
+    return NextResponse.json({
+      signal: {
+        ...signal,
+        stationScreenLabel: signal.stationScreen?.label ?? null,
+        stationScreen: undefined,
+      },
+    });
   } catch (err) {
     console.error("[menuos] pass-signals POST failed", err);
     return NextResponse.json(
