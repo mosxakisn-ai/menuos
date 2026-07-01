@@ -32,6 +32,13 @@ export function VenueSpotsQrList({
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
   const { spots, loading } = useVenueSpots(venueId);
 
+  const [busy, setBusy] = useState<string | null>(null);
+  const [qrExpandedId, setQrExpandedId] = useState<string | null>(null);
+  const [qrCache, setQrCache] = useState<Record<string, QrData>>({});
+  const qrCacheRef = useRef<Record<string, QrData>>({});
+  const venueGenerationRef = useRef(0);
+  const { flash, setFlash, showFromResponse } = useFlashMessage();
+
   useEffect(() => {
     if (initialVenueId && venues.some((v) => v.id === initialVenueId)) {
       setVenueId(initialVenueId);
@@ -39,16 +46,11 @@ export function VenueSpotsQrList({
   }, [initialVenueId, venues]);
 
   useEffect(() => {
+    venueGenerationRef.current += 1;
     setQrExpandedId(null);
     setQrCache({});
     qrCacheRef.current = {};
   }, [venueId]);
-
-  const [busy, setBusy] = useState<string | null>(null);
-  const [qrExpandedId, setQrExpandedId] = useState<string | null>(null);
-  const [qrCache, setQrCache] = useState<Record<string, QrData>>({});
-  const qrCacheRef = useRef<Record<string, QrData>>({});
-  const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   const venue = venues.find((v) => v.id === venueId);
   const itemCount = itemCountByVenue[venueId] ?? 0;
@@ -77,8 +79,10 @@ export function VenueSpotsQrList({
     const cached = qrCacheRef.current[spot.id];
     if (cached) return cached;
     if (!venueId) return null;
+    const generation = venueGenerationRef.current;
     const res = await fetch(`/api/qr?${qrParamsFor(spot)}`);
     const data = (await res.json()) as { pngDataUrl?: string; menuUrl?: string; error?: string };
+    if (generation !== venueGenerationRef.current) return null;
     if (!res.ok || !data.pngDataUrl || !data.menuUrl) {
       showFromResponse(data, false);
       return null;
@@ -94,7 +98,7 @@ export function VenueSpotsQrList({
       setQrExpandedId(null);
       return;
     }
-    if (qrCache[spot.id]) {
+    if (qrCacheRef.current[spot.id]) {
       setQrExpandedId(spot.id);
       return;
     }
@@ -212,7 +216,7 @@ export function VenueSpotsQrList({
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
-                        disabled={busy !== null && !viewBusy}
+                        disabled={busy !== null && busy !== `view-${spot.id}` && busy !== `qr-${spot.id}`}
                         onClick={() => void toggleQrPreview(spot)}
                         className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
                         aria-expanded={expanded}
@@ -222,7 +226,7 @@ export function VenueSpotsQrList({
                       </button>
                       <button
                         type="button"
-                        disabled={busy !== null}
+                        disabled={busy !== null && busy !== `qr-${spot.id}`}
                         onClick={() => void downloadQr(spot)}
                         className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
                       >

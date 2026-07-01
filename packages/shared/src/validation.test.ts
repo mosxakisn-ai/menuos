@@ -9,6 +9,7 @@ import { itemExtrasSchema } from "./item-extras";
 describe("venueSpotCreateSchema", () => {
   it("accepts valid spot labels", () => {
     expect(venueSpotCreateSchema.safeParse({ type: "TABLE", label: "sala-1" }).success).toBe(true);
+    expect(venueSpotCreateSchema.safeParse({ type: "TABLE", label: "Αυλή-1" }).success).toBe(true);
   });
 
   it("rejects labels with spaces", () => {
@@ -21,6 +22,9 @@ describe("venueSpotBulkCreateSchema", () => {
   it("accepts bulk range up to 200", () => {
     expect(
       venueSpotBulkCreateSchema.safeParse({ type: "TABLE", from: 1, to: 120, prefix: "sala-" }).success,
+    ).toBe(true);
+    expect(
+      venueSpotBulkCreateSchema.safeParse({ type: "TABLE", from: 1, to: 50, prefix: "Αυλή-" }).success,
     ).toBe(true);
   });
 

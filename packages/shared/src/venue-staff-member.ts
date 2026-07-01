@@ -17,7 +17,7 @@ export const venueStaffMemberCreateSchema = z.object({
 export const venueStaffMemberUpdateSchema = venueStaffMemberCreateSchema;
 
 export const STAFF_STATION_LABELS_EL: Record<StaffStationOption, string> = {
-  services: "Services",
+  services: "Σερβιτόριο",
   kitchen: "Κουζίνα",
   bar: "Μπαρ",
   cold: "Κρύα",

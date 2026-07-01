@@ -336,7 +336,7 @@ export const DASHBOARD_EL = {
     qr: {
       title: "QR Codes",
       description:
-        "Κατέβασε ή δες preview QR για κάθε θέση. Τα τραπέζια ρυθμίζονται από Ρυθμίσεις → Ταμπλό.",
+        "Κατέβασε ή δες QR για κάθε θέση. Τα τραπέζια ρυθμίζονται από Ρυθμίσεις → Ταμπλό.",
       configureSpotsLink: "Ρύθμιση τραπεζιών →",
       configureSpotsEmpty: "Δεν έχεις ακόμα θέσεις. Ρύθμισέ τες από Ρυθμίσεις → Ταμπλό.",
       needVenueTitle: "Χρειάζεσαι πρώτα κατάστημα",
@@ -389,7 +389,7 @@ export const DASHBOARD_EL = {
       bulkLimit: "Μέγιστο 200 θέσεις ανά φορά. Για περισσότερες, κάνε δεύτερη προσθήκη (π.χ. 201–400).",
       invalidPrefix: (hint: string) => `Άκυρο πρόθεμα. ${hint}`,
       labelHint: "Μόνο γράμματα, αριθμοί, παύλα και κάτω παύλα (π.χ. 12, Αυλή-1).",
-      previewSpot: "Preview",
+      previewSpot: "Προεπισκόπηση",
       showQr: "Προβολή QR",
       hideQr: "Κλείσιμο",
       loadingQr: "Φόρτωση QR…",
@@ -402,8 +402,8 @@ export const DASHBOARD_EL = {
     waiter: {
       title: "Κλήσεις σερβιτόρου",
       description:
-        "Live κλήσεις και πάσο — ενημερώνεται αυτόματα. Το link και ο κωδικός σερβιτόρου ρυθμίζονται από Ρυθμίσεις → Services.",
-      setupLink: "Ρυθμίσεις → Services",
+        "Live κλήσεις και πάσο — ενημερώνεται αυτόματα. Το link και ο κωδικός σερβιτόρου ρυθμίζονται από Ρυθμίσεις → Υπηρεσίες.",
+      setupLink: "Ρυθμίσεις → Υπηρεσίες",
     },
     billing: {
       title: "Συνδρομή",
@@ -418,13 +418,13 @@ export const DASHBOARD_EL = {
         kitchen: "Κουζίνα",
         bar: "Μπαρ",
         tables: "Ταμπλό",
-        services: "Services",
+        services: "Υπηρεσίες",
       },
       demoBadge: "Δείγμα — για δοκιμές UI",
       personnel: {
         title: "Προσωπικό",
         description:
-          "Λίστα ονομάτων και τμημάτων — για οργάνωση. Δεν αντικαθιστά login χρηστών· τα links σερβιτόρου/οθονών μοιράζονται από Services και Κουζίνα/Μπαρ.",
+          "Λίστα ονομάτων και τμημάτων — για οργάνωση. Δεν αντικαθιστά login χρηστών· τα links σερβιτόρου/οθονών μοιράζονται από Υπηρεσίες και Κουζίνα/Μπαρ.",
         addTitle: "Νέο μέλος",
         addStaff: "Προσθήκη",
         saving: "Αποθήκευση...",
@@ -441,7 +441,7 @@ export const DASHBOARD_EL = {
         delete: "Διαγραφή",
         saveEdit: "Αποθήκευση",
         stationLabels: {
-          services: "Services",
+          services: "Σερβιτόριο",
           kitchen: "Κουζίνα",
           bar: "Μπαρ",
           cold: "Κρύα",
@@ -500,7 +500,7 @@ export const DASHBOARD_EL = {
         yourVenueSpots: (name: string, count: number) => `${name} — ${count} θέσεις`,
       },
       services: {
-        title: "Services",
+        title: "Υπηρεσίες",
         description: "Link σερβιτόρου, push ειδοποιήσεις και live πάσα — κλήσεις πελάτη + μηνύματα τμημάτων.",
         passTitle: "Live πάσα",
         passHint: "Μένει μέχρι ο σερβιτόρος πατήσει «Παρέδωσα». Ο χάρτης θέσεων ενημερώνεται live στον πίνακα σερβιτόρου.",
