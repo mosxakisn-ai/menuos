@@ -7,6 +7,7 @@ import {
   passStationInputToDb,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
+import { startOfTodayAthens } from "@/lib/athens-day";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -61,6 +62,17 @@ export async function GET(request: Request) {
     },
   });
 
+  const screenFilter = auth.stationScreen?.id ? { stationScreenId: auth.stationScreen.id } : {};
+  const todayStart = startOfTodayAthens();
+  const todayCount = await prisma.passSignal.count({
+    where: {
+      venueId: auth.venue.id,
+      station: dbStation,
+      readyAt: { gte: todayStart },
+      ...screenFilter,
+    },
+  });
+
   return NextResponse.json({
     venueId: auth.venue.id,
     venueName: auth.venue.name,
@@ -70,5 +82,6 @@ export async function GET(request: Request) {
     spotPrefix: auth.stationScreen?.spotPrefix ?? null,
     spots: filtered,
     activeSignals,
+    todayCount,
   });
 }

@@ -32,6 +32,12 @@ export const passSignalStatusUpdateSchema = z.object({
   staffKey: z.string().min(1).max(80).optional(),
 });
 
+export const passSignalStationCancelSchema = z.object({
+  venueSlug: z.string().min(1).max(60),
+  station: passStationInputSchema,
+  stationKey: z.string().min(1).max(80),
+});
+
 export function passStationInputToDb(station: PassStationInput): "KITCHEN" | "BAR" | "COLD" | "DESSERT" {
   return station.toUpperCase() as "KITCHEN" | "BAR" | "COLD" | "DESSERT";
 }
