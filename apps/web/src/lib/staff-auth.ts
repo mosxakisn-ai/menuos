@@ -13,9 +13,20 @@ export type StaffVenueContext = {
   organizationId: string;
 };
 
+export type StaffMemberContext = {
+  id: string;
+  name: string;
+  stations: string[];
+};
+
+export type StaffAuthContext = {
+  venue: StaffVenueContext;
+  staffMember: StaffMemberContext | null;
+};
+
 export type WaiterAccess =
-  | { mode: "session"; session: SessionPayload; venue: StaffVenueContext }
-  | { mode: "staff"; venue: StaffVenueContext };
+  | { mode: "session"; session: SessionPayload; venue: StaffVenueContext; staffMember: StaffMemberContext | null }
+  | { mode: "staff"; venue: StaffVenueContext; staffMember: StaffMemberContext | null };
 
 export function staffKeyFromBody(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
@@ -36,26 +47,78 @@ export async function resolveStaffKey(request: Request, venueId: string): Promis
   return query || null;
 }
 
+const venueSelect = { id: true, slug: true, name: true, organizationId: true } as const;
+
+export async function resolveStaffAuthByKey(
+  venueId: string,
+  staffKey: string,
+): Promise<StaffAuthContext | null> {
+  const venue = await prisma.venue.findFirst({
+    where: { id: venueId, staffToken: staffKey },
+    select: venueSelect,
+  });
+  if (venue) return { venue, staffMember: null };
+
+  const member = await prisma.venueStaffMember.findFirst({
+    where: { venueId, memberToken: staffKey },
+    select: {
+      id: true,
+      name: true,
+      stations: true,
+      venue: { select: venueSelect },
+    },
+  });
+  if (!member) return null;
+
+  return {
+    venue: member.venue,
+    staffMember: { id: member.id, name: member.name, stations: member.stations },
+  };
+}
+
+export async function resolveStaffAuthBySlug(
+  venueSlug: string,
+  staffKey: string,
+): Promise<StaffAuthContext | null> {
+  const venue = await prisma.venue.findFirst({
+    where: { slug: venueSlug, staffToken: staffKey },
+    select: venueSelect,
+  });
+  if (venue) return { venue, staffMember: null };
+
+  const member = await prisma.venueStaffMember.findFirst({
+    where: { memberToken: staffKey, venue: { slug: venueSlug } },
+    select: {
+      id: true,
+      name: true,
+      stations: true,
+      venue: { select: venueSelect },
+    },
+  });
+  if (!member) return null;
+
+  return {
+    venue: member.venue,
+    staffMember: { id: member.id, name: member.name, stations: member.stations },
+  };
+}
+
+/** @deprecated Use resolveStaffAuthByKey */
 export async function resolveVenueByStaffKey(
   venueId: string,
   staffKey: string,
 ): Promise<StaffVenueContext | null> {
-  const venue = await prisma.venue.findFirst({
-    where: { id: venueId, staffToken: staffKey },
-    select: { id: true, slug: true, name: true, organizationId: true },
-  });
-  return venue;
+  const ctx = await resolveStaffAuthByKey(venueId, staffKey);
+  return ctx?.venue ?? null;
 }
 
+/** @deprecated Use resolveStaffAuthBySlug */
 export async function resolveVenueByStaffSlug(
   venueSlug: string,
   staffKey: string,
 ): Promise<StaffVenueContext | null> {
-  const venue = await prisma.venue.findFirst({
-    where: { slug: venueSlug, staffToken: staffKey },
-    select: { id: true, slug: true, name: true, organizationId: true },
-  });
-  return venue;
+  const ctx = await resolveStaffAuthBySlug(venueSlug, staffKey);
+  return ctx?.venue ?? null;
 }
 
 async function organizationIsActive(organizationId: string): Promise<boolean> {
@@ -95,6 +158,7 @@ export async function requireWaiterVenueAccess(
           name: venue.name,
           organizationId: session.organizationId,
         },
+        staffMember: null,
       },
       response: null,
     };
@@ -111,8 +175,8 @@ export async function requireWaiterVenueAccess(
     };
   }
 
-  const venue = await resolveVenueByStaffKey(venueId, staffKey);
-  if (!venue) {
+  const auth = await resolveStaffAuthByKey(venueId, staffKey);
+  if (!auth) {
     return {
       access: null,
       response: NextResponse.json(
@@ -122,7 +186,7 @@ export async function requireWaiterVenueAccess(
     };
   }
 
-  if (!(await organizationIsActive(venue.organizationId))) {
+  if (!(await organizationIsActive(auth.venue.organizationId))) {
     return {
       access: null,
       response: NextResponse.json(
@@ -132,7 +196,7 @@ export async function requireWaiterVenueAccess(
     };
   }
 
-  return { access: { mode: "staff", venue }, response: null };
+  return { access: { mode: "staff", venue: auth.venue, staffMember: auth.staffMember }, response: null };
 }
 
 export async function requireWaiterCallAccess(
@@ -181,4 +245,8 @@ export function buildStaffWaiterUrl(slug: string, staffToken: string): string {
   url.searchParams.set("venueSlug", slug);
   url.searchParams.set("key", staffToken);
   return url.toString();
+}
+
+export function buildStaffMemberWaiterUrl(slug: string, memberToken: string): string {
+  return buildStaffWaiterUrl(slug, memberToken);
 }

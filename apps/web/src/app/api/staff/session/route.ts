@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resolveVenueByStaffSlug } from "@/lib/staff-auth";
+import { resolveStaffAuthBySlug } from "@/lib/staff-auth";
 import { STAFF_SESSION_COOKIE } from "@/lib/staff-auth-constants";
 import { APP_URL } from "@/lib/config";
 import { createStaffSessionToken, staffSessionCookieOptions } from "@/lib/staff-session";
@@ -16,12 +16,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Απαιτούνται venueSlug και key." }, { status: 400 });
   }
 
-  const venue = await resolveVenueByStaffSlug(venueSlug, key);
-  if (!venue) {
+  const auth = await resolveStaffAuthBySlug(venueSlug, key);
+  if (!auth) {
     return NextResponse.json({ error: "Μη έγκυρος σύνδεσμος σερβιτόρου." }, { status: 404 });
   }
 
-  const token = createStaffSessionToken(venue.id, key);
+  const token = createStaffSessionToken(auth.venue.id, key);
   const redirectTo = new URL(`/s/${venueSlug}`, APP_URL);
   const response = NextResponse.redirect(redirectTo, 302);
   response.cookies.set(STAFF_SESSION_COOKIE, token, staffSessionCookieOptions());

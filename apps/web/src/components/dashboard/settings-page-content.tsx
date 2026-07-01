@@ -89,7 +89,16 @@ function SettingsPageBody({
       case "general":
         return <SettingsGeneralTab email={email} name={name} role={role} venues={venues} />;
       case "personnel":
-        return <SettingsPersonnelPanel venues={spotVenues} />;
+        return (
+          <SettingsPersonnelPanel
+            venues={venues.map((v) => ({
+              id: v.id,
+              name: v.name,
+              slug: v.slug,
+              staffToken: v.staffToken,
+            }))}
+          />
+        );
       case "kitchen":
         return <SettingsKitchenPanel venues={venues} />;
       case "bar":

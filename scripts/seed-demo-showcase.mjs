@@ -235,6 +235,7 @@ async function ensureStaff(venueId) {
         name: row.name,
         roleLabel: row.roleLabel,
         stations: row.stations,
+        memberToken: randomUUID(),
         sortOrder: sort++,
       },
     });

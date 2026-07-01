@@ -47,3 +47,26 @@ export function formatStaffStationsForLang(stations: string[], lang: "GR" | "EN"
     .map((s) => staffStationLabelForLang(s as StaffStationOption, lang))
     .join(", ");
 }
+
+const PASS_DB_STATION_TO_STAFF: Record<string, StaffStationOption> = {
+  KITCHEN: "kitchen",
+  BAR: "bar",
+  COLD: "cold",
+  DESSERT: "dessert",
+};
+
+/** Whether a pass signal station is visible to this staff member's department tags. */
+export function passSignalVisibleToStaffMember(
+  passDbStation: string,
+  memberStations: string[],
+): boolean {
+  if (memberStations.includes("all") || memberStations.includes("services")) return true;
+  const mapped = PASS_DB_STATION_TO_STAFF[passDbStation];
+  if (!mapped) return true;
+  return memberStations.includes(mapped);
+}
+
+/** Waiter calls (table buzz) only for floor/service staff. */
+export function waiterCallsVisibleToStaffMember(memberStations: string[]): boolean {
+  return memberStations.includes("all") || memberStations.includes("services");
+}

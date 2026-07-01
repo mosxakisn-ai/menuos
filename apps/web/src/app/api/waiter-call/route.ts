@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma, prisma, WaiterCallStatus, WaiterCallType, type WaiterCall } from "@menuos/db";
-import { mergeOrderPayload, type OrderPayload, waiterCallSchema, normalizeWaiterCallLocation } from "@menuos/shared";
+import { mergeOrderPayload, type OrderPayload, waiterCallSchema, normalizeWaiterCallLocation, waiterCallsVisibleToStaffMember } from "@menuos/shared";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { validateOrderItemsForVenue } from "@/lib/validate-order-items";
@@ -109,6 +109,11 @@ export async function GET(request: Request) {
   const auth = await requireWaiterVenueAccess(request, venueId);
   if (auth.response) return auth.response;
 
+  const member = auth.access.staffMember;
+  if (member && !waiterCallsVisibleToStaffMember(member.stations)) {
+    return NextResponse.json({ calls: [], pendingCount: 0, spots: [], staffMember: { id: member.id, name: member.name } });
+  }
+
   const [calls, spots] = await Promise.all([
     prisma.waiterCall.findMany({
       where: {
@@ -127,7 +132,12 @@ export async function GET(request: Request) {
 
   const pendingCount = calls.filter((c) => c.status === "PENDING").length;
 
-  return NextResponse.json({ calls, pendingCount, spots });
+  return NextResponse.json({
+    calls,
+    pendingCount,
+    spots,
+    staffMember: member ? { id: member.id, name: member.name } : null,
+  });
 }
 
 export async function POST(request: Request) {

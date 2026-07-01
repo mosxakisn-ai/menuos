@@ -221,14 +221,15 @@ model VenueSpot {
 }
 
 model VenueStaffMember {
-  id        String   @id @default(cuid())
-  venueId   String
-  name      String   @db.VarChar(60)
-  roleLabel String   @db.VarChar(40)
-  stations  String[]
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  venueId     String
+  name        String   @db.VarChar(60)
+  roleLabel   String   @db.VarChar(40)
+  stations    String[]
+  memberToken String   @unique
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
 

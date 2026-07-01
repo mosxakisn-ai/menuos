@@ -13,7 +13,11 @@ import type { SettingsVenue } from "@/components/dashboard/settings-form";
 
 type VenueSpotVenue = { id: string; name: string; slug: string };
 
-export function SettingsPersonnelPanel({ venues }: { venues: VenueSpotVenue[] }) {
+export function SettingsPersonnelPanel({
+  venues,
+}: {
+  venues: (VenueSpotVenue & { staffToken?: string })[];
+}) {
   return <VenueStaffSetup venues={venues} />;
 }
 
@@ -47,7 +51,11 @@ export function SettingsServicesPanel({
   const { d } = useDashboardCopy();
   const S = d.pages.settings;
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
+  const [staffTokens, setStaffTokens] = useState<Record<string, string>>(() =>
+    Object.fromEntries(venues.filter((v) => v.staffToken).map((v) => [v.id, v.staffToken!])),
+  );
   const venue = venues.find((v) => v.id === venueId);
+  const staffToken = venue ? staffTokens[venue.id] : undefined;
 
   useEffect(() => {
     if (venues.length === 0) {
@@ -59,9 +67,19 @@ export function SettingsServicesPanel({
     }
   }, [venues, venueId]);
 
+  useEffect(() => {
+    setStaffTokens((prev) => {
+      const next = { ...prev };
+      for (const v of venues) {
+        if (v.staffToken && !next[v.id]) next[v.id] = v.staffToken;
+      }
+      return next;
+    });
+  }, [venues]);
+
   return (
     <div className="space-y-5">
-      {venue?.staffToken ? (
+      {staffToken && venue ? (
         <div className={dashboardCardClass}>
           <h2 className="text-sm font-semibold text-primary">{d.waiter.shareTitle}</h2>
           {venues.length > 1 ? (
@@ -83,8 +101,11 @@ export function SettingsServicesPanel({
           <div className="mt-4">
             <WaiterShareLink
               venueSlug={venue.slug}
-              staffToken={venue.staffToken}
+              staffToken={staffToken}
               venueId={venue.id}
+              onStaffTokenRotated={(next) =>
+                setStaffTokens((prev) => ({ ...prev, [venue.id]: next }))
+              }
             />
           </div>
         </div>

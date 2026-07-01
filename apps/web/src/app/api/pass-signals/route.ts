@@ -4,6 +4,7 @@ import {
   normalizeWaiterCallLocation,
   passLocationMatchesScreenSpotPrefix,
   passSignalCreateSchema,
+  passSignalVisibleToStaffMember,
   passStationInputToDb,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
   if (auth.response) return auth.response;
 
   try {
-    const signals = await prisma.passSignal.findMany({
+    const signalsRaw = await prisma.passSignal.findMany({
       where: {
         venueId,
         status: { in: ["READY", "PICKED_UP"] },
@@ -33,12 +34,18 @@ export async function GET(request: Request) {
       },
     });
 
+    const member = auth.access.staffMember;
+    const signals = member
+      ? signalsRaw.filter((signal) => passSignalVisibleToStaffMember(signal.station, member.stations))
+      : signalsRaw;
+
     return NextResponse.json({
       signals: signals.map(({ stationScreen, ...signal }) => ({
         ...signal,
         stationScreenLabel: stationScreen?.label ?? null,
       })),
       activeCount: signals.length,
+      staffMember: member ? { id: member.id, name: member.name } : null,
     });
   } catch (err) {
     console.error("[menuos] pass-signals GET failed", err);

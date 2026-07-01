@@ -32,6 +32,8 @@ export type DashboardOverviewProps = {
   subscriptionPlan: string;
   subscriptionTrialEndsAt: string | null;
   subscriptionCurrentPeriodEnd: string | null;
+  passTodayCount?: number | null;
+  passAvgDeliveryMin?: number | null;
 };
 
 export function DashboardOverviewContent({
@@ -49,6 +51,8 @@ export function DashboardOverviewContent({
   subscriptionPlan,
   subscriptionTrialEndsAt,
   subscriptionCurrentPeriodEnd,
+  passTodayCount,
+  passAvgDeliveryMin,
 }: DashboardOverviewProps) {
   const { d, lang, planLabel } = useDashboardCopy();
   const venueWord = venueCount === 1 ? d.venue.toLowerCase() : d.venues.toLowerCase();
@@ -106,6 +110,25 @@ export function DashboardOverviewContent({
         />
         <DashboardStatCard label={renewalStat.label} value={renewalStat.value} hint={renewalStat.hint} />
       </div>
+
+      {venueCount > 0 && passTodayCount != null ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <DashboardStatCard
+            label={d.overview.passToday}
+            value={passTodayCount}
+            hint={d.overview.passTodayHint}
+          />
+          <DashboardStatCard
+            label={d.overview.passAvgDelivery}
+            value={
+              passAvgDeliveryMin != null
+                ? d.overview.passAvgMinutes(passAvgDeliveryMin)
+                : d.overview.passAvgNone
+            }
+            hint={d.overview.passAvgDeliveryHint}
+          />
+        </div>
+      ) : null}
 
       <div className={dashboardCardClass}>
         <h2 className="text-center font-semibold text-primary sm:text-left">{d.overview.quickActions}</h2>

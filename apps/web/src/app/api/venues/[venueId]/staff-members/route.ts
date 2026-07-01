@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
 import { venueStaffMemberCreateSchema, zodFirstErrorMessage } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
@@ -62,6 +63,7 @@ export async function POST(request: Request, { params }: Params) {
       name: parsed.data.name,
       roleLabel: parsed.data.roleLabel,
       stations: parsed.data.stations,
+      memberToken: randomUUID(),
       sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
     },
   });

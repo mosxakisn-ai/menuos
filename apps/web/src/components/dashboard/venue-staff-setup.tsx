@@ -1,7 +1,7 @@
 "use client";
 
-import { Pencil, Plus, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Check, Copy, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   formatStaffStationsForLang,
   STAFF_STATION_OPTIONS,
@@ -14,16 +14,108 @@ import {
   dashboardFormGridClass,
   dashboardLabelClass,
 } from "@/components/dashboard/dashboard-page";
+import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { clientShareOrigin } from "@/lib/client-share-origin";
 
-type Venue = { id: string; name: string };
+type Venue = { id: string; name: string; slug: string; staffToken?: string };
 type StaffMember = {
   id: string;
   name: string;
   roleLabel: string;
   stations: string[];
+  memberToken: string;
 };
+
+function memberWaiterUrl(venueSlug: string, memberToken: string): string {
+  const u = new URL("/api/staff/session", clientShareOrigin());
+  u.searchParams.set("venueSlug", venueSlug);
+  u.searchParams.set("key", memberToken);
+  return u.toString();
+}
+
+function StaffMemberLinkActions({
+  venueId,
+  venueSlug,
+  member,
+  labels,
+  busy,
+  onTokenRotated,
+}: {
+  venueId: string;
+  venueSlug: string;
+  member: StaffMember;
+  labels: {
+    copyLink: string;
+    copied: string;
+    rotateLink: string;
+    rotateConfirm: (name: string) => string;
+  };
+  busy: boolean;
+  onTokenRotated: (memberId: string, memberToken: string) => void;
+}) {
+  const url = useMemo(() => memberWaiterUrl(venueSlug, member.memberToken), [venueSlug, member.memberToken]);
+  const [copied, setCopied] = useState(false);
+  const [rotating, setRotating] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function rotate() {
+    if (!window.confirm(labels.rotateConfirm(member.name))) return;
+    setRotating(true);
+    try {
+      const res = await fetch(`/api/venues/${venueId}/staff-members/${member.id}/rotate-token`, {
+        method: "POST",
+      });
+      const data = (await res.json()) as { memberToken?: string; error?: string };
+      if (!res.ok || !data.memberToken) {
+        window.alert(data.error ?? "Αποτυχία.");
+        return;
+      }
+      onTokenRotated(member.id, data.memberToken);
+    } finally {
+      setRotating(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => void copy()}
+        className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        {copied ? labels.copied : labels.copyLink}
+      </button>
+      <button
+        type="button"
+        disabled={busy || rotating}
+        onClick={() => void rotate()}
+        className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+        title={labels.rotateLink}
+      >
+        <RefreshCw className={`h-3.5 w-3.5 ${rotating ? "animate-spin" : ""}`} />
+        {labels.rotateLink}
+      </button>
+    </div>
+  );
+}
 
 export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const { d, lang } = useDashboardCopy();
@@ -43,6 +135,15 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   const venue = venues.find((v) => v.id === venueId);
+  const [sharedStaffToken, setSharedStaffToken] = useState(venue?.staffToken ?? "");
+
+  useEffect(() => {
+    setSharedStaffToken(venue?.staffToken ?? "");
+  }, [venue?.staffToken]);
+
+  function onMemberTokenRotated(memberId: string, memberToken: string) {
+    setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, memberToken } : m)));
+  }
 
   const reload = useCallback(async () => {
     if (!venueId) {
@@ -268,12 +369,13 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           <p className="text-sm text-slate-500">{S.empty}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-sm">
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-slate-100 text-left text-slate-500">
                   <th className="pb-3 pr-4 font-medium">{S.colName}</th>
                   <th className="pb-3 pr-4 font-medium">{S.colRole}</th>
                   <th className="pb-3 pr-4 font-medium">{S.colStations}</th>
+                  <th className="pb-3 pr-4 font-medium">{S.colLink}</th>
                   <th className="pb-3 font-medium">{S.colActions}</th>
                 </tr>
               </thead>
@@ -327,6 +429,23 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       <td className="py-3 pr-4 text-slate-600">
                         {formatStaffStationsForLang(member.stations, spotLang)}
                       </td>
+                      <td className="py-3 pr-4">
+                        {venue?.slug ? (
+                          <StaffMemberLinkActions
+                            venueId={venueId}
+                            venueSlug={venue.slug}
+                            member={member}
+                            labels={{
+                              copyLink: S.copyLink,
+                              copied: S.copied,
+                              rotateLink: S.rotateLink,
+                              rotateConfirm: S.rotateConfirm,
+                            }}
+                            busy={busy !== null}
+                            onTokenRotated={onMemberTokenRotated}
+                          />
+                        ) : null}
+                      </td>
                       <td className="py-3">
                         <div className="flex gap-2">
                           <button
@@ -357,6 +476,21 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           </div>
         )}
       </div>
+
+      {venue?.slug && sharedStaffToken ? (
+        <div className={dashboardCardClass}>
+          <h3 className="text-sm font-semibold text-primary">{S.sharedLinkTitle}</h3>
+          <p className="mt-2 text-sm text-slate-600">{S.sharedLinkHint}</p>
+          <div className="mt-4">
+            <WaiterShareLink
+              venueSlug={venue.slug}
+              staffToken={sharedStaffToken}
+              venueId={venue.id}
+              onStaffTokenRotated={setSharedStaffToken}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

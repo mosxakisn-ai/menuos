@@ -6,6 +6,7 @@ import { DashboardPage as DashboardPageShell } from "@/components/dashboard/dash
 import { getSession } from "@/lib/auth";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
+import { startOfTodayAthens } from "@/lib/athens-day";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildDashboardPageMetadata("overview", "/dashboard");
@@ -50,6 +51,36 @@ export default async function DashboardPage({ searchParams }: Props) {
       ? getTrialPeriodDays(org.subscription.trialEndsAt, org.createdAt)
       : catalogTrialDays;
 
+  const venueIds = venues.map((v) => v.id);
+  let passTodayCount: number | null = null;
+  let passAvgDeliveryMin: number | null = null;
+
+  if (venueIds.length > 0) {
+    const todayStart = startOfTodayAthens();
+    passTodayCount = await prisma.passSignal.count({
+      where: { venueId: { in: venueIds }, readyAt: { gte: todayStart } },
+    });
+
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const delivered = await prisma.passSignal.findMany({
+      where: {
+        venueId: { in: venueIds },
+        status: "DELIVERED",
+        deliveredAt: { gte: weekAgo, not: null },
+      },
+      select: { readyAt: true, deliveredAt: true },
+      take: 500,
+    });
+    const durations = delivered
+      .filter((row) => row.deliveredAt)
+      .map((row) => (row.deliveredAt!.getTime() - row.readyAt.getTime()) / 60_000);
+    if (durations.length > 0) {
+      passAvgDeliveryMin = Math.round(
+        durations.reduce((sum, minutes) => sum + minutes, 0) / durations.length,
+      );
+    }
+  }
+
   return (
     <DashboardPageShell>
       <DashboardOverviewContent
@@ -67,6 +98,8 @@ export default async function DashboardPage({ searchParams }: Props) {
         subscriptionPlan={org?.subscription?.plan ?? "TRIAL"}
         subscriptionTrialEndsAt={org?.subscription?.trialEndsAt?.toISOString() ?? null}
         subscriptionCurrentPeriodEnd={org?.subscription?.currentPeriodEnd?.toISOString() ?? null}
+        passTodayCount={passTodayCount}
+        passAvgDeliveryMin={passAvgDeliveryMin}
       />
     </DashboardPageShell>
   );
