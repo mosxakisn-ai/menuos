@@ -229,6 +229,8 @@ export const DASHBOARD_EL = {
     needVenueFirst: "Φτιάξε πρώτα κατάστημα για να λαμβάνεις κλήσεις από πελάτες.",
     pendingCount: (n: number) => `${n} σε αναμονή`,
     refreshHint: "Ανανέωση κάθε 5 δευτ.",
+    loadFailed: "Δεν φορτώθηκαν οι κλήσεις. Κάνε refresh ή άνοιξε ξανά το link από το dashboard.",
+    sessionExpired: "Έληξε η σύνδεση — άνοιξε ξανά το link σερβιτόρου από το dashboard.",
     emptyTitle: "Καμία ενεργή κλήση",
     emptyDesc:
       "Όταν πελάτης στείλει παραγγελία, καλέσει σερβιτόρο ή ζητήσει λογαριασμό από το QR menu, θα εμφανιστεί εδώ.",

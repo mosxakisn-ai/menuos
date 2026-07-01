@@ -98,8 +98,16 @@ export function WaiterPanel({
         pendingBaselineSetRef.current = true;
       }
       setPendingCount(0);
+      const apiError = typeof data.error === "string" ? data.error : null;
+      if (res.status === 401) {
+        setFlash({ type: "error", text: W.sessionExpired });
+      } else if (apiError) {
+        setFlash({ type: "error", text: apiError });
+      } else if (res.status >= 500) {
+        setFlash({ type: "error", text: W.loadFailed });
+      }
     }
-  }, [staffKey, staffViaCookie, venueId]);
+  }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash]);
 
   useEffect(() => {
     setCalls([]);

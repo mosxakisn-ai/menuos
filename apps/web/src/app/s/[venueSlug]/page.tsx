@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { prisma } from "@menuos/db";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { StaffWaiterInvalidLink } from "@/components/dashboard/staff-waiter-invalid-link";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
@@ -35,6 +36,14 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
 
   const venue = await resolveVenueByStaffKey(session.venueId, session.staffToken);
   if (!venue || venue.slug !== venueSlug) {
+    const current = await prisma.venue.findFirst({
+      where: { id: session.venueId, slug: venueSlug },
+      select: { staffToken: true },
+    });
+    if (current?.staffToken) {
+      const params = new URLSearchParams({ venueSlug, key: current.staffToken });
+      redirect(`/api/staff/session?${params.toString()}`);
+    }
     return <StaffWaiterInvalidLink venueSlug={venueSlug} />;
   }
 

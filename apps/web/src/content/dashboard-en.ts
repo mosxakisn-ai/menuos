@@ -226,6 +226,8 @@ export const DASHBOARD_EN = {
     needVenueFirst: "Create a venue first to receive calls from customers.",
     pendingCount: (n: number) => `${n} pending`,
     refreshHint: "Refreshes every 5 sec.",
+    loadFailed: "Could not load calls. Refresh the page or open the link from the dashboard again.",
+    sessionExpired: "Session expired — open the waiter link from the dashboard again.",
     emptyTitle: "No active calls",
     emptyDesc:
       "When a customer places an order, calls the waiter or requests the bill from the QR menu, it will appear here.",

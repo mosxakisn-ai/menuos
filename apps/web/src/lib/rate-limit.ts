@@ -30,26 +30,41 @@ async function checkRateLimitDb(key: string, limit: number, windowMs: number): P
   const now = new Date();
   const resetAt = new Date(now.getTime() + windowMs);
 
-  return prisma.$transaction(async (tx) => {
-    const row = await tx.rateLimitBucket.findUnique({ where: { key } });
+  const run = () =>
+    prisma.$transaction(
+      async (tx) => {
+        const row = await tx.rateLimitBucket.findUnique({ where: { key } });
 
-    if (!row || row.resetAt <= now) {
-      await tx.rateLimitBucket.upsert({
-        where: { key },
-        create: { key, count: 1, resetAt },
-        update: { count: 1, resetAt },
-      });
-      return true;
+        if (!row || row.resetAt <= now) {
+          await tx.rateLimitBucket.upsert({
+            where: { key },
+            create: { key, count: 1, resetAt },
+            update: { count: 1, resetAt },
+          });
+          return true;
+        }
+
+        if (row.count >= limit) return false;
+
+        const updated = await tx.rateLimitBucket.updateMany({
+          where: { key, count: { lt: limit } },
+          data: { count: { increment: 1 } },
+        });
+        return updated.count > 0;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted },
+    );
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await run();
+    } catch (err) {
+      const code = err instanceof Prisma.PrismaClientKnownRequestError ? err.code : "";
+      if (code === "P2034" && attempt < 2) continue;
+      throw err;
     }
-
-    if (row.count >= limit) return false;
-
-    const updated = await tx.rateLimitBucket.updateMany({
-      where: { key, count: { lt: limit } },
-      data: { count: { increment: 1 } },
-    });
-    return updated.count > 0;
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+  return true;
 }
 
 /** Postgres-backed when available; in-memory fallback for local dev without migrations. */
