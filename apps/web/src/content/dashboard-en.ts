@@ -466,7 +466,8 @@ export const DASHBOARD_EN = {
         rotateConfirm: (name: string) =>
           `New link for “${name}”? The old one will stop working.`,
         sharedLinkTitle: "Shared link (whole team)",
-        sharedLinkHint: "Backup — everyone sees all calls and pass alerts.",
+        sharedLinkOptional: "optional",
+        sharedLinkHint: "Backup — everyone sees all calls and pass alerts. Prefer a personal link per staff member.",
         namePlaceholder: "e.g. Maria P.",
         rolePlaceholder: "e.g. Waiter",
         loading: "Loading...",
@@ -486,7 +487,7 @@ export const DASHBOARD_EN = {
       },
       kitchen: {
         title: "Kitchen",
-        description: "Chef screen — sends “pass ready” to waiters with an optional comment.",
+        description: "Chef screen — sends “pass ready” to waiters.",
         screenLink: "Kitchen screen link",
         screenHint: "Open on a kitchen tablet — no dashboard login.",
         sampleTable: "Table",
@@ -496,18 +497,31 @@ export const DASHBOARD_EN = {
         openScreen: "Open screen",
         copyScreenLink: "Copy link",
       },
+      kitchenTab: {
+        title: "Kitchen screens",
+        description:
+          "Each screen opens on a tablet — no login. The chef taps “Ready” and waiters get notified.",
+        steps:
+          "Open the screen on the kitchen tablet\nCopy the link or tap “Open screen”\nFor a second kitchen/zone: add a new screen (e.g. Beach)",
+      },
       bar: {
         title: "Bar",
-        description: "Same flow as kitchen — notify waiters when drinks are ready.",
+        description: "Bar screen — notify waiters when drinks are ready.",
         screenLink: "Bar screen link",
         screenHint: "Quick actions for a bar tablet.",
         sampleSend: "Drink ready",
         openScreen: "Open screen",
         copyScreenLink: "Copy link",
       },
+      barTab: {
+        title: "Bar & dessert screens",
+        description: "Same flow as kitchen — tablet at the bar or dessert pass, no login.",
+        steps:
+          "Open the screen on the bar tablet\nFor a second bar (e.g. beach): add a new screen\nDesserts can have their own screen",
+      },
       cold: {
         title: "Cold kitchen",
-        description: "Salads and cold starters — separate screen if your kitchen needs it.",
+        description: "Salads and cold starters — separate screen if you use one.",
         screenLink: "Cold kitchen screen link",
         screenHint: "Tablet at cold prep — no dashboard login.",
         openScreen: "Open screen",
@@ -528,14 +542,21 @@ export const DASHBOARD_EN = {
       multiScreenHint:
         "You can add multiple screens per department (e.g. beach bar and main bar) — each with its own link.",
       loadingScreens: "Loading screens…",
+      screensEmpty: "No screens yet — add one below.",
+      showLink: "Show link",
+      hideLink: "Hide link",
+      allTablesZone: "All tables / sunbeds / rooms",
+      addScreenFor: (dept: string) => `New screen — ${dept}`,
       addScreenTitle: "Add screen",
-      addScreenHint: "Give it a name to tell them apart (e.g. Beach, Main room).",
+      addScreenHint: "A name to tell them apart (e.g. Beach, Main room).",
       screenNameLabel: "Screen name",
       screenNamePlaceholder: "e.g. Beach",
-      screenSpotPrefixLabel: "Table zone",
-      screenSpotPrefixPlaceholder: "e.g. Beach (empty = all)",
+      screenSpotPrefixLabel: "Zone (optional)",
+      screenSpotPrefixPlaceholder: "e.g. Beach",
       screenSpotPrefixHint:
         "Empty = all tables, sunbeds and rooms. «Σαλόνι» = numeric tables only (1, 2, 3…). Any other prefix = only matching tables (e.g. Beach-1). Sunbeds/rooms need an empty prefix.",
+      screenSpotPrefixHintShort:
+        "Empty = all spots. «Σαλόνι» = numeric tables only. «Beach» = Beach-1, Beach-2… only",
       screenSpotPrefixActive: (prefix: string) => `Tables only: ${prefix}-*`,
       addScreenButton: "Add",
       addingScreen: "Adding…",
@@ -565,6 +586,7 @@ export const DASHBOARD_EN = {
         passHint: "Stays visible until the waiter taps “Delivered”. The spot map updates live on the waiter panel.",
         livePanelLink: "Open live screens →",
         historyLink: "Delivery history →",
+        staffLinksHint: "Waiter links: Settings → Personnel (one link per staff member).",
         minutesAgo: (n: number) => `${n} min ago`,
         tableLabel: (n: string) => `Table ${n}`,
         historyTitle: "Pass history",

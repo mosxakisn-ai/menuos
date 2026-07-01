@@ -471,7 +471,8 @@ export const DASHBOARD_EL = {
         rotateConfirm: (name: string) =>
           `Νέο link για «${name}»; Το παλιό θα σταματήσει να λειτουργεί.`,
         sharedLinkTitle: "Κοινό link (όλο το προσωπικό)",
-        sharedLinkHint: "Για backup — όλοι βλέπουν όλες τις κλήσεις και τα πάσο.",
+        sharedLinkOptional: "προαιρετικό",
+        sharedLinkHint: "Backup — όλοι βλέπουν όλες τις κλήσεις και τα πάσο. Προτιμήστε προσωπικό link ανά άτομο.",
         namePlaceholder: "π.χ. Μαρία Π.",
         rolePlaceholder: "π.χ. Σερβιτόρος",
         loading: "Φόρτωση...",
@@ -491,7 +492,7 @@ export const DASHBOARD_EL = {
       },
       kitchen: {
         title: "Κουζίνα",
-        description: "Οθόνη για τον μάγειρα — στέλνει «έλα πάσο» στον σερβιτόρο με προαιρετικό σχόλιο.",
+        description: "Οθόνη για τον μάγειρα — στέλνει «έλα πάσο» στον σερβιτόρο.",
         screenLink: "Link οθόνης κουζίνας",
         screenHint: "Άνοιξε σε tablet στην κουζίνα — χωρίς login dashboard.",
         sampleTable: "Τραπέζι",
@@ -501,18 +502,32 @@ export const DASHBOARD_EL = {
         openScreen: "Άνοιγμα οθόνης",
         copyScreenLink: "Αντιγραφή link",
       },
+      kitchenTab: {
+        title: "Οθόνες κουζίνας",
+        description:
+          "Κάθε οθόνη ανοίγει σε tablet — χωρίς login. Ο μάγειρας πατά «Έτοιμο» και ειδοποιείται ο σερβιτόρος.",
+        steps:
+          "Άνοιξε την οθόνη στο tablet της κουζίνας\nΑντιγράψε το link ή πάτα «Άνοιγμα οθόνης»\nΓια 2η κουζίνα/ζώνη: πρόσθεσε νέα οθόνη με όνομα (π.χ. Παραλία)",
+      },
       bar: {
         title: "Μπαρ",
-        description: "Ίδια λογική με την κουζίνα — ειδοποίηση σερβιτόρου όταν είναι έτοιμο το ποτό.",
+        description: "Οθόνη για το μπαρ — ειδοποίηση σερβιτόρου όταν είναι έτοιμο το ποτό.",
         screenLink: "Link οθόνης μπαρ",
         screenHint: "Γρήγορες ενέργειες για tablet στο μπαρ.",
         sampleSend: "Έτοιμο το ποτό",
         openScreen: "Άνοιγμα οθόνης",
         copyScreenLink: "Αντιγραφή link",
       },
+      barTab: {
+        title: "Οθόνες μπαρ & γλυκών",
+        description:
+          "Ίδια λογική με την κουζίνα — tablet στο μπαρ ή στο πάσο γλυκών, χωρίς login.",
+        steps:
+          "Άνοιξε την οθόνη στο tablet του μπαρ\nΓια 2ο μπαρ (π.χ. παραλία): πρόσθεσε νέα οθόνη\nΤα γλυκά μπορούν να έχουν ξεχωριστή οθόνη",
+      },
       cold: {
         title: "Κρύα κουζίνα",
-        description: "Σαλάτες, ορεκτικά κρύα — ξεχωριστή οθόνη αν η κουζίνα σου το χρειάζεται.",
+        description: "Σαλάτες και ορεκτικά κρύα — ξεχωριστή οθόνη αν τη χρησιμοποιείτε.",
         screenLink: "Link οθόνης κρύας",
         screenHint: "Tablet στην κρύα κουζίνα — χωρίς login dashboard.",
         openScreen: "Άνοιγμα οθόνης",
@@ -534,14 +549,21 @@ export const DASHBOARD_EL = {
       multiScreenHint:
         "Μπορείς να έχεις πολλές οθόνες ανά τμήμα (π.χ. μπαρ παραλίας και μπαρ καταστήματος) — κάθε μία με δικό της link.",
       loadingScreens: "Φόρτωση οθονών…",
+      screensEmpty: "Δεν υπάρχουν οθόνες ακόμα — πρόσθεσε μία παρακάτω.",
+      showLink: "Δες link",
+      hideLink: "Κρύψε link",
+      allTablesZone: "Όλα τα τραπέζια / ξαπλώστρες / δωμάτια",
+      addScreenFor: (dept: string) => `Νέα οθόνη — ${dept}`,
       addScreenTitle: "Προσθήκη οθόνης",
-      addScreenHint: "Δώσε όνομα για να ξεχωρίζει (π.χ. Παραλία, Σαλόνι).",
+      addScreenHint: "Όνομα για να ξεχωρίζει (π.χ. Παραλία, Σαλόνι).",
       screenNameLabel: "Όνομα οθόνης",
       screenNamePlaceholder: "π.χ. Παραλία",
-      screenSpotPrefixLabel: "Ζώνη τραπεζιών",
-      screenSpotPrefixPlaceholder: "π.χ. Αυλή (κενό = όλα)",
+      screenSpotPrefixLabel: "Ζώνη (προαιρετικό)",
+      screenSpotPrefixPlaceholder: "π.χ. Αυλή",
       screenSpotPrefixHint:
         "Κενό = όλα τα τραπέζια, ξαπλώστρες και δωμάτια. «Σαλόνι» = μόνο αριθμητικά (1, 2, 3…). Άλλο πρόθεμα = μόνο τραπέζια με αυτό το prefix (π.χ. Αυλή-1).",
+      screenSpotPrefixHintShort:
+        "Άδειο πεδίο = όλα. «Σαλόνι» = μόνο αριθμητικά τραπέζια. «Αυλή» = μόνο Αυλή-1, Αυλή-2…",
       screenSpotPrefixActive: (prefix: string) => `Μόνο τραπέζια: ${prefix}-*`,
       addScreenButton: "Προσθήκη",
       addingScreen: "Προσθήκη…",
@@ -571,6 +593,7 @@ export const DASHBOARD_EL = {
         passHint: "Μένει μέχρι ο σερβιτόρος πατήσει «Παρέδωσα». Ο χάρτης θέσεων ενημερώνεται live στον πίνακα σερβιτόρου.",
         livePanelLink: "Άνοιγμα live οθονών →",
         historyLink: "Ιστορικό παραδόσεων →",
+        staffLinksHint: "Links σερβιτόρων: Ρυθμίσεις → Προσωπικό (ένα link ανά άτομο).",
         minutesAgo: (n: number) => `πριν ${n} λεπ.`,
         tableLabel: (n: string) => `Τραπέζι ${n}`,
         historyTitle: "Ιστορικό πάσου",

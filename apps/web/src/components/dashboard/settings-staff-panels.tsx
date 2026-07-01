@@ -5,12 +5,73 @@ import { ExternalLink } from "lucide-react";
 import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
 import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
-import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import type { SettingsVenue } from "@/components/dashboard/settings-form";
 
 type VenueSpotVenue = { id: string; name: string; slug: string };
+
+function useVenuePicker(venues: VenueSpotVenue[]) {
+  const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
+
+  useEffect(() => {
+    if (venues.length === 0) {
+      setVenueId("");
+      return;
+    }
+    if (!venues.some((v) => v.id === venueId)) {
+      setVenueId(venues[0]!.id);
+    }
+  }, [venues, venueId]);
+
+  return { venueId, setVenueId };
+}
+
+function DepartmentTabIntro({
+  title,
+  description,
+  hint,
+  venues,
+  venueId,
+  onVenueChange,
+}: {
+  title: string;
+  description: string;
+  hint: string;
+  venues: VenueSpotVenue[];
+  venueId: string;
+  onVenueChange: (id: string) => void;
+}) {
+  const { d } = useDashboardCopy();
+
+  return (
+    <div className={dashboardCardClass}>
+      <h2 className="text-base font-semibold text-brand-navy">{title}</h2>
+      <p className="mt-2 text-sm text-slate-600">{description}</p>
+      <ul className="mt-3 list-inside list-disc space-y-1 text-xs text-slate-500">
+        {hint.split("\n").map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
+      {venues.length > 1 ? (
+        <label className="mt-4 block max-w-md">
+          <span className={dashboardLabelClass}>{d.venue}</span>
+          <select
+            value={venueId}
+            onChange={(e) => onVenueChange(e.target.value)}
+            className={dashboardFieldClass}
+          >
+            {venues.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+    </div>
+  );
+}
 
 export function SettingsPersonnelPanel({
   venues,
@@ -21,19 +82,43 @@ export function SettingsPersonnelPanel({
 }
 
 export function SettingsKitchenPanel({ venues }: { venues: VenueSpotVenue[] }) {
+  const { d } = useDashboardCopy();
+  const S = d.pages.settings;
+  const { venueId, setVenueId } = useVenuePicker(venues);
+
   return (
     <div className="space-y-5">
-      <StationScreensPanel station="kitchen" venues={venues} />
-      <StationScreensPanel station="cold" venues={venues} />
+      <DepartmentTabIntro
+        title={S.kitchenTab.title}
+        description={S.kitchenTab.description}
+        hint={S.kitchenTab.steps}
+        venues={venues}
+        venueId={venueId}
+        onVenueChange={setVenueId}
+      />
+      <StationScreensPanel station="kitchen" venues={venues} venueId={venueId} embedded />
+      <StationScreensPanel station="cold" venues={venues} venueId={venueId} embedded />
     </div>
   );
 }
 
 export function SettingsBarPanel({ venues }: { venues: VenueSpotVenue[] }) {
+  const { d } = useDashboardCopy();
+  const S = d.pages.settings;
+  const { venueId, setVenueId } = useVenuePicker(venues);
+
   return (
     <div className="space-y-5">
-      <StationScreensPanel station="bar" venues={venues} />
-      <StationScreensPanel station="dessert" venues={venues} />
+      <DepartmentTabIntro
+        title={S.barTab.title}
+        description={S.barTab.description}
+        hint={S.barTab.steps}
+        venues={venues}
+        venueId={venueId}
+        onVenueChange={setVenueId}
+      />
+      <StationScreensPanel station="bar" venues={venues} venueId={venueId} embedded />
+      <StationScreensPanel station="dessert" venues={venues} venueId={venueId} embedded />
     </div>
   );
 }
@@ -49,67 +134,9 @@ export function SettingsServicesPanel({
 }) {
   const { d } = useDashboardCopy();
   const S = d.pages.settings;
-  const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
-  const [staffTokens, setStaffTokens] = useState<Record<string, string>>(() =>
-    Object.fromEntries(venues.filter((v) => v.staffToken).map((v) => [v.id, v.staffToken!])),
-  );
-  const venue = venues.find((v) => v.id === venueId);
-  const staffToken = venue ? staffTokens[venue.id] : undefined;
-
-  useEffect(() => {
-    if (venues.length === 0) {
-      setVenueId("");
-      return;
-    }
-    if (!venues.some((v) => v.id === venueId)) {
-      setVenueId(venues[0]!.id);
-    }
-  }, [venues, venueId]);
-
-  useEffect(() => {
-    setStaffTokens((prev) => {
-      const next = { ...prev };
-      for (const v of venues) {
-        if (v.staffToken && !next[v.id]) next[v.id] = v.staffToken;
-      }
-      return next;
-    });
-  }, [venues]);
 
   return (
     <div className="space-y-5">
-      {staffToken && venue ? (
-        <div className={dashboardCardClass}>
-          <h2 className="text-sm font-semibold text-primary">{d.waiter.shareTitle}</h2>
-          {venues.length > 1 ? (
-            <label className="mt-4 block max-w-md">
-              <span className={dashboardLabelClass}>{d.venue}</span>
-              <select
-                value={venueId}
-                onChange={(e) => setVenueId(e.target.value)}
-                className={dashboardFieldClass}
-              >
-                {venues.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          <div className="mt-4">
-            <WaiterShareLink
-              venueSlug={venue.slug}
-              staffToken={staffToken}
-              venueId={venue.id}
-              onStaffTokenRotated={(next) =>
-                setStaffTokens((prev) => ({ ...prev, [venue.id]: next }))
-              }
-            />
-          </div>
-        </div>
-      ) : null}
-
       <div className={dashboardCardClass}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-primary">{S.services.passTitle}</h2>
@@ -131,6 +158,7 @@ export function SettingsServicesPanel({
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </p>
+        <p className="mt-4 text-xs text-slate-500">{S.services.staffLinksHint}</p>
       </div>
     </div>
   );

@@ -479,9 +479,14 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
       </div>
 
       {venue?.slug && sharedStaffToken ? (
-        <div className={dashboardCardClass}>
-          <h3 className="text-sm font-semibold text-primary">{S.sharedLinkTitle}</h3>
-          <p className="mt-2 text-sm text-slate-600">{S.sharedLinkHint}</p>
+        <details className={`${dashboardCardClass} group`}>
+          <summary className="cursor-pointer list-none text-sm font-semibold text-primary marker:content-none [&::-webkit-details-marker]:hidden">
+            <span className="inline-flex items-center gap-2">
+              {S.sharedLinkTitle}
+              <span className="text-xs font-normal text-slate-500">({S.sharedLinkOptional})</span>
+            </span>
+          </summary>
+          <p className="mt-3 text-sm text-slate-600">{S.sharedLinkHint}</p>
           <div className="mt-4">
             <WaiterShareLink
               venueSlug={venue.slug}
@@ -490,7 +495,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
               onStaffTokenRotated={setSharedStaffToken}
             />
           </div>
-        </div>
+        </details>
       ) : null}
     </div>
   );
