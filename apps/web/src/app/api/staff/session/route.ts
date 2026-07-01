@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolveVenueByStaffSlug } from "@/lib/staff-auth";
 import { STAFF_SESSION_COOKIE } from "@/lib/staff-auth-constants";
+import { APP_URL } from "@/lib/config";
 import { createStaffSessionToken, staffSessionCookieOptions } from "@/lib/staff-session";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
   }
 
   const token = createStaffSessionToken(venue.id, key);
-  const redirectTo = new URL(`/s/${venueSlug}`, url.origin);
+  const redirectTo = new URL(`/s/${venueSlug}`, APP_URL);
   const response = NextResponse.redirect(redirectTo, 302);
   response.cookies.set(STAFF_SESSION_COOKIE, token, staffSessionCookieOptions());
   return response;
