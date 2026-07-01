@@ -350,6 +350,13 @@ export function MenuImportWizard({
           {phase === "review" && W.phaseReview}
         </h2>
         <p className="mt-2 text-sm text-slate-600">{W.hint}</p>
+        {phase === "upload" && W.processSteps?.length ? (
+          <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-600">
+            {W.processSteps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+        ) : null}
       </Card>
 
       {phase === "processing" ? (

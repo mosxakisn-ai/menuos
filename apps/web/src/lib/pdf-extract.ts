@@ -229,7 +229,11 @@ export async function parseUploadedPdfFiles(
       ocrPages = result.ocrPages;
     } catch (err) {
       console.error("pdf-extract", file.name, err);
-      throw new PdfTextExtractionError(P.readFailed(file.name), file.name);
+      const detail = err instanceof Error ? err.message : String(err);
+      throw new PdfTextExtractionError(
+        detail.includes(file.name) ? detail : P.readFailed(file.name),
+        file.name,
+      );
     }
 
     totalOcrPages += ocrPages;

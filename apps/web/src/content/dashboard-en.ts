@@ -29,6 +29,12 @@ export const DASHBOARD_EN = {
   importWizard: {
     hint:
       "Upload a catalog PDF — we analyze it automatically (digital + OCR for images). Review results before saving.",
+    processSteps: [
+      "Scan — quick preview in your browser (covers/logos are skipped automatically).",
+      "Analyze — server reads text from digital pages; scanned pages use OCR if needed.",
+      "Structure — categories and items are detected from the text.",
+      "Review — edit the draft, then save to your catalog.",
+    ],
     analyzeButton: "Analyze & preview",
     processingTitle: "Analyzing catalog PDF",
     pipeline: {
