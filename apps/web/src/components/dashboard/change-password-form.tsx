@@ -29,7 +29,7 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        setFlash({ type: "success", text: data.message ?? d.changePassword.success });
+        setFlash({ type: "success", text: d.changePassword.success });
       } else {
         showFromResponse(data, false);
       }

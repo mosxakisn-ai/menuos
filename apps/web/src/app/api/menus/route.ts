@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { menuCreateSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
+import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 import { planLimitErrorResponse, assertCanAddMenuInTransaction, serializableTransaction } from "@/lib/plan-limits";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
@@ -9,14 +10,15 @@ export async function GET(request: Request) {
   const auth = await requireActiveSubscription();
   if (auth.response) return auth.response;
 
+  const copy = dashboardCopyFromRequest(request);
   const venueId = new URL(request.url).searchParams.get("venueId");
   if (!venueId) {
-    return NextResponse.json({ error: "Απαιτείται venueId." }, { status: 400 });
+    return NextResponse.json({ code: "invalid_input" }, { status: 400 });
   }
 
   const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
   if (!venue) {
-    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
+    return NextResponse.json({ code: "not_found" }, { status: 404 });
   }
 
   const menus = await prisma.menu.findMany({
@@ -43,21 +45,23 @@ export async function POST(request: Request) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
+  const copy = dashboardCopyFromRequest(request);
+
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
+    return NextResponse.json({ code: "bad_request" }, { status: 400 });
   }
 
   const parsed = menuCreateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Μη έγκυρα στοιχεία menu." }, { status: 400 });
+    return NextResponse.json({ code: "invalid_input" }, { status: 400 });
   }
 
   const venue = await getVenueForOrganization(parsed.data.venueId, auth.session!.organizationId);
   if (!venue) {
-    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
+    return NextResponse.json({ code: "not_found" }, { status: 404 });
   }
 
   try {
@@ -74,7 +78,7 @@ export async function POST(request: Request) {
       });
     }, serializableTransaction);
 
-    return NextResponse.json({ menu, message: "Ο κατάλογος δημιουργήθηκε." });
+    return NextResponse.json({ menu, message: copy.api.menuCreated });
   } catch (err) {
     const limit = planLimitErrorResponse(err);
     if (limit) {
