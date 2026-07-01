@@ -8,8 +8,8 @@ export async function GET() {
   if (auth.response) return auth.response;
 
   try {
-    const operators = await listSupervisorOperators();
-    const current = auth.supervisor!.username;
+    const current = auth.supervisor!.username.trim().toLowerCase();
+    const operators = (await listSupervisorOperators()).filter((op) => op.username !== current);
     const self = await findSupervisorOperatorByUsername(current);
     return NextResponse.json({
       operators,

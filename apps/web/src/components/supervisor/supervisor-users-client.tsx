@@ -164,8 +164,7 @@ export function SupervisorUsersClient() {
     ownConfirmPassword.length >= 8 &&
     ownNewPassword === ownConfirmPassword;
 
-  const envOnly = operators.length === 0 && currentUsername;
-  const currentUsernameLower = currentUsername.toLowerCase();
+  const envOnly = operators.length === 0 && currentUsername && !canChangeOwnPassword;
 
   return (
     <DashboardPage wide>
@@ -268,12 +267,7 @@ export function SupervisorUsersClient() {
               <tbody>
                 {operators.map((op) => (
                   <tr key={op.id} className="border-t border-slate-100">
-                    <td className="px-3 py-2 font-medium text-brand-navy">
-                      {op.username}
-                      {op.username === currentUsernameLower ? (
-                        <span className="ml-2 text-xs text-brand-blue">(εσύ)</span>
-                      ) : null}
-                    </td>
+                    <td className="px-3 py-2 font-medium text-brand-navy">{op.username}</td>
                     <td className="px-3 py-2 text-slate-600">{op.name}</td>
                     <td className="px-3 py-2">
                       <span
@@ -287,29 +281,21 @@ export function SupervisorUsersClient() {
                     <td className="px-3 py-2 text-slate-500">{formatDate(op.createdAt)}</td>
                     <td className="px-3 py-2">
                       <div className="flex flex-wrap gap-2">
-                        {op.username !== currentUsernameLower ? (
-                          <button
-                            type="button"
-                            className={buttonClass("ghost", "sm")}
-                            onClick={() => {
-                              setResetId(op.id);
-                              setResetPassword("");
-                              setFormError(null);
-                            }}
-                          >
-                            Νέο password
-                          </button>
-                        ) : null}
+                        <button
+                          type="button"
+                          className={buttonClass("ghost", "sm")}
+                          onClick={() => {
+                            setResetId(op.id);
+                            setResetPassword("");
+                            setFormError(null);
+                          }}
+                        >
+                          Νέο password
+                        </button>
                         {op.active ? (
                           <button
                             type="button"
                             className={buttonClass("ghost", "sm")}
-                            disabled={op.username === currentUsernameLower}
-                            title={
-                              op.username === currentUsernameLower
-                                ? "Δεν μπορείς να απενεργοποιήσεις τον εαυτό σου"
-                                : undefined
-                            }
                             onClick={() => void patchOperator(op.id, { active: false })}
                           >
                             Απενεργοποίηση
@@ -330,7 +316,9 @@ export function SupervisorUsersClient() {
                 {!operators.length ? (
                   <tr>
                     <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
-                      Δεν υπάρχουν μέλη στη βάση — μόνο ο λογαριασμός .env.
+                      {canChangeOwnPassword
+                        ? "Δεν υπάρχουν άλλα μέλη — ο δικός σου λογαριασμός δεν εμφανίζεται εδώ."
+                        : "Δεν υπάρχουν μέλη στη βάση — μόνο ο λογαριασμός .env."}
                     </td>
                   </tr>
                 ) : null}
