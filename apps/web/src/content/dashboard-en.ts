@@ -494,6 +494,8 @@ export const DASHBOARD_EN = {
       screenNamePlaceholder: "e.g. Beach",
       screenSpotPrefixLabel: "Table zone",
       screenSpotPrefixPlaceholder: "e.g. Beach (empty = all)",
+      screenSpotPrefixHint:
+        "Empty = all tables, sunbeds and rooms. «Σαλόνι» = numeric tables only (1, 2, 3…). Any other prefix = only matching tables (e.g. Beach-1). Sunbeds/rooms need an empty prefix.",
       screenSpotPrefixActive: (prefix: string) => `Tables only: ${prefix}-*`,
       addScreenButton: "Add",
       addingScreen: "Adding…",

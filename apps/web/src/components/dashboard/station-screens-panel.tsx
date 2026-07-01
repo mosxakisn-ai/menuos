@@ -260,6 +260,7 @@ export function StationScreensPanel({
                         maxLength={20}
                         className={dashboardFieldClass}
                       />
+                      <span className="mt-1 block text-xs text-slate-500">{S.screenSpotPrefixHint}</span>
                     </label>
                     <button
                       type="button"
@@ -378,6 +379,7 @@ export function StationScreensPanel({
               maxLength={20}
               className={dashboardFieldClass}
             />
+            <span className="mt-1 block text-xs text-slate-500">{S.screenSpotPrefixHint}</span>
           </label>
           <button
             type="button"

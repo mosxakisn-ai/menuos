@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import {
   normalizeWaiterCallLocation,
+  passLocationMatchesScreenSpotPrefix,
   passSignalCreateSchema,
   passStationInputToDb,
 } from "@menuos/shared";
@@ -84,6 +85,17 @@ export async function POST(request: Request) {
 
   const location = normalizeWaiterCallLocation(parsed.data);
   const message = parsed.data.message?.trim() || null;
+
+  const screenPrefix = auth.stationScreen?.spotPrefix;
+  if (
+    screenPrefix &&
+    !passLocationMatchesScreenSpotPrefix(location, screenPrefix)
+  ) {
+    return NextResponse.json(
+      { error: "Το τραπέζι δεν ανήκει στη ζώνη αυτής της οθόνης.", code: "spot_out_of_zone" },
+      { status: 400 },
+    );
+  }
 
   try {
     const signal = await prisma.passSignal.create({

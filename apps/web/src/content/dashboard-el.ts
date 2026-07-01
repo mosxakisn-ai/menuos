@@ -500,6 +500,8 @@ export const DASHBOARD_EL = {
       screenNamePlaceholder: "π.χ. Παραλία",
       screenSpotPrefixLabel: "Ζώνη τραπεζιών",
       screenSpotPrefixPlaceholder: "π.χ. Αυλή (κενό = όλα)",
+      screenSpotPrefixHint:
+        "Κενό = όλα τα τραπέζια, ξαπλώστρες και δωμάτια. «Σαλόνι» = μόνο αριθμητικά (1, 2, 3…). Άλλο πρόθεμα = μόνο τραπέζια με αυτό το prefix (π.χ. Αυλή-1).",
       screenSpotPrefixActive: (prefix: string) => `Μόνο τραπέζια: ${prefix}-*`,
       addScreenButton: "Προσθήκη",
       addingScreen: "Προσθήκη…",

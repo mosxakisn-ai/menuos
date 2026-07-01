@@ -20,6 +20,7 @@ type ScreenContext = {
   venueSlug: string;
   station: PassStationInput;
   screenLabel?: string | null;
+  spotPrefix?: string | null;
   spots: ScreenSpot[];
 };
 
@@ -31,6 +32,7 @@ const COPY = {
     commentPh: "π.χ. ξέχασες τον πάγο",
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
+    emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
   },
   bar: {
@@ -40,6 +42,7 @@ const COPY = {
     commentPh: "π.χ. χωρίς πάγο",
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
+    emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
   },
   cold: {
@@ -49,6 +52,7 @@ const COPY = {
     commentPh: "π.χ. σαλάτα",
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
+    emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
   },
   dessert: {
@@ -58,6 +62,7 @@ const COPY = {
     commentPh: "π.χ. με παγωτό",
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
+    emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
   },
 };
@@ -255,6 +260,10 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                   </p>
                 ) : null}
               </>
+            ) : ctx.spotPrefix ? (
+              <p className="rounded-xl border border-amber-400/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+                {C.emptyZone}
+              </p>
             ) : (
               <input
                 value={manualTable}
