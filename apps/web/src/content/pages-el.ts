@@ -274,7 +274,7 @@ export const PAGES_EL = {
       submitting: "Σύνδεση...",
       failed: "Η σύνδεση απέτυχε.",
       noAccount: "Δεν έχεις λογαριασμό;",
-      freeTrial: (days: string) => `Δωρεάν δοκιμή ${days}`,
+      freeTrial: "Δωρεάν δοκιμή {days}",
     },
     register: {
       title: "Δημιουργία λογαριασμού",
@@ -287,15 +287,15 @@ export const PAGES_EL = {
       sendOtp: "Στείλε κωδικό",
       resendOtp: "Ξαναστείλε κωδικό",
       sendingOtp: "Αποστολή...",
-      resendIn: (s: number) => `Ξανά σε ${s}s`,
+      resendIn: "Ξανά σε {s}s",
       otpSent: "Κωδικός στάλθηκε — έλεγξε και spam.",
-      otpSentSuccess: (minutes: number) => `Στείλαμε κωδικό στο email σου. Ισχύει για ${minutes} λεπτά.`,
-      otpExpiresIn: (t: string) => ` Λήγει σε ${t}.`,
+      otpSentSuccess: "Στείλαμε κωδικό στο email σου. Ισχύει για {minutes} λεπτά.",
+      otpExpiresIn: "Λήγει σε {t}.",
       creating: "Δημιουργία...",
       submitCreate: "Δημιουργία λογαριασμού",
       submitCheckout: "Συνέχεια στην πληρωμή",
-      subtitleTrial: (days: string) =>
-        `Δωρεάν δοκιμή ${days} — χωρίς κάρτα. Θα σου στείλουμε κωδικό επιβεβαίωσης στο email (ισχύει 30 λεπτά).`,
+      subtitleTrial:
+        "Δωρεάν δοκιμή {days} — χωρίς κάρτα. Θα σου στείλουμε κωδικό επιβεβαίωσης στο email (ισχύει 30 λεπτά).",
       subtitleBasic:
         "Δημιούργησε λογαριασμό και συνέχισε στην ασφαλή πληρωμή Basic (Stripe). Χρειάζεται κάρτα.",
       subtitlePro:
@@ -307,9 +307,9 @@ export const PAGES_EL = {
       registerFailed: "Η εγγραφή απέτυχε.",
       networkError: "Σφάλμα σύνδεσης. Έλεγξε το internet και δοκίμασε ξανά.",
       serverError: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr.",
-      otpSeconds: (s: number) => `${s} δευτ.`,
-      otpMinutes: (m: number) => `${m} λεπ.`,
-      otpMinutesSeconds: (m: number, s: string) => `${m}:${s}`,
+      otpSeconds: "{s} δευτ.",
+      otpMinutes: "{m} λεπ.",
+      otpMinutesSeconds: "{m}:{s}",
     },
   },
 } as const;

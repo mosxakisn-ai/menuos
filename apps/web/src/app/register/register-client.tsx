@@ -7,6 +7,7 @@ import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { useI18n } from "@/i18n/context";
+import { formatMessage } from "@/lib/format-message";
 import {
   type RegisterPlanIntent,
   registerSubmitLabel,
@@ -62,9 +63,12 @@ export default function RegisterPageClient({
   function formatOtpCountdown(totalSeconds: number): string {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    if (minutes <= 0) return R.otpSeconds(seconds);
-    if (seconds === 0) return R.otpMinutes(minutes);
-    return R.otpMinutesSeconds(minutes, seconds.toString().padStart(2, "0"));
+    if (minutes <= 0) return formatMessage(R.otpSeconds, { s: seconds });
+    if (seconds === 0) return formatMessage(R.otpMinutes, { m: minutes });
+    return formatMessage(R.otpMinutesSeconds, {
+      m: minutes,
+      s: seconds.toString().padStart(2, "0"),
+    });
   }
 
   async function sendOtp() {
@@ -103,7 +107,9 @@ export default function RegisterPageClient({
       setResendIn(60);
       const ttl = data.expiresInSeconds ?? 30 * 60;
       setOtpExpiresAt(Date.now() + ttl * 1000);
-      setInfo(data.message ?? R.otpSentSuccess(Math.round(ttl / 60)));
+      setInfo(
+        data.message ?? formatMessage(R.otpSentSuccess, { minutes: Math.round(ttl / 60) }),
+      );
     } catch {
       setError(R.networkError);
     } finally {
@@ -229,7 +235,7 @@ export default function RegisterPageClient({
             {sendingOtp
               ? R.sendingOtp
               : resendIn > 0
-                ? R.resendIn(resendIn)
+                ? formatMessage(R.resendIn, { s: resendIn })
                 : otpSent
                   ? R.resendOtp
                   : R.sendOtp}
@@ -237,7 +243,9 @@ export default function RegisterPageClient({
           {otpSent ? (
             <span className="text-xs text-emerald-700">
               {R.otpSent}
-              {otpExpiresIn > 0 ? R.otpExpiresIn(formatOtpCountdown(otpExpiresIn)) : null}
+              {otpExpiresIn > 0
+                ? formatMessage(R.otpExpiresIn, { t: formatOtpCountdown(otpExpiresIn) })
+                : null}
             </span>
           ) : null}
         </div>

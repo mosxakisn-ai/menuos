@@ -7,6 +7,7 @@ import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { useI18n } from "@/i18n/context";
+import { formatMessage } from "@/lib/format-message";
 
 export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string }) {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string
       footer={
         <AuthFooterLink
           text={L.noAccount}
-          linkText={L.freeTrial(trialDaysGen)}
+          linkText={formatMessage(L.freeTrial, { days: trialDaysGen })}
           href="/register"
         />
       }
