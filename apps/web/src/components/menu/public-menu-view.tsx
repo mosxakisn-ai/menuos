@@ -209,7 +209,7 @@ export function PublicMenuView({
     [roomNumber, sunbedNumber, tableNumber],
   );
 
-  const fetchTableCalls = useCallback(async (): Promise<TableCall[]> => {
+  const fetchTableCalls = useCallback(async (): Promise<TableCall[] | null> => {
     if (!menuLocation.tableNumber && !menuLocation.roomNumber && !menuLocation.sunbedNumber) {
       return [];
     }
@@ -218,7 +218,7 @@ export function PublicMenuView({
     if (menuLocation.roomNumber) params.set("roomNumber", menuLocation.roomNumber);
     if (menuLocation.sunbedNumber) params.set("sunbedNumber", menuLocation.sunbedNumber);
     const res = await fetch(`/api/waiter-call/status?${params}`);
-    if (!res.ok) return [];
+    if (!res.ok) return null;
     const data = (await res.json()) as {
       calls?: Array<{
         id: string;
@@ -253,6 +253,7 @@ export function PublicMenuView({
   const syncTableStatus = useCallback(async () => {
     try {
       const calls = await fetchTableCalls();
+      if (calls === null) return;
       if (calls.length === 0) {
         clearActiveCall();
         return;
@@ -571,10 +572,13 @@ export function PublicMenuView({
     setActionState((s) => ({ ...s, CANCEL: "loading" }));
     try {
       const calls = await fetchTableCalls();
-      if (calls.length > 0) applyTableCalls(calls);
-      else clearActiveCall();
+      if (calls !== null) {
+        if (calls.length > 0) applyTableCalls(calls);
+        else clearActiveCall();
+      }
 
-      const target = calls.find((c) => c.id === callId && c.cancellable);
+      const resolvedCalls = calls ?? activeCalls;
+      const target = resolvedCalls.find((c) => c.id === callId && c.cancellable);
       if (!target) {
         setCancelErrorCode("not_cancellable");
         setActionState((s) => ({ ...s, CANCEL: "error" }));

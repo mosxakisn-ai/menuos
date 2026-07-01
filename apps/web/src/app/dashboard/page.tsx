@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@menuos/db";
-import { isTrialPlan, getTrialPeriodDays, TRIAL_DAYS } from "@menuos/shared";
+import { isTrialPlan, getTrialPeriodDays } from "@menuos/shared";
 import { WelcomeTrialCard } from "@/components/dashboard/welcome-trial-card";
 import {
   DashboardPage as DashboardPageShell,
@@ -15,6 +15,7 @@ import { TrialLimitsHint } from "@/components/dashboard/trial-limits-hint";
 import { buttonClass } from "@/components/ui/button";
 import { DASHBOARD_EL, planLabel } from "@/content/dashboard-el";
 import { getSession } from "@/lib/auth";
+import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
@@ -53,10 +54,11 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   const planId = org?.subscription?.plan ?? "TRIAL";
   const trialEndsAt = org?.subscription?.trialEndsAt?.toISOString() ?? null;
+  const catalogTrialDays = await getTrialDaysFromCatalog();
   const trialPeriodDays =
     org?.subscription?.trialEndsAt && org.createdAt
       ? getTrialPeriodDays(org.subscription.trialEndsAt, org.createdAt)
-      : TRIAL_DAYS;
+      : catalogTrialDays;
   const renewalStat = subscriptionRenewalStat(org?.subscription);
 
   return (

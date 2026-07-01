@@ -69,6 +69,7 @@ export function WaiterPanel({
   const [pendingCount, setPendingCount] = useState(0);
   const [updatingCallId, setUpdatingCallId] = useState<string | null>(null);
   const prevPendingRef = useRef<number | null>(null);
+  const prevCallsRef = useRef<WaiterCall[]>([]);
   const pendingBaselineSetRef = useRef(false);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
@@ -81,7 +82,18 @@ export function WaiterPanel({
     });
     const data = await res.json();
     if (res.ok) {
-      setCalls(data.calls ?? []);
+      const newCalls = (data.calls ?? []) as WaiterCall[];
+      if (pendingBaselineSetRef.current && prevCallsRef.current.length > 0) {
+        const prevById = new Map(prevCallsRef.current.map((c) => [c.id, c]));
+        const orderUpdated = newCalls.some((call) => {
+          if (call.status !== "PENDING" || call.type !== "ORDER") return false;
+          const prev = prevById.get(call.id);
+          return prev != null && prev.updatedAt !== call.updatedAt;
+        });
+        if (orderUpdated) alertNewWaiterCall();
+      }
+      prevCallsRef.current = newCalls;
+      setCalls(newCalls);
       const nextPending = data.pendingCount ?? 0;
       if (!pendingBaselineSetRef.current) {
         prevPendingRef.current = nextPending;
@@ -90,6 +102,7 @@ export function WaiterPanel({
       setPendingCount(nextPending);
     } else {
       setCalls([]);
+      prevCallsRef.current = [];
       if (!pendingBaselineSetRef.current) {
         prevPendingRef.current = 0;
         pendingBaselineSetRef.current = true;
@@ -102,6 +115,7 @@ export function WaiterPanel({
     setCalls([]);
     setPendingCount(0);
     prevPendingRef.current = null;
+    prevCallsRef.current = [];
     pendingBaselineSetRef.current = false;
   }, [venueId]);
 

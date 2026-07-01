@@ -97,10 +97,15 @@ export async function verifySupervisorOperatorPassword(
   return bcrypt.compare(password, row.passwordHash);
 }
 
-/** DB-backed operators must stay active; env-only usernames pass without a row. */
+/** DB-backed operators must stay active; env-only usernames pass without a row in dev only. */
 export async function isSupervisorOperatorSessionAllowed(username: string): Promise<boolean> {
-  const row = await findSupervisorOperatorByUsername(username);
-  if (!row) return true;
+  const normalized = username.trim().toLowerCase();
+  const row = await findSupervisorOperatorByUsername(normalized);
+  if (!row) {
+    if (process.env.NODE_ENV === "production") return false;
+    const envUser = process.env.SUPERVISOR_USERNAME?.trim().toLowerCase();
+    return Boolean(envUser && envUser === normalized);
+  }
   return row.active;
 }
 

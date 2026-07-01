@@ -9,8 +9,9 @@ import { DashboardSidebarSubscription } from "@/components/dashboard/dashboard-s
 import { DashboardSidebarNav } from "@/components/dashboard/dashboard-sidebar-nav";
 import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
 import { getSession } from "@/lib/auth";
-import { isTrialPlan, isTrialStillActive, getTrialPeriodDays, TRIAL_DAYS } from "@menuos/shared";
+import { isTrialPlan, isTrialStillActive, getTrialPeriodDays } from "@menuos/shared";
 import { organizationHasActiveSubscription } from "@/lib/billing";
+import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { formatSubscriptionSummary } from "@/lib/subscription-display";
 import { roleLabel } from "@/content/dashboard-el";
 import { resolveBusinessDisplay } from "@/lib/business-display";
@@ -80,10 +81,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     subscription.trialEndsAt &&
     isTrialStillActive(subscription.trialEndsAt);
   const trialEndsAtIso = subscription?.trialEndsAt?.toISOString() ?? null;
+  const catalogTrialDays = await getTrialDaysFromCatalog();
   const trialPeriodDays =
-    org?.subscription?.trialEndsAt && org.createdAt
+    org?.subscription?.trialEndsAt && org?.createdAt
       ? getTrialPeriodDays(org.subscription.trialEndsAt, org.createdAt)
-      : TRIAL_DAYS;
+      : catalogTrialDays;
 
   return (
     <div className="flex min-h-screen bg-brand-surface">
