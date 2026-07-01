@@ -61,6 +61,9 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     }
     if (!venues.some((v) => v.id === venueId)) {
       setVenueId(venues[0]!.id);
+      setSpotId("");
+      setStation("");
+      setStaffMemberId("");
     }
   }, [venues, venueId]);
 
@@ -85,12 +88,6 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     return () => {
       cancelled = true;
     };
-  }, [venueId]);
-
-  useEffect(() => {
-    setSpotId("");
-    setStation("");
-    setStaffMemberId("");
   }, [venueId]);
 
   const load = useCallback(async () => {
@@ -138,7 +135,12 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
             <span className={dashboardLabelClass}>{d.venue}</span>
             <select
               value={venueId}
-              onChange={(e) => setVenueId(e.target.value)}
+              onChange={(e) => {
+                setVenueId(e.target.value);
+                setSpotId("");
+                setStation("");
+                setStaffMemberId("");
+              }}
               className={dashboardFieldClass}
             >
               {venues.map((v) => (

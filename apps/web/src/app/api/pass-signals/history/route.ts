@@ -56,6 +56,13 @@ export async function GET(request: Request) {
 
   const staffMemberId = searchParams.get("staffMemberId")?.trim();
   if (staffMemberId) {
+    const member = await prisma.venueStaffMember.findFirst({
+      where: { id: staffMemberId, venueId },
+      select: { id: true },
+    });
+    if (!member) {
+      return NextResponse.json({ signals: [], days, limit });
+    }
     where.deliveredByStaffMemberId = staffMemberId;
   }
 
@@ -65,12 +72,13 @@ export async function GET(request: Request) {
       where: { id: spotId, venueId },
       select: { type: true, label: true },
     });
-    if (spot) {
-      const loc = spotToQueryParams(spot.type, spot.label);
-      where.tableNumber = loc.table ?? null;
-      where.roomNumber = loc.room ?? null;
-      where.sunbedNumber = loc.sunbed ?? null;
+    if (!spot) {
+      return NextResponse.json({ signals: [], days, limit });
     }
+    const loc = spotToQueryParams(spot.type, spot.label);
+    where.tableNumber = loc.table ?? null;
+    where.roomNumber = loc.room ?? null;
+    where.sunbedNumber = loc.sunbed ?? null;
   }
 
   try {
