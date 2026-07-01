@@ -303,15 +303,18 @@ export function MenuEditor({
     if (res.ok) await loadMenus();
   }
 
-  async function deleteCategory(id: string) {
-    if (
-      !window.confirm(
-        "Διαγραφή της κατηγορίας και όλων των πιάτων της;\n\nΕίσαι σίγουρος; Η ενέργεια δεν αναιρείται.",
-      )
-    ) {
+  async function deleteCategory(cat: Category) {
+    if (cat.items.length > 0) {
+      setFlash({
+        type: "error",
+        text: "Δεν μπορείς να διαγράψεις κατηγορία που έχει πιάτα. Διέγραψε πρώτα όλα τα πιάτα.",
+      });
       return;
     }
-    const res = await fetch(`/api/categories/${id}?force=1`, { method: "DELETE" });
+    if (!window.confirm("Διαγραφή της κατηγορίας;\n\nΕίσαι σίγουρος; Η ενέργεια δεν αναιρείται.")) {
+      return;
+    }
+    const res = await fetch(`/api/categories/${cat.id}`, { method: "DELETE" });
     const data = await res.json();
     showFromResponse(data, res.ok);
     if (res.ok) await loadMenus();
@@ -461,7 +464,7 @@ export function MenuEditor({
           <Card>
             <h2 className="font-semibold text-brand-navy">Νέα κατηγορία</h2>
             <p className="mt-1 text-xs text-slate-500">
-              Βάλε μόνο ελληνικά — αυτόματη μετάφραση σε EN / DE / FR για το QR menu
+              Μόνο ελληνικά — EN / DE / FR δημιουργούνται αυτόματα για το QR menu
             </p>
             <form onSubmit={addCategory} className="mt-4 flex flex-wrap items-end gap-2">
               <input
@@ -495,9 +498,19 @@ export function MenuEditor({
                 </div>
                 <button
                   type="button"
-                  onClick={() => deleteCategory(cat.id)}
-                  className="shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                  title="Διαγραφή κατηγορίας"
+                  onClick={() => deleteCategory(cat)}
+                  disabled={cat.items.length > 0}
+                  className={cn(
+                    "shrink-0 rounded-lg p-2 transition",
+                    cat.items.length > 0
+                      ? "cursor-not-allowed text-slate-300"
+                      : "text-slate-400 hover:bg-red-50 hover:text-red-600",
+                  )}
+                  title={
+                    cat.items.length > 0
+                      ? "Διέγραψε πρώτα όλα τα πιάτα της κατηγορίας"
+                      : "Διαγραφή κενής κατηγορίας"
+                  }
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -747,7 +760,7 @@ export function MenuEditor({
                   >
                     <p className="text-sm font-semibold text-brand-navy">Νέο πιάτο</p>
                     <p className="text-xs text-slate-500">
-                      Όνομα και περιγραφή μόνο στα ελληνικά — μετάφραση αυτόματα στο QR menu
+                      Μόνο ελληνικά — EN / DE / FR δημιουργούνται αυτόματα για το QR menu
                     </p>
                     <div className={dashboardFormGridClass}>
                       <input
