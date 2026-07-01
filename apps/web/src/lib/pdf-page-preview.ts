@@ -74,7 +74,8 @@ async function renderPageThumbnail(
   canvas.height = viewport.height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return "";
-  await page.render({ canvasContext: ctx, viewport }).promise;
+  // pdfjs-dist types disagree across TS/pdfjs versions; canvasContext works at runtime.
+  await page.render({ canvasContext: ctx, viewport } as never).promise;
   return canvas.toDataURL("image/jpeg", 0.72);
 }
 
