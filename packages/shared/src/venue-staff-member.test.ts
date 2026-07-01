@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { passSignalVisibleToStaffMember, waiterCallsVisibleToStaffMember } from "./venue-staff-member";
+import { passDbStationsForStaffMember, passSignalVisibleToStaffMember, waiterCallsVisibleToStaffMember } from "./venue-staff-member";
+
+describe("passDbStationsForStaffMember", () => {
+  it("returns null for floor staff", () => {
+    expect(passDbStationsForStaffMember(["services"])).toBeNull();
+    expect(passDbStationsForStaffMember(["all"])).toBeNull();
+  });
+
+  it("maps department tags to DB stations", () => {
+    expect(passDbStationsForStaffMember(["kitchen"])).toEqual(["KITCHEN"]);
+    expect(passDbStationsForStaffMember(["bar", "kitchen"])).toEqual(["BAR", "KITCHEN"]);
+  });
+});
 
 describe("passSignalVisibleToStaffMember", () => {
   it("shows all stations for services or all", () => {

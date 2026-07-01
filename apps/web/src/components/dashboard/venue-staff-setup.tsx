@@ -402,6 +402,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       <td className="py-3 pr-4">
                         <StationPicker value={editStations} onChange={setEditStations} />
                       </td>
+                      <td className="py-3 pr-4" />
                       <td className="py-3">
                         <div className="flex gap-2">
                           <button

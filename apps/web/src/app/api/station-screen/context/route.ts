@@ -84,14 +84,30 @@ export async function GET(request: Request) {
     ),
   );
   const todayStart = startOfTodayAthens();
-  const todayCount = await prisma.passSignal.count({
+  const todaySignalsRaw = await prisma.passSignal.findMany({
     where: {
       venueId: auth.venue.id,
       station: dbStation,
       readyAt: { gte: todayStart },
       ...screenFilter,
     },
+    select: {
+      tableNumber: true,
+      roomNumber: true,
+      sunbedNumber: true,
+    },
+    take: 500,
   });
+  const todayCount = todaySignalsRaw.filter((signal) =>
+    passLocationMatchesScreenSpotPrefix(
+      {
+        tableNumber: signal.tableNumber ?? undefined,
+        roomNumber: signal.roomNumber ?? undefined,
+        sunbedNumber: signal.sunbedNumber ?? undefined,
+      },
+      auth.stationScreen?.spotPrefix,
+    ),
+  ).length;
 
   return NextResponse.json({
     venueId: auth.venue.id,

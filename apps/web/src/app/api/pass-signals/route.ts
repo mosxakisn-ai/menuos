@@ -4,6 +4,7 @@ import {
   normalizeWaiterCallLocation,
   passLocationMatchesScreenSpotPrefix,
   passSignalCreateSchema,
+  passDbStationsForStaffMember,
   passSignalVisibleToStaffMember,
   passStationInputToDb,
 } from "@menuos/shared";
@@ -22,10 +23,24 @@ export async function GET(request: Request) {
   if (auth.response) return auth.response;
 
   try {
+    const member = auth.access.staffMember;
+    const allowedStations = member ? passDbStationsForStaffMember(member.stations) : null;
+
+    if (member && allowedStations?.length === 0) {
+      return NextResponse.json({
+        signals: [],
+        activeCount: 0,
+        staffMember: { id: member.id, name: member.name },
+      });
+    }
+
     const signalsRaw = await prisma.passSignal.findMany({
       where: {
         venueId,
         status: { in: ["READY", "PICKED_UP"] },
+        ...(allowedStations && allowedStations.length > 0
+          ? { station: { in: allowedStations as ("KITCHEN" | "BAR" | "COLD" | "DESSERT")[] } }
+          : {}),
       },
       orderBy: { readyAt: "desc" },
       take: 80,
@@ -34,7 +49,6 @@ export async function GET(request: Request) {
       },
     });
 
-    const member = auth.access.staffMember;
     const signals = member
       ? signalsRaw.filter((signal) => passSignalVisibleToStaffMember(signal.station, member.stations))
       : signalsRaw;

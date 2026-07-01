@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { passSignalStationCancelSchema, passSignalStatusUpdateSchema, passStationInputToDb } from "@menuos/shared";
+import { passSignalStationCancelSchema, passSignalStatusUpdateSchema, passSignalVisibleToStaffMember, passStationInputToDb } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
 import { resolvePrimaryStationScreen } from "@/lib/station-screens";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
@@ -24,7 +24,7 @@ export async function PATCH(request: Request, { params }: Props) {
 
   const existing = await prisma.passSignal.findUnique({
     where: { id: signalId },
-    select: { id: true, venueId: true, status: true },
+    select: { id: true, venueId: true, station: true, status: true },
   });
   if (!existing) {
     return NextResponse.json({ error: "Η ειδοποίηση δεν βρέθηκε." }, { status: 404 });
@@ -41,6 +41,11 @@ export async function PATCH(request: Request, { params }: Props) {
 
   const auth = await requireWaiterVenueAccess(fakeRequest, existing.venueId);
   if (auth.response) return auth.response;
+
+  const member = auth.access.staffMember;
+  if (member && !passSignalVisibleToStaffMember(existing.station, member.stations)) {
+    return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 403 });
+  }
 
   const next = parsed.data.status;
   const allowed: Record<string, string[]> = {

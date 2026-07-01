@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { waiterCallUpdateSchema } from "@menuos/shared";
+import { waiterCallUpdateSchema, waiterCallsVisibleToStaffMember } from "@menuos/shared";
 import { requireWaiterCallAccess } from "@/lib/staff-auth";
 
 type Params = { params: Promise<{ callId: string }> };
@@ -22,6 +22,11 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const auth = await requireWaiterCallAccess(request, callId, parsed.data.staffKey);
   if (auth.response) return auth.response;
+
+  const member = auth.access!.staffMember;
+  if (member && !waiterCallsVisibleToStaffMember(member.stations)) {
+    return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 403 });
+  }
 
   const existing = await prisma.waiterCall.findFirst({
     where: {

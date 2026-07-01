@@ -193,6 +193,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   const [sending, setSending] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  const loadGenerationRef = useRef(0);
 
   useScreenWakeLock();
 
@@ -201,9 +202,11 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       setError(C.invalid);
       return;
     }
+    const generation = ++loadGenerationRef.current;
     const params = new URLSearchParams({ venueSlug, key: stationKey, station });
     const res = await fetch(`/api/station-screen/context?${params}`);
     const data = await res.json();
+    if (generation !== loadGenerationRef.current) return;
     if (!res.ok) {
       setError(typeof data.error === "string" ? data.error : C.invalid);
       setCtx(null);

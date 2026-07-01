@@ -55,6 +55,24 @@ const PASS_DB_STATION_TO_STAFF: Record<string, StaffStationOption> = {
   DESSERT: "dessert",
 };
 
+const STAFF_TO_PASS_DB_STATION: Record<StaffStationOption, string | null> = {
+  services: null,
+  all: null,
+  kitchen: "KITCHEN",
+  bar: "BAR",
+  cold: "COLD",
+  dessert: "DESSERT",
+};
+
+/** PassStation DB values this member may see; null = all stations. */
+export function passDbStationsForStaffMember(memberStations: string[]): string[] | null {
+  if (memberStations.includes("all") || memberStations.includes("services")) return null;
+  const stations = memberStations
+    .map((s) => STAFF_TO_PASS_DB_STATION[s as StaffStationOption])
+    .filter((s): s is string => Boolean(s));
+  return stations.length > 0 ? [...new Set(stations)] : [];
+}
+
 /** Whether a pass signal station is visible to this staff member's department tags. */
 export function passSignalVisibleToStaffMember(
   passDbStation: string,

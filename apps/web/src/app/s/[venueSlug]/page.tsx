@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { prisma } from "@menuos/db";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { StaffWaiterInvalidLink } from "@/components/dashboard/staff-waiter-invalid-link";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { resolveStaffAuthByKey, resolveStaffAuthBySlug } from "@/lib/staff-auth";
-import { readStaffSessionFromCookies } from "@/lib/staff-session";
+import { clearStaffSessionCookie, readStaffSessionFromCookies } from "@/lib/staff-session";
 
 export const metadata: Metadata = {
   title: "Σερβιτόρος — MenuOS",
@@ -36,14 +35,7 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
 
   const auth = await resolveStaffAuthByKey(session.venueId, session.staffToken);
   if (!auth || auth.venue.slug !== venueSlug) {
-    const venue = await prisma.venue.findFirst({
-      where: { slug: venueSlug },
-      select: { staffToken: true },
-    });
-    if (venue?.staffToken) {
-      const params = new URLSearchParams({ venueSlug, key: venue.staffToken });
-      redirect(`/api/staff/session?${params.toString()}`);
-    }
+    await clearStaffSessionCookie();
     return <StaffWaiterInvalidLink venueSlug={venueSlug} />;
   }
 

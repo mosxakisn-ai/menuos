@@ -69,6 +69,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         deliveredAt: { gte: weekAgo, not: null },
       },
       select: { readyAt: true, deliveredAt: true },
+      orderBy: { deliveredAt: "desc" },
       take: 500,
     });
     const durations = delivered
