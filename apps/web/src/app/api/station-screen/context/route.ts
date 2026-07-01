@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import type { PassStationInput } from "@menuos/shared";
-import { filterVenueSpotsForScreen, passStationInputSchema } from "@menuos/shared";
+import {
+  filterVenueSpotsForScreen,
+  passStationInputSchema,
+  passStationInputToDb,
+} from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
 
 export async function GET(request: Request) {
@@ -36,6 +40,27 @@ export async function GET(request: Request) {
 
   const filtered = filterVenueSpotsForScreen(spots, auth.stationScreen?.spotPrefix);
 
+  const dbStation = passStationInputToDb(station);
+  const activeSignals = await prisma.passSignal.findMany({
+    where: {
+      venueId: auth.venue.id,
+      station: dbStation,
+      status: { in: ["READY", "PICKED_UP"] },
+      ...(auth.stationScreen?.id ? { stationScreenId: auth.stationScreen.id } : {}),
+    },
+    orderBy: { readyAt: "desc" },
+    take: 24,
+    select: {
+      id: true,
+      tableNumber: true,
+      roomNumber: true,
+      sunbedNumber: true,
+      message: true,
+      status: true,
+      readyAt: true,
+    },
+  });
+
   return NextResponse.json({
     venueId: auth.venue.id,
     venueName: auth.venue.name,
@@ -44,5 +69,6 @@ export async function GET(request: Request) {
     screenLabel: auth.stationScreen?.label ?? null,
     spotPrefix: auth.stationScreen?.spotPrefix ?? null,
     spots: filtered,
+    activeSignals,
   });
 }
