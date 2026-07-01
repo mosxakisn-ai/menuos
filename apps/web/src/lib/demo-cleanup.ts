@@ -13,6 +13,18 @@ export type DemoCleanupResult = {
 };
 
 export async function processDemoVenueCleanup(now = new Date()): Promise<DemoCleanupResult> {
+  const pauseUntilRaw = process.env.DEMO_SHOWCASE_UNTIL?.trim();
+  if (pauseUntilRaw) {
+    const pauseUntil = new Date(pauseUntilRaw);
+    if (!Number.isNaN(pauseUntil.getTime()) && pauseUntil > now) {
+      const venue = await prisma.venue.findUnique({
+        where: { slug: DEMO_VENUE_SLUG },
+        select: { id: true },
+      });
+      return { venueId: venue?.id ?? null, canceledPending: 0, deleted: 0 };
+    }
+  }
+
   const venue = await prisma.venue.findUnique({
     where: { slug: DEMO_VENUE_SLUG },
     select: { id: true },
