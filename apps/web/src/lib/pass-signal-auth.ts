@@ -14,7 +14,7 @@ export type PassSignalVenue = StaffVenueContext & {
   dessertScreenToken: string;
 };
 
-export type PassSignalStationScreen = { id: string; label: string };
+export type PassSignalStationScreen = { id: string; label: string; spotPrefix?: string | null };
 
 export type PassSignalAuthSuccess = {
   venue: PassSignalVenue;

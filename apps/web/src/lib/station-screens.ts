@@ -11,6 +11,7 @@ export type StationScreenRow = {
   label: string;
   screenToken: string;
   sortOrder: number;
+  spotPrefix: string | null;
 };
 
 const LEGACY_TOKEN_FIELDS: Record<
@@ -38,7 +39,7 @@ export async function listStationScreens(
   return prisma.venueStationScreen.findMany({
     where: { venueId, station: dbStation },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    select: { id: true, label: true, screenToken: true, sortOrder: true },
+    select: { id: true, label: true, screenToken: true, sortOrder: true, spotPrefix: true },
   });
 }
 
@@ -46,23 +47,23 @@ export async function resolveStationScreenByToken(
   venueId: string,
   station: PassStationInput,
   screenToken: string,
-): Promise<{ id: string; label: string } | null> {
+): Promise<{ id: string; label: string; spotPrefix: string | null } | null> {
   const dbStation = passStationInputToDb(station);
   return prisma.venueStationScreen.findFirst({
     where: { venueId, station: dbStation, screenToken },
-    select: { id: true, label: true },
+    select: { id: true, label: true, spotPrefix: true },
   });
 }
 
 export async function resolvePrimaryStationScreen(
   venueId: string,
   station: PassStationInput,
-): Promise<{ id: string; label: string } | null> {
+): Promise<{ id: string; label: string; spotPrefix: string | null } | null> {
   const dbStation = passStationInputToDb(station);
   return prisma.venueStationScreen.findFirst({
     where: { venueId, station: dbStation },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    select: { id: true, label: true },
+    select: { id: true, label: true, spotPrefix: true },
   });
 }
 

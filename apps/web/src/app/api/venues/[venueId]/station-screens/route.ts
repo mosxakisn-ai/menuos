@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
 import {
+  normalizeStationScreenSpotPrefix,
   passStationInputSchema,
   passStationInputToDb,
   STATION_SCREENS_MAX_PER_STATION,
@@ -91,10 +92,11 @@ export async function POST(request: Request, { params }: Params) {
       venueId,
       station: dbStation,
       label: parsed.data.label,
+      spotPrefix: normalizeStationScreenSpotPrefix(parsed.data.spotPrefix ?? null),
       screenToken,
       sortOrder,
     },
-    select: { id: true, label: true, screenToken: true, sortOrder: true },
+    select: { id: true, label: true, screenToken: true, sortOrder: true, spotPrefix: true },
   });
 
   if (isFirst) {

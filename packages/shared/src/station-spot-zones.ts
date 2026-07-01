@@ -79,6 +79,9 @@ export function groupVenueSpotsByZone(spots: ZoneSpotInput[]): SpotZoneGroup[] {
     }
 
     const group = map.get(id) ?? { id, label, spots: [] };
+    if (!map.has(id)) {
+      group.label = label;
+    }
     group.spots.push({ spot, displayLabel });
     map.set(id, group);
   }

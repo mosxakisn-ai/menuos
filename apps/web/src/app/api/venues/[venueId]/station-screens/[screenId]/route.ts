@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
-import { passStationDbToInput, stationScreenUpdateSchema, zodFirstErrorMessage } from "@menuos/shared";
+import { passStationDbToInput, normalizeStationScreenSpotPrefix, stationScreenUpdateSchema, zodFirstErrorMessage } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { countStationScreens, isStationScreenLabelTaken, syncLegacyVenueToken } from "@/lib/station-screens";
 import { getVenueForOrganization } from "@/lib/venue-access";
@@ -40,21 +40,32 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: zodFirstErrorMessage(parsed.error) }, { status: 400 });
   }
 
+  if (parsed.data.label === undefined && parsed.data.spotPrefix === undefined) {
+    return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
+  }
+
   if (
-    await isStationScreenLabelTaken(
+    parsed.data.label !== undefined &&
+    (await isStationScreenLabelTaken(
       venueId,
       passStationDbToInput(owned.screen.station),
       parsed.data.label,
       screenId,
-    )
+    ))
   ) {
     return NextResponse.json({ error: "Υπάρχει ήδη οθόνη με αυτό το όνομα." }, { status: 400 });
   }
 
+  const data: { label?: string; spotPrefix?: string | null } = {};
+  if (parsed.data.label !== undefined) data.label = parsed.data.label;
+  if (parsed.data.spotPrefix !== undefined) {
+    data.spotPrefix = normalizeStationScreenSpotPrefix(parsed.data.spotPrefix);
+  }
+
   const screen = await prisma.venueStationScreen.update({
     where: { id: screenId },
-    data: { label: parsed.data.label },
-    select: { id: true, label: true, screenToken: true, sortOrder: true },
+    data,
+    select: { id: true, label: true, screenToken: true, sortOrder: true, spotPrefix: true },
   });
 
   return NextResponse.json({ screen, message: "Η οθόνη ενημερώθηκε." });
@@ -124,7 +135,7 @@ export async function POST(request: Request, { params }: Params) {
   const screen = await prisma.venueStationScreen.update({
     where: { id: screenId },
     data: { screenToken },
-    select: { id: true, label: true, screenToken: true, sortOrder: true, station: true },
+    select: { id: true, label: true, screenToken: true, sortOrder: true, spotPrefix: true, station: true },
   });
 
   if (owned.screen.sortOrder === 0) {

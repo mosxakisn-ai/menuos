@@ -20,10 +20,24 @@ export const stationScreenLabelSchema = z
 export const stationScreenCreateSchema = z.object({
   station: passStationInputSchema,
   label: stationScreenLabelSchema,
+  spotPrefix: z
+    .string()
+    .trim()
+    .max(20, "Μέγιστο 20 χαρακτήρες.")
+    .regex(/^[a-zA-Z0-9\u0370-\u03FF\u1F00-\u1FFF_-]*$/, "Μη έγκυρο πρόθεμα ζώνης.")
+    .optional()
+    .nullable(),
 });
 
 export const stationScreenUpdateSchema = z.object({
-  label: stationScreenLabelSchema,
+  label: stationScreenLabelSchema.optional(),
+  spotPrefix: z
+    .string()
+    .trim()
+    .max(20, "Μέγιστο 20 χαρακτήρες.")
+    .regex(/^[a-zA-Z0-9\u0370-\u03FF\u1F00-\u1FFF_-]*$/, "Μη έγκυρο πρόθεμα ζώνης.")
+    .optional()
+    .nullable(),
 });
 
 export type StationScreenCreateInput = z.infer<typeof stationScreenCreateSchema>;

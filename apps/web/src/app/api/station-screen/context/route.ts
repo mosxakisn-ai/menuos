@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import type { PassStationInput } from "@menuos/shared";
-import { passStationInputSchema } from "@menuos/shared";
+import { filterVenueSpotsForScreen, passStationInputSchema } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
 
 export async function GET(request: Request) {
@@ -34,12 +34,15 @@ export async function GET(request: Request) {
     take: 200,
   });
 
+  const filtered = filterVenueSpotsForScreen(spots, auth.stationScreen?.spotPrefix);
+
   return NextResponse.json({
     venueId: auth.venue.id,
     venueName: auth.venue.name,
     venueSlug: auth.venue.slug,
     station,
     screenLabel: auth.stationScreen?.label ?? null,
-    spots,
+    spotPrefix: auth.stationScreen?.spotPrefix ?? null,
+    spots: filtered,
   });
 }

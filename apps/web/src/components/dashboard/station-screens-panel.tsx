@@ -40,11 +40,13 @@ export function StationScreensPanel({
   const [screens, setScreens] = useState<StationScreenRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [newLabel, setNewLabel] = useState("");
+  const [newSpotPrefix, setNewSpotPrefix] = useState("");
   const [adding, setAdding] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
+  const [editSpotPrefix, setEditSpotPrefix] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
   const venue = venues.find((v) => v.id === venueId);
@@ -93,7 +95,11 @@ export function StationScreensPanel({
       const res = await fetch(`/api/venues/${venueId}/station-screens`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ station, label: newLabel.trim() }),
+        body: JSON.stringify({
+          station,
+          label: newLabel.trim(),
+          spotPrefix: newSpotPrefix.trim() || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -101,6 +107,7 @@ export function StationScreensPanel({
         return;
       }
       setNewLabel("");
+      setNewSpotPrefix("");
       await loadScreens();
     } finally {
       setAdding(false);
@@ -152,11 +159,13 @@ export function StationScreensPanel({
   function startEdit(screen: StationScreenRow) {
     setEditingId(screen.id);
     setEditLabel(screen.label);
+    setEditSpotPrefix(screen.spotPrefix ?? "");
   }
 
   function cancelEdit() {
     setEditingId(null);
     setEditLabel("");
+    setEditSpotPrefix("");
   }
 
   async function saveEdit(screenId: string) {
@@ -167,7 +176,10 @@ export function StationScreensPanel({
       const res = await fetch(`/api/venues/${venueId}/station-screens/${screenId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label }),
+        body: JSON.stringify({
+          label,
+          spotPrefix: editSpotPrefix.trim() || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -176,6 +188,7 @@ export function StationScreensPanel({
       }
       setEditingId(null);
       setEditLabel("");
+      setEditSpotPrefix("");
       await loadScreens();
     } finally {
       setSavingEdit(false);
@@ -238,6 +251,16 @@ export function StationScreensPanel({
                         autoFocus
                       />
                     </label>
+                    <label className="block min-w-[160px] flex-1">
+                      <span className={dashboardLabelClass}>{S.screenSpotPrefixLabel}</span>
+                      <input
+                        value={editSpotPrefix}
+                        onChange={(e) => setEditSpotPrefix(e.target.value)}
+                        placeholder={S.screenSpotPrefixPlaceholder}
+                        maxLength={20}
+                        className={dashboardFieldClass}
+                      />
+                    </label>
                     <button
                       type="button"
                       disabled={savingEdit || !editLabel.trim()}
@@ -259,7 +282,14 @@ export function StationScreensPanel({
                   </div>
                 ) : (
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-semibold text-brand-navy">{screen.label}</p>
+                    <div>
+                      <p className="font-semibold text-brand-navy">{screen.label}</p>
+                      {screen.spotPrefix ? (
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {S.screenSpotPrefixActive(screen.spotPrefix)}
+                        </p>
+                      ) : null}
+                    </div>
                     <button
                       type="button"
                       disabled={busy}
@@ -336,6 +366,16 @@ export function StationScreensPanel({
               onChange={(e) => setNewLabel(e.target.value)}
               placeholder={S.screenNamePlaceholder}
               maxLength={40}
+              className={dashboardFieldClass}
+            />
+          </label>
+          <label className="block min-w-[160px] flex-1">
+            <span className={dashboardLabelClass}>{S.screenSpotPrefixLabel}</span>
+            <input
+              value={newSpotPrefix}
+              onChange={(e) => setNewSpotPrefix(e.target.value)}
+              placeholder={S.screenSpotPrefixPlaceholder}
+              maxLength={20}
               className={dashboardFieldClass}
             />
           </label>

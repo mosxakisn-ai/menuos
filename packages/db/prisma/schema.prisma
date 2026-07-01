@@ -365,6 +365,7 @@ model VenueStationScreen {
   venueId     String
   station     PassStation
   label       String      @db.VarChar(40)
+  spotPrefix  String?     @db.VarChar(20)
   screenToken String      @unique @default(cuid())
   sortOrder   Int         @default(0)
   createdAt   DateTime    @default(now())

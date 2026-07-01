@@ -182,14 +182,14 @@ async function ensureStationScreens(venueId) {
   };
 
   const stations = [
-    { station: "KITCHEN", label: "Κουζίνα" },
-    { station: "BAR", label: "Μπαρ" },
-    { station: "BAR", label: "Παραλία" },
-    { station: "COLD", label: "Κρύα" },
-    { station: "DESSERT", label: "Γλυκά" },
+    { station: "KITCHEN", label: "Κουζίνα", spotPrefix: null },
+    { station: "BAR", label: "Μπαρ", spotPrefix: null },
+    { station: "BAR", label: "Παραλία", spotPrefix: "Αυλή" },
+    { station: "COLD", label: "Κρύα", spotPrefix: null },
+    { station: "DESSERT", label: "Γλυκά", spotPrefix: null },
   ];
 
-  for (const { station, label } of stations) {
+  for (const { station, label, spotPrefix } of stations) {
     const found = await prisma.venueStationScreen.findFirst({
       where: { venueId, station, label },
     });
@@ -202,7 +202,13 @@ async function ensureStationScreens(venueId) {
           label,
           screenToken: count === 0 ? legacyTokens[station] : randomUUID(),
           sortOrder: count,
+          spotPrefix,
         },
+      });
+    } else if (spotPrefix && found.spotPrefix !== spotPrefix) {
+      await prisma.venueStationScreen.update({
+        where: { id: found.id },
+        data: { spotPrefix },
       });
     }
   }
