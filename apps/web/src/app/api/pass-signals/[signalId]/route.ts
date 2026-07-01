@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { passSignalStationCancelSchema, passSignalStatusUpdateSchema } from "@menuos/shared";
+import { passSignalStationCancelSchema, passSignalStatusUpdateSchema, passStationInputToDb } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
+import { resolvePrimaryStationScreen } from "@/lib/station-screens";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
 
 type Props = { params: Promise<{ signalId: string }> };
@@ -86,7 +87,7 @@ export async function DELETE(request: Request, { params }: Props) {
 
   const existing = await prisma.passSignal.findUnique({
     where: { id: signalId },
-    select: { id: true, venueId: true, status: true, stationScreenId: true },
+    select: { id: true, venueId: true, station: true, status: true, stationScreenId: true },
   });
   if (!existing) {
     return NextResponse.json({ error: "Η ειδοποίηση δεν βρέθηκε." }, { status: 404 });
@@ -107,12 +108,21 @@ export async function DELETE(request: Request, { params }: Props) {
   if (auth.venue.id !== existing.venueId) {
     return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 401 });
   }
+  if (existing.station !== passStationInputToDb(parsed.data.station)) {
+    return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 403 });
+  }
   if (
-    auth.stationScreen?.id &&
     existing.stationScreenId &&
+    auth.stationScreen?.id &&
     existing.stationScreenId !== auth.stationScreen.id
   ) {
     return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 403 });
+  }
+  if (!existing.stationScreenId && auth.stationScreen?.id) {
+    const primary = await resolvePrimaryStationScreen(auth.venue.id, parsed.data.station);
+    if (primary?.id !== auth.stationScreen.id) {
+      return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 403 });
+    }
   }
 
   await prisma.passSignal.delete({ where: { id: signalId } });

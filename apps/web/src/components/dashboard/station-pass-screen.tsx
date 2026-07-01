@@ -223,13 +223,17 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     () => (ctx?.spots?.length ? ctx.spots : EMPTY_SPOTS),
     [ctx?.spots],
   );
+  const spotsLayoutKey = useMemo(
+    () => spots.map((s) => `${s.type}:${s.label}`).join("|"),
+    [spots],
+  );
   const activeSignals = ctx?.activeSignals ?? [];
-  const zoneGroups = useMemo(() => groupVenueSpotsByZone(spots), [spots]);
+  const zoneGroups = useMemo(() => groupVenueSpotsByZone(spots), [spotsLayoutKey, spots]);
 
   useEffect(() => {
-    setActiveZoneId(pickDefaultZoneId(zoneGroups));
+    setActiveZoneId(pickDefaultZoneId(groupVenueSpotsByZone(spots)));
     setTable(null);
-  }, [ctx?.venueId, zoneGroups]);
+  }, [ctx?.venueId, spotsLayoutKey]);
 
   const activeZone = zoneGroups.find((z) => z.id === activeZoneId) ?? zoneGroups[0];
   const visibleSpots = activeZone?.spots ?? [];
