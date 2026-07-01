@@ -62,6 +62,12 @@
     overscroll-behavior-x: contain;
     touch-action: pan-x;
     scroll-snap-type: x mandatory;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .menu-touch-scroll-x::-webkit-scrollbar {
+    display: none;
   }
 
   .menu-touch-scroll-x > * {

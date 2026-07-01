@@ -796,7 +796,7 @@ export function PublicMenuView({
             </div>
             <div
               className={cn(
-                "flex items-center gap-0.5 overflow-x-auto rounded-button bg-white/10 p-1 backdrop-blur-sm",
+                "flex items-center gap-0.5 overflow-x-auto menu-touch-scroll-x rounded-button bg-white/10 p-1 backdrop-blur-sm",
                 isEmbedded ? "w-full max-w-none self-start" : "max-w-[11rem] shrink-0",
               )}
               role="group"
@@ -825,7 +825,7 @@ export function PublicMenuView({
           ) : null}
         </div>
         {venue.menus.length > 1 ? (
-          <div className={cn("relative mt-5 flex gap-2 overflow-x-auto", shell)}>
+          <div className={cn("relative mt-5 flex gap-2 overflow-x-auto menu-touch-scroll-x", shell)}>
             {venue.menus.map((menu) => (
               <button
                 key={menu.id}
