@@ -521,8 +521,8 @@ export const DASHBOARD_EN = {
       tables: {
         title: "Tables",
         description: "Configure tables, rooms and sunbeds. Download QR codes from the QR codes page.",
-        gridPreview: "Grid preview (sample)",
-        gridHint: "How table tiles will look on the live waiter board.",
+        gridPreview: "Spot map colors",
+        gridHint: "Each color on the waiter board shows what is happening at that table.",
         qrLink: "Download QR codes →",
         yourVenueSpots: (name: string, count: number) => `${name} — ${count} spots`,
       },

@@ -10,7 +10,7 @@ import {
   type TableGridTile,
   type TableTileState,
 } from "@menuos/shared";
-import { TableGridPreview } from "@/components/dashboard/table-grid-preview";
+import { TableGridLegend, TableGridPreview } from "@/components/dashboard/table-grid-preview";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
 function formatTileHint(
@@ -71,14 +71,8 @@ export function WaiterTableGrid({
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold text-brand-navy">{W.tableGridTitle}</h2>
+      <TableGridLegend stateLabels={stateLabels} />
       <TableGridPreview tiles={previewTiles} stateLabels={stateLabels} />
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500">
-        {(Object.keys(stateLabels) as TableTileState[])
-          .filter((state) => state !== "idle")
-          .map((state) => (
-            <span key={state}>{stateLabels[state]}</span>
-          ))}
-      </div>
     </div>
   );
 }

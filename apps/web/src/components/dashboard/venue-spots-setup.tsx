@@ -10,7 +10,6 @@ import {
   VENUE_SPOT_TYPES,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
-import { DemoBadge } from "@/components/dashboard/settings-demo-badge";
 import { TableGridPreview } from "@/components/dashboard/table-grid-preview";
 import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
 import {
@@ -377,23 +376,17 @@ export function VenueSpotsSetup({
       </div>
 
       <div className={dashboardCardClass}>
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="font-semibold text-brand-navy">{S.tables.gridPreview}</h2>
-          <DemoBadge>{S.demoBadge}</DemoBadge>
-        </div>
+        <h2 className="font-semibold text-brand-navy">{S.tables.gridPreview}</h2>
         <p className="mt-2 text-sm text-slate-600">{S.tables.gridHint}</p>
-        <div className="mt-5">
-          <TableGridPreview tiles={demo.tableTiles} stateLabels={demo.tableStateLabels} />
+        <div className="mt-4">
+          <TableGridLegend stateLabels={demo.tableStateLabels} />
         </div>
         {realTiles.length > 0 ? (
           <div className="mt-6 border-t border-slate-100 pt-5">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
               {S.tables.yourVenueSpots(venue?.name ?? "", spots.length)}
             </p>
-            <TableGridPreview
-              tiles={realTiles}
-              stateLabels={demo.tableStateLabels}
-            />
+            <TableGridPreview tiles={realTiles} stateLabels={demo.tableStateLabels} />
           </div>
         ) : null}
       </div>

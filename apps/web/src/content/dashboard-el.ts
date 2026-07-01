@@ -527,8 +527,8 @@ export const DASHBOARD_EL = {
       tables: {
         title: "Ταμπλό",
         description: "Ρύθμισε τραπέζια, δωμάτια και ξαπλώστρες. Τα QR κατεβαίνουν από τη σελίδα QR codes.",
-        gridPreview: "Προεπισκόπηση πλέγματος (δείγμα)",
-        gridHint: "Έτσι θα φαίνονται τα τετραγωνάκια στο live ταμπλό σερβιτόρου.",
+        gridPreview: "Χρώματα χάρτη θέσεων",
+        gridHint: "Κάθε χρώμα στο ταμπλό σερβιτόρου δείχνει τι συμβαίνει στο τραπέζι.",
         qrLink: "Λήψη QR codes →",
         yourVenueSpots: (name: string, count: number) => `${name} — ${count} θέσεις`,
       },
