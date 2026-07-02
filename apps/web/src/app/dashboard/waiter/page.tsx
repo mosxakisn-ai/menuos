@@ -22,7 +22,7 @@ export default async function WaiterPage({ searchParams }: Props) {
   });
 
   return (
-    <DashboardPage>
+    <DashboardPage wide>
       <LocalizedDashboardPageHeader page="waiter" />
       <WaiterPanel
         venues={venues}

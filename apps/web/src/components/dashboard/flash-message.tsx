@@ -5,19 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import type { DashboardCopy } from "@/content/dashboard-i18n";
 import { reportClientDiagnostic } from "@/lib/report-client-diagnostic";
+import { shouldReportClientApiError } from "@/lib/client-api-diagnostic";
 import { cn } from "@/lib/utils";
 
-function diagnosticCategoryFromPath(): string {
-  if (typeof window === "undefined") return "unknown";
-  const path = window.location.pathname;
-  if (path.includes("/menus/import")) return "pdf_import";
-  if (path.includes("/menus")) return "catalog";
-  if (path.includes("/billing")) return "billing";
-  if (path.includes("/qr")) return "qr";
-  if (path.includes("/waiter")) return "waiter";
-  if (path.includes("/settings")) return "settings";
-  return "dashboard";
-}
+import { inferDiagnosticCategoryFromPath } from "@/lib/diagnostic-category";
 
 export function resolveApiError(
   data: { error?: string; code?: string },
@@ -106,15 +97,13 @@ export function useFlashMessage() {
       else if (data.error || data.code) {
         const text = resolveApiError(data, d.flash);
         setFlash({ type: "error", text });
-        const skipClientDiagnostic =
-          data.diagnosticLogged ||
-          (status !== undefined && status < 500) ||
-          (data.code !== undefined && data.code !== null && data.code !== "");
-        if (!skipClientDiagnostic) {
+        if (shouldReportClientApiError(data, status)) {
           reportClientDiagnostic({
             severity: "ERROR",
             source: "client_api",
-            category: diagnosticCategoryFromPath(),
+            category: inferDiagnosticCategoryFromPath(
+              typeof window !== "undefined" ? window.location.pathname : "",
+            ),
             message: text,
             errorCode: data.code ?? null,
             context: {

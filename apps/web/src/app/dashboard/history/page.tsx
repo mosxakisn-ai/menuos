@@ -19,7 +19,7 @@ export default async function HistoryPage() {
   });
 
   return (
-    <DashboardPage>
+    <DashboardPage wide>
       <LocalizedDashboardPageHeader page="history" />
       <PassSignalHistoryPanel venues={venues} />
     </DashboardPage>

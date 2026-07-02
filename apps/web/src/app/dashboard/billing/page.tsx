@@ -34,7 +34,7 @@ export default async function BillingPage({ searchParams: _searchParams }: Props
   const showInactive = !hasActiveSubscription;
 
   return (
-    <DashboardPage>
+    <DashboardPage wide>
       <LocalizedDashboardPageHeader page="billing" />
 
       <SubscriptionInactiveBanner

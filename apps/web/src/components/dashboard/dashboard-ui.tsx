@@ -113,11 +113,12 @@ export function DashboardCountBadge({
   className?: string;
 }) {
   if (count <= 0) return null;
-  const label = count > 9 ? "9+" : String(count);
+  const label = count > 99 ? "99+" : String(count);
   return (
     <span
       className={cn(
-        "inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold leading-none text-amber-950 shadow-sm",
+        "inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-bold leading-none text-amber-950 shadow-sm",
+        count >= 10 && "min-w-[22px] text-[9px]",
         className,
       )}
     >

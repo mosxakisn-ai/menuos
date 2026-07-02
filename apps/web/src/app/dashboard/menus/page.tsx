@@ -26,7 +26,7 @@ export default async function MenusPage({ searchParams }: Props) {
   });
 
   return (
-    <DashboardPage>
+    <DashboardPage wide>
       <LocalizedDashboardPageHeader page="menus" />
       <Suspense fallback={null}>
         <MenuEditor

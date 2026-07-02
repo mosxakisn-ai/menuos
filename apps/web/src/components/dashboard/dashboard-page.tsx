@@ -16,10 +16,11 @@ export const dashboardFormActionsClass = "flex flex-wrap items-center gap-3 pt-1
 export function DashboardPage({
   children,
   className,
-  wide,
+  wide = true,
 }: {
   children: React.ReactNode;
   className?: string;
+  /** @default true — matches settings / layout width */
   wide?: boolean;
 }) {
   return (

@@ -3,16 +3,7 @@
 import { useEffect } from "react";
 import { reportClientDiagnostic } from "@/lib/report-client-diagnostic";
 
-function categoryFromPath(pathname: string): string {
-  if (pathname.includes("/menus/import")) return "pdf_import";
-  if (pathname.includes("/menus")) return "catalog";
-  if (pathname.includes("/billing")) return "billing";
-  if (pathname.includes("/qr")) return "qr";
-  if (pathname.includes("/waiter")) return "waiter";
-  if (pathname.includes("/settings")) return "settings";
-  if (pathname.includes("/dashboard")) return "dashboard";
-  return "unknown";
-}
+import { inferDiagnosticCategoryFromPath } from "@/lib/diagnostic-category";
 
 /** Captures dashboard JS errors silently for MenuOS Ops Help Desk. */
 export function DashboardDiagnosticsReporter() {
@@ -21,7 +12,7 @@ export function DashboardDiagnosticsReporter() {
       reportClientDiagnostic({
         severity: "ERROR",
         source: "client",
-        category: categoryFromPath(window.location.pathname),
+        category: inferDiagnosticCategoryFromPath(window.location.pathname),
         message: event.message || "Unhandled error",
         stack: event.error?.stack ?? null,
         context: {
@@ -43,7 +34,7 @@ export function DashboardDiagnosticsReporter() {
       reportClientDiagnostic({
         severity: "ERROR",
         source: "client",
-        category: categoryFromPath(window.location.pathname),
+        category: inferDiagnosticCategoryFromPath(window.location.pathname),
         message,
         stack: reason instanceof Error ? reason.stack ?? null : null,
         context: { url: window.location.href },

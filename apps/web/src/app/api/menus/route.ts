@@ -5,6 +5,7 @@ import { requireActiveSubscription } from "@/lib/api-auth";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 import { planLimitErrorResponse, assertCanAddMenuInTransaction, serializableTransaction } from "@/lib/plan-limits";
 import { getVenueForOrganization } from "@/lib/venue-access";
+import { logServerDiagnostic } from "@/lib/client-diagnostics-service";
 
 export async function GET(request: Request) {
   const auth = await requireActiveSubscription();
@@ -18,7 +19,17 @@ export async function GET(request: Request) {
 
   const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
   if (!venue) {
-    return NextResponse.json({ code: "not_found" }, { status: 404 });
+    logServerDiagnostic({
+      organizationId: auth.session!.organizationId,
+      userId: auth.session!.userId,
+      userEmail: auth.session!.email,
+      source: "server",
+      category: "catalog",
+      message: `Κατάστημα δεν βρέθηκε για φόρτωση καταλόγου (${venueId}).`,
+      errorCode: "catalog_venue_not_found",
+      context: { venueId },
+    });
+    return NextResponse.json({ code: "not_found", diagnosticLogged: true }, { status: 404 });
   }
 
   const menus = await prisma.menu.findMany({

@@ -40,7 +40,7 @@ export default async function QrPage({ searchParams }: Props) {
   const venueList = venues.map(({ id, name, slug }) => ({ id, name, slug }));
 
   return (
-    <DashboardPage>
+    <DashboardPage wide>
       <MarkQrOnboarding />
       <LocalizedDashboardPageHeader page="qr" />
       <VenueSpotsQrList venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />

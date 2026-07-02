@@ -137,7 +137,7 @@ export function MenuEditor({
           return list[0]?.id ?? "";
         });
       } else {
-        showFromResponse(data, false);
+        showFromResponse(data, false, res.status);
       }
     } finally {
       setLoading(false);

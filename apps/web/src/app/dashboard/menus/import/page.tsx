@@ -34,7 +34,7 @@ export default async function MenuImportPage({ searchParams }: Props) {
   });
 
   return (
-    <DashboardPage>
+    <DashboardPage wide>
       <Suspense fallback={null}>
         <MenuImportPageIntro />
       </Suspense>
