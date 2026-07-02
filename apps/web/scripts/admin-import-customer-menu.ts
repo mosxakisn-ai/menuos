@@ -12,10 +12,13 @@
 import { readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { prisma } from "@menuos/db";
-import { buildMenuNameTranslations, parseMenuTextFromPdf, resetMenuPdfParserIds } from "@menuos/shared";
+import { buildMenuNameTranslations } from "@menuos/shared";
 import { extractTextFromPdfBuffer } from "@/lib/pdf-extract";
+import { finalizePdfImportPipeline } from "@/lib/pdf-import-pipeline";
+import { enhancePdfImportWithVision } from "@/lib/pdf-import-vision";
 import { isOcrSpaceConfigured, ocrImageBuffer } from "@/lib/ocr-space";
 import { renderPdfPageToJpeg } from "@/lib/pdf-page-render";
+import { isPdfVisionConfigured } from "@/lib/pdf-vision-gemini";
 import {
   classifyPdfImportPage,
   ensureAnalyzablePageSelection,
@@ -54,20 +57,23 @@ async function extractPdfForImport(buffer: Buffer, fileName: string) {
     kind: ReturnType<typeof classifyPdfImportPage>["kind"];
     selected: boolean;
     text: string;
+    usedOcr: boolean;
   }> = [];
 
   for (let p = 1; p <= totalPages; p += 1) {
     const embedded = await extractTextFromPdfBuffer(buffer, [p]);
     const { kind, selected } = classifyPdfImportPage(embedded.length, p, totalPages);
     let text = embedded;
+    let usedOcr = false;
     if (selected && text.length < MIN_TEXT_CHARS) {
       if (!isOcrSpaceConfigured()) {
         throw new Error("OCR_SPACE_API_KEY required for scanned PDF");
       }
       const jpeg = await renderPdfPageToJpeg(buffer, p);
       text = await ocrImageBuffer(jpeg, `${fileName}-p${p}.jpg`);
+      usedOcr = true;
     }
-    classified.push({ page: p, kind, selected, text });
+    classified.push({ page: p, kind, selected, text, usedOcr });
   }
 
   const pages = ensureAnalyzablePageSelection(selectMenuImportPages(classified));
@@ -76,9 +82,20 @@ async function extractPdfForImport(buffer: Buffer, fileName: string) {
     throw new Error("No text extracted from selected pages");
   }
 
+  const ocrPageNumbers = withText.filter((p) => p.usedOcr).map((p) => p.page);
+  const ocrPages = ocrPageNumbers.length;
+  const digitalPages = withText.filter((p) => !p.usedOcr).length;
   const merged = withText.map((p) => p.text.trim()).join("\n\n");
-  resetMenuPdfParserIds();
-  return parseMenuTextFromPdf(merged, fileName);
+
+  const rules = finalizePdfImportPipeline([{ name: fileName, text: merged }], {
+    digitalPages,
+    ocrPages,
+  });
+
+  const fileContexts =
+    ocrPageNumbers.length > 0 ? [{ name: fileName, buffer, ocrPageNumbers }] : [];
+
+  return enhancePdfImportWithVision(rules, fileContexts);
 }
 
 async function main() {
@@ -150,8 +167,12 @@ async function main() {
   const fileName = basename(pdfPath);
   console.log(`\nParsing ${fileName} (${Math.round(buffer.length / 1024)} KB)...`);
   console.log(`OCR: ${isOcrSpaceConfigured() ? "yes" : "NO"}`);
+  console.log(`Vision: ${isPdfVisionConfigured() ? "yes" : "NO"}`);
 
   const draft = await extractPdfForImport(buffer, fileName);
+  console.log(
+    `Pipeline: ${draft.extraction.path}${draft.extraction.visionUsed ? " (Vision AI)" : ""}`,
+  );
   const selectedCategories = draft.categories.filter((c) => c.selected !== false);
   const selectedItems = selectedCategories.flatMap((c) => c.items.filter((i) => i.selected !== false));
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Link2, RefreshCw } from "lucide-react";
+import { Check, Copy, ExternalLink, Link2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { dashboardTextActionClass } from "@/components/dashboard/dashboard-action-button";
@@ -82,7 +82,7 @@ export function WaiterShareLink({
               <p className="mt-2 text-xs text-slate-500">{w.sharePerDevice}</p>
             </div>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[280px]">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[280px]">
             <input
               type="text"
               readOnly
@@ -91,14 +91,25 @@ export function WaiterShareLink({
               className="w-full rounded-button border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
               aria-label={w.shareTitle}
             />
-            <button
-              type="button"
-              onClick={() => void copy()}
-              className={`inline-flex items-center justify-center gap-2 ${buttonClass("primary", "sm")}`}
-            >
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {copied ? w.copied : w.copyLink}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex flex-1 items-center justify-center gap-2 sm:flex-none ${buttonClass("primary", "sm")}`}
+              >
+                <ExternalLink className="h-4 w-4" />
+                {w.viewLink}
+              </a>
+              <button
+                type="button"
+                onClick={() => void copy()}
+                className={`inline-flex flex-1 items-center justify-center gap-2 sm:flex-none ${buttonClass("secondary", "sm")}`}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? w.copied : w.copyLink}
+              </button>
+            </div>
           </div>
         </div>
       </Card>

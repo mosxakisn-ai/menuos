@@ -25,6 +25,8 @@ export * from "./item-labels";
 export * from "./menu-languages";
 export * from "./menu-auto-translate";
 export * from "./menu-pdf-parser";
+export * from "./menu-import-document";
+export * from "./menu-pdf-parse-quality";
 export * from "./demo-venue";
 export * from "./onboarding-starter-data";
 export * from "./menu-cart";

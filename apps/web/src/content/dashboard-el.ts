@@ -123,6 +123,16 @@ export const DASHBOARD_EL = {
       issuesTitle: "Προβλήματα & σημειώσεις",
       issuesNone: "Δεν βρήκαμε σοβαρά προβλήματα — έλεγξε ονόματα και τιμές πριν την εισαγωγή.",
       ocrBadge: (n: number) => (n === 1 ? "1 σελίδα OCR" : `${n} σελίδες OCR`),
+      extractionPath: {
+        digital: "Digital PDF",
+        ocr: "OCR (σάρωση)",
+        hybrid: "Hybrid (digital + OCR)",
+        vision: "Vision AI",
+      },
+      visionUsedBadge: (n: number) =>
+        n === 1 ? "1 σελίδα Vision AI" : `${n} σελίδες Vision AI`,
+      visionHint:
+        "Το layout φαίνεται πολύπλοκο — έλεγξε προσεκτικά. Βάλε GEMINI_API_KEY για αυτόματη ανάλυση εικόνας.",
       nextStepsTitle: "Τι κάνεις τώρα",
       nextSteps: [
         "Ξετικίνα κατηγορίες ή είδη που δεν θέλεις να μπουν.",
@@ -329,6 +339,7 @@ export const DASHBOARD_EL = {
     rotating: "Αλλαγή...",
     rotateFailed: "Αποτυχία αλλαγής κωδικού.",
     rotateSuccess: "Ο κωδικός άλλαξε. Στείλε το νέο link στο προσωπικό.",
+    viewLink: "Προβολή",
     copyLink: "Αντιγραφή link",
     copied: "Αντιγράφηκε!",
     newItems: "Νέα είδη",
@@ -592,6 +603,7 @@ export const DASHBOARD_EL = {
         colLink: "Σύνδεσμος σερβιτόρου",
         colLinkHint: "Στείλτε το στο κινητό του — άνοιγμα χωρίς login.",
         colActions: "",
+        viewLink: "Προβολή",
         copyLink: "Αντιγραφή",
         copied: "Αντιγράφηκε!",
         rotateLink: "Νέο link",

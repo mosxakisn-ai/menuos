@@ -16,12 +16,13 @@ alwaysApply: true
 **Multi-tenant:** Every query scoped by `organizationId`. Each business has venues → menus → categories → items.
 
 **Hard rules:**
-- No AI anywhere. OCR = Tesseract + rule-based parsing only (Phase 3).
+- **No general AI** — no chatbot, no auto menu suggestions, no AI-generated copy in product flows.
+- **PDF import (Pro): hybrid pipeline** — digital text + OCR.space + rule parser + **Gemini Vision** for scanned/complex layouts. Always review before DB import. See `docs/PDF-IMPORT.md`.
 - Call waiter = WebSocket + Web Push (PWA). No native iOS/Android app.
 - Premium UI: Blue/cyan gradient (#2563EB / #06B6D4), Manrope, QR+M logo. Tagline: Scan. Browse. Enjoy.
 - **Never touch MatchWork or other servers** without explicit user approval. MenuOS deploys to `/opt/menuos` only.
 - Local development first; production deploy only when user approves.
 
-**Stack:** Next.js 15 (App Router) + TypeScript + Tailwind + shadcn/ui · PostgreSQL 16 + Prisma · NextAuth v5 · Socket.io · Cloudflare R2 · Stripe (Phase 2) · Python FastAPI OCR service (Phase 3).
+**Stack:** Next.js 15 (App Router) + TypeScript + Tailwind + shadcn/ui · PostgreSQL 16 + Prisma · NextAuth v5 · Socket.io · Cloudflare R2 · Stripe (Phase 2) · Gemini Vision (PDF import Pro) · OCR.space (PDF scans).
 
-**Full docs:** `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `docs/SEO-STRATEGY.md`, `docs/DESIGN-SYSTEM.md`, `docs/DOMAIN.md`
+**Full docs:** `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `docs/PDF-IMPORT.md`, `docs/SEO-STRATEGY.md`, `docs/DESIGN-SYSTEM.md`, `docs/DOMAIN.md`

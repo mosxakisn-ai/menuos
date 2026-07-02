@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   formatStaffStationsForLang,
@@ -140,6 +140,7 @@ function StaffMemberLinkActions({
   venueSlug: string;
   member: StaffMember;
   labels: {
+    viewLink: string;
     copyLink: string;
     copied: string;
     rotateLink: string;
@@ -196,11 +197,20 @@ function StaffMemberLinkActions({
         aria-label={labels.copyLink}
       />
       <div className="flex flex-wrap items-center gap-2">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          {labels.viewLink}
+        </a>
         <button
           type="button"
           disabled={busy}
           onClick={() => void copy()}
-          className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
+          className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
         >
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? labels.copied : labels.copyLink}
@@ -354,6 +364,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   }
 
   const linkLabels = {
+    viewLink: S.viewLink,
     copyLink: S.copyLink,
     copied: S.copied,
     rotateLink: S.rotateLink,

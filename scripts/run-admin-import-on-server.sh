@@ -20,6 +20,7 @@ fi
 
 DB_URL="$(docker compose -f docker-compose.prod.yml exec -T menuos-web printenv DATABASE_URL)"
 OCR_KEY="$(docker compose -f docker-compose.prod.yml exec -T menuos-web printenv OCR_SPACE_API_KEY || true)"
+GEMINI_KEY="$(docker compose -f docker-compose.prod.yml exec -T menuos-web printenv GEMINI_API_KEY || true)"
 if [ -z "$DB_URL" ]; then
   echo "ERROR: could not read DATABASE_URL from menuos-web"
   exit 1
@@ -34,6 +35,7 @@ echo "    PDF: $PDF"
 docker run --rm --network menuos_default \
   -e DATABASE_URL="$DB_URL" \
   -e OCR_SPACE_API_KEY="$OCR_KEY" \
+  -e GEMINI_API_KEY="$GEMINI_KEY" \
   -e OCR_SPACE_LANGUAGE="${OCR_SPACE_LANGUAGE:-ell}" \
   -v "$ROOT:/app" \
   -w /app \

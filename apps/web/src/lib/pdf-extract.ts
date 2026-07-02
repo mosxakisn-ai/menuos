@@ -1,7 +1,12 @@
-import type { MenuPdfParseResult } from "@menuos/shared";
 import { getDashboardCopy, type DashboardLang } from "@/content/dashboard-i18n";
 import { isOcrSpaceConfigured, ocrImageBuffer, OcrSpaceError } from "@/lib/ocr-space";
 import { renderPdfPageToJpeg } from "@/lib/pdf-page-render";
+import {
+  finalizePdfImportPipeline,
+  type PdfImportExtractionMeta,
+  type PdfImportPipelineResult,
+} from "@/lib/pdf-import-pipeline";
+import { enhancePdfImportWithVision, type PdfImportFileContext } from "@/lib/pdf-import-vision";
 
 const MAX_FILES = 10;
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -139,24 +144,32 @@ async function extractSelectedPagesText(
   buffer: Buffer,
   fileName: string,
   selectedPages?: number[],
-): Promise<{ text: string; ocrPages: number }> {
+): Promise<{ text: string; ocrPages: number; digitalPages: number; ocrPageNumbers: number[] }> {
   if (!selectedPages || selectedPages.length === 0) {
     const text = await extractTextFromPdfBuffer(buffer);
-    return { text, ocrPages: 0 };
+    const pageCount = text.length >= MIN_TEXT_CHARS ? 1 : 0;
+    return { text, ocrPages: 0, digitalPages: pageCount, ocrPageNumbers: [] };
   }
 
   const parts: string[] = [];
   let ocrPages = 0;
+  let digitalPages = 0;
+  const ocrPageNumbers: number[] = [];
 
   for (const pageNum of selectedPages) {
     const { text, usedOcr } = await extractTextForPage(buffer, pageNum, fileName);
-    if (usedOcr) ocrPages += 1;
+    if (usedOcr) {
+      ocrPages += 1;
+      ocrPageNumbers.push(pageNum);
+    } else if (text.trim().length >= MIN_TEXT_CHARS) {
+      digitalPages += 1;
+    }
     if (text.trim().length >= MIN_TEXT_CHARS) {
       parts.push(text.trim());
     }
   }
 
-  return { text: parts.join("\n\n"), ocrPages };
+  return { text: parts.join("\n\n"), ocrPages, digitalPages, ocrPageNumbers };
 }
 
 export function readPdfFilesFromFormData(formData: FormData): File[] {
@@ -206,11 +219,12 @@ export async function parseUploadedPdfFiles(
   files: File[],
   pageSelections?: PageSelectionMap,
   lang: DashboardLang = "EN",
-): Promise<MenuPdfParseResult & { ocrPagesUsed?: number }> {
+): Promise<PdfImportPipelineResult> {
   const P = getDashboardCopy(lang).api.pdf;
-  const { parseMultipleMenuPdfTexts } = await import("@menuos/shared");
   const extracted: { name: string; text: string }[] = [];
+  const fileContexts: PdfImportFileContext[] = [];
   let totalOcrPages = 0;
+  let totalDigitalPages = 0;
 
   for (let fileIndex = 0; fileIndex < files.length; fileIndex += 1) {
     const file = files[fileIndex]!;
@@ -222,11 +236,15 @@ export async function parseUploadedPdfFiles(
     const buffer = Buffer.from(await file.arrayBuffer());
     let text: string;
     let ocrPages = 0;
+    let digitalPages = 0;
+    let ocrPageNumbers: number[] = [];
 
     try {
       const result = await extractSelectedPagesText(buffer, file.name, selectedPages);
       text = result.text;
       ocrPages = result.ocrPages;
+      digitalPages = result.digitalPages;
+      ocrPageNumbers = result.ocrPageNumbers;
     } catch (err) {
       console.error("pdf-extract", file.name, err);
       const detail = err instanceof Error ? err.message : String(err);
@@ -237,6 +255,7 @@ export async function parseUploadedPdfFiles(
     }
 
     totalOcrPages += ocrPages;
+    totalDigitalPages += digitalPages;
 
     if (text.length < MIN_TEXT_CHARS) {
       const pageHint = selectedPages?.length ? P.pagesHint(selectedPages) : "";
@@ -245,6 +264,9 @@ export async function parseUploadedPdfFiles(
     }
 
     extracted.push({ name: file.name, text });
+    if (ocrPageNumbers.length > 0) {
+      fileContexts.push({ name: file.name, buffer, ocrPageNumbers });
+    }
   }
 
   if (extracted.length === 0) {
@@ -253,8 +275,14 @@ export async function parseUploadedPdfFiles(
     );
   }
 
-  const parsed = parseMultipleMenuPdfTexts(extracted);
-  return { ...parsed, ocrPagesUsed: totalOcrPages };
+  const rulesResult = finalizePdfImportPipeline(extracted, {
+    digitalPages: totalDigitalPages,
+    ocrPages: totalOcrPages,
+  });
+
+  return enhancePdfImportWithVision(rulesResult, fileContexts);
 }
+
+export type { PdfImportExtractionMeta, PdfImportPipelineResult };
 
 export { OcrSpaceError };

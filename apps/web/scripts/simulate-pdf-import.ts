@@ -8,8 +8,8 @@
 import { readFileSync, existsSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseMenuTextFromPdf, resetMenuPdfParserIds } from "@menuos/shared";
 import { extractTextFromPdfBuffer } from "@/lib/pdf-extract";
+import { finalizePdfImportPipeline } from "@/lib/pdf-import-pipeline";
 import { isOcrSpaceConfigured } from "@/lib/ocr-space";
 import { renderPdfPageToJpeg } from "@/lib/pdf-page-render";
 import {
@@ -129,9 +129,17 @@ async function main() {
 
   console.log("▶ Βήμα 3/4 — Parsing κατηγοριών & ειδών...");
   const mergedText = withText.map((p) => p.text).join("\n\n");
-  resetMenuPdfParserIds();
-  const result = parseMenuTextFromPdf(mergedText, fileName);
+  const ocrPageCount = pages.filter((p) => p.ocrUsed).length;
+  const digitalPageCount = withText.filter((p) => !p.ocrUsed).length;
+  const result = finalizePdfImportPipeline([{ name: fileName, text: mergedText }], {
+    digitalPages: digitalPageCount,
+    ocrPages: ocrPageCount,
+  });
 
+  console.log(`   Διαδρομή: ${result.extraction.path} (confidence ${result.extraction.confidence})`);
+  if (result.extraction.suggestsVision) {
+    console.log("   ⚠ Πολύπλοκο layout — προτείνεται έλεγχος ή μελλοντική vision ανάλυση");
+  }
   console.log(`   Κατηγορίες: ${result.stats.categoriesFound}`);
   console.log(`   Είδη: ${result.stats.itemsFound}`);
   console.log(`   Με τιμή: ${result.stats.itemsWithPrice}`);

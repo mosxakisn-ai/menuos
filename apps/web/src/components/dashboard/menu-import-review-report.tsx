@@ -48,6 +48,7 @@ export function MenuImportReviewReport({
   report,
   copy,
   ocrPagesUsed,
+  extraction,
 }: {
   report: MenuImportReviewReport;
   copy: {
@@ -65,10 +66,25 @@ export function MenuImportReviewReport({
     issuesTitle: string;
     issuesNone: string;
     ocrBadge: (n: number) => string;
+      extractionPath: {
+        digital: string;
+        ocr: string;
+        hybrid: string;
+        vision: string;
+      };
+      visionUsedBadge: (n: number) => string;
+      visionHint: string;
     nextStepsTitle: string;
     nextSteps: string[];
   };
   ocrPagesUsed?: number;
+  extraction?: {
+    path: "digital" | "ocr" | "hybrid" | "vision";
+    confidence: number;
+    suggestsVision: boolean;
+    visionUsed?: boolean;
+    visionPages?: number;
+  };
 }) {
   const { totals, issues, canImport } = report;
   const actionableIssues = issues.filter((i) => i.severity !== "info");
@@ -84,12 +100,27 @@ export function MenuImportReviewReport({
               </p>
               <h3 className="mt-1 font-serif text-xl font-bold text-brand-navy">{copy.reportSubtitle}</h3>
             </div>
+            {extraction ? (
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                {copy.extractionPath[extraction.path]}
+              </span>
+            ) : null}
+            {extraction?.visionUsed && extraction.visionPages ? (
+              <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-800">
+                {copy.visionUsedBadge(extraction.visionPages)}
+              </span>
+            ) : null}
             {ocrPagesUsed && ocrPagesUsed > 0 ? (
               <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-800">
                 {copy.ocrBadge(ocrPagesUsed)}
               </span>
             ) : null}
           </div>
+          {extraction?.suggestsVision && !extraction.visionUsed ? (
+            <p className="mt-3 rounded-card border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              {copy.visionHint}
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4">

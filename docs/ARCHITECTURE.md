@@ -92,17 +92,23 @@ Upload (dashboard) → API → Sharp (resize + WebP) → R2 bucket → store URL
 Public menu → R2 CDN URL → lazy load + blur placeholder
 ```
 
-## OCR Pipeline (Phase 3)
+## OCR / PDF Import
+
+> **Full spec, benchmarks, roadmap:** [`docs/PDF-IMPORT.md`](./PDF-IMPORT.md)
+
+Current implementation (Node.js, not separate Python container yet):
 
 ```
-Upload PDF (dashboard) → API → Python OCR service
-  → pdf2image / PyMuPDF extract pages
-  → Tesseract OCR per page
-  → Rule-based parser (regex + heuristics: price patterns, category headers)
-  → Return structured draft → dashboard review UI → save to DB
+Upload PDF (dashboard) → classify pages (digital / scan / cover)
+  → digital: pdf-parse embedded text
+  → scan: render page → JPEG → OCR.space
+  → rule-based parser + category normalize
+  → MenuImportDocument JSON → review UI → save to DB
 ```
 
-No LLM, no cloud AI APIs.
+Legacy Phase 3 plan (Tesseract Python service) — optional future; see PDF-IMPORT roadmap.
+
+No LLM in production yet. Vision path documented for Pro PDF when policy allows.
 
 ## Docker Compose (production)
 

@@ -15,6 +15,7 @@ Premium SaaS QR menu platform for restaurants, hotels, and hospitality venues.
 | [docs/DOMAIN.md](docs/DOMAIN.md) | menuos.gr URLs, DNS, env vars, QR links |
 | [docs/STRIPE-MENUOS.md](docs/STRIPE-MENUOS.md) | Stripe setup, `app=menuos` metadata, billing |
 | [docs/EMAIL-MENUOS.md](docs/EMAIL-MENUOS.md) | SMTP (admin@s1cloud.b-os.gr), admin alerts |
+| [docs/PDF-IMPORT.md](docs/PDF-IMPORT.md) | **PDF → κατάλογος:** hybrid pipeline, schema, roadmap 100% |
 
 ## Cursor Rules
 
@@ -23,7 +24,7 @@ Premium SaaS QR menu platform for restaurants, hotels, and hospitality venues.
 ## Key Constraints
 
 - **Multi-tenant SaaS** — signup, subscription, dashboard, public QR menu
-- **No AI** — OCR via Tesseract + rules only
+- **No general AI** — chatbot/suggestions όχι · **PDF import (Pro): hybrid + Gemini Vision** για scans
 - **No native app** — web + PWA + Web Push
 - **Never touch MatchWork server** without explicit approval
 - **Premium UI** — Deep Blue `#1A2A6C` + Silver `#C0C0C0`

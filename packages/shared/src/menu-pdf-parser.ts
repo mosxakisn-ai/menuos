@@ -249,6 +249,80 @@ function isTitleCaseSection(line: string): boolean {
   return words.every((w) => /^[A-ZΑ-ΩΆΈΉΊΌΎΏ]/.test(w));
 }
 
+const COMMON_EN_SECTION =
+  /^(pasta|soups?|starters?|appetizers?|mezedes|mezze|mains?|desserts?|salads?|beers?|wines?|fish|meat|seafood|breakfast|lunch|dinner|sides?|snacks?|grills?|vegetarian|vegan|shellfish|pizza|sandwiches?|ostracoid|shell\s*fish)$/i;
+
+function normalizeCategoryKey(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function categoriesShouldMerge(a: ParsedMenuCategoryDraft, b: ParsedMenuCategoryDraft): boolean {
+  const keyA = normalizeCategoryKey(a.nameGr);
+  const keyB = normalizeCategoryKey(b.nameGr);
+  if (keyA === keyB) return true;
+  if (a.nameEn && normalizeCategoryKey(a.nameEn) === keyB) return true;
+  if (b.nameEn && normalizeCategoryKey(b.nameEn) === keyA) return true;
+  if (a.nameEn && b.nameEn && normalizeCategoryKey(a.nameEn) === normalizeCategoryKey(b.nameEn)) {
+    return true;
+  }
+  return false;
+}
+
+function isOrphanEnglishSectionHeader(cat: ParsedMenuCategoryDraft): boolean {
+  if (cat.items.length > 0) return false;
+  const name = cat.nameGr.trim();
+  if (containsGreek(name)) return false;
+  if (name.length > 24) return false;
+  return COMMON_EN_SECTION.test(name) || isCapsCategoryHeader(name);
+}
+
+/** Merge duplicate section headers and drop OCR-only empty English titles. */
+export function normalizeParsedMenuCategories(
+  categories: ParsedMenuCategoryDraft[],
+): ParsedMenuCategoryDraft[] {
+  const filtered = categories.filter((c) => !isOrphanEnglishSectionHeader(c));
+  const merged: ParsedMenuCategoryDraft[] = [];
+
+  for (const cat of filtered) {
+    const existing = merged.find((m) => categoriesShouldMerge(m, cat));
+    if (existing) {
+      existing.items.push(...cat.items);
+      existing.warnings.push(...cat.warnings.filter((w) => !existing.warnings.includes(w)));
+      existing.selected = existing.selected || cat.selected;
+      if (!existing.nameEn && cat.nameEn) existing.nameEn = cat.nameEn;
+      if (!existing.nameDe && cat.nameDe) existing.nameDe = cat.nameDe;
+      if (!existing.nameFr && cat.nameFr) existing.nameFr = cat.nameFr;
+      continue;
+    }
+    merged.push({
+      ...cat,
+      items: [...cat.items],
+      warnings: [...cat.warnings],
+    });
+  }
+
+  return merged.filter((c) => c.items.length > 0);
+}
+
+function isRedundantEnglishSectionHeader(
+  line: string,
+  currentCategory: ParsedMenuCategoryDraft | null,
+): boolean {
+  if (!currentCategory) return false;
+  const stripped = categoryNameFromLine(line);
+  if (containsGreek(stripped)) return false;
+  if (!COMMON_EN_SECTION.test(stripped) && !isCapsCategoryHeader(stripped)) return false;
+
+  const lineKey = normalizeCategoryKey(stripped);
+  const currentKey = normalizeCategoryKey(currentCategory.nameGr);
+  if (lineKey === currentKey) return true;
+
+  const currentEn = currentCategory.nameEn?.trim().toLowerCase();
+  if (currentEn && currentEn === stripped.toLowerCase()) return true;
+
+  return false;
+}
+
 function looksLikeCategory(line: string, nextLineHasPrice: boolean): boolean {
   if (isCapsCategoryHeader(line)) return true;
   if (line.length < 2 || line.length > 80) return false;
@@ -502,6 +576,7 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
     if (isMenuNoteLine(line)) continue;
 
     if (looksLikeCategory(line, nextHasPrice)) {
+      if (isRedundantEnglishSectionHeader(line, currentCategory)) continue;
       ensureCategory(line);
       continue;
     }
@@ -547,19 +622,17 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
     }
   }
 
-  for (const cat of categories) {
+  const normalizedCategories = normalizeParsedMenuCategories(categories);
+
+  for (const cat of normalizedCategories) {
     const names = cat.items.map((i) => i.nameGr.toLowerCase());
     const dupes = names.filter((n, idx) => names.indexOf(n) !== idx);
     if (dupes.length > 0) {
       cat.warnings.push("Υπάρχουν διπλότυπα είδη — έλεγξέ τα.");
     }
-    if (cat.items.length === 0) {
-      cat.warnings.push("Η κατηγορία δεν έχει είδη.");
-      cat.selected = false;
-    }
   }
 
-  if (categories.length === 0) {
+  if (normalizedCategories.length === 0) {
     globalWarnings.push(
       "Δεν βρέθηκαν κατηγορίες/είδη. Αν το PDF είναι σαρωμένη εικόνα, χρειάζεται OCR ή χειροκίνητη εισαγωγή.",
     );
@@ -575,12 +648,12 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
   }
 
   return {
-    categories,
+    categories: normalizedCategories,
     warnings: globalWarnings,
     stats: {
       filesProcessed: 1,
       totalLines: rawLines.length,
-      categoriesFound: categories.length,
+      categoriesFound: normalizedCategories.length,
       itemsFound,
       itemsWithPrice,
     },
@@ -624,5 +697,8 @@ export function parseMultipleMenuPdfTexts(
     }
     return parsed;
   });
-  return mergeMenuPdfParseResults(results);
+  const merged = mergeMenuPdfParseResults(results);
+  merged.categories = normalizeParsedMenuCategories(merged.categories);
+  merged.stats.categoriesFound = merged.categories.length;
+  return merged;
 }

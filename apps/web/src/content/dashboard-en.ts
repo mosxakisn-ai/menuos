@@ -123,6 +123,15 @@ export const DASHBOARD_EN = {
       issuesTitle: "Issues & notes",
       issuesNone: "No major issues found — still check names and prices before importing.",
       ocrBadge: (n: number) => (n === 1 ? "1 OCR page" : `${n} OCR pages`),
+      extractionPath: {
+        digital: "Digital PDF",
+        ocr: "OCR (scan)",
+        hybrid: "Hybrid (digital + OCR)",
+        vision: "Vision AI",
+      },
+      visionUsedBadge: (n: number) => (n === 1 ? "1 Vision AI page" : `${n} Vision AI pages`),
+      visionHint:
+        "This layout looks complex — review carefully. Set GEMINI_API_KEY for automatic image analysis.",
       nextStepsTitle: "What to do now",
       nextSteps: [
         "Uncheck categories or items you do not want imported.",
@@ -324,6 +333,7 @@ export const DASHBOARD_EN = {
     rotating: "Changing...",
     rotateFailed: "Failed to change password.",
     rotateSuccess: "Password changed. Send the new link to staff.",
+    viewLink: "Preview",
     copyLink: "Copy link",
     copied: "Copied!",
     newItems: "New items",
@@ -585,6 +595,7 @@ export const DASHBOARD_EN = {
         colLink: "Waiter link",
         colLinkHint: "Send to their phone — opens without dashboard login.",
         colActions: "",
+        viewLink: "Preview",
         copyLink: "Copy",
         copied: "Copied!",
         rotateLink: "New link",

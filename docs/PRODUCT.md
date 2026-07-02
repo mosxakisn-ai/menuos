@@ -62,10 +62,13 @@ Login → dashboard → real-time waiter panel → mark handled / toggle availab
 - WebSocket gateway for notifications
 - JWT, RBAC, rate limiting, input validation (Zod)
 
-### OCR (Phase 3 — no AI)
-- PDF upload → Tesseract → rule-based parsing (categories, names, prices, descriptions)
-- Embedded PDF images → extract for manual assignment
-- Scanned PDF → text only; photos uploaded manually
+### OCR / PDF import
+
+> **Λεπτομέρειες, pipeline, roadmap:** [`docs/PDF-IMPORT.md`](./PDF-IMPORT.md)
+
+- PDF upload → hybrid extract (digital + OCR.space) → rule parser → **Gemini Vision** (OCR pages) → review → DB
+- Pro plan feature; scanned menus need `OCR_SPACE_API_KEY` + `GEMINI_API_KEY` for best results
+- Vision AI: **Pro PDF import only** — not used elsewhere in product
 
 ## Data Model (core)
 

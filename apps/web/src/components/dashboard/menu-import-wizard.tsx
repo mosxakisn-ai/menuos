@@ -128,7 +128,17 @@ export function MenuImportWizard({
   }, [initialPipeline]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [draft, setDraft] = useState<(MenuPdfParseResult & { ocrPagesUsed?: number }) | null>(null);
+  const [draft, setDraft] = useState<
+    | (MenuPdfParseResult & {
+        ocrPagesUsed?: number;
+        extraction?: {
+          path: "digital" | "ocr" | "hybrid";
+          confidence: number;
+          suggestsVision: boolean;
+        };
+      })
+    | null
+  >(null);
   const [hideEmptyCategories, setHideEmptyCategories] = useState(true);
   const [showIssuesOnly, setShowIssuesOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -339,7 +349,18 @@ export function MenuImportWizard({
 
       await new Promise((r) => setTimeout(r, 400));
 
-      setDraft(normalizeImportDraft(data as MenuPdfParseResult & { ocrPagesUsed?: number }));
+      setDraft(
+        normalizeImportDraft(
+          data as MenuPdfParseResult & {
+            ocrPagesUsed?: number;
+            extraction?: {
+              path: "digital" | "ocr" | "hybrid";
+              confidence: number;
+              suggestsVision: boolean;
+            };
+          },
+        ),
+      );
       setPhase("review");
       showFromResponse(data, true);
     } catch (err) {
@@ -683,6 +704,7 @@ export function MenuImportWizard({
           <MenuImportReviewReport
             report={reviewReport}
             ocrPagesUsed={draft.ocrPagesUsed}
+            extraction={draft.extraction}
             copy={{
               reportTitle: W.report.title,
               reportSubtitle: W.report.subtitle,
@@ -698,6 +720,9 @@ export function MenuImportWizard({
               issuesTitle: W.report.issuesTitle,
               issuesNone: W.report.issuesNone,
               ocrBadge: W.report.ocrBadge,
+              extractionPath: W.report.extractionPath,
+              visionUsedBadge: W.report.visionUsedBadge,
+              visionHint: W.report.visionHint,
               nextStepsTitle: W.report.nextStepsTitle,
               nextSteps: W.report.nextSteps,
             }}
