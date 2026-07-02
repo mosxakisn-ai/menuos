@@ -44,10 +44,15 @@ export async function POST(request: Request) {
   try {
     const pageSelections = parsePageSelectionMap(formData.get("pageSelections"));
     const forceVision = String(formData.get("forceVision") ?? "") === "1";
-    const result = await parseUploadedPdfFiles(files, pageSelections, lang, { forceVision });
+    const forceTranslate = String(formData.get("forceTranslate") ?? "") === "1";
+    const result = await parseUploadedPdfFiles(files, pageSelections, lang, {
+      forceVision,
+      forceTranslate,
+    });
     return NextResponse.json({
       ...result,
       visionAvailable: isPdfVisionConfigured(),
+      geminiAvailable: isPdfVisionConfigured(),
       menu: { id: menu.id, name: menu.name, venueName: menu.venue.name },
       message:
         result.stats.itemsFound > 0

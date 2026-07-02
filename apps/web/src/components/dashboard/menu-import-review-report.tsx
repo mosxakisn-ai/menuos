@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   FolderOpen,
   Info,
+  Languages,
   ListChecks,
   Sparkles,
 } from "lucide-react";
@@ -54,6 +55,9 @@ export function MenuImportReviewReport({
   visionAvailable,
   visionRetrying,
   onVisionRetry,
+  needsGreekTranslation,
+  translateRetrying,
+  onTranslateToGreek,
 }: {
   report: MenuImportReviewReport;
   copy: {
@@ -82,7 +86,11 @@ export function MenuImportReviewReport({
       visionHintUnavailable: string;
       visionRetryButton: string;
       visionRetrying: string;
-    nextStepsTitle: string;
+      translateHint: string;
+      translateHintUnavailable: string;
+      translateButton: string;
+      translateRetrying: string;
+      nextStepsTitle: string;
     nextSteps: string[];
   };
   ocrPagesUsed?: number;
@@ -96,6 +104,9 @@ export function MenuImportReviewReport({
   visionAvailable?: boolean;
   visionRetrying?: boolean;
   onVisionRetry?: () => void;
+  needsGreekTranslation?: boolean;
+  translateRetrying?: boolean;
+  onTranslateToGreek?: () => void;
 }) {
   const { totals, issues, canImport } = report;
   const actionableIssues = issues.filter((i) => i.severity !== "info");
@@ -141,6 +152,24 @@ export function MenuImportReviewReport({
                 >
                   <Sparkles className="mr-1.5 inline h-4 w-4" />
                   {visionRetrying ? copy.visionRetrying : copy.visionRetryButton}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          {needsGreekTranslation ? (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-card border border-sky-200 bg-sky-50 px-3 py-2.5">
+              <p className="text-sm text-sky-950">
+                {visionAvailable ? copy.translateHint : copy.translateHintUnavailable}
+              </p>
+              {visionAvailable && onTranslateToGreek ? (
+                <button
+                  type="button"
+                  onClick={onTranslateToGreek}
+                  disabled={translateRetrying}
+                  className={buttonClass("secondary", "sm")}
+                >
+                  <Languages className="mr-1.5 inline h-4 w-4" />
+                  {translateRetrying ? copy.translateRetrying : copy.translateButton}
                 </button>
               ) : null}
             </div>

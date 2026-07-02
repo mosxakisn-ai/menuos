@@ -31,7 +31,7 @@ import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
-import { confirmDestructive } from "@/lib/confirm-action";
+import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
 import {
   buildPageSelectionMap,
   loadAllPdfPagePreviews,
@@ -43,6 +43,7 @@ import {
 import {
   buildMenuImportReviewReport,
   countSelectedImport,
+  importDraftNeedsGreekTranslation,
   normalizeImportDraft,
   patchAllItems,
 } from "@/lib/menu-import-review";
@@ -52,6 +53,7 @@ import {
   buildMenusImportUrl,
   resolveMenuIdForVenue,
 } from "@/lib/menus-nav-url";
+import { useMenusNavUrlFill } from "@/lib/use-menus-nav-url-fill";
 
 type Venue = {
   id: string;
@@ -130,6 +132,7 @@ export function MenuImportWizard({
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [visionRetrying, setVisionRetrying] = useState(false);
+  const [translateRetrying, setTranslateRetrying] = useState(false);
   const [visionAvailable, setVisionAvailable] = useState(false);
   const [draft, setDraft] = useState<
     | (MenuPdfParseResult & {
@@ -163,6 +166,7 @@ export function MenuImportWizard({
     setShowIssuesOnly(false);
     setSearchQuery("");
     setVisionRetrying(false);
+    setTranslateRetrying(false);
   }, [initialPipeline]);
 
   useEffect(() => {
@@ -187,6 +191,8 @@ export function MenuImportWizard({
     router.replace(buildMenusImportUrl(next), { scroll: false });
   }
 
+  useMenusNavUrlFill("import", { venueId, menuId: menuId || undefined }, Boolean(venueId && menuId));
+
   async function selectMenu(nextMenuId: string) {
     if (nextMenuId === menuId) return;
     if (phase === "review" && draft) {
@@ -194,20 +200,18 @@ export function MenuImportWizard({
       if (!(await confirmDestructive(W.changeCatalogConfirm(targetName)))) return;
     }
     setMenuId(nextMenuId);
+    syncImportUrl({ venueId, menuId: nextMenuId });
   }
-
-  useEffect(() => {
-    if (!venueId || !menuId) return;
-    const venueParam = searchParams.get("venue");
-    const menuParam = searchParams.get("menu");
-    if (venueParam === venueId && menuParam === menuId) return;
-    syncImportUrl({ venueId, menuId });
-  }, [venueId, menuId, searchParams]);
 
   const selectedCounts = useMemo(() => {
     if (!draft) return { categories: 0, items: 0 };
     return countSelectedImport(draft);
   }, [draft]);
+
+  const needsGreekTranslation = useMemo(
+    () => (draft ? importDraftNeedsGreekTranslation(draft) : false),
+    [draft],
+  );
 
   const reviewReport = useMemo(() => {
     if (!draft) return null;
@@ -327,6 +331,8 @@ export function MenuImportWizard({
 
       if (typeof data.visionAvailable === "boolean") {
         setVisionAvailable(data.visionAvailable);
+      } else if (typeof data.geminiAvailable === "boolean") {
+        setVisionAvailable(data.geminiAvailable);
       }
 
       if (!res.ok) {
@@ -402,8 +408,20 @@ export function MenuImportWizard({
           },
         ),
       );
+      const parseMessage = typeof data.message === "string" ? data.message : undefined;
+      if (data.translationApplied && typeof data.translatedCount === "number" && data.translatedCount > 0) {
+        showFromResponse(
+          {
+            message: parseMessage
+              ? `${W.translateSuccess(data.translatedCount)} ${parseMessage}`
+              : W.translateSuccess(data.translatedCount),
+          },
+          true,
+        );
+      } else {
+        showFromResponse(data, true);
+      }
       setPhase("review");
-      showFromResponse(data, true);
     } catch (err) {
       console.error("import pipeline", err);
       if (options?.forceVision) {
@@ -463,6 +481,33 @@ export function MenuImportWizard({
   async function runVisionRetry() {
     if (!(await confirmDestructive(W.visionRetryConfirm))) return;
     await runAnalysis({ forceVision: true });
+  }
+
+  async function runGreekTranslation() {
+    if (!draft) return;
+    if (!(await confirmWarning(W.translateConfirm))) return;
+
+    setTranslateRetrying(true);
+    setFlash(null);
+    try {
+      const res = await fetch("/api/menu-import/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draft }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showFromResponse(data, false, res.status);
+        return;
+      }
+      setDraft(normalizeImportDraft(data.draft as MenuPdfParseResult));
+      showFromResponse({ message: data.message as string }, true);
+    } catch (err) {
+      console.error("import translate", err);
+      setFlash({ type: "error", text: W.parseFailed });
+    } finally {
+      setTranslateRetrying(false);
+    }
   }
 
   async function applyImport() {
@@ -761,6 +806,9 @@ export function MenuImportWizard({
             visionAvailable={visionAvailable}
             visionRetrying={visionRetrying}
             onVisionRetry={() => void runVisionRetry()}
+            needsGreekTranslation={needsGreekTranslation}
+            translateRetrying={translateRetrying}
+            onTranslateToGreek={() => void runGreekTranslation()}
             copy={{
               reportTitle: W.report.title,
               reportSubtitle: W.report.subtitle,
@@ -782,6 +830,10 @@ export function MenuImportWizard({
               visionHintUnavailable: W.report.visionHintUnavailable,
               visionRetryButton: W.report.visionRetryButton,
               visionRetrying: W.report.visionRetrying,
+              translateHint: W.report.translateHint,
+              translateHintUnavailable: W.report.translateHintUnavailable,
+              translateButton: W.report.translateButton,
+              translateRetrying: W.report.translateRetrying,
               nextStepsTitle: W.report.nextStepsTitle,
               nextSteps: W.report.nextSteps,
             }}

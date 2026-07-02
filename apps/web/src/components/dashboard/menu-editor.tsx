@@ -22,6 +22,7 @@ import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { confirmDestructive } from "@/lib/confirm-action";
 import { buildMenusImportUrl, buildMenusPageUrl, resolveMenuIdForVenue } from "@/lib/menus-nav-url";
+import { useMenusNavUrlFill } from "@/lib/use-menus-nav-url-fill";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { cn } from "@/lib/utils";
 
@@ -156,20 +157,18 @@ export function MenuEditor({
     setActiveMenuId((prev) => (prev === resolved ? prev : resolved));
   }, [searchParams, menus]);
 
-  useEffect(() => {
-    if (!venueId || !activeMenuId) return;
-    const venueParam = searchParams.get("venue");
-    const menuParam = searchParams.get("menu");
-    if (venueParam === venueId && menuParam === activeMenuId) return;
-    router.replace(buildMenusPageUrl({ venueId, menuId: activeMenuId }), { scroll: false });
-  }, [venueId, activeMenuId, searchParams, router]);
+  useMenusNavUrlFill("catalog", { venueId, menuId: activeMenuId || undefined }, Boolean(venueId && activeMenuId));
 
   function selectActiveMenu(id: string) {
     setActiveMenuId(id);
+    if (venueId) {
+      router.replace(buildMenusPageUrl({ venueId, menuId: id }), { scroll: false });
+    }
   }
 
   function changeVenue(nextVenueId: string) {
     setVenueId(nextVenueId);
+    setActiveMenuId("");
     router.replace(buildMenusPageUrl({ venueId: nextVenueId }), { scroll: false });
   }
 

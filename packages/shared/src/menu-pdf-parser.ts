@@ -105,6 +105,13 @@ function containsGreek(text: string): boolean {
   return /[\u0370-\u03FF\u1F00-\u1FFF]/.test(text);
 }
 
+/** Latin/English menu text without Greek script (e.g. OCR from English-only PDF). */
+export function isLatinOnlyMenuText(text: string): boolean {
+  const line = text.trim();
+  if (!line) return false;
+  return isMostlyLatin(line) && !containsGreek(line);
+}
+
 /** Split «Ελληνικό | English» or «Ελληνικό / English» menu lines. */
 export function splitBilingualMenuName(raw: string): { nameGr: string; nameEn?: string } {
   const line = raw.trim();
@@ -131,8 +138,8 @@ export function splitBilingualMenuName(raw: string): { nameGr: string; nameEn?: 
     if (containsGreek(b) && isMostlyLatin(a)) return { nameGr: b, nameEn: a };
   }
 
-  if (isMostlyLatin(line) && !containsGreek(line)) {
-    return { nameGr: line };
+  if (isLatinOnlyMenuText(line)) {
+    return { nameGr: line, nameEn: line };
   }
 
   return { nameGr: line };

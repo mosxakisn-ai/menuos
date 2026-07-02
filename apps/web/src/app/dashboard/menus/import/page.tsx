@@ -35,7 +35,9 @@ export default async function MenuImportPage({ searchParams }: Props) {
 
   return (
     <DashboardPage>
-      <MenuImportPageIntro venueId={sp.venue} menuId={sp.menu} />
+      <Suspense fallback={null}>
+        <MenuImportPageIntro />
+      </Suspense>
       <Suspense fallback={null}>
         <MenuImportWizard venues={venues} initialVenueId={sp.venue} />
       </Suspense>

@@ -3,6 +3,15 @@ export type MenusNavParams = {
   menuId?: string;
 };
 
+export function menusNavParamsMatchUrl(
+  params: MenusNavParams,
+  searchParams: Pick<URLSearchParams, "get">,
+): boolean {
+  if (params.venueId && searchParams.get("venue") !== params.venueId) return false;
+  if (params.menuId && searchParams.get("menu") !== params.menuId) return false;
+  return true;
+}
+
 export function buildMenusPageUrl(params: MenusNavParams): string {
   const qs = new URLSearchParams();
   if (params.venueId) qs.set("venue", params.venueId);

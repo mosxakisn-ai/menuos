@@ -1,5 +1,6 @@
 "use client";
 
+import { isLatinOnlyMenuText } from "@menuos/shared";
 import { ChevronDown, Search } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { PDF_IMPORT_UNCATEGORIZED_CATEGORY, type ParsedMenuCategoryDraft, type ParsedMenuItemDraft } from "@menuos/shared";
@@ -96,7 +97,9 @@ export function MenuImportCategoryEditor({
         const hasIssues = categoryHasIssues(cat);
         const isUncategorized = cat.nameGr === PDF_IMPORT_UNCATEGORIZED_CATEGORY;
         const showCategoryEn =
-          hasDistinctEnglish(cat.nameGr, cat.nameEn) || Boolean(showEnFor[`cat-${cat.id}`]);
+          hasDistinctEnglish(cat.nameGr, cat.nameEn) ||
+          isLatinOnlyMenuText(cat.nameGr) ||
+          Boolean(showEnFor[`cat-${cat.id}`]);
 
         const visibleItems = cat.items.filter((item) => {
           if (showIssuesOnly && !itemHasIssues(item) && !categoryHasIssues(cat)) return false;
@@ -172,7 +175,7 @@ export function MenuImportCategoryEditor({
                         className="mt-1 w-full max-w-md rounded-button border border-slate-200 bg-white px-3 py-2 text-sm"
                       />
                     </div>
-                  ) : (
+                  ) : isLatinOnlyMenuText(cat.nameGr) ? null : (
                     <button
                       type="button"
                       onClick={() => setShowEnFor((s) => ({ ...s, [`cat-${cat.id}`]: true }))}
@@ -206,6 +209,7 @@ export function MenuImportCategoryEditor({
                 {visibleItems.map((item) => {
                   const showItemEn =
                     hasDistinctEnglish(item.nameGr, item.nameEn) ||
+                    isLatinOnlyMenuText(item.nameGr) ||
                     Boolean(showEnFor[`item-${item.id}`]);
 
                   return (
@@ -292,7 +296,7 @@ export function MenuImportCategoryEditor({
                                 className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2 text-sm"
                               />
                             </div>
-                          ) : (
+                          ) : isLatinOnlyMenuText(item.nameGr) ? null : (
                             <button
                               type="button"
                               onClick={() =>

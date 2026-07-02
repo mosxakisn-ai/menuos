@@ -75,6 +75,13 @@ export const DASHBOARD_EN = {
       "AI analysis did not improve the result — review manually or try other pages.",
     visionRetryConfirm:
       "AI analysis will replace the draft (names, prices, selections). Continue?",
+    translateRetrying: "Translating to Greek…",
+    translateSuccess: (n: number) =>
+      n === 1
+        ? "Translated 1 name to Greek — review the results."
+        : `Translated ${n} names to Greek — review the results.`,
+    translateConfirm:
+      "AI will translate English names to Greek (categories and items). Continue?",
     ocrUsed: (n: number) => (n === 1 ? "1 page via OCR" : `${n} pages via OCR`),
     badge: "PDF IMPORT",
     phaseUpload: "Upload PDF",
@@ -147,6 +154,12 @@ export const DASHBOARD_EN = {
         "This layout looks complex — review names and prices carefully before importing.",
       visionRetryButton: "AI analysis",
       visionRetrying: "Analyzing…",
+      translateHint:
+        "Names are in English — press «Translate to Greek» for automatic AI translation.",
+      translateHintUnavailable:
+        "Names appear to be in English — fill in Greek manually or configure GEMINI_API_KEY on the server.",
+      translateButton: "Translate to Greek",
+      translateRetrying: "Translating…",
       nextStepsTitle: "What to do now",
       nextSteps: [
         "Uncheck categories or items you do not want imported.",
@@ -178,7 +191,7 @@ export const DASHBOARD_EN = {
     editor: {
       toolbarTitle: "Edit draft",
       toolbarHint:
-        "Each block is one category. Below it you see items with name and price — as in the PDF, without auto-translation.",
+        "Each block is one category. If the PDF is in English, press «Translate to Greek» before importing.",
       searchPlaceholder: "Search item or category…",
       hideEmpty: "Hide empty categories",
       showIssuesOnly: "Issues only",
@@ -960,6 +973,12 @@ export const DASHBOARD_EN = {
         `Found ${items} in ${categories} categories. Review before importing.`,
       parseEmpty: (many: string) => `No ${many} found — try another PDF or add manually.`,
       parseFailed: "Could not read PDF. Try again or add the catalog manually.",
+      translateUnavailable: "AI translation is not available — GEMINI_API_KEY is missing on the server.",
+      translateInvalidDraft: "Invalid draft — run PDF analysis again.",
+      translateNothingNeeded: "No translation needed — names are already in Greek.",
+      translateSuccess: (n: number) =>
+        n === 1 ? "Translated 1 name to Greek." : `Translated ${n} names to Greek.`,
+      translateFailed: "AI translation failed. Try again or fill in Greek manually.",
       applySuccess: (items: string, categories: number) =>
         `Imported ${items} into ${categories} categories. Edit photos and prices in the catalog.`,
     },

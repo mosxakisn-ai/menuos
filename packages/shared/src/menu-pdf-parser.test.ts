@@ -22,9 +22,12 @@ describe("splitBilingualMenuName", () => {
     });
   });
 
-  it("keeps Latin-only lines in one field without fake English", () => {
-    expect(splitBilingualMenuName("Espresso Martini")).toEqual({ nameGr: "Espresso Martini" });
-    expect(splitBilingualMenuName("PASTA")).toEqual({ nameGr: "PASTA" });
+  it("maps Latin-only lines to English field (Greek filled via AI translate on import)", () => {
+    expect(splitBilingualMenuName("Espresso Martini")).toEqual({
+      nameGr: "Espresso Martini",
+      nameEn: "Espresso Martini",
+    });
+    expect(splitBilingualMenuName("PASTA")).toEqual({ nameGr: "PASTA", nameEn: "PASTA" });
   });
 });
 

@@ -1,4 +1,9 @@
-import type { MenuPdfParseResult, ParsedMenuCategoryDraft, ParsedMenuItemDraft } from "@menuos/shared";
+import {
+  isLatinOnlyMenuText,
+  type MenuPdfParseResult,
+  type ParsedMenuCategoryDraft,
+  type ParsedMenuItemDraft,
+} from "@menuos/shared";
 
 export type MenuImportIssueSeverity = "error" | "warning" | "info";
 
@@ -157,24 +162,64 @@ export function buildMenuImportReviewReport(
   };
 }
 
+function normalizeBilingualFields(nameGr: string, nameEn?: string): { nameGr: string; nameEn?: string } {
+  const gr = nameGr.trim();
+  if (!gr) return { nameGr: gr, nameEn: nameEn?.trim() || undefined };
+
+  if (isLatinOnlyMenuText(gr)) {
+    return { nameGr: gr, nameEn: (nameEn?.trim() || gr).trim() };
+  }
+
+  const en = nameEn?.trim();
+  if (en && en.toLowerCase() !== gr.toLowerCase()) {
+    return { nameGr: gr, nameEn: en };
+  }
+  return { nameGr: gr, nameEn: undefined };
+}
+
+export function countLatinOnlyImportNames(draft: MenuPdfParseResult): {
+  total: number;
+  latinOnly: number;
+} {
+  let total = 0;
+  let latinOnly = 0;
+
+  for (const cat of draft.categories) {
+    if (cat.nameGr.trim()) {
+      total += 1;
+      if (isLatinOnlyMenuText(cat.nameGr)) latinOnly += 1;
+    }
+    for (const item of cat.items) {
+      if (!item.nameGr.trim()) continue;
+      total += 1;
+      if (isLatinOnlyMenuText(item.nameGr)) latinOnly += 1;
+    }
+  }
+
+  return { total, latinOnly };
+}
+
+/** English-only / Latin OCR menus need Gemini to fill Greek names before import. */
+export function importDraftNeedsGreekTranslation(draft: MenuPdfParseResult): boolean {
+  const { total, latinOnly } = countLatinOnlyImportNames(draft);
+  return total >= 3 && latinOnly / total >= 0.5;
+}
+
 export function normalizeImportDraft(draft: MenuPdfParseResult): MenuPdfParseResult {
   return {
     ...draft,
-    categories: draft.categories.map((cat) => ({
-      ...cat,
-      selected: cat.items.length > 0 ? cat.selected : false,
-      nameEn:
-        cat.nameEn && cat.nameEn.trim().toLowerCase() !== cat.nameGr.trim().toLowerCase()
-          ? cat.nameEn
-          : undefined,
-      items: cat.items.map((item) => ({
-        ...item,
-        nameEn:
-          item.nameEn && item.nameEn.trim().toLowerCase() !== item.nameGr.trim().toLowerCase()
-            ? item.nameEn
-            : undefined,
-      })),
-    })),
+    categories: draft.categories.map((cat) => {
+      const names = normalizeBilingualFields(cat.nameGr, cat.nameEn);
+      return {
+        ...cat,
+        selected: cat.items.length > 0 ? cat.selected : false,
+        ...names,
+        items: cat.items.map((item) => ({
+          ...item,
+          ...normalizeBilingualFields(item.nameGr, item.nameEn),
+        })),
+      };
+    }),
   };
 }
 

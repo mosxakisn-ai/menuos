@@ -7,6 +7,7 @@ import {
   type PdfImportPipelineResult,
 } from "@/lib/pdf-import-pipeline";
 import { enhancePdfImportWithVision, type PdfImportFileContext } from "@/lib/pdf-import-vision";
+import { enhancePdfImportWithTranslation } from "@/lib/pdf-import-translate";
 
 const MAX_FILES = 10;
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -219,7 +220,7 @@ export async function parseUploadedPdfFiles(
   files: File[],
   pageSelections?: PageSelectionMap,
   lang: DashboardLang = "EN",
-  options?: { forceVision?: boolean },
+  options?: { forceVision?: boolean; forceTranslate?: boolean },
 ): Promise<PdfImportPipelineResult> {
   const P = getDashboardCopy(lang).api.pdf;
   const extracted: { name: string; text: string }[] = [];
@@ -281,7 +282,8 @@ export async function parseUploadedPdfFiles(
     ocrPages: totalOcrPages,
   });
 
-  return enhancePdfImportWithVision(rulesResult, fileContexts, options);
+  const withVision = await enhancePdfImportWithVision(rulesResult, fileContexts, options);
+  return enhancePdfImportWithTranslation(withVision, options);
 }
 
 export type { PdfImportExtractionMeta, PdfImportPipelineResult };

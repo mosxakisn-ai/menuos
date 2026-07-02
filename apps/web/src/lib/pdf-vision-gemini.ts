@@ -26,7 +26,8 @@ Rules:
 - Distinguish SECTION HEADERS from menu items using layout (headers are larger/separate, not priced rows).
 - price is a number in EUR without currency symbol; null only if truly missing on the page.
 - Skip logos, decorative photos, page numbers, footnotes-only lines, and allergen legends unless part of an item description.
-- Bilingual menus: Greek in name, English in nameEn when both appear.
+- Bilingual menus: Greek in name, English in nameEn when both appear on the page.
+- English-only menus (no Greek script visible): put the visible English text in nameEn and a natural Greek menu translation in name.
 - Do not invent items not visible on this page.
 - Empty sections array is OK for cover/decorative pages.`;
 
