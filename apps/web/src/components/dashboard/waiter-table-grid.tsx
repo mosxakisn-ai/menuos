@@ -5,8 +5,10 @@ import { useMemo } from "react";
 import {
   buildTableGridTiles,
   formatOrderLineDetail,
+  formatWaiterCallLocationForLang,
   passStationDbToInput,
   passStationInputToDb,
+  UNMAPPED_SPOT_ID_PREFIX,
   type TableGridCall,
   type TableGridPassSignal,
   type TableGridSpot,
@@ -39,6 +41,16 @@ function formatOrderSummary(call: TableGridCall): string | null {
   const head = `${first.quantity}× ${first.name}`;
   if (lines.length === 1) return detail ? `${head} (${detail})` : head;
   return `${head} +${lines.length - 1}`;
+}
+
+function tileDisplayLabel(tile: TableGridTile, lang: "GR" | "EN"): string {
+  if (!tile.spotId.startsWith(UNMAPPED_SPOT_ID_PREFIX)) return tile.label;
+  const sample = tile.activeCalls[0] ?? tile.activePasses[0];
+  return sample ? formatWaiterCallLocationForLang(sample, lang) : tile.label;
+}
+
+function isUnmappedTile(tile: TableGridTile): boolean {
+  return tile.spotId.startsWith(UNMAPPED_SPOT_ID_PREFIX);
 }
 
 function filterPasses(
@@ -81,6 +93,7 @@ function WaiterSpotTile({
   callStatusLabels,
   stateLabels,
   labels,
+  lang,
   updatingCallId,
   updatingPassId,
   onUpdateCall,
@@ -101,7 +114,9 @@ function WaiterSpotTile({
     newItems: string;
     orderTotal: string;
     guestCall: string;
+    unmappedSpotBadge: string;
   };
+  lang: "GR" | "EN";
   updatingCallId: string | null;
   updatingPassId: string | null;
   onUpdateCall: (callId: string, status: "ACKNOWLEDGED" | "COMPLETED") => void;
@@ -111,6 +126,8 @@ function WaiterSpotTile({
   const visiblePasses =
     viewTab === "calls" ? [] : filterPasses(tile.activePasses, passStationFilter);
   const hasActivity = visibleCalls.length > 0 || visiblePasses.length > 0;
+  const displayLabel = tileDisplayLabel(tile, lang);
+  const unmapped = isUnmappedTile(tile);
 
   return (
     <div
@@ -130,15 +147,23 @@ function WaiterSpotTile({
           className={cn(
             "font-serif text-2xl font-bold tabular-nums leading-none",
             hasActivity ? "shrink-0" : "",
+            unmapped ? "text-left text-lg leading-tight" : "",
           )}
         >
-          {tile.label}
+          {displayLabel}
         </span>
-        <TileStateBadge
-          state={tile.state}
-          label={stateLabels[tile.state]}
-          className={hasActivity ? "shrink text-right" : "mt-2"}
-        />
+        <div className={cn("flex flex-col items-end gap-1", hasActivity ? "shrink text-right" : "")}>
+          {unmapped ? (
+            <span className="inline-flex max-w-full rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+              {labels.unmappedSpotBadge}
+            </span>
+          ) : null}
+          <TileStateBadge
+            state={tile.state}
+            label={stateLabels[tile.state]}
+            className={hasActivity ? "text-right" : "mt-2"}
+          />
+        </div>
       </div>
 
       {hasActivity ? (
@@ -289,7 +314,7 @@ export function WaiterTableGrid({
   onUpdateCall: (callId: string, status: "ACKNOWLEDGED" | "COMPLETED") => void;
   onUpdatePass: (signalId: string, status: "PICKED_UP" | "DELIVERED") => void;
 }) {
-  const { d } = useDashboardCopy();
+  const { d, lang } = useDashboardCopy();
   const W = d.waiter;
 
   const tiles = useMemo(() => {
@@ -297,7 +322,13 @@ export function WaiterTableGrid({
     return built.filter((tile) => tileMatchesView(tile, viewTab, passStationFilter));
   }, [spots, calls, passSignals, viewTab, passStationFilter]);
 
-  if (spots.length === 0) return null;
+  const hasConfiguredSpots = spots.length > 0;
+  const hasAnyTiles = useMemo(
+    () => buildTableGridTiles(spots, calls, passSignals).length > 0,
+    [spots, calls, passSignals],
+  );
+
+  if (!hasConfiguredSpots && !hasAnyTiles) return null;
 
   const stateLabels = W.tableStateLabels as Record<TableTileState, string>;
   const emptyMessage =
@@ -310,8 +341,10 @@ export function WaiterTableGrid({
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold text-brand-navy">{W.tableGridTitle}</h2>
-      <TableGridLegend stateLabels={stateLabels} className="hidden sm:flex" />
-      <p className="text-xs text-slate-500 sm:hidden">{W.tableGridLegendHint}</p>
+      <TableGridLegend stateLabels={stateLabels} className={hasConfiguredSpots ? "hidden sm:flex" : "hidden"} />
+      <p className={cn("text-xs text-slate-500 sm:hidden", !hasConfiguredSpots && "hidden")}>
+        {W.tableGridLegendHint}
+      </p>
       {tiles.length === 0 && emptyMessage ? (
         <p className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
           {emptyMessage}
@@ -336,7 +369,9 @@ export function WaiterTableGrid({
                 newItems: W.newItems,
                 orderTotal: W.orderTotal,
                 guestCall: stateLabels.guest_call,
+                unmappedSpotBadge: W.unmappedSpotBadge,
               }}
+              lang={lang}
               updatingCallId={updatingCallId}
               updatingPassId={updatingPassId}
               onUpdateCall={onUpdateCall}

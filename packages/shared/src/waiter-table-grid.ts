@@ -40,6 +40,20 @@ export type TableGridTile = {
 
 const ACTIVE_CALL_STATUSES = new Set(["PENDING", "ACKNOWLEDGED"]);
 
+/** Synthetic spot id prefix for calls/passes with no matching configured spot. */
+export const UNMAPPED_SPOT_ID_PREFIX = "__unmapped__:";
+
+function locationKey(location: WaiterCallLocation): string {
+  if (location.tableNumber) return `TABLE:${location.tableNumber}`;
+  if (location.roomNumber) return `ROOM:${location.roomNumber}`;
+  if (location.sunbedNumber) return `SUNBED:${location.sunbedNumber}`;
+  return "NONE";
+}
+
+function isMatchedByAnySpot(spots: TableGridSpot[], location: WaiterCallLocation): boolean {
+  return spots.some((spot) => matchesSpot(spot, location));
+}
+
 function spotLocationRequest(spot: TableGridSpot): {
   tableNumber?: string;
   roomNumber?: string;
@@ -85,7 +99,7 @@ export function buildTableGridTiles(
 ): TableGridTile[] {
   const activeCalls = calls.filter((c) => ACTIVE_CALL_STATUSES.has(c.status));
 
-  return spots.map((spot) => {
+  const tiles = spots.map((spot) => {
     const spotCalls = activeCalls.filter((c) => matchesSpot(spot, c));
     const spotPasses = passSignals.filter((p) => matchesSpot(spot, p));
     const hasGuest = spotCalls.length > 0;
@@ -100,4 +114,40 @@ export function buildTableGridTiles(
       activePasses: spotPasses.map((p) => ({ ...p, message: p.message ?? null })),
     };
   });
+
+  const unmappedCalls = activeCalls.filter((c) => !isMatchedByAnySpot(spots, c));
+  const unmappedPasses = passSignals.filter((p) => !isMatchedByAnySpot(spots, p));
+  const groups = new Map<string, { calls: TableGridCall[]; passes: TableGridPassSignal[] }>();
+
+  for (const call of unmappedCalls) {
+    const key = locationKey(call);
+    const group = groups.get(key) ?? { calls: [], passes: [] };
+    group.calls.push(call);
+    groups.set(key, group);
+  }
+  for (const pass of unmappedPasses) {
+    const key = locationKey(pass);
+    const group = groups.get(key) ?? { calls: [], passes: [] };
+    group.passes.push(pass);
+    groups.set(key, group);
+  }
+
+  for (const [key, group] of groups) {
+    const sample = group.calls[0] ?? group.passes[0];
+    const label =
+      sample?.tableNumber ?? sample?.roomNumber ?? sample?.sunbedNumber ?? "?";
+    const hasGuest = group.calls.length > 0;
+    const hasKitchen = group.passes.some((p) => isKitchenStation(p.station));
+    const hasBar = group.passes.some((p) => isBarStation(p.station));
+
+    tiles.push({
+      spotId: `${UNMAPPED_SPOT_ID_PREFIX}${key}`,
+      label,
+      state: resolveTileState(hasGuest, hasKitchen, hasBar),
+      activeCalls: group.calls.map((c) => ({ ...c })),
+      activePasses: group.passes.map((p) => ({ ...p, message: p.message ?? null })),
+    });
+  }
+
+  return tiles;
 }

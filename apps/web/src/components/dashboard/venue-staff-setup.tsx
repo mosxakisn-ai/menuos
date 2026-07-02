@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Copy, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   formatStaffStationsForLang,
   STAFF_STATION_OPTIONS,
@@ -41,7 +41,7 @@ function toggleStation(
   station: StaffStationOption,
 ): StaffStationOption[] {
   if (station === "all") {
-    return current.includes("all") ? [] : ["all"];
+    return current.includes("all") ? ["services"] : ["all"];
   }
   const withoutAll = current.filter((s) => s !== "all");
   if (withoutAll.includes(station)) {
@@ -206,6 +206,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const [editStations, setEditStations] = useState<StaffStationOption[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
+  const loadGenerationRef = useRef(0);
 
   const venue = venues.find((v) => v.id === venueId);
   const [sharedStaffToken, setSharedStaffToken] = useState(venue?.staffToken ?? "");
@@ -223,14 +224,21 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
       setMembers([]);
       return;
     }
+    const generation = ++loadGenerationRef.current;
     setLoading(true);
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members`);
       const data = await res.json();
+      if (generation !== loadGenerationRef.current) return;
       setMembers(res.ok ? (data.members ?? []) : []);
     } finally {
-      setLoading(false);
+      if (generation === loadGenerationRef.current) setLoading(false);
     }
+  }, [venueId]);
+
+  useEffect(() => {
+    loadGenerationRef.current += 1;
+    setMembers([]);
   }, [venueId]);
 
   useEffect(() => {

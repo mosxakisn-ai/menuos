@@ -242,6 +242,8 @@ export function WaiterPanel({
     { id: "dessert", label: W.passStation.dessert },
   ];
 
+  const hasActivity = pendingCount > 0 || passCount > 0;
+
   return (
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
@@ -328,7 +330,13 @@ export function WaiterPanel({
         </div>
       ) : null}
 
-      {spots.length === 0 ? (
+      {spots.length === 0 && hasActivity ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          {W.emptySpotsActiveHint}
+        </p>
+      ) : null}
+
+      {spots.length === 0 && !hasActivity ? (
         <Card className="border-dashed text-center">
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 font-medium text-brand-navy">{W.emptyTitle}</p>

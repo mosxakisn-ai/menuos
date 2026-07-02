@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Copy, ExternalLink, Monitor, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import type { PassStationInput } from "@menuos/shared";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
@@ -61,6 +61,7 @@ export function StationScreensPanel({
   const [editSpotPrefix, setEditSpotPrefix] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [expandedUrlId, setExpandedUrlId] = useState<string | null>(null);
+  const loadGenerationRef = useRef(0);
 
   const venue = venues.find((v) => v.id === venueId);
 
@@ -69,14 +70,21 @@ export function StationScreensPanel({
       setScreens([]);
       return;
     }
+    const generation = ++loadGenerationRef.current;
     setLoading(true);
     try {
       const res = await fetch(`/api/venues/${venueId}/station-screens?station=${station}`);
       const data = (await res.json()) as { screens?: StationScreenRow[] };
+      if (generation !== loadGenerationRef.current) return;
       setScreens(res.ok ? (data.screens ?? []) : []);
     } finally {
-      setLoading(false);
+      if (generation === loadGenerationRef.current) setLoading(false);
     }
+  }, [venueId, station]);
+
+  useEffect(() => {
+    loadGenerationRef.current += 1;
+    setScreens([]);
   }, [venueId, station]);
 
   useEffect(() => {

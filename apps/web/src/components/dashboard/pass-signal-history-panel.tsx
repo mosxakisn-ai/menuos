@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Clock } from "lucide-react";
 import {
   formatVenueSpotLabelForLang,
@@ -31,6 +31,7 @@ type StaffMember = { id: string; name: string };
 const STATION_FILTERS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
 
 function formatDurationMs(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return "—";
   if (ms < 60_000) return `${Math.max(1, Math.round(ms / 1000))}s`;
   const mins = Math.round(ms / 60_000);
   if (mins < 60) return `${mins}′`;
@@ -53,6 +54,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
   const [spotId, setSpotId] = useState("");
   const [station, setStation] = useState("");
   const [staffMemberId, setStaffMemberId] = useState("");
+  const loadGenerationRef = useRef(0);
 
   useEffect(() => {
     if (venues.length === 0) {
@@ -66,6 +68,12 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
       setStaffMemberId("");
     }
   }, [venues, venueId]);
+
+  useEffect(() => {
+    loadGenerationRef.current += 1;
+    setSignals([]);
+    setLoadError(false);
+  }, [venueId]);
 
   useEffect(() => {
     if (!venueId) {
@@ -96,6 +104,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
       setLoadError(false);
       return;
     }
+    const generation = ++loadGenerationRef.current;
     setLoading(true);
     setLoadError(false);
     try {
@@ -105,6 +114,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
       if (staffMemberId) params.set("staffMemberId", staffMemberId);
       const res = await fetch(`/api/pass-signals/history?${params}`);
       const data = await res.json();
+      if (generation !== loadGenerationRef.current) return;
       if (!res.ok) {
         setSignals([]);
         setLoadError(true);
@@ -112,10 +122,11 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
       }
       setSignals(data.signals ?? []);
     } catch {
+      if (generation !== loadGenerationRef.current) return;
       setSignals([]);
       setLoadError(true);
     } finally {
-      setLoading(false);
+      if (generation === loadGenerationRef.current) setLoading(false);
     }
   }, [venueId, days, spotId, station, staffMemberId]);
 

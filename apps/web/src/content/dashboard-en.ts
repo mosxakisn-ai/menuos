@@ -239,6 +239,9 @@ export const DASHBOARD_EN = {
     emptyTitle: "No active calls",
     emptyDesc:
       "When a customer places an order, calls the waiter or requests the bill from the QR menu, it will appear here.",
+    emptySpotsActiveHint:
+      "No spots configured — active calls appear below. Set up tables/rooms in Settings → Spots.",
+    unmappedSpotBadge: "Unconfigured",
     goButton: "Accept",
     completeButton: "Done",
     orderTotal: "Total",
@@ -307,7 +310,8 @@ export const DASHBOARD_EN = {
       "Android: Open in Chrome (not Messenger). Tap Enable and allow notifications when prompted.",
     pageOpenHint:
       "While the page is open, you'll hear sounds and see calls automatically — even without push enabled.",
-    managerHint: "Receive push for calls and pass alerts for the whole venue on this device.",
+    managerHint:
+      "You'll receive push for calls and pass from all venues in your organization on this device.",
   },
   photos: {
     label: "Photo (optional)",
@@ -595,7 +599,7 @@ export const DASHBOARD_EN = {
         description: "Waiter link, push alerts and live pass — guest calls plus department messages.",
         pushSectionTitle: "Push notifications",
         pushHint:
-          "Enable push on this device (e.g. manager tablet). Use Chrome/Safari — not Messenger or Instagram.",
+          "Enable push on this device (e.g. manager tablet). Applies to all venues in your organization — use Chrome/Safari, not Messenger or Instagram.",
         staffPushHint:
           "Each waiter enables push on their own phone — open their personal link and tap Enable.",
         passTitle: "Live pass",

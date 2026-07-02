@@ -71,4 +71,26 @@ describe("buildTableGridTiles", () => {
     );
     expect(tiles[0]?.state).toBe("guest_call");
   });
+
+  it("adds unmapped tile when call location does not match any spot", () => {
+    const tiles = buildTableGridTiles(
+      spots,
+      [{ id: "c1", type: "WAITER", status: "PENDING", tableNumber: "99" }],
+      [],
+    );
+    const unmapped = tiles.find((t) => t.spotId.startsWith("__unmapped__:"));
+    expect(unmapped?.label).toBe("99");
+    expect(unmapped?.state).toBe("guest_call");
+    expect(tiles.find((t) => t.label === "99" && !t.spotId.startsWith("__unmapped__:"))).toBeUndefined();
+  });
+
+  it("shows unmapped calls when no spots are configured", () => {
+    const tiles = buildTableGridTiles(
+      [],
+      [{ type: "ORDER", status: "PENDING", tableNumber: "8" }],
+      [{ station: "KITCHEN", tableNumber: "8", message: "μουσακάς" }],
+    );
+    expect(tiles).toHaveLength(1);
+    expect(tiles[0]?.state).toBe("both");
+  });
 });
