@@ -41,9 +41,12 @@ Fixture στο repo: `apps/web/test-fixtures/pdf/stegnakozas-menu-25.pdf`
 | Μετρική | Πριν (OCR μόνο) | Μετά hybrid+normalize (Ιούλ 2026) | Στόχος 100% |
 |---------|-----------------|-------------------------------------|-------------|
 | Είδη με τιμή | ~98 | ~98 | ≥95% του PDF |
-| Κατηγορίες | ~38 (πολλές λάθος) | ↓ (φιλτράρισμα κενών EN headers) | ≤15 πραγματικές |
+| Κατηγορίες | ~38 (πολλές λάθος) | **25** (Technolocos re-import, Ιούλ 2026) | ≤15 πραγματικές |
 | False positives (τίτλοι ως είδη) | Ναι (PASTA, FISH…) | Μερική βελτίωση | 0 |
 | 2-στήλες layout | Χαλάει OCR | Μερική (inline split) | Vision ή layout OCR |
+| Ελληνικά ονόματα (nameGr) | — | **30/83** (rules+OCR engine 3) | ≥90% |
+
+> **Technolocos (ΚΑΦΕΝΕΣ / MENOY):** admin re-import Ιούλ 2026 — 83 είδη, 25 κατηγορίες (πριν 46). Vision off (χωρίς `GEMINI_API_KEY` στο prod).
 
 > **Γιατί δεν φτάνουμε 100% ακόμα:** Το OCR βγάζει κείμενο γραμμή-γραμμή — δεν «βλέπει» layout, φωτό, εικονίδια, στήλες.
 
@@ -211,9 +214,9 @@ GEMINI_MODEL=gemini-2.0-flash
 # Υποχρεωτικό για σαρωμένα PDF
 OCR_SPACE_API_KEY=
 
-# Προαιρετικά (defaults στο ocr-space.ts)
-# OCR_SPACE_ENGINE=2          # 2 = καλύτερο για menus
-# OCR_SPACE_LANGUAGE=gre      # Engine 2: ελληνικά
+# Προαιρετικά (defaults στο ocr-space.ts: engine 3, language gre)
+# OCR_SPACE_ENGINE=3          # 3 = ελληνικά. Engine 2 δεν δέχεται gre — μόνο auto
+# OCR_SPACE_LANGUAGE=gre      # ή auto (engine 2/3)
 # OCR_SPACE_IS_TABLE=false    # true χαλάει bilingual 2-column
 # OCR_SPACE_API_URL=          # override endpoint
 ```
@@ -330,6 +333,7 @@ npm run test -w @menuos/shared -- menu-import-document
 | Σύμπτωμα | Αιτία | Λύση |
 |----------|-------|------|
 | «Δεν βρέθηκε κείμενο» | Scan χωρίς OCR key | `OCR_SPACE_API_KEY` |
+| `E201: language invalid` | `gre` σε Engine 2 (δεν υποστηρίζεται) | Engine **3** + `gre`, ή Engine 2 + `auto` |
 | 0 είδη | Μόνο cover επιλέχθηκε | Advanced → επίλεξε menu pages |
 | Πολλές κενές κατηγορίες | OCR noise | Normalize (ή Vision) |
 | Τιμές σε λάθος είδος | 2-column OCR merge | Vision / column OCR |
@@ -345,6 +349,11 @@ npm run test -w @menuos/shared -- menu-import-document
 ---
 
 ## Changelog (ενημερώνεται εδώ)
+
+### 2026-07-02 — OCR engine fix + Technolocos re-import
+- **Root cause:** Engine 2 δεν δέχεται `gre` — προηγούμενο fix (auto→gre) ήταν λάθος
+- Default OCR engine → **3** (ελληνικά). Admin script: `OCR_SPACE_ENGINE=3`, `OCR_SPACE_LANGUAGE=gre`
+- Technolocos (`fanenos@gmail.com`): **83 είδη, 25 κατηγορίες** (πριν 46) — rules+OCR, χωρίς Vision
 
 ### 2026-07-02 — Vision + hybrid production
 - Gemini Flash vision path (`pdf-vision-gemini.ts`, `pdf-import-vision.ts`)

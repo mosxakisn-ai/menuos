@@ -27,7 +27,8 @@ function ocrApiUrl(): string {
 }
 
 function ocrEngine(): string {
-  return process.env.OCR_SPACE_ENGINE?.trim() || "2";
+  // Engine 3 supports Greek + auto-detect; Engine 2 does not accept `gre`.
+  return process.env.OCR_SPACE_ENGINE?.trim() || "3";
 }
 
 function ocrIsTable(): boolean {
@@ -41,9 +42,16 @@ function ocrIsTable(): boolean {
 function ocrLanguage(override?: string): string {
   const custom = override?.trim() || process.env.OCR_SPACE_LANGUAGE?.trim();
   const engine = ocrEngine();
+
   if (!custom || custom === "auto") {
-    return engine === "3" ? "auto" : "gre";
+    return engine === "1" ? "gre" : "auto";
   }
+
+  // Engine 2 has no Greek (`gre`) — autodetect Latin scripts only.
+  if (custom === "gre" && engine === "2") {
+    return "auto";
+  }
+
   return custom;
 }
 
