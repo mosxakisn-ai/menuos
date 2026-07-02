@@ -3,8 +3,10 @@
 import { Check, Copy, Link2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
+import { dashboardTextActionClass } from "@/components/dashboard/dashboard-action-button";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { confirmWarning } from "@/lib/confirm-action";
 import { clientShareOrigin } from "@/lib/client-share-origin";
 
 export function WaiterShareLink({
@@ -51,7 +53,7 @@ export function WaiterShareLink({
 
   async function rotateToken() {
     if (!venueId || !onStaffTokenRotated) return;
-    if (!window.confirm(w.rotateConfirm)) return;
+    if (!confirmWarning(w.rotateConfirm)) return;
 
     setRotating(true);
     try {
@@ -115,7 +117,8 @@ export function WaiterShareLink({
               type="button"
               disabled={rotating}
               onClick={() => void rotateToken()}
-              className={`inline-flex shrink-0 items-center justify-center gap-2 ${buttonClass("secondary", "sm")}`}
+              className={`inline-flex shrink-0 items-center justify-center gap-2 ${dashboardTextActionClass("warning")}`}
+              title={w.rotateTitle}
             >
               <RefreshCw className={`h-4 w-4 ${rotating ? "animate-spin" : ""}`} aria-hidden />
               {rotating ? w.rotating : w.rotateButton}

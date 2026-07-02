@@ -492,7 +492,9 @@ export const DASHBOARD_EL = {
         rolePlaceholder: "π.χ. Σερβιτόρος",
         loading: "Φόρτωση...",
         empty: "Δεν έχεις προσθέσει προσωπικό ακόμα.",
-        deleteConfirm: (name: string) => `Να διαγραφεί το «${name}»;`,
+        deleteConfirm: (name: string) =>
+          `Διαγραφή του «${name}»;\n\nΤο προσωπικό link θα σταματήσει. Η ενέργεια δεν αναιρείται.`,
+        deleteTitle: "Διαγραφή προσωπικού",
         edit: "Επεξεργασία",
         delete: "Διαγραφή",
         saveEdit: "Αποθήκευση",
@@ -584,8 +586,9 @@ export const DASHBOARD_EL = {
       addingScreen: "Προσθήκη…",
       addScreenFailed: "Αποτυχία προσθήκης οθόνης.",
       deleteScreen: "Διαγραφή",
+      deleteScreenTitle: "Διαγραφή οθόνης",
       deleteScreenConfirm: (name: string) =>
-        `Διαγραφή της οθόνης «${name}»;\n\nΤο link της θα σταματήσει να λειτουργεί.`,
+        `Διαγραφή της οθόνης «${name}»;\n\nΤο link θα σταματήσει να λειτουργεί. Η ενέργεια δεν αναιρείται.`,
       deleteScreenFailed: "Αποτυχία διαγραφής οθόνης.",
       renameScreen: "Μετονομασία",
       saveScreen: "Αποθήκευση",

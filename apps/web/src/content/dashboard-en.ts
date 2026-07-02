@@ -487,7 +487,9 @@ export const DASHBOARD_EN = {
         rolePlaceholder: "e.g. Waiter",
         loading: "Loading...",
         empty: "No staff added yet.",
-        deleteConfirm: (name: string) => `Delete “${name}”?`,
+        deleteConfirm: (name: string) =>
+          `Delete “${name}”?\n\nTheir personal link will stop working. This cannot be undone.`,
+        deleteTitle: "Delete staff member",
         edit: "Edit",
         delete: "Delete",
         saveEdit: "Save",
@@ -577,8 +579,9 @@ export const DASHBOARD_EN = {
       addingScreen: "Adding…",
       addScreenFailed: "Could not add screen.",
       deleteScreen: "Delete",
+      deleteScreenTitle: "Delete screen",
       deleteScreenConfirm: (name: string) =>
-        `Delete screen «${name}»?\n\nIts link will stop working.`,
+        `Delete screen «${name}»?\n\nIts link will stop working. This cannot be undone.`,
       deleteScreenFailed: "Could not delete screen.",
       renameScreen: "Rename",
       saveScreen: "Save",

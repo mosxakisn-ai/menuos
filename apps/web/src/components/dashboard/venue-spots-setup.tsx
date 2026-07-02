@@ -21,7 +21,9 @@ import {
   dashboardLabelClass,
 } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
+import { DashboardIconButton } from "@/components/dashboard/dashboard-action-button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { confirmDestructive } from "@/lib/confirm-action";
 import { getSettingsDemo } from "@/content/settings-demo";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
@@ -116,7 +118,7 @@ export function VenueSpotsSetup({
 
   async function removeSpot(spotId: string, name: string) {
     if (!venueId) return;
-    if (!window.confirm(Q.deleteSpotConfirm(name))) return;
+    if (!confirmDestructive(Q.deleteSpotConfirm(name))) return;
     setBusy(spotId);
     try {
       const res = await fetch(`/api/venues/${venueId}/spots/${spotId}`, { method: "DELETE" });
@@ -342,30 +344,27 @@ export function VenueSpotsSetup({
                       {formatVenueSpotLabelForLang(spot.type, spot.label, lang)}
                     </span>
                     <div className="flex shrink-0 gap-1">
-                      <button
-                        type="button"
+                      <DashboardIconButton
                         onClick={() => {
                           setEditingId(spot.id);
                           setEditLabel(spot.label);
                         }}
-                        className={buttonClass("secondary", "sm")}
-                        aria-label={Q.editSpot}
+                        label={Q.editSpot}
                       >
                         <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
+                      </DashboardIconButton>
+                      <DashboardIconButton
+                        variant="danger"
                         onClick={() =>
                           void removeSpot(
                             spot.id,
                             formatVenueSpotLabelForLang(spot.type, spot.label, lang),
                           )
                         }
-                        className={buttonClass("secondary", "sm")}
-                        aria-label={Q.deleteSpotLabel}
+                        label={Q.deleteSpotLabel}
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-red-600" />
-                      </button>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </DashboardIconButton>
                     </div>
                   </>
                 )}

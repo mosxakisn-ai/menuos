@@ -15,8 +15,13 @@ import {
   dashboardLabelClass,
 } from "@/components/dashboard/dashboard-page";
 import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
+import {
+  DashboardIconButton,
+  dashboardTextActionClass,
+} from "@/components/dashboard/dashboard-action-button";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
 import { clientShareOrigin } from "@/lib/client-share-origin";
 import { cn } from "@/lib/utils";
 
@@ -167,7 +172,7 @@ function StaffMemberLinkActions({
   }
 
   async function rotate() {
-    if (!window.confirm(labels.rotateConfirm(member.name))) return;
+    if (!confirmWarning(labels.rotateConfirm(member.name))) return;
     setRotating(true);
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members/${member.id}/rotate-token`, {
@@ -199,7 +204,7 @@ function StaffMemberLinkActions({
         type="button"
         disabled={busy || rotating}
         onClick={() => void rotate()}
-        className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
+        className={dashboardTextActionClass("warning")}
         title={labels.rotateLink}
       >
         <RefreshCw className={`h-3.5 w-3.5 ${rotating ? "animate-spin" : ""}`} />
@@ -325,7 +330,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   }
 
   async function removeMember(memberId: string, memberName: string) {
-    if (!venueId || !window.confirm(S.deleteConfirm(memberName))) return;
+    if (!venueId || !confirmDestructive(S.deleteConfirm(memberName))) return;
     setBusy(`del-${memberId}`);
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members/${memberId}`, {
@@ -516,24 +521,22 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       <p className="mt-0.5 text-sm text-slate-600">{member.roleLabel}</p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
+                      <DashboardIconButton
+                        variant="neutral"
                         disabled={isBusy}
                         onClick={() => startEdit(member)}
-                        className={buttonClass("secondary", "sm")}
-                        aria-label={S.edit}
+                        label={S.edit}
                       >
                         <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
+                      </DashboardIconButton>
+                      <DashboardIconButton
+                        variant="danger"
                         disabled={isBusy}
                         onClick={() => void removeMember(member.id, member.name)}
-                        className={`${buttonClass("secondary", "sm")} text-red-700`}
-                        aria-label={S.delete}
+                        label={S.deleteTitle}
                       >
                         <Trash2 className="h-4 w-4" />
-                      </button>
+                      </DashboardIconButton>
                     </div>
                   </div>
 

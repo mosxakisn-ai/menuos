@@ -15,9 +15,11 @@ import {
 } from "@/components/dashboard/dashboard-page";
 import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
 import { DashboardScrollRow } from "@/components/dashboard/dashboard-ui";
+import { dashboardIconButtonClass } from "@/components/dashboard/dashboard-action-button";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { confirmDestructive } from "@/lib/confirm-action";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { cn } from "@/lib/utils";
 
@@ -220,7 +222,7 @@ export function MenuEditor({
       setFlash({ type: "error", text: d.deleteCatalogLast });
       return;
     }
-    if (!window.confirm(d.deleteCatalogConfirm(menu.name))) return;
+    if (!confirmDestructive(d.deleteCatalogConfirm(menu.name))) return;
 
     setDeletingMenuId(menu.id);
     try {
@@ -302,7 +304,7 @@ export function MenuEditor({
   }
 
   async function deleteItem(id: string) {
-    if (!window.confirm(d.catalogEntry.deleteConfirm)) return;
+    if (!confirmDestructive(d.catalogEntry.deleteConfirm)) return;
     const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
     const data = await res.json();
     showFromResponse(data, res.ok);
@@ -317,7 +319,7 @@ export function MenuEditor({
       });
       return;
     }
-    if (!window.confirm(d.menuEditor.deleteCategoryConfirm)) {
+    if (!confirmDestructive(d.menuEditor.deleteCategoryConfirm)) {
       return;
     }
     const res = await fetch(`/api/categories/${cat.id}`, { method: "DELETE" });
@@ -477,8 +479,8 @@ export function MenuEditor({
                           className={cn(
                             "inline-flex items-center border-l px-2 py-1.5 transition",
                             isActive
-                              ? "border-white/30 hover:bg-white/15"
-                              : "border-slate-200 hover:bg-slate-100",
+                              ? "border-white/30 hover:bg-white/15 hover:text-white"
+                              : "border-slate-200 hover:border-red-200 hover:bg-red-50 hover:text-red-700",
                           )}
                           aria-label={d.deleteCatalog}
                           title={d.deleteCatalog}
@@ -586,10 +588,10 @@ export function MenuEditor({
                   onClick={() => deleteCategory(cat)}
                   disabled={cat.items.length > 0}
                   className={cn(
-                    "shrink-0 rounded-lg p-2 transition",
+                    "shrink-0 transition",
                     cat.items.length > 0
-                      ? "cursor-not-allowed text-slate-300"
-                      : "text-slate-400 hover:bg-red-50 hover:text-red-600",
+                      ? "cursor-not-allowed rounded-lg p-2 text-slate-300"
+                      : dashboardIconButtonClass("danger"),
                   )}
                   title={
                     cat.items.length > 0
@@ -753,8 +755,9 @@ export function MenuEditor({
                               <button
                                 type="button"
                                 onClick={() => deleteItem(item.id)}
-                                className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                className={dashboardIconButtonClass("danger")}
                                 title={d.catalogEntry.deleteTitle}
+                                aria-label={d.catalogEntry.deleteTitle}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -809,7 +812,7 @@ export function MenuEditor({
                                   <button
                                     type="button"
                                     onClick={() => setEditExtras(editExtras.filter((_, j) => j !== i))}
-                                    className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                    className={dashboardIconButtonClass("danger", "sm")}
                                     title={d.menuEditor.remove}
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />

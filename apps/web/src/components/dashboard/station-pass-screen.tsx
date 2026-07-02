@@ -12,6 +12,7 @@ import {
   type VenueSpotType,
 } from "@menuos/shared";
 import { buttonClass } from "@/components/ui/button";
+import { confirmDestructive } from "@/lib/confirm-action";
 import { cn } from "@/lib/utils";
 
 type ScreenSpot = { type: VenueSpotType; label: string };
@@ -263,7 +264,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   }
 
   async function cancelSignal(signalId: string) {
-    if (!ctx || !window.confirm(C.cancelConfirm)) return;
+    if (!ctx || !confirmDestructive(C.cancelConfirm)) return;
     setCancellingId(signalId);
     try {
       const res = await fetch(`/api/pass-signals/${signalId}`, {

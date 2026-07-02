@@ -4,8 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Copy, ExternalLink, Monitor, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import type { PassStationInput } from "@menuos/shared";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
+import {
+  dashboardTextActionClass,
+  DashboardIconButton,
+} from "@/components/dashboard/dashboard-action-button";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
 import { clientShareOrigin } from "@/lib/client-share-origin";
 import { stationScreenPath, type StationScreenRow } from "@/lib/station-screens";
 import { cn } from "@/lib/utils";
@@ -137,7 +142,7 @@ export function StationScreensPanel({
   }
 
   async function rotateScreen(screenId: string) {
-    if (!window.confirm(S.rotateScreenConfirm)) return;
+    if (!confirmWarning(S.rotateScreenConfirm)) return;
     setBusyId(screenId);
     try {
       const res = await fetch(`/api/venues/${venueId}/station-screens/${screenId}`, {
@@ -157,7 +162,7 @@ export function StationScreensPanel({
   }
 
   async function deleteScreen(screen: StationScreenRow) {
-    if (!window.confirm(S.deleteScreenConfirm(screen.label))) return;
+    if (!confirmDestructive(S.deleteScreenConfirm(screen.label))) return;
     setBusyId(screen.id);
     try {
       const res = await fetch(`/api/venues/${venueId}/station-screens/${screen.id}`, {
@@ -373,7 +378,8 @@ export function StationScreensPanel({
                         type="button"
                         disabled={busy}
                         onClick={() => void rotateScreen(screen.id)}
-                        className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
+                        className={`inline-flex items-center gap-1.5 ${dashboardTextActionClass("warning")}`}
+                        title={S.rotateScreenButton}
                       >
                         <RefreshCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} />
                         {busy ? S.rotatingScreen : S.rotateScreenButton}
@@ -383,7 +389,8 @@ export function StationScreensPanel({
                           type="button"
                           disabled={busy}
                           onClick={() => void deleteScreen(screen)}
-                          className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")} text-red-700`}
+                          className={`inline-flex items-center gap-1.5 ${dashboardTextActionClass("danger")}`}
+                          title={S.deleteScreenTitle}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           {S.deleteScreen}
