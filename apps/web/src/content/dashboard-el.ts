@@ -663,9 +663,18 @@ export const DASHBOARD_EL = {
   },
   overview: {
     titleFallback: "Επισκόπηση",
+    heroEyebrow: "Επισκόπηση",
+    metricsTitle: "Στατιστικά",
     addFirstVenue: "Πρόσθεσε το πρώτο",
     addToCatalog: "Πρόσθεσε στον κατάλογο",
     quickActions: "Γρήγορες ενέργειες",
+    actionVenue: "Ρύθμισε το κατάστημά σου",
+    actionCatalog: "Είδη, τιμές & κατηγορίες",
+    actionQr: "QR για τραπέζια & δωμάτια",
+    actionScreens: "Κλήσεις πελάτη & live πάσο",
+    actionPreview: "Όπως το βλέπει ο πελάτης",
+    actionHistory: "Ιστορικό παραδόσεων πάσου",
+    actionBilling: "Πλάνο & συνδρομή",
     quickStartEmpty:
       "Ξεκίνα προσθέτοντας κατηγορίες και είδη — μετά βγάλε QR για τα τραπέζια σου.",
     quickStartReady: "Ο κατάλογος σου είναι online! Βγάλε QR ή δες τις κλήσεις από πελάτες.",

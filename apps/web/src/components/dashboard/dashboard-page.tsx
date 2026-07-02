@@ -103,24 +103,64 @@ export function DashboardStatCard({
   label,
   value,
   hint,
+  compact,
+  accent,
 }: {
   label: string;
   value: string | number;
   hint?: string;
+  compact?: boolean;
+  accent?: "blue" | "cyan" | "slate";
 }) {
+  const accentClass =
+    accent === "cyan"
+      ? "from-brand-cyan/10 to-transparent"
+      : accent === "slate"
+        ? "from-slate-100/80 to-transparent"
+        : "from-brand-blue/10 to-transparent";
+
   return (
     <div
       className={cn(
-        dashboardCardClass,
-        "relative flex flex-col items-center justify-center overflow-hidden text-center",
+        "relative overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-sm transition hover:border-brand-blue/20 hover:shadow-md",
+        compact ? "p-4 text-left" : cn(dashboardCardClass, "flex flex-col items-center justify-center text-center"),
       )}
     >
-      <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-brand-blue/[0.04]" aria-hidden />
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <p className="mt-2 font-serif text-3xl font-bold tabular-nums leading-none text-primary">{value}</p>
-      {hint ? (
-        <p className="mt-2.5 text-xs font-medium text-brand-blue">{hint}</p>
-      ) : null}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 bg-gradient-to-br opacity-70",
+          accentClass,
+        )}
+        aria-hidden
+      />
+      <div className={cn("relative", compact ? "" : "flex flex-col items-center")}>
+        <p
+          className={cn(
+            "font-semibold uppercase tracking-[0.1em] text-slate-500",
+            compact ? "text-[10px]" : "text-[11px]",
+          )}
+        >
+          {label}
+        </p>
+        <p
+          className={cn(
+            "mt-1.5 font-serif font-bold tabular-nums leading-none text-brand-navy",
+            compact ? "text-2xl" : "mt-2 text-3xl text-primary",
+          )}
+        >
+          {value}
+        </p>
+        {hint ? (
+          <p
+            className={cn(
+              "text-slate-500",
+              compact ? "mt-1.5 text-[11px] leading-snug" : "mt-2.5 text-xs font-medium text-brand-blue",
+            )}
+          >
+            {hint}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }

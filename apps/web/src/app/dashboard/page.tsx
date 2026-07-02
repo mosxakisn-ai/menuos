@@ -83,7 +83,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   }
 
   return (
-    <DashboardPageShell>
+    <DashboardPageShell wide>
       <DashboardOverviewContent
         showWelcome={sp.welcome === "1"}
         orgName={org?.name ?? null}
