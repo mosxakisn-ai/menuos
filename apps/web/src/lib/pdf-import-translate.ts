@@ -21,11 +21,13 @@ export async function enhancePdfImportWithTranslation(
   }
 
   try {
-    const { draft, translatedCount } = await translateImportDraftToGreek(result);
+    const { draft: translated, translatedCount } = await translateImportDraftToGreek(result, {
+      force: options?.forceTranslate,
+    });
     if (translatedCount === 0) return result;
 
     return {
-      ...draft,
+      ...translated,
       ocrPagesUsed: result.ocrPagesUsed,
       digitalPagesUsed: result.digitalPagesUsed,
       document: result.document,

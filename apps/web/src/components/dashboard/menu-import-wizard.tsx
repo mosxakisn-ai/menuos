@@ -43,7 +43,7 @@ import {
 import {
   buildMenuImportReviewReport,
   countSelectedImport,
-  importDraftNeedsGreekTranslation,
+  draftHasLatinOnlyNames,
   normalizeImportDraft,
   patchAllItems,
 } from "@/lib/menu-import-review";
@@ -209,7 +209,7 @@ export function MenuImportWizard({
   }, [draft]);
 
   const needsGreekTranslation = useMemo(
-    () => (draft ? importDraftNeedsGreekTranslation(draft) : false),
+    () => (draft ? draftHasLatinOnlyNames(draft) : false),
     [draft],
   );
 

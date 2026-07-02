@@ -1,7 +1,6 @@
 import { isLatinOnlyMenuText, type MenuPdfParseResult } from "@menuos/shared";
-import { importDraftNeedsGreekTranslation } from "@/lib/menu-import-review";
-
-const GEMINI_API = "https://generativelanguage.googleapis.com/v1beta/models";
+import { geminiGenerateContent } from "@/lib/gemini-fetch";
+import { draftHasLatinOnlyNames, importDraftNeedsGreekTranslation } from "@/lib/menu-import-review";
 
 const TRANSLATE_PROMPT = `You translate restaurant/hotel menu names from English to Greek for a Greek QR menu app.
 
@@ -72,21 +71,15 @@ async function translateBatch(entries: TranslateEntry[]): Promise<Map<string, st
   if (!apiKey) throw new PdfTranslateError("GEMINI_API_KEY is not configured.");
 
   const model = geminiModel();
-  const url = `${GEMINI_API}/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
   const payload = entries.map((e) => ({ id: e.id, nameEn: e.nameEn }));
   const userText = `${TRANSLATE_PROMPT}\n\nTranslate these menu entries:\n${JSON.stringify(payload)}`;
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: userText }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.15,
-      },
-    }),
+  const res = await geminiGenerateContent(model, apiKey, {
+    contents: [{ parts: [{ text: userText }] }],
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.15,
+    },
   });
 
   const data = (await res.json()) as {
@@ -123,14 +116,20 @@ const BATCH_SIZE = 60;
 
 export async function translateImportDraftToGreek(
   draft: MenuPdfParseResult,
-): Promise<{ draft: MenuPdfParseResult; translatedCount: number }> {
-  if (!importDraftNeedsGreekTranslation(draft)) {
-    return { draft, translatedCount: 0 };
+  options?: { force?: boolean },
+): Promise<{ draft: MenuPdfParseResult; translatedCount: number; untranslatedCount: number }> {
+  const shouldRun =
+    options?.force === true
+      ? draftHasLatinOnlyNames(draft)
+      : importDraftNeedsGreekTranslation(draft);
+
+  if (!shouldRun) {
+    return { draft, translatedCount: 0, untranslatedCount: 0 };
   }
 
   const entries = collectTranslateEntries(draft);
   if (entries.length === 0) {
-    return { draft, translatedCount: 0 };
+    return { draft, translatedCount: 0, untranslatedCount: 0 };
   }
 
   const translations = new Map<string, string>();
@@ -158,15 +157,27 @@ export async function translateImportDraftToGreek(
     return { ...nextCat, items };
   });
 
+  const untranslatedCount = entries.filter((e) => !translations.has(e.id)).length;
+  const warnings = draft.warnings.filter((w) => !w.startsWith("Μετάφραση AI"));
+
+  if (translatedCount > 0) {
+    warnings.push(`Μετάφραση AI — ${translatedCount} ονόματα στα ελληνικά.`);
+  }
+  if (untranslatedCount > 0) {
+    warnings.push(
+      untranslatedCount === 1
+        ? "Μερική μετάφραση — 1 όνομα έμεινε στα αγγλικά, έλεγξέ το χειροκίνητα."
+        : `Μερική μετάφραση — ${untranslatedCount} ονόματα έμειναν στα αγγλικά, έλεγξέ τα χειροκίνητα.`,
+    );
+  }
+
   return {
     draft: {
       ...draft,
       categories,
-      warnings: [
-        ...draft.warnings.filter((w) => !w.startsWith("Μετάφραση AI")),
-        `Μετάφραση AI — ${translatedCount} ονόματα στα ελληνικά.`,
-      ],
+      warnings,
     },
     translatedCount,
+    untranslatedCount,
   };
 }

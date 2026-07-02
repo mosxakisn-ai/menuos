@@ -1,6 +1,6 @@
 import type { MenuImportSection } from "@menuos/shared";
 
-const GEMINI_API = "https://generativelanguage.googleapis.com/v1beta/models";
+import { geminiGenerateContent } from "@/lib/gemini-fetch";
 
 const MENU_VISION_PROMPT = `You analyze a restaurant/hotel menu page image.
 
@@ -125,30 +125,25 @@ export async function parseMenuPageImageWithGemini(jpeg: Buffer): Promise<MenuIm
   if (!apiKey) throw new PdfVisionError("GEMINI_API_KEY is not configured.");
 
   const model = geminiModel();
-  const url = `${GEMINI_API}/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [
-            { text: MENU_VISION_PROMPT },
-            {
-              inline_data: {
-                mime_type: "image/jpeg",
-                data: jpeg.toString("base64"),
-              },
+  const res = await geminiGenerateContent(model, apiKey, {
+    contents: [
+      {
+        parts: [
+          { text: MENU_VISION_PROMPT },
+          {
+            inline_data: {
+              mime_type: "image/jpeg",
+              data: jpeg.toString("base64"),
             },
-          ],
-        },
-      ],
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.1,
+          },
+        ],
       },
-    }),
+    ],
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.1,
+    },
   });
 
   const data = (await res.json()) as {

@@ -3,7 +3,7 @@ import { requirePdfImportPlan } from "@/lib/api-auth";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 import { logServerDiagnostic } from "@/lib/client-diagnostics-service";
 import {
-  importDraftNeedsGreekTranslation,
+  draftHasLatinOnlyNames,
   normalizeImportDraft,
 } from "@/lib/menu-import-review";
 import { PdfTranslateError, translateImportDraftToGreek } from "@/lib/pdf-import-gemini-translate";
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: I.translateInvalidDraft }, { status: 400 });
   }
 
-  if (!importDraftNeedsGreekTranslation(draft)) {
+  if (!draftHasLatinOnlyNames(draft)) {
     return NextResponse.json({
       draft: normalizeImportDraft(draft),
       translatedCount: 0,
@@ -45,7 +45,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { draft: translated, translatedCount } = await translateImportDraftToGreek(draft);
+    const { draft: translated, translatedCount } = await translateImportDraftToGreek(draft, {
+      force: true,
+    });
     return NextResponse.json({
       draft: normalizeImportDraft(translated),
       translatedCount,

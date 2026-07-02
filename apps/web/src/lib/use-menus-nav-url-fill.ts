@@ -15,6 +15,7 @@ type NavMode = "catalog" | "import";
 
 const NAV_LOOP_WINDOW_MS = 3_000;
 const NAV_LOOP_THRESHOLD = 6;
+const NAV_LOOP_RECOVERY_MS = 15_000;
 
 /** One-time URL fill when venue/menu state is known but query params are missing — avoids replace loops. */
 export function useMenusNavUrlFill(
@@ -27,18 +28,29 @@ export function useMenusNavUrlFill(
   const filledRef = useRef(false);
   const replaceTimesRef = useRef<number[]>([]);
   const loopReportedRef = useRef(false);
+  const loopReportedAtRef = useRef<number | null>(null);
   const buildUrl = mode === "import" ? buildMenusImportUrl : buildMenusPageUrl;
   const searchKey = searchParams.toString();
 
   useEffect(() => {
     filledRef.current = false;
     loopReportedRef.current = false;
+    loopReportedAtRef.current = null;
     replaceTimesRef.current = [];
   }, [params.venueId]);
 
-  // Allow URL fill again after browser back / stale ?menu= (unless nav loop was reported).
+  // Allow URL fill again after browser back / stale ?menu= (unless nav loop cooldown active).
   useEffect(() => {
-    if (loopReportedRef.current) return;
+    if (loopReportedRef.current) {
+      const reportedAt = loopReportedAtRef.current;
+      if (reportedAt && Date.now() - reportedAt >= NAV_LOOP_RECOVERY_MS) {
+        loopReportedRef.current = false;
+        loopReportedAtRef.current = null;
+        replaceTimesRef.current = [];
+      } else {
+        return;
+      }
+    }
     filledRef.current = menusNavParamsMatchUrl(params, searchParams);
   }, [searchKey, params.venueId, params.menuId, searchParams, params]);
 
@@ -49,6 +61,7 @@ export function useMenusNavUrlFill(
       return;
     }
     if (filledRef.current) return;
+    if (loopReportedRef.current) return;
 
     const now = Date.now();
     replaceTimesRef.current = replaceTimesRef.current.filter((t) => now - t < NAV_LOOP_WINDOW_MS);
@@ -57,6 +70,7 @@ export function useMenusNavUrlFill(
     if (replaceTimesRef.current.length >= NAV_LOOP_THRESHOLD) {
       if (!loopReportedRef.current) {
         loopReportedRef.current = true;
+        loopReportedAtRef.current = now;
         reportClientDiagnostic({
           severity: "WARN",
           source: "client_nav",
@@ -74,6 +88,14 @@ export function useMenusNavUrlFill(
             replacesInWindow: replaceTimesRef.current.length,
           },
         });
+        if (typeof window !== "undefined") {
+          window.setTimeout(() => {
+            loopReportedRef.current = false;
+            loopReportedAtRef.current = null;
+            replaceTimesRef.current = [];
+            filledRef.current = false;
+          }, NAV_LOOP_RECOVERY_MS);
+        }
       }
       filledRef.current = true;
       return;

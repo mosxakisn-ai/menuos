@@ -205,6 +205,11 @@ export function importDraftNeedsGreekTranslation(draft: MenuPdfParseResult): boo
   return total >= 3 && latinOnly / total >= 0.5;
 }
 
+/** Any Latin-only names — show manual translate even on mixed menus. */
+export function draftHasLatinOnlyNames(draft: MenuPdfParseResult): boolean {
+  return countLatinOnlyImportNames(draft).latinOnly > 0;
+}
+
 export function normalizeImportDraft(draft: MenuPdfParseResult): MenuPdfParseResult {
   return {
     ...draft,

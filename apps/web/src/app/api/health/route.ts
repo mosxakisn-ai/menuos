@@ -17,20 +17,25 @@ export async function GET() {
     console.error("[menuos-health] database check failed", err);
   }
 
+  const hints: string[] = [];
+  if (checks.database === "fail") {
+    hints.push("Η βάση δεδομένων δεν απαντά — έλεγξε Postgres και DATABASE_URL στο server.");
+  }
+  if (checks.mail === "fail") {
+    hints.push("Ρύθμισε MAILBOX_PASSWORD στο .env για αποστολή email.");
+  }
+  if (checks.gemini === "fail") {
+    hints.push("GEMINI_API_KEY κενό — PDF AI (Vision + μετάφραση) απενεργοποιημένο.");
+  }
+
   const healthy = checks.database === "ok";
 
   return NextResponse.json(
     {
       ok: healthy,
       checks,
-      hint:
-        checks.database === "fail"
-          ? "Η βάση δεδομένων δεν απαντά — έλεγξε Postgres και DATABASE_URL στο server."
-          : checks.mail === "fail"
-            ? "Ρύθμισε MAILBOX_PASSWORD στο .env για αποστολή email."
-            : checks.gemini === "fail"
-              ? "GEMINI_API_KEY κενό — PDF AI (Vision + μετάφραση) απενεργοποιημένο."
-              : undefined,
+      hint: hints[0],
+      hints: hints.length > 0 ? hints : undefined,
     },
     { status: healthy ? 200 : 503 },
   );
