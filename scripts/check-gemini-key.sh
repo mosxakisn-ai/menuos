@@ -8,12 +8,12 @@ source "$ROOT/scripts/load-env.sh"
 load_env "$ROOT"
 
 KEY="${GEMINI_API_KEY:-}"
-MODEL="${GEMINI_MODEL:-gemini-2.0-flash}"
+MODEL="${GEMINI_MODEL:-gemini-2.5-flash}"
 
 if [ -z "$KEY" ]; then
   echo "FAIL: GEMINI_API_KEY is empty in $ROOT/.env"
   echo "Create free key: https://aistudio.google.com/apikey"
-  echo "Then: bash scripts/set-gemini-key.sh AIzaSy..."
+  echo "Then: bash scripts/set-gemini-key.sh YOUR_GEMINI_API_KEY"
   exit 1
 fi
 

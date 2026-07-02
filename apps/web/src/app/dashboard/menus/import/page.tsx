@@ -8,6 +8,7 @@ import { MenuImportWizard } from "@/components/dashboard/menu-import-wizard";
 import { getSession } from "@/lib/auth";
 import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
+import { isPdfVisionConfigured } from "@/lib/pdf-vision-gemini";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildDashboardPageMetadata("import", "/dashboard/menus/import");
@@ -39,7 +40,11 @@ export default async function MenuImportPage({ searchParams }: Props) {
         <MenuImportPageIntro />
       </Suspense>
       <Suspense fallback={null}>
-        <MenuImportWizard venues={venues} initialVenueId={sp.venue} />
+        <MenuImportWizard
+          venues={venues}
+          initialVenueId={sp.venue}
+          geminiConfigured={isPdfVisionConfigured()}
+        />
       </Suspense>
     </DashboardPage>
   );

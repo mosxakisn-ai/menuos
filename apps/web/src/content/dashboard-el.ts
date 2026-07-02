@@ -34,6 +34,14 @@ export const DASHBOARD_EL = {
   loadingCatalog: "Φόρτωση καταλόγου...",
   importWizard: {
     hint: "Ανέβασε PDF καταλόγου — digital + OCR. Βλέπεις αναφορά πριν την εισαγωγή.",
+    hintWithGemini:
+      "Ανέβασε PDF — OCR, layout και μετάφραση με Gemini AI. Έλεγχος πριν την εισαγωγή.",
+    geminiBadge: "Με Gemini AI",
+    geminiPoweredSubtitle: "Layout, OCR και ελληνικά ονόματα με Gemini AI",
+    geminiProcessingDetail: "Gemini AI: layout, OCR & μετάφραση…",
+    geminiStepDone: "Ολοκληρώθηκε",
+    analyzeButtonAi: "Ανάλυση με Gemini AI",
+    processingTitleGemini: "Ανάλυση με Gemini AI",
     processFlow: {
       scan: "Σάρωση",
       analyze: "Ανάλυση",
@@ -45,6 +53,8 @@ export const DASHBOARD_EL = {
     pipeline: {
       scan: "Σάρωση PDF",
       extract: "Ανάλυση σελίδων",
+      extractWithGemini: "OCR & Gemini AI",
+      ai: "Gemini AI",
       ocr: "OCR εικόνων",
       parse: "Κατηγορίες & είδη",
       done: "Έτοιμο",

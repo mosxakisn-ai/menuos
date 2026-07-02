@@ -34,6 +34,14 @@ export const DASHBOARD_EN = {
   loadingCatalog: "Loading catalog...",
   importWizard: {
     hint: "Upload a catalog PDF — digital + OCR. Review the report before importing.",
+    hintWithGemini:
+      "Upload a PDF — OCR, layout and translation with Gemini AI. Review before importing.",
+    geminiBadge: "With Gemini AI",
+    geminiPoweredSubtitle: "Layout, OCR and Greek names via Gemini AI",
+    geminiProcessingDetail: "Gemini AI: layout, OCR & translation…",
+    geminiStepDone: "Complete",
+    analyzeButtonAi: "Analyze with Gemini AI",
+    processingTitleGemini: "Analyzing with Gemini AI",
     processFlow: {
       scan: "Scan",
       analyze: "Analyze",
@@ -45,6 +53,8 @@ export const DASHBOARD_EN = {
     pipeline: {
       scan: "Scanning PDF",
       extract: "Analyzing pages",
+      extractWithGemini: "OCR & Gemini AI",
+      ai: "Gemini AI",
       ocr: "Image OCR",
       parse: "Categories & items",
       done: "Done",

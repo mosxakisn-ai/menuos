@@ -30,7 +30,7 @@ export class PdfTranslateError extends Error {
 type TranslateEntry = { id: string; nameEn: string };
 
 function geminiModel(): string {
-  return process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
+  return process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
 }
 
 function collectTranslateEntries(draft: MenuPdfParseResult): TranslateEntry[] {

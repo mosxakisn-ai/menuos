@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
 import { LoadingSkeleton, LoadingState } from "@/components/ui/loading-state";
@@ -121,28 +121,56 @@ export function MenuEditor({
   const [addingMenu, setAddingMenu] = useState(false);
   const [deletingMenuId, setDeletingMenuId] = useState<string | null>(null);
   const [deletingAllMenus, setDeletingAllMenus] = useState(false);
+  const scrollRestoreRef = useRef<number | null>(null);
+  const refreshSeqRef = useRef(0);
 
-  const loadMenus = useCallback(async () => {
-    if (!venueId) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/menus?venueId=${venueId}`);
-      const data = await res.json();
-      if (res.ok) {
-        setMenus(data.menus ?? []);
-        setVenue(data.venue ?? null);
-        setActiveMenuId((prev) => {
-          const list = data.menus ?? [];
-          if (prev && list.some((m: Menu) => m.id === prev)) return prev;
-          return list[0]?.id ?? "";
-        });
+  const restoreScrollAfterRefresh = useCallback(() => {
+    const y = scrollRestoreRef.current;
+    scrollRestoreRef.current = null;
+    if (y == null) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => window.scrollTo({ top: y, left: 0 }));
+    });
+  }, []);
+
+  const loadMenus = useCallback(
+    async (options?: { background?: boolean }) => {
+      if (!venueId) return;
+      let refreshSeq = 0;
+      if (options?.background) {
+        refreshSeq = ++refreshSeqRef.current;
+        scrollRestoreRef.current = window.scrollY;
       } else {
-        showFromResponse(data, false, res.status);
+        setLoading(true);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [venueId, showFromResponse]);
+      try {
+        const res = await fetch(`/api/menus?venueId=${venueId}`);
+        const data = await res.json();
+        if (res.ok) {
+          setMenus(data.menus ?? []);
+          setVenue(data.venue ?? null);
+          setActiveMenuId((prev) => {
+            const list = data.menus ?? [];
+            if (prev && list.some((m: Menu) => m.id === prev)) return prev;
+            return list[0]?.id ?? "";
+          });
+          if (options?.background && refreshSeq === refreshSeqRef.current) {
+            restoreScrollAfterRefresh();
+          }
+        } else {
+          if (options?.background && refreshSeq === refreshSeqRef.current) {
+            scrollRestoreRef.current = null;
+          }
+          showFromResponse(data, false, res.status);
+        }
+      } finally {
+        if (!options?.background) setLoading(false);
+      }
+    },
+    [venueId, showFromResponse, restoreScrollAfterRefresh],
+  );
+
+  const refreshMenus = useCallback(() => loadMenus({ background: true }), [loadMenus]);
 
   useEffect(() => {
     const venueParam = searchParams.get("venue");
@@ -194,7 +222,7 @@ export function MenuEditor({
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setCatNameGr("");
-        await loadMenus();
+        await refreshMenus();
       }
     } finally {
       setAddingCat(false);
@@ -228,7 +256,7 @@ export function MenuEditor({
       if (res.ok) {
         setItemForm({ nameGr: "", price: "", descriptionGr: "", label: "", photoUrl: "" });
         setItemCategoryId(null);
-        await loadMenus();
+        await refreshMenus();
       }
     } finally {
       setAddingItem(false);
@@ -249,7 +277,7 @@ export function MenuEditor({
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setNewMenuName("");
-        await loadMenus();
+        await refreshMenus();
         if (data.menu?.id) setActiveMenuId(data.menu.id);
       }
     } finally {
@@ -277,7 +305,7 @@ export function MenuEditor({
       if (res.ok) {
         clearMenuEditState();
         setActiveMenuId(data.menu?.id ?? "");
-        await loadMenus();
+        await refreshMenus();
       }
     } finally {
       setDeletingAllMenus(false);
@@ -314,7 +342,7 @@ export function MenuEditor({
           const next = menus.find((m) => m.id !== menu.id);
           setActiveMenuId(next?.id ?? "");
         }
-        await loadMenus();
+        await refreshMenus();
       }
     } finally {
       setDeletingMenuId(null);
@@ -329,7 +357,7 @@ export function MenuEditor({
     });
     const data = await res.json();
     showFromResponse(data, res.ok, res.status);
-    if (res.ok) await loadMenus();
+    if (res.ok) await refreshMenus();
   }
 
   async function saveItemEdit(itemId: string) {
@@ -365,7 +393,7 @@ export function MenuEditor({
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setEditingItemId(null);
-        await loadMenus();
+        await refreshMenus();
       }
     } finally {
       setSavingName(false);
@@ -380,7 +408,7 @@ export function MenuEditor({
     });
     const data = await res.json();
     showFromResponse(data, res.ok, res.status);
-    if (res.ok) await loadMenus();
+    if (res.ok) await refreshMenus();
   }
 
   async function deleteItem(id: string) {
@@ -388,7 +416,7 @@ export function MenuEditor({
     const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
     const data = await res.json();
     showFromResponse(data, res.ok, res.status);
-    if (res.ok) await loadMenus();
+    if (res.ok) await refreshMenus();
   }
 
   async function deleteCategory(cat: Category) {
@@ -405,7 +433,7 @@ export function MenuEditor({
     const res = await fetch(`/api/categories/${cat.id}`, { method: "DELETE" });
     const data = await res.json();
     showFromResponse(data, res.ok, res.status);
-    if (res.ok) await loadMenus();
+    if (res.ok) await refreshMenus();
   }
 
   function tName(translations: Translation[]) {
@@ -435,7 +463,7 @@ export function MenuEditor({
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setEditingCategoryId(null);
-        await loadMenus();
+        await refreshMenus();
       }
     } finally {
       setSavingCategory(false);

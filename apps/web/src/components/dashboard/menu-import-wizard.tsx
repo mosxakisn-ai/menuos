@@ -26,6 +26,7 @@ import {
   ImportPipelineProgress,
   type PipelineStep,
 } from "@/components/dashboard/import-pipeline-progress";
+import { ImportGeminiBadge } from "@/components/dashboard/import-gemini-badge";
 import { ImportProcessFlow } from "@/components/dashboard/import-process-flow";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -54,6 +55,17 @@ import {
   resolveMenuIdForVenue,
 } from "@/lib/menus-nav-url";
 import { useMenusNavUrlFill } from "@/lib/use-menus-nav-url-fill";
+
+type ImportWizardPipelineCopy = {
+  pipeline: {
+    scan: string;
+    extract: string;
+    extractWithGemini: string;
+    ai: string;
+    parse: string;
+    done: string;
+  };
+};
 
 type Venue = {
   id: string;
@@ -90,23 +102,39 @@ function setStepStatus(steps: PipelineStep[], id: string, patch: Partial<Pipelin
   return steps.map((s) => (s.id === id ? { ...s, ...patch } : s));
 }
 
+function buildInitialPipeline(W: ImportWizardPipelineCopy, withGemini: boolean): PipelineStep[] {
+  if (withGemini) {
+    return [
+      { id: "scan", label: W.pipeline.scan, status: "pending" },
+      { id: "extract", label: W.pipeline.extractWithGemini, status: "pending" },
+      { id: "ai", label: W.pipeline.ai, status: "pending" },
+      { id: "parse", label: W.pipeline.parse, status: "pending" },
+      { id: "done", label: W.pipeline.done, status: "pending" },
+    ];
+  }
+  return [
+    { id: "scan", label: W.pipeline.scan, status: "pending" },
+    { id: "extract", label: W.pipeline.extract, status: "pending" },
+    { id: "parse", label: W.pipeline.parse, status: "pending" },
+    { id: "done", label: W.pipeline.done, status: "pending" },
+  ];
+}
+
 export function MenuImportWizard({
   venues,
   initialVenueId,
+  geminiConfigured: geminiConfiguredInitial = false,
 }: {
   venues: Venue[];
   initialVenueId?: string;
+  geminiConfigured?: boolean;
 }) {
   const { d, lang } = useDashboardCopy();
   const W = d.importWizard;
+  const [geminiConfigured, setGeminiConfigured] = useState(geminiConfiguredInitial);
   const initialPipeline = useMemo<PipelineStep[]>(
-    () => [
-      { id: "scan", label: W.pipeline.scan, status: "pending" },
-      { id: "extract", label: W.pipeline.extract, status: "pending" },
-      { id: "parse", label: W.pipeline.parse, status: "pending" },
-      { id: "done", label: W.pipeline.done, status: "pending" },
-    ],
-    [W],
+    () => buildInitialPipeline(W, geminiConfigured),
+    [W, geminiConfigured],
   );
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -122,13 +150,17 @@ export function MenuImportWizard({
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    if (phase === "upload") {
+      setPipeline(initialPipeline);
+      return;
+    }
     setPipeline((prev) =>
       prev.map((step) => ({
         ...step,
         label: initialPipeline.find((s) => s.id === step.id)?.label ?? step.label,
       })),
     );
-  }, [initialPipeline]);
+  }, [initialPipeline, phase]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [visionRetrying, setVisionRetrying] = useState(false);
@@ -151,6 +183,26 @@ export function MenuImportWizard({
   const [expandAllToken, setExpandAllToken] = useState(0);
   const [collapseAllToken, setCollapseAllToken] = useState(0);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
+
+  useEffect(() => {
+    setGeminiConfigured(geminiConfiguredInitial);
+  }, [geminiConfiguredInitial]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/health")
+      .then((res) => res.json())
+      .then((data: { checks?: { gemini?: string } }) => {
+        if (cancelled) return;
+        if (data.checks?.gemini === "ok") {
+          setGeminiConfigured(true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const pageStats = useMemo(() => pageSelectionStats(pages), [pages]);
   const activeMenu = venue?.menus.find((m) => m.id === menuId);
@@ -314,7 +366,17 @@ export function MenuImportWizard({
       setPipeline((p) =>
         p.map((s) => {
           if (s.id === "scan") return { ...s, status: "done", detail: undefined };
-          if (s.id === "extract") return { ...s, status: "active", detail: forceVision ? W.visionRetrying : W.extractDetail };
+          if (s.id === "extract") {
+            return {
+              ...s,
+              status: "active",
+              detail: forceVision
+                ? W.visionRetrying
+                : geminiConfigured
+                  ? W.geminiProcessingDetail
+                  : W.extractDetail,
+            };
+          }
           return s;
         }),
       );
@@ -387,6 +449,34 @@ export function MenuImportWizard({
               detail: ocrUsed > 0 ? W.ocrUsed(ocrUsed) : undefined,
             };
           }
+          if (s.id === "ai" && geminiConfigured) {
+            const translated =
+              Boolean(data.translationApplied) &&
+              typeof data.translatedCount === "number" &&
+              data.translatedCount > 0;
+            const warnings = Array.isArray(data.warnings) ? (data.warnings as string[]) : [];
+            const translateFailed = warnings.some(
+              (w) =>
+                w.includes("Μετάφραση AI δεν ολοκληρώθηκε") ||
+                w.includes("Μερική μετάφραση") ||
+                w.includes("AI translation") ||
+                w.includes("Partial translation"),
+            );
+            if (translated) {
+              return { ...s, status: "done", detail: W.geminiStepDone };
+            }
+            if (translateFailed) {
+              const failedWarning = warnings.find(
+                (w) =>
+                  w.includes("Μετάφραση AI δεν ολοκληρώθηκε") ||
+                  w.includes("Μερική μετάφραση") ||
+                  w.includes("AI translation") ||
+                  w.includes("Partial translation"),
+              );
+              return { ...s, status: "error", detail: failedWarning };
+            }
+            return { ...s, status: "done" };
+          }
           if (s.id === "parse") return { ...s, status: "done" };
           if (s.id === "done") return { ...s, status: "done" };
           return s;
@@ -436,7 +526,7 @@ export function MenuImportWizard({
     } finally {
       if (options?.forceVision) setVisionRetrying(false);
     }
-  }, [menuId, files, pages, showFromResponse, setFlash, initialPipeline, W, lang]);
+  }, [menuId, files, pages, showFromResponse, setFlash, initialPipeline, W, lang, geminiConfigured]);
 
   function updateCategory(catId: string, patch: Partial<ParsedMenuCategoryDraft>) {
     setDraft((d) =>
@@ -573,13 +663,19 @@ export function MenuImportWizard({
 
       <Card className="overflow-hidden border-brand-blue/20 bg-gradient-to-br from-brand-blue/[0.07] via-white to-cyan-50/40 p-0">
         <div className="border-b border-brand-blue/10 bg-white/50 px-5 py-4 backdrop-blur-sm">
-          <p className="text-xs font-bold uppercase tracking-widest text-brand-blue">{W.badge}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-blue">{W.badge}</p>
+            {geminiConfigured ? <ImportGeminiBadge label={W.geminiBadge} pulse={phase === "processing"} /> : null}
+          </div>
           <h2 className="mt-1 font-serif text-xl font-bold text-brand-navy">
             {phase === "upload" && W.phaseUpload}
-            {phase === "processing" && W.processingTitle}
+            {phase === "processing" &&
+              (geminiConfigured ? W.processingTitleGemini : W.processingTitle)}
             {phase === "review" && W.phaseReview}
           </h2>
-          <p className="mt-1.5 text-sm text-slate-600">{W.hint}</p>
+          <p className="mt-1.5 text-sm text-slate-600">
+            {geminiConfigured ? W.hintWithGemini : W.hint}
+          </p>
         </div>
         {phase === "upload" ? (
           <div className="px-4 py-4 sm:px-5">
@@ -590,7 +686,13 @@ export function MenuImportWizard({
 
       {phase === "processing" ? (
         <Card className="overflow-hidden border-brand-blue/15 py-4">
-          <ImportPipelineProgress steps={pipeline} progress={progress} title={W.processingTitle} />
+          <ImportPipelineProgress
+            steps={pipeline}
+            progress={progress}
+            title={geminiConfigured ? W.processingTitleGemini : W.processingTitle}
+            subtitle={geminiConfigured ? W.geminiPoweredSubtitle : undefined}
+            poweredByGemini={geminiConfigured}
+          />
         </Card>
       ) : null}
 
@@ -670,7 +772,7 @@ export function MenuImportWizard({
               className={`mt-4 inline-flex items-center gap-2 ${buttonClass("primary")}`}
             >
               <Sparkles className="h-4 w-4" />
-              {W.analyzeButton}
+              {geminiConfigured ? W.analyzeButtonAi : W.analyzeButton}
             </button>
           </Card>
 
