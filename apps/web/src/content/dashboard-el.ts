@@ -482,9 +482,10 @@ export const DASHBOARD_EL = {
         colName: "Όνομα",
         colRole: "Ρόλος",
         colStations: "Τμήματα",
-        colLink: "Link",
+        colLink: "Σύνδεσμος σερβιτόρου",
+        colLinkHint: "Στείλτε το στο κινητό του — άνοιγμα χωρίς login.",
         colActions: "",
-        copyLink: "Αντιγραφή link",
+        copyLink: "Αντιγραφή",
         copied: "Αντιγράφηκε!",
         rotateLink: "Νέο link",
         rotateConfirm: (name: string) =>

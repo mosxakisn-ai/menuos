@@ -241,8 +241,7 @@ export async function requireWaiterCallAccess(
 
 export function buildStaffWaiterUrl(slug: string, staffToken: string): string {
   const base = process.env.APP_URL?.replace(/\/$/, "") ?? "https://menuos.gr";
-  const url = new URL("/api/staff/session", base);
-  url.searchParams.set("venueSlug", slug);
+  const url = new URL(`/s/${slug}`, base);
   url.searchParams.set("key", staffToken);
   return url.toString();
 }

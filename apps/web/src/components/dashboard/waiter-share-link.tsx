@@ -7,7 +7,7 @@ import { dashboardTextActionClass } from "@/components/dashboard/dashboard-actio
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { confirmWarning } from "@/lib/confirm-action";
-import { clientShareOrigin } from "@/lib/client-share-origin";
+import { buildStaffShareUrl } from "@/lib/staff-share-url";
 
 export function WaiterShareLink({
   venueSlug,
@@ -29,10 +29,7 @@ export function WaiterShareLink({
 
   useEffect(() => {
     if (!venueSlug || !staffToken) return;
-    const u = new URL("/api/staff/session", clientShareOrigin());
-    u.searchParams.set("venueSlug", venueSlug);
-    u.searchParams.set("key", staffToken);
-    setUrl(u.toString());
+    setUrl(buildStaffShareUrl(venueSlug, staffToken));
   }, [venueSlug, staffToken]);
 
   async function copy() {

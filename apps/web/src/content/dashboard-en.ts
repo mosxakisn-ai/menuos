@@ -477,9 +477,10 @@ export const DASHBOARD_EN = {
         colName: "Name",
         colRole: "Role",
         colStations: "Departments",
-        colLink: "Link",
+        colLink: "Waiter link",
+        colLinkHint: "Send to their phone — opens without dashboard login.",
         colActions: "",
-        copyLink: "Copy link",
+        copyLink: "Copy",
         copied: "Copied!",
         rotateLink: "New link",
         rotateConfirm: (name: string) =>

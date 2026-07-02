@@ -22,7 +22,7 @@ import {
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
-import { clientShareOrigin } from "@/lib/client-share-origin";
+import { buildStaffShareUrl } from "@/lib/staff-share-url";
 import { cn } from "@/lib/utils";
 
 type Venue = { id: string; name: string; slug: string; staffToken?: string };
@@ -35,10 +35,7 @@ type StaffMember = {
 };
 
 function memberWaiterUrl(venueSlug: string, memberToken: string): string {
-  const u = new URL("/api/staff/session", clientShareOrigin());
-  u.searchParams.set("venueSlug", venueSlug);
-  u.searchParams.set("key", memberToken);
-  return u.toString();
+  return buildStaffShareUrl(venueSlug, memberToken);
 }
 
 function toggleStation(
@@ -190,26 +187,36 @@ function StaffMemberLinkActions({
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => void copy()}
-        className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
-      >
-        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-        {copied ? labels.copied : labels.copyLink}
-      </button>
-      <button
-        type="button"
-        disabled={busy || rotating}
-        onClick={() => void rotate()}
-        className={dashboardTextActionClass("warning")}
-        title={labels.rotateLink}
-      >
-        <RefreshCw className={`h-3.5 w-3.5 ${rotating ? "animate-spin" : ""}`} />
-        {labels.rotateLink}
-      </button>
+    <div className="space-y-2">
+      <input
+        type="text"
+        readOnly
+        value={url}
+        onFocus={(e) => e.target.select()}
+        className="w-full rounded-button border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700"
+        aria-label={labels.copyLink}
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void copy()}
+          className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
+        >
+          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? labels.copied : labels.copyLink}
+        </button>
+        <button
+          type="button"
+          disabled={busy || rotating}
+          onClick={() => void rotate()}
+          className={dashboardTextActionClass("warning")}
+          title={labels.rotateLink}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${rotating ? "animate-spin" : ""}`} />
+          {labels.rotateLink}
+        </button>
+      </div>
     </div>
   );
 }
@@ -540,21 +547,18 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                     </div>
                   </div>
 
-                  <div className="mt-4 grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 sm:items-center">
+                  <div className="mt-4 space-y-4 border-t border-slate-100 pt-4">
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        {S.colStations}
-                      </p>
+                      <p className="text-xs font-medium text-slate-500">{S.colStations}</p>
                       <div className="mt-2">
                         <StationBadges stations={member.stations} labels={stationLabels} lang={lang} />
                       </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        {S.colLink}
-                      </p>
-                      <div className="mt-2">
-                        {venue?.slug ? (
+                    {venue?.slug ? (
+                      <div>
+                        <p className="text-xs font-medium text-slate-500">{S.colLink}</p>
+                        <p className="mt-1 text-xs text-slate-500">{S.colLinkHint}</p>
+                        <div className="mt-2">
                           <StaffMemberLinkActions
                             venueId={venueId}
                             venueSlug={venue.slug}
@@ -563,9 +567,9 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                             busy={isBusy}
                             onTokenRotated={onMemberTokenRotated}
                           />
-                        ) : null}
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
                   </div>
                 </li>
               );
