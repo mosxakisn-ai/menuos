@@ -45,17 +45,17 @@ export function TableGridLegend({
   className?: string;
 }) {
   return (
-    <ul className={cn("flex flex-wrap gap-x-4 gap-y-2", className)}>
+    <ul className={cn("flex flex-wrap gap-2", className)}>
       {LEGEND_STATES.map((state) => (
-        <li key={state} className="inline-flex items-center gap-2 text-xs text-slate-600">
+        <li key={state}>
           <span
             className={cn(
-              "inline-block h-3.5 w-3.5 shrink-0 rounded border",
-              TABLE_TILE_STYLES[state],
+              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold leading-tight",
+              TABLE_TILE_BADGE_STYLES[state],
             )}
-            aria-hidden
-          />
-          <span>{stateLabels[state]}</span>
+          >
+            {stateLabels[state]}
+          </span>
         </li>
       ))}
     </ul>
