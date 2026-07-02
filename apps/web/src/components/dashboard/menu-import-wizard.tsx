@@ -187,11 +187,11 @@ export function MenuImportWizard({
     router.replace(buildMenusImportUrl(next), { scroll: false });
   }
 
-  function selectMenu(nextMenuId: string) {
+  async function selectMenu(nextMenuId: string) {
     if (nextMenuId === menuId) return;
     if (phase === "review" && draft) {
       const targetName = venue?.menus.find((m) => m.id === nextMenuId)?.name ?? "";
-      if (!confirmDestructive(W.changeCatalogConfirm(targetName))) return;
+      if (!(await confirmDestructive(W.changeCatalogConfirm(targetName)))) return;
     }
     setMenuId(nextMenuId);
   }
@@ -461,7 +461,7 @@ export function MenuImportWizard({
   }
 
   async function runVisionRetry() {
-    if (!confirmDestructive(W.visionRetryConfirm)) return;
+    if (!(await confirmDestructive(W.visionRetryConfirm))) return;
     await runAnalysis({ forceVision: true });
   }
 

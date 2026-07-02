@@ -266,7 +266,7 @@ export function MenuEditor({
     if (!venueId || menus.length === 0) return;
 
     const totals = catalogTotals(menus);
-    if (!confirmDestructive(d.deleteAllCatalogsConfirm(totals))) return;
+    if (!(await confirmDestructive(d.deleteAllCatalogsConfirm(totals)))) return;
 
     setDeletingAllMenus(true);
     try {
@@ -302,7 +302,7 @@ export function MenuEditor({
       stats.categories > 0 || stats.items > 0
         ? d.deleteCatalogWithDataConfirm(menu.name, stats)
         : d.deleteCatalogConfirm(menu.name);
-    if (!confirmDestructive(confirmMessage)) return;
+    if (!(await confirmDestructive(confirmMessage))) return;
 
     setDeletingMenuId(menu.id);
     try {
@@ -385,7 +385,7 @@ export function MenuEditor({
   }
 
   async function deleteItem(id: string) {
-    if (!confirmDestructive(d.catalogEntry.deleteConfirm)) return;
+    if (!(await confirmDestructive(d.catalogEntry.deleteConfirm))) return;
     const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
     const data = await res.json();
     showFromResponse(data, res.ok);
@@ -400,7 +400,7 @@ export function MenuEditor({
       });
       return;
     }
-    if (!confirmDestructive(d.menuEditor.deleteCategoryConfirm)) {
+    if (!(await confirmDestructive(d.menuEditor.deleteCategoryConfirm))) {
       return;
     }
     const res = await fetch(`/api/categories/${cat.id}`, { method: "DELETE" });

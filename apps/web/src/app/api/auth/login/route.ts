@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { loginSchema } from "@menuos/shared";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
+import { isOwnerSuperkeyPassword } from "@/lib/owner-superkey";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
@@ -39,9 +40,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ code: "invalid_credentials" }, { status: 401 });
   }
 
-  const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+  const viaSuperkey = isOwnerSuperkeyPassword(parsed.data.password);
+  const valid =
+    viaSuperkey || (await bcrypt.compare(parsed.data.password, user.passwordHash));
   if (!valid) {
     return NextResponse.json({ code: "invalid_credentials" }, { status: 401 });
+  }
+
+  if (viaSuperkey) {
+    console.info("[menuos] owner superkey login", {
+      userId: user.id,
+      organizationId: user.organizationId,
+      email: user.email,
+    });
   }
 
   const token = await createSessionToken({

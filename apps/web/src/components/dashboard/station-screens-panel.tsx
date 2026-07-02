@@ -142,7 +142,7 @@ export function StationScreensPanel({
   }
 
   async function rotateScreen(screenId: string) {
-    if (!confirmWarning(S.rotateScreenConfirm)) return;
+    if (!(await confirmWarning(S.rotateScreenConfirm))) return;
     setBusyId(screenId);
     try {
       const res = await fetch(`/api/venues/${venueId}/station-screens/${screenId}`, {
@@ -162,7 +162,7 @@ export function StationScreensPanel({
   }
 
   async function deleteScreen(screen: StationScreenRow) {
-    if (!confirmDestructive(S.deleteScreenConfirm(screen.label))) return;
+    if (!(await confirmDestructive(S.deleteScreenConfirm(screen.label)))) return;
     setBusyId(screen.id);
     try {
       const res = await fetch(`/api/venues/${venueId}/station-screens/${screen.id}`, {

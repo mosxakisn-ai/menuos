@@ -264,7 +264,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   }
 
   async function cancelSignal(signalId: string) {
-    if (!ctx || !confirmDestructive(C.cancelConfirm)) return;
+    if (!ctx || !(await confirmDestructive(C.cancelConfirm))) return;
     setCancellingId(signalId);
     try {
       const res = await fetch(`/api/pass-signals/${signalId}`, {

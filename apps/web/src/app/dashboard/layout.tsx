@@ -6,6 +6,7 @@ import { DashboardMobileNav } from "@/components/dashboard/dashboard-mobile-nav"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { DashboardLocaleProvider } from "@/components/dashboard/dashboard-locale-provider";
 import { DashboardDiagnosticsReporter } from "@/components/dashboard/dashboard-diagnostics-reporter";
+import { ConfirmDialogHost } from "@/components/ui/confirm-dialog";
 import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
 import { getSession } from "@/lib/auth";
 import { loginUrlWithCallback } from "@/lib/safe-callback-url";
@@ -107,6 +108,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <DashboardLocaleProvider initialLang={initialLang}>
       <DashboardDiagnosticsReporter />
+      <ConfirmDialogHost />
       <div className="dashboard-shell flex min-h-screen bg-brand-surface">
         <DashboardSidebar
           initialPendingCount={initialMonitorCount}

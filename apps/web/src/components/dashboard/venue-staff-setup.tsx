@@ -169,7 +169,7 @@ function StaffMemberLinkActions({
   }
 
   async function rotate() {
-    if (!confirmWarning(labels.rotateConfirm(member.name))) return;
+    if (!(await confirmWarning(labels.rotateConfirm(member.name)))) return;
     setRotating(true);
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members/${member.id}/rotate-token`, {
@@ -341,7 +341,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   }
 
   async function removeMember(memberId: string, memberName: string) {
-    if (!venueId || !confirmDestructive(S.deleteConfirm(memberName))) return;
+    if (!venueId || !(await confirmDestructive(S.deleteConfirm(memberName)))) return;
     setBusy(`del-${memberId}`);
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members/${memberId}`, {

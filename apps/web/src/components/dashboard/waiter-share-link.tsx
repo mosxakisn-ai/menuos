@@ -50,7 +50,7 @@ export function WaiterShareLink({
 
   async function rotateToken() {
     if (!venueId || !onStaffTokenRotated) return;
-    if (!confirmWarning(w.rotateConfirm)) return;
+    if (!(await confirmWarning(w.rotateConfirm))) return;
 
     setRotating(true);
     try {

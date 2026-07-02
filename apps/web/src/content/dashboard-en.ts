@@ -21,6 +21,12 @@ export const DASHBOARD_EN = {
     success: "Password updated.",
   },
   addVenue: "Add venue",
+  confirmDialog: {
+    close: "Close",
+    cancel: "Cancel",
+    confirmDelete: "Delete",
+    confirmContinue: "Continue",
+  },
   editCatalog: "Edit catalog",
   livePreview: "Live preview",
   importPdf: "Import from PDF",
@@ -205,55 +211,46 @@ export const DASHBOARD_EN = {
   deleteCatalog: "Delete catalog",
   deleteCatalogHasData: "You cannot delete a catalog that has categories or items.",
   deleteCatalogLast: "At least one catalog must remain for this venue.",
-  deleteCatalogConfirm: (name: string) =>
-    `Delete catalog «${name}»?\n\nAre you sure? This cannot be undone.`,
+  deleteCatalogConfirm: (name: string) => ({
+    variant: "destructive" as const,
+    title: `Delete catalog «${name}»?`,
+    note: "This cannot be undone.",
+  }),
   deleteCatalogWithDataConfirm: (
     name: string,
     stats: { categories: number; items: number },
-  ) => {
-    const lines = [
-      "WARNING — permanent deletion",
-      "",
-      `Catalog «${name}» will be deleted:`,
-    ];
-    if (stats.categories > 0) {
-      lines.push(`• ${stats.categories} categor${stats.categories === 1 ? "y" : "ies"}`);
-    }
-    if (stats.items > 0) {
-      lines.push(`• ${stats.items} item${stats.items === 1 ? "" : "s"}`);
-    }
-    lines.push(
-      "",
-      "We cannot restore them — this is permanent.",
-      "",
-      "Continue?",
-    );
-    return lines.join("\n");
-  },
+  ) => ({
+    variant: "destructive" as const,
+    eyebrow: "Warning",
+    title: "Permanent deletion",
+    description: `Catalog «${name}» will be deleted:`,
+    bullets: [
+      ...(stats.categories > 0
+        ? [`${stats.categories} categor${stats.categories === 1 ? "y" : "ies"}`]
+        : []),
+      ...(stats.items > 0
+        ? [`${stats.items} item${stats.items === 1 ? "" : "s"}`]
+        : []),
+    ],
+    note: "We cannot restore them — this is permanent.",
+  }),
   deleteAllCatalogs: "Delete all catalogs",
-  deleteAllCatalogsConfirm: (stats: { menus: number; categories: number; items: number }) => {
-    const lines = [
-      "WARNING — permanent deletion",
-      "",
-      "ALL catalogs for this venue will be deleted:",
-      `• ${stats.menus} catalog${stats.menus === 1 ? "" : "s"}`,
-    ];
-    if (stats.categories > 0) {
-      lines.push(`• ${stats.categories} categor${stats.categories === 1 ? "y" : "ies"}`);
-    }
-    if (stats.items > 0) {
-      lines.push(`• ${stats.items} item${stats.items === 1 ? "" : "s"}`);
-    }
-    lines.push(
-      "",
-      "We cannot restore them — this is permanent.",
-      "",
-      "You will get one empty catalog to start fresh.",
-      "",
-      "Continue?",
-    );
-    return lines.join("\n");
-  },
+  deleteAllCatalogsConfirm: (stats: { menus: number; categories: number; items: number }) => ({
+    variant: "destructive" as const,
+    eyebrow: "Warning",
+    title: "Permanent deletion",
+    description: "All catalogs for this venue will be deleted:",
+    bullets: [
+      `${stats.menus} catalog${stats.menus === 1 ? "" : "s"}`,
+      ...(stats.categories > 0
+        ? [`${stats.categories} categor${stats.categories === 1 ? "y" : "ies"}`]
+        : []),
+      ...(stats.items > 0
+        ? [`${stats.items} item${stats.items === 1 ? "" : "s"}`]
+        : []),
+    ],
+    note: "We cannot restore them — this is permanent. You will get one empty catalog to start fresh.",
+  }),
   roleLabels: {
     ADMIN: "Administrator",
     MANAGER: "Manager",

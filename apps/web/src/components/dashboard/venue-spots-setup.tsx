@@ -118,7 +118,7 @@ export function VenueSpotsSetup({
 
   async function removeSpot(spotId: string, name: string) {
     if (!venueId) return;
-    if (!confirmDestructive(Q.deleteSpotConfirm(name))) return;
+    if (!(await confirmDestructive(Q.deleteSpotConfirm(name)))) return;
     setBusy(spotId);
     try {
       const res = await fetch(`/api/venues/${venueId}/spots/${spotId}`, { method: "DELETE" });

@@ -21,6 +21,12 @@ export const DASHBOARD_EL = {
     success: "Ο κωδικός άλλαξε.",
   },
   addVenue: "Προσθήκη καταστήματος",
+  confirmDialog: {
+    close: "Κλείσιμο",
+    cancel: "Ακύρωση",
+    confirmDelete: "Διαγραφή",
+    confirmContinue: "Συνέχεια",
+  },
   editCatalog: "Επεξεργασία καταλόγου",
   livePreview: "Δες πώς φαίνεται",
   importPdf: "Εισαγωγή από PDF",
@@ -206,59 +212,50 @@ export const DASHBOARD_EL = {
   deleteCatalog: "Διαγραφή καταλόγου",
   deleteCatalogHasData: "Δεν μπορείς να διαγράψεις κατάλογο που έχει κατηγορίες ή είδη.",
   deleteCatalogLast: "Πρέπει να υπάρχει τουλάχιστον ένας κατάλογος στο κατάστημα.",
-  deleteCatalogConfirm: (name: string) =>
-    `Διαγραφή του καταλόγου «${name}»;\n\nΕίσαι σίγουρος; Η ενέργεια δεν αναιρείται.`,
+  deleteCatalogConfirm: (name: string) => ({
+    variant: "destructive" as const,
+    title: `Διαγραφή καταλόγου «${name}»;`,
+    note: "Η ενέργεια δεν αναιρείται.",
+  }),
   deleteCatalogWithDataConfirm: (
     name: string,
     stats: { categories: number; items: number },
-  ) => {
-    const lines = [
-      "ΠΡΟΣΟΧΗ — μόνιμη διαγραφή",
-      "",
-      `Θα διαγραφεί ο κατάλογος «${name}»:`,
-    ];
-    if (stats.categories > 0) {
-      lines.push(
-        `• ${stats.categories} ${stats.categories === 1 ? "κατηγορία" : "κατηγορίες"}`,
-      );
-    }
-    if (stats.items > 0) {
-      lines.push(`• ${stats.items} ${stats.items === 1 ? "είδος" : "είδη"}`);
-    }
-    lines.push(
-      "",
-      "Δεν μπορούμε να τα επαναφέρουμε — χάνονται οριστικά.",
-      "",
-      "Συνέχεια;",
-    );
-    return lines.join("\n");
-  },
+  ) => ({
+    variant: "destructive" as const,
+    eyebrow: "Προσοχή",
+    title: "Μόνιμη διαγραφή",
+    description: `Θα διαγραφεί ο κατάλογος «${name}»:`,
+    bullets: [
+      ...(stats.categories > 0
+        ? [
+            `${stats.categories} ${stats.categories === 1 ? "κατηγορία" : "κατηγορίες"}`,
+          ]
+        : []),
+      ...(stats.items > 0
+        ? [`${stats.items} ${stats.items === 1 ? "είδος" : "είδη"}`]
+        : []),
+    ],
+    note: "Δεν μπορούμε να τα επαναφέρουμε — χάνονται οριστικά.",
+  }),
   deleteAllCatalogs: "Διαγραφή όλων των καταλόγων",
-  deleteAllCatalogsConfirm: (stats: { menus: number; categories: number; items: number }) => {
-    const lines = [
-      "ΠΡΟΣΟΧΗ — μόνιμη διαγραφή",
-      "",
-      "Θα διαγραφούν ΟΛΟΙ οι κατάλογοι αυτού του καταστήματος:",
-      `• ${stats.menus} ${stats.menus === 1 ? "κατάλογος" : "κατάλογοι"}`,
-    ];
-    if (stats.categories > 0) {
-      lines.push(
-        `• ${stats.categories} ${stats.categories === 1 ? "κατηγορία" : "κατηγορίες"}`,
-      );
-    }
-    if (stats.items > 0) {
-      lines.push(`• ${stats.items} ${stats.items === 1 ? "είδος" : "είδη"}`);
-    }
-    lines.push(
-      "",
-      "Δεν μπορούμε να τα επαναφέρουμε — χάνονται οριστικά.",
-      "",
-      "Θα μείνει ένας κενός κατάλογος για να ξεκινήσεις από την αρχή.",
-      "",
-      "Συνέχεια;",
-    );
-    return lines.join("\n");
-  },
+  deleteAllCatalogsConfirm: (stats: { menus: number; categories: number; items: number }) => ({
+    variant: "destructive" as const,
+    eyebrow: "Προσοχή",
+    title: "Μόνιμη διαγραφή",
+    description: "Θα διαγραφούν όλοι οι κατάλογοι αυτού του καταστήματος:",
+    bullets: [
+      `${stats.menus} ${stats.menus === 1 ? "κατάλογος" : "κατάλογοι"}`,
+      ...(stats.categories > 0
+        ? [
+            `${stats.categories} ${stats.categories === 1 ? "κατηγορία" : "κατηγορίες"}`,
+          ]
+        : []),
+      ...(stats.items > 0
+        ? [`${stats.items} ${stats.items === 1 ? "είδος" : "είδη"}`]
+        : []),
+    ],
+    note: "Δεν μπορούμε να τα επαναφέρουμε — χάνονται οριστικά. Θα μείνει ένας κενός κατάλογος για να ξεκινήσεις από την αρχή.",
+  }),
   roleLabels: {
     ADMIN: "Διαχειριστής",
     MANAGER: "Υπεύθυνος",
