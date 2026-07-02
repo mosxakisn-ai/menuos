@@ -27,14 +27,13 @@ export const DASHBOARD_EN = {
   importPdfPro: "PDF import (Pro only)",
   loadingCatalog: "Loading catalog...",
   importWizard: {
-    hint:
-      "Upload a catalog PDF — we analyze it automatically (digital + OCR for images). You will see a report with categories, items and issues before importing.",
-    processSteps: [
-      "Scan — quick preview in your browser (covers/logos are skipped automatically).",
-      "Analyze — server reads text from digital pages; scanned pages use OCR if needed.",
-      "Report — see how many categories/items were found and what needs fixing.",
-      "Review — edit, uncheck what you do not want, then import to your catalog.",
-    ] as string[],
+    hint: "Upload a catalog PDF — digital + OCR. Review the report before importing.",
+    processFlow: {
+      scan: "Scan",
+      analyze: "Analyze",
+      report: "Report",
+      review: "Review",
+    },
     analyzeButton: "Analyze & preview",
     processingTitle: "Analyzing catalog PDF",
     pipeline: {

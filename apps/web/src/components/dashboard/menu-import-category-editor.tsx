@@ -212,38 +212,70 @@ export function MenuImportCategoryEditor({
                     <div
                       key={item.id}
                       className={cn(
-                        "grid gap-4 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_140px]",
+                        "px-5 py-4",
                         itemHasIssues(item) && "bg-amber-50/30",
                       )}
                     >
-                      <div className="flex gap-3">
-                        <label className="mt-8 shrink-0">
-                          <input
-                            type="checkbox"
-                            checked={item.selected}
-                            onChange={(e) =>
-                              onUpdateItem(cat.id, item.id, { selected: e.target.checked })
-                            }
-                            className="h-4 w-4 accent-brand-blue"
-                          />
-                          <span className="sr-only">{copy.includeItem}</span>
+                      <div className="grid grid-cols-[auto_minmax(0,1fr)_7.5rem] items-start gap-x-3 gap-y-1.5 sm:grid-cols-[auto_minmax(0,1fr)_8.5rem]">
+                        <div className="row-start-2 flex h-10 items-center self-center">
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={item.selected}
+                              onChange={(e) =>
+                                onUpdateItem(cat.id, item.id, { selected: e.target.checked })
+                              }
+                              className="h-4 w-4 accent-brand-blue"
+                            />
+                            <span className="sr-only">{copy.includeItem}</span>
+                          </label>
+                        </div>
+
+                        <label className="col-start-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                          {copy.itemNameLabel}
+                        </label>
+                        <label className="col-start-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                          {copy.priceLabel}
                         </label>
 
-                        <div className="min-w-0 flex-1 space-y-3">
-                          <div>
-                            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                              {copy.itemNameLabel}
-                            </label>
+                        <div className="col-start-2 row-start-2 min-w-0">
+                          <input
+                            value={item.nameGr}
+                            onChange={(e) =>
+                              onUpdateItem(cat.id, item.id, { nameGr: e.target.value })
+                            }
+                            placeholder={FORM_PLACEHOLDERS.importItemGr}
+                            className="w-full rounded-button border border-slate-200 px-3 py-2.5 text-sm font-medium text-brand-navy"
+                          />
+                        </div>
+
+                        <div className="col-start-3 row-start-2">
+                          <div className="relative">
+                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+                              €
+                            </span>
                             <input
-                              value={item.nameGr}
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={item.price ?? ""}
                               onChange={(e) =>
-                                onUpdateItem(cat.id, item.id, { nameGr: e.target.value })
+                                onUpdateItem(cat.id, item.id, {
+                                  price: e.target.value ? Number.parseFloat(e.target.value) : null,
+                                })
                               }
-                              placeholder={FORM_PLACEHOLDERS.importItemGr}
-                              className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5 text-sm font-medium text-brand-navy"
+                              placeholder="0.00"
+                              className={cn(
+                                "w-full rounded-button border py-2.5 pl-8 pr-3 text-right text-base font-semibold tabular-nums",
+                                item.price === null
+                                  ? "border-amber-300 bg-amber-50/60 text-amber-950"
+                                  : "border-slate-200 text-brand-navy",
+                              )}
                             />
                           </div>
+                        </div>
 
+                        <div className="col-start-2 row-start-3 space-y-1.5">
                           {showItemEn ? (
                             <div>
                               <label className="text-[11px] font-semibold text-slate-500">
@@ -273,37 +305,10 @@ export function MenuImportCategoryEditor({
                           )}
 
                           {item.warnings.length > 0 ? (
-                            <p className="text-xs text-amber-800">{item.warnings.join(" · ")}</p>
+                            <p className="text-xs leading-relaxed text-amber-800">
+                              {item.warnings.join(" · ")}
+                            </p>
                           ) : null}
-                        </div>
-                      </div>
-
-                      <div className="lg:pt-6">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                          {copy.priceLabel}
-                        </label>
-                        <div className="relative mt-1">
-                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
-                            €
-                          </span>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={item.price ?? ""}
-                            onChange={(e) =>
-                              onUpdateItem(cat.id, item.id, {
-                                price: e.target.value ? Number.parseFloat(e.target.value) : null,
-                              })
-                            }
-                            placeholder="0.00"
-                            className={cn(
-                              "w-full rounded-button border py-2.5 pl-8 pr-3 text-right text-base font-semibold tabular-nums",
-                              item.price === null
-                                ? "border-amber-300 bg-amber-50/60 text-amber-950"
-                                : "border-slate-200 text-brand-navy",
-                            )}
-                          />
                         </div>
                       </div>
                     </div>

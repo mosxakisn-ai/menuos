@@ -26,6 +26,7 @@ import {
   ImportPipelineProgress,
   type PipelineStep,
 } from "@/components/dashboard/import-pipeline-progress";
+import { ImportProcessFlow } from "@/components/dashboard/import-process-flow";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -473,20 +474,20 @@ export function MenuImportWizard({
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
-      <Card className="border-brand-blue/20 bg-brand-blue/5">
-        <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">{W.badge}</p>
-        <h2 className="mt-1 text-lg font-bold text-brand-navy">
-          {phase === "upload" && W.phaseUpload}
-          {phase === "processing" && W.processingTitle}
-          {phase === "review" && W.phaseReview}
-        </h2>
-        <p className="mt-2 text-sm text-slate-600">{W.hint}</p>
-        {phase === "upload" && W.processSteps?.length ? (
-          <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-600">
-            {W.processSteps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
+      <Card className="overflow-hidden border-brand-blue/20 bg-gradient-to-br from-brand-blue/[0.07] via-white to-cyan-50/40 p-0">
+        <div className="border-b border-brand-blue/10 bg-white/50 px-5 py-4 backdrop-blur-sm">
+          <p className="text-xs font-bold uppercase tracking-widest text-brand-blue">{W.badge}</p>
+          <h2 className="mt-1 font-serif text-xl font-bold text-brand-navy">
+            {phase === "upload" && W.phaseUpload}
+            {phase === "processing" && W.processingTitle}
+            {phase === "review" && W.phaseReview}
+          </h2>
+          <p className="mt-1.5 text-sm text-slate-600">{W.hint}</p>
+        </div>
+        {phase === "upload" ? (
+          <div className="px-4 py-4 sm:px-5">
+            <ImportProcessFlow labels={W.processFlow} />
+          </div>
         ) : null}
       </Card>
 

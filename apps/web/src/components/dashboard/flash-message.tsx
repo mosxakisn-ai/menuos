@@ -4,7 +4,20 @@ import { CheckCircle2, Info, AlertTriangle, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import type { DashboardCopy } from "@/content/dashboard-i18n";
+import { reportClientDiagnostic } from "@/lib/report-client-diagnostic";
 import { cn } from "@/lib/utils";
+
+function diagnosticCategoryFromPath(): string {
+  if (typeof window === "undefined") return "unknown";
+  const path = window.location.pathname;
+  if (path.includes("/menus/import")) return "pdf_import";
+  if (path.includes("/menus")) return "catalog";
+  if (path.includes("/billing")) return "billing";
+  if (path.includes("/qr")) return "qr";
+  if (path.includes("/waiter")) return "waiter";
+  if (path.includes("/settings")) return "settings";
+  return "dashboard";
+}
 
 export function resolveApiError(
   data: { error?: string; code?: string },
@@ -84,10 +97,24 @@ export function useFlashMessage() {
   }, []);
 
   const showFromResponse = useCallback(
-    (data: { message?: string; error?: string; code?: string }, ok: boolean) => {
+    (data: { message?: string; error?: string; code?: string; diagnosticLogged?: boolean }, ok: boolean) => {
       if (data.message) setFlash({ type: "success", text: data.message });
-      else if (data.error || data.code) setFlash({ type: "error", text: resolveApiError(data, d.flash) });
-      else if (ok) setFlash({ type: "success", text: d.flash.success });
+      else if (data.error || data.code) {
+        const text = resolveApiError(data, d.flash);
+        setFlash({ type: "error", text });
+        if (!data.diagnosticLogged) {
+          reportClientDiagnostic({
+            severity: "ERROR",
+            source: "client_api",
+            category: diagnosticCategoryFromPath(),
+            message: text,
+            errorCode: data.code ?? null,
+            context: {
+              url: typeof window !== "undefined" ? window.location.href : undefined,
+            },
+          });
+        }
+      } else if (ok) setFlash({ type: "success", text: d.flash.success });
     },
     [d.flash],
   );

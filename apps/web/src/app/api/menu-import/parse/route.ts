@@ -9,6 +9,7 @@ import {
   validatePdfUploadFiles,
 } from "@/lib/pdf-extract";
 import { dashboardCopyFromRequest, dashboardLangFromRequest } from "@/lib/dashboard-request-locale";
+import { logServerDiagnostic } from "@/lib/client-diagnostics-service";
 import { getMenuForOrganization } from "@/lib/venue-access";
 
 export const runtime = "nodejs";
@@ -53,8 +54,30 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("menu-import parse", err);
     if (err instanceof PdfTextExtractionError || err instanceof OcrSpaceError) {
-      return NextResponse.json({ error: err.message }, { status: 422 });
+      logServerDiagnostic({
+        organizationId: auth.session!.organizationId,
+        userId: auth.session!.userId,
+        userEmail: auth.session!.email,
+        source: "server",
+        category: "pdf_import",
+        message: err.message,
+        errorCode: err instanceof OcrSpaceError ? "ocr_failed" : "pdf_extract_failed",
+        context: { menuId, fileName: err instanceof PdfTextExtractionError ? err.fileName : undefined },
+      });
+      return NextResponse.json(
+        { error: err.message, diagnosticLogged: true, code: err instanceof OcrSpaceError ? "ocr_failed" : "pdf_extract_failed" },
+        { status: 422 },
+      );
     }
-    return NextResponse.json({ error: I.parseFailed }, { status: 422 });
+    logServerDiagnostic({
+      organizationId: auth.session!.organizationId,
+      userId: auth.session!.userId,
+      userEmail: auth.session!.email,
+      source: "server",
+      category: "pdf_import",
+      message: err instanceof Error ? err.message : I.parseFailed,
+      errorCode: "parse_failed",
+    });
+    return NextResponse.json({ error: I.parseFailed, diagnosticLogged: true, code: "parse_failed" }, { status: 422 });
   }
 }
