@@ -124,7 +124,11 @@ function WaiterSpotTile({
 }) {
   const visibleCalls = viewTab === "pass" ? [] : tile.activeCalls;
   const visiblePasses =
-    viewTab === "calls" ? [] : filterPasses(tile.activePasses, passStationFilter);
+    viewTab === "calls"
+      ? []
+      : viewTab === "pass"
+        ? filterPasses(tile.activePasses, passStationFilter)
+        : tile.activePasses;
   const hasActivity = visibleCalls.length > 0 || visiblePasses.length > 0;
   const displayLabel = tileDisplayLabel(tile, lang);
   const unmapped = isUnmappedTile(tile);
