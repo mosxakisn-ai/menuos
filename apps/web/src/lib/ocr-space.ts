@@ -30,9 +30,19 @@ function ocrEngine(): string {
   return process.env.OCR_SPACE_ENGINE?.trim() || "2";
 }
 
+function ocrIsTable(): boolean {
+  const raw = process.env.OCR_SPACE_IS_TABLE?.trim().toLowerCase();
+  if (raw === "1" || raw === "true" || raw === "yes") return true;
+  if (raw === "0" || raw === "false" || raw === "no") return false;
+  // Table mode merges adjacent columns on bilingual menus — default off.
+  return false;
+}
+
 function ocrLanguage(override?: string): string {
   const custom = override?.trim() || process.env.OCR_SPACE_LANGUAGE?.trim();
-  return custom || "gre";
+  if (custom) return custom;
+  // Engine 2: explicit Greek for restaurant menus. Engine 3: auto-detect.
+  return ocrEngine() === "3" ? "auto" : "gre";
 }
 
 function formatOcrError(data: OcrSpaceResponse): string {
@@ -65,7 +75,7 @@ export async function ocrImageBuffer(
     fileName.endsWith(".jpg") ? fileName : `${fileName}.jpg`,
   );
   form.append("language", ocrLanguage(options?.language));
-  form.append("isTable", "true");
+  form.append("isTable", ocrIsTable() ? "true" : "false");
   form.append("scale", "true");
   form.append("detectOrientation", "true");
   form.append("OCREngine", ocrEngine());

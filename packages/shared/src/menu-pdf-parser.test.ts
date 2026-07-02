@@ -21,6 +21,58 @@ describe("splitBilingualMenuName", () => {
       nameEn: "PASTA",
     });
   });
+
+  it("keeps Latin-only lines in one field without fake English", () => {
+    expect(splitBilingualMenuName("Espresso Martini")).toEqual({ nameGr: "Espresso Martini" });
+    expect(splitBilingualMenuName("PASTA")).toEqual({ nameGr: "PASTA" });
+  });
+});
+
+describe("parseMenuTextFromPdf — Kozas-style scanned menu", () => {
+  const kozasFixture = readFileSync(join(fixtureDir, "menu-pdf-parser.kozas.fixture.txt"), "utf8");
+
+  it("splits merged OCR lines and skips notes", () => {
+    resetMenuPdfParserIds();
+    const result = parseMenuTextFromPdf(kozasFixture, "kozas.pdf");
+
+    const names = result.categories.flatMap((c) => c.items.map((i) => i.nameGr));
+    expect(names).not.toContain("ΖΥΜΑΡΙΚΑ");
+    expect(names).not.toContain("ΣΟΥΠΕΣ");
+    expect(names).not.toContain("ΟΣΤΡΑΚΟΕΙΔΗ");
+    expect(names.some((n) => n.includes("Tzatziki"))).toBe(true);
+    expect(names.some((n) => n.includes("Cuttlefish"))).toBe(true);
+    expect(names.some((n) => n.includes("Calamari"))).toBe(true);
+    expect(names.some((n) => n.toLowerCase().includes("choice of"))).toBe(false);
+    expect(names.some((n) => n.toLowerCase().includes("please let us"))).toBe(false);
+
+    expect(result.categories.find((c) => c.nameGr === "ΖΥΜΑΡΙΚΑ")).toBeDefined();
+    expect(result.categories.find((c) => c.nameGr === "ΣΟΥΠΕΣ")).toBeDefined();
+
+    const tzatziki = result.categories
+      .flatMap((c) => c.items)
+      .find((i) => i.nameGr.includes("Tzatziki"));
+    const cuttlefish = result.categories
+      .flatMap((c) => c.items)
+      .find((i) => i.nameGr.includes("Cuttlefish"));
+    expect(tzatziki?.price).toBe(7.4);
+    expect(cuttlefish?.price).toBe(16);
+  });
+
+  it("pairs name blocks with trailing price-only OCR lines", () => {
+    resetMenuPdfParserIds();
+    const text = `STARTERS
+Home made Tzatziki
+Fresh fried potatoes
+Mizithra pie
+9.50€
+9.00€
+7.40€`;
+    const result = parseMenuTextFromPdf(text, "block.pdf");
+    const names = result.categories.flatMap((c) => c.items.map((i) => i.nameGr));
+    expect(names.some((n) => n.includes("Tzatziki"))).toBe(true);
+    expect(names.some((n) => n.includes("potatoes"))).toBe(true);
+    expect(result.categories.flatMap((c) => c.items).find((i) => i.nameGr.includes("Tzatziki"))?.price).toBe(9.5);
+  });
 });
 
 describe("parseMenuTextFromPdf — bilingual beverage PDF", () => {

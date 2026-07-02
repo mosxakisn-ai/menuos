@@ -28,12 +28,12 @@ export const DASHBOARD_EL = {
   loadingCatalog: "Φόρτωση καταλόγου...",
   importWizard: {
     hint:
-      "Ανέβασε PDF καταλόγου — αναλύουμε αυτόματα (digital + OCR για εικόνες). Έλεγξε τα αποτελέσματα πριν την αποθήκευση.",
+      "Ανέβασε PDF καταλόγου — αναλύουμε αυτόματα (digital + OCR για εικόνες). Θα δεις αναφορά με κατηγορίες, είδη και προβλήματα πριν την εισαγωγή.",
     processSteps: [
       "Σάρωση — γρήγορη προεπισκόπηση στον browser (cover/logo παραλείπονται αυτόματα).",
       "Ανάλυση — ο server διαβάζει κείμενο από digital σελίδες· σαρωμένες σελίδες περνούν OCR αν χρειάζεται.",
-      "Δομή — εντοπίζονται κατηγορίες και είδη από το κείμενο.",
-      "Έλεγχος — επεξεργάσου το draft και αποθήκευσε στον κατάλογο.",
+      "Αναφορά — βλέπεις πόσες κατηγορίες/είδη βρέθηκαν και τι χρειάζεται διόρθωση.",
+      "Έλεγχος — επεξεργάσου, ξετίκαρα ό,τι δεν θέλεις, και εισήγαγε στον κατάλογο.",
     ] as string[],
     analyzeButton: "Ανάλυση & προεπισκόπηση",
     processingTitle: "Ανάλυση PDF καταλόγου",
@@ -68,7 +68,7 @@ export const DASHBOARD_EL = {
       n === 1 ? "1 σελίδα μέσω OCR" : `${n} σελίδες μέσω OCR`,
     badge: "IMPORT ΑΠΟ PDF",
     phaseUpload: "Ανέβασμα PDF",
-    phaseReview: "Έλεγχος & εισαγωγή",
+    phaseReview: "Αναφορά & έλεγχος πριν την εισαγωγή",
     needVenueTitle: "Χρειάζεσαι κατάστημα πρώτα",
     selectCatalogAndPdf: "Επίλεξε κατάλογο και τουλάχιστον ένα PDF.",
     noMenuPagesScanDetail: "Δεν βρέθηκαν σελίδες μενού",
@@ -100,6 +100,80 @@ export const DASHBOARD_EL = {
     tableColPrice: "Τιμή €",
     tableColNotes: "Σημειώσεις",
     selectMinOneItem: (one: string) => `Επίλεξε τουλάχιστον ένα ${one}.`,
+    report: {
+      title: "Αποτελέσματα ανάλυσης",
+      subtitle: "Έλεγξε τι βρήκαμε στο PDF πριν μπουν στον κατάλογο",
+      statCategories: "Κατηγορίες",
+      statCategoriesSub: (withItems: number, empty: number) =>
+        `${withItems} με είδη · ${empty} κενές`,
+      statItems: "Είδη",
+      statItemsSub: (selected: number) => `${selected} επιλεγμένα για εισαγωγή`,
+      statPrices: "Με τιμή",
+      statPricesSub: (without: number) =>
+        without > 0 ? `${without} χωρίς τιμή — συμπλήρωσέ τες` : "Όλα έχουν τιμή",
+      statReady: "Έτοιμο;",
+      statReadyYes: "Ναι",
+      statReadyNo: "Όχι ακόμα",
+      issuesTitle: "Προβλήματα & σημειώσεις",
+      issuesNone: "Δεν βρήκαμε σοβαρά προβλήματα — έλεγξε ονόματα και τιμές πριν την εισαγωγή.",
+      ocrBadge: (n: number) => (n === 1 ? "1 σελίδα OCR" : `${n} σελίδες OCR`),
+      nextStepsTitle: "Τι κάνεις τώρα",
+      nextSteps: [
+        "Ξετικίνα κατηγορίες ή είδη που δεν θέλεις να μπουν.",
+        "Διόρθωσε ονόματα και τιμές στα πεδία — ιδίως όσα είναι κίτρινα.",
+        "Όταν είσαι σίγουρος, πάτα «Εισαγωγή στον κατάλογο».",
+      ] as string[],
+      issueNoItems: "Δεν βρέθηκαν είδη στο PDF.",
+      issueNoItemsHint:
+        "Δοκίμασε άλλες σελίδες στα Προχωρημένα ή άλλο PDF. Σε σαρωμένα μενού χρειάζεται OCR.",
+      issueNoPrice: (n: number) =>
+        n === 1 ? "1 είδος χωρίς τιμή." : `${n} είδη χωρίς τιμή.`,
+      issueNoPriceHint: "Βάλε τιμή ή άφησέ το €0 — μπορείς να το αλλάξεις μετά στον κατάλογο.",
+      issueEmptyCategories: (n: number) =>
+        n === 1 ? "1 κενή κατηγορία (χωρίς είδη)." : `${n} κενές κατηγορίες.`,
+      issueEmptyCategoriesHint: "Δεν θα εισαχθούν — κρύβονται από προεπιλογή.",
+      issueDuplicateCategories: (n: number) =>
+        n === 1
+          ? "1 κατηγορία με πιθανά διπλότυπα."
+          : `${n} κατηγορίες με πιθανά διπλότυπα.`,
+      issueItemWarnings: (n: number) =>
+        n === 1 ? "1 είδος χρειάζεται έλεγχο." : `${n} είδη χρειάζονται έλεγχο.`,
+      issueItemWarningsHint: "Δες τη στήλη «Σημειώσεις» — κίτρινα πεδία τιμής ή σύντομα ονόματα.",
+      issueNothingSelected: "Δεν έχεις επιλέξει κανένα είδος.",
+      issueNothingSelectedHint: "Τσέκαρε τουλάχιστον ένα είδος ή κατηγορία για εισαγωγή.",
+      issueOcr: "Το PDF είναι σαρωμένη εικόνα — χρησιμοποιήθηκε OCR.",
+      issueOcrHint:
+        "Μπορεί να λείπουν ή να είναι λάθος ονόματα/τιμές. Έλεγξε προσεκτικά πριν την εισαγωγή.",
+    },
+    editor: {
+      toolbarTitle: "Επεξεργασία προσχεδίου",
+      toolbarHint:
+        "Κάθε μπλοκ είναι μια κατηγορία. Κάτω από αυτή βλέπεις τα είδη με όνομα και τιμή — όπως στο PDF, χωρίς αυτόματη μετάφραση.",
+      searchPlaceholder: "Αναζήτηση είδους ή κατηγορίας…",
+      hideEmpty: "Κρύψε κενές κατηγορίες",
+      showIssuesOnly: "Μόνο με θέματα",
+      selectAll: "Επιλογή όλων",
+      deselectAll: "Αποεπιλογή όλων",
+      expandAll: "Άνοιγμα όλων",
+      collapseAll: "Κλείσιμο όλων",
+      categoryLabel: "Κατηγορία",
+      categoryEnLabel: "Κατηγορία στα αγγλικά (μόνο αν υπάρχει στο PDF)",
+      uncategorizedHint:
+        "Αυτά τα είδη δεν μπήκαν σε ξεχωριστή κατηγορία από το PDF. Μπορείς να τα εισαγάγεις έτσι και να τα μετακινήσεις αργότερα στον κατάλογο.",
+      emptyCategory: "Καμία είδος σε αυτή την κατηγορία",
+      itemsCount: (selected: number, total: number) => `${selected}/${total} επιλεγμένα`,
+      noResults: "Δεν βρέθηκαν κατηγορίες με αυτά τα κριτήρια.",
+      itemNameLabel: "Όνομα είδους",
+      itemNameEnLabel: "Όνομα στα αγγλικά (μόνο αν υπάρχει στο PDF)",
+      addEnglish: "+ Προσθήκη αγγλικών",
+      priceLabel: "Τιμή",
+      issueBadge: "Έλεγχος",
+      includeCategory: "Συμπερίληψη κατηγορίας στην εισαγωγή",
+      includeItem: "Συμπερίληψη είδους στην εισαγωγή",
+    },
+    importConfirmTitle: "Έτοιμος για εισαγωγή",
+    importConfirmHint: (categories: number, items: string) =>
+      `Θα προστεθούν ${categories} κατηγορίες και ${items} στον κατάλογο που επέλεξες.`,
   },
   previewCatalog: "Προεπισκόπηση",
   newCatalogPlaceholder: "Νέος κατάλογος (π.χ. Pool Bar)",

@@ -13,7 +13,7 @@ export async function renderPdfPageToJpeg(buffer: Buffer, pageNumber: number): P
   try {
     const shot = await parser.getScreenshot({
       partial: [pageNumber],
-      desiredWidth: 1600,
+      desiredWidth: 2200,
       imageBuffer: true,
       imageDataUrl: false,
     });

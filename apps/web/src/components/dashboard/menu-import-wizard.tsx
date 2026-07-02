@@ -17,14 +17,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MenuPdfParseResult, ParsedMenuCategoryDraft, ParsedMenuItemDraft } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
+  MenuImportCategoryEditor,
+  MenuImportEditorToolbar,
+} from "@/components/dashboard/menu-import-category-editor";
+import { MenuImportReviewReport } from "@/components/dashboard/menu-import-review-report";
+import {
   ImportPipelineProgress,
   type PipelineStep,
 } from "@/components/dashboard/import-pipeline-progress";
-import { DashboardScrollRow } from "@/components/dashboard/dashboard-ui";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-state";
-import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import {
   buildPageSelectionMap,
@@ -34,6 +37,12 @@ import {
   ensurePdfPagesAnalyzable,
   type PdfPagePreview,
 } from "@/lib/pdf-page-preview";
+import {
+  buildMenuImportReviewReport,
+  countSelectedImport,
+  normalizeImportDraft,
+  patchAllItems,
+} from "@/lib/menu-import-review";
 import { cn } from "@/lib/utils";
 
 type Venue = {
@@ -110,18 +119,43 @@ export function MenuImportWizard({
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [draft, setDraft] = useState<(MenuPdfParseResult & { ocrPagesUsed?: number }) | null>(null);
+  const [hideEmptyCategories, setHideEmptyCategories] = useState(true);
+  const [showIssuesOnly, setShowIssuesOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandAllToken, setExpandAllToken] = useState(0);
+  const [collapseAllToken, setCollapseAllToken] = useState(0);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   const pageStats = useMemo(() => pageSelectionStats(pages), [pages]);
 
   const selectedCounts = useMemo(() => {
     if (!draft) return { categories: 0, items: 0 };
-    const categories = draft.categories.filter((c) => c.selected).length;
-    const items = draft.categories
-      .filter((c) => c.selected)
-      .flatMap((c) => c.items.filter((i) => i.selected)).length;
-    return { categories, items };
+    return countSelectedImport(draft);
   }, [draft]);
+
+  const reviewReport = useMemo(() => {
+    if (!draft) return null;
+    const R = W.report;
+    return buildMenuImportReviewReport(
+      draft,
+      {
+        issueNoItems: R.issueNoItems,
+        issueNoItemsHint: R.issueNoItemsHint,
+        issueNoPrice: R.issueNoPrice,
+        issueNoPriceHint: R.issueNoPriceHint,
+        issueEmptyCategories: R.issueEmptyCategories,
+        issueEmptyCategoriesHint: R.issueEmptyCategoriesHint,
+        issueDuplicateCategories: R.issueDuplicateCategories,
+        issueItemWarnings: R.issueItemWarnings,
+        issueItemWarningsHint: R.issueItemWarningsHint,
+        issueNothingSelected: R.issueNothingSelected,
+        issueNothingSelectedHint: R.issueNothingSelectedHint,
+        issueOcr: R.issueOcr,
+        issueOcrHint: R.issueOcrHint,
+      },
+      draft.ocrPagesUsed ?? 0,
+    );
+  }, [draft, W.report]);
 
   function resetAll() {
     setDraft(null);
@@ -130,6 +164,9 @@ export function MenuImportWizard({
     setPipeline(initialPipeline);
     setProgress(0);
     setAdvancedOpen(false);
+    setHideEmptyCategories(true);
+    setShowIssuesOnly(false);
+    setSearchQuery("");
   }
 
   function onVenueChange(id: string) {
@@ -250,7 +287,7 @@ export function MenuImportWizard({
 
       await new Promise((r) => setTimeout(r, 400));
 
-      setDraft(data as MenuPdfParseResult & { ocrPagesUsed?: number });
+      setDraft(normalizeImportDraft(data as MenuPdfParseResult & { ocrPagesUsed?: number }));
       setPhase("review");
       showFromResponse(data, true);
     } catch (err) {
@@ -264,7 +301,22 @@ export function MenuImportWizard({
 
   function updateCategory(catId: string, patch: Partial<ParsedMenuCategoryDraft>) {
     setDraft((d) =>
-      d ? { ...d, categories: d.categories.map((c) => (c.id === catId ? { ...c, ...patch } : c)) } : d,
+      d
+        ? {
+            ...d,
+            categories: d.categories.map((c) => {
+              if (c.id !== catId) return c;
+              const next = { ...c, ...patch };
+              if (patch.selected === true) {
+                next.items = c.items.map((i) => ({ ...i, selected: true }));
+              }
+              if (patch.selected === false) {
+                next.items = c.items.map((i) => ({ ...i, selected: false }));
+              }
+              return next;
+            }),
+          }
+        : d,
     );
   }
 
@@ -281,6 +333,10 @@ export function MenuImportWizard({
           }
         : d,
     );
+  }
+
+  function setAllItemsSelected(selected: boolean) {
+    setDraft((d) => (d ? patchAllItems(d, { selected }) : d));
   }
 
   async function applyImport() {
@@ -535,154 +591,120 @@ export function MenuImportWizard({
         </>
       ) : null}
 
-      {phase === "review" && draft ? (
+      {phase === "review" && draft && reviewReport ? (
         <>
-          {draft.warnings.length > 0 ? (
-            <div className="space-y-2">
-              {draft.warnings.map((w) => (
-                <div
-                  key={w}
-                  role="alert"
-                  className="flex items-start gap-2 rounded-card border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-                >
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                  {w}
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <button type="button" onClick={resetAll} className={buttonClass("secondary", "sm")}>
+              <ArrowLeft className="mr-1 inline h-4 w-4" />
+              {W.newAnalysis}
+            </button>
+          </div>
 
-          <Card>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="font-semibold text-brand-navy">
-                  {W.reviewSummary(
-                    selectedCounts.categories,
-                    d.catalogEntry.count(selectedCounts.items),
-                  )}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {W.reviewMeta(
-                    draft.stats.filesProcessed,
-                    draft.stats.itemsWithPrice,
-                    draft.stats.itemsFound - draft.stats.itemsWithPrice,
-                  )}
-                  {(draft.ocrPagesUsed ?? 0) > 0 ? ` · ${W.ocrUsed(draft.ocrPagesUsed!)}` : ""}
-                </p>
-              </div>
-              <button type="button" onClick={resetAll} className={buttonClass("secondary", "sm")}>
-                <ArrowLeft className="mr-1 inline h-4 w-4" />
-                {W.newAnalysis}
-              </button>
-            </div>
-          </Card>
+          <MenuImportReviewReport
+            report={reviewReport}
+            ocrPagesUsed={draft.ocrPagesUsed}
+            copy={{
+              reportTitle: W.report.title,
+              reportSubtitle: W.report.subtitle,
+              statCategories: W.report.statCategories,
+              statCategoriesSub: W.report.statCategoriesSub,
+              statItems: W.report.statItems,
+              statItemsSub: W.report.statItemsSub,
+              statPrices: W.report.statPrices,
+              statPricesSub: W.report.statPricesSub,
+              statReady: W.report.statReady,
+              statReadyYes: W.report.statReadyYes,
+              statReadyNo: W.report.statReadyNo,
+              issuesTitle: W.report.issuesTitle,
+              issuesNone: W.report.issuesNone,
+              ocrBadge: W.report.ocrBadge,
+              nextStepsTitle: W.report.nextStepsTitle,
+              nextSteps: W.report.nextSteps,
+            }}
+          />
 
-          {draft.categories.map((cat) => (
-            <Card key={cat.id}>
-              <div className="flex flex-wrap items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={cat.selected}
-                  onChange={(e) => updateCategory(cat.id, { selected: e.target.checked })}
-                  className="mt-1"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      value={cat.nameGr}
-                      onChange={(e) => updateCategory(cat.id, { nameGr: e.target.value })}
-                      placeholder={FORM_PLACEHOLDERS.importCategory}
-                      className="rounded-button border border-slate-200 px-2 py-1 text-sm font-bold"
-                    />
-                    {cat.sourceFile ? (
-                      <span className="text-xs text-slate-400">{cat.sourceFile}</span>
-                    ) : null}
-                  </div>
-                  {cat.warnings.map((w) => (
-                    <p key={w} className="mt-1 text-xs text-amber-700">
-                      {w}
-                    </p>
-                  ))}
-                </div>
-              </div>
+          <MenuImportEditorToolbar
+            hideEmpty={hideEmptyCategories}
+            showIssuesOnly={showIssuesOnly}
+            searchQuery={searchQuery}
+            onHideEmptyChange={setHideEmptyCategories}
+            onShowIssuesOnlyChange={setShowIssuesOnly}
+            onSearchChange={setSearchQuery}
+            onSelectAll={() => setAllItemsSelected(true)}
+            onDeselectAll={() => setAllItemsSelected(false)}
+            onExpandAll={() => setExpandAllToken((t) => t + 1)}
+            onCollapseAll={() => setCollapseAllToken((t) => t + 1)}
+            copy={{
+              toolbarTitle: W.editor.toolbarTitle,
+              toolbarHint: W.editor.toolbarHint,
+              searchPlaceholder: W.editor.searchPlaceholder,
+              hideEmpty: W.editor.hideEmpty,
+              showIssuesOnly: W.editor.showIssuesOnly,
+              selectAll: W.editor.selectAll,
+              deselectAll: W.editor.deselectAll,
+              expandAll: W.editor.expandAll,
+              collapseAll: W.editor.collapseAll,
+            }}
+          />
 
-              <DashboardScrollRow className="mt-4" innerClassName="pb-1">
-                <table className="w-full min-w-[640px] text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-100 text-left text-xs text-slate-500">
-                      <th className="pb-2 pr-2">✓</th>
-                      <th className="pb-2 pr-2">{W.tableColItemGr}</th>
-                      <th className="pb-2 pr-2">{W.tableColEn}</th>
-                      <th className="pb-2 pr-2">{W.tableColPrice}</th>
-                      <th className="pb-2">{W.tableColNotes}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cat.items.map((item) => (
-                      <tr key={item.id} className="border-b border-slate-50">
-                        <td className="py-2 pr-2 align-top">
-                          <input
-                            type="checkbox"
-                            checked={item.selected}
-                            onChange={(e) => updateItem(cat.id, item.id, { selected: e.target.checked })}
-                          />
-                        </td>
-                        <td className="py-2 pr-2 align-top">
-                          <input
-                            value={item.nameGr}
-                            onChange={(e) => updateItem(cat.id, item.id, { nameGr: e.target.value })}
-                            placeholder={FORM_PLACEHOLDERS.importItemGr}
-                            className="w-full min-w-[140px] rounded border border-slate-200 px-2 py-1"
-                          />
-                        </td>
-                        <td className="py-2 pr-2 align-top">
-                          <input
-                            value={item.nameEn ?? ""}
-                            onChange={(e) => updateItem(cat.id, item.id, { nameEn: e.target.value || undefined })}
-                            placeholder={FORM_PLACEHOLDERS.importItemEn}
-                            className="w-full min-w-[120px] rounded border border-slate-200 px-2 py-1"
-                          />
-                        </td>
-                        <td className="py-2 pr-2 align-top">
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={item.price ?? ""}
-                            onChange={(e) =>
-                              updateItem(cat.id, item.id, {
-                                price: e.target.value ? Number.parseFloat(e.target.value) : null,
-                              })
-                            }
-                            placeholder={FORM_PLACEHOLDERS.importItemPrice}
-                            className="w-24 rounded border border-slate-200 px-2 py-1"
-                          />
-                        </td>
-                        <td className="py-2 align-top text-xs text-amber-700">
-                          {item.warnings.join(" ")}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </DashboardScrollRow>
-            </Card>
-          ))}
+          <MenuImportCategoryEditor
+            categories={draft.categories}
+            hideEmpty={hideEmptyCategories}
+            showIssuesOnly={showIssuesOnly}
+            searchQuery={searchQuery}
+            expandAllToken={expandAllToken}
+            collapseAllToken={collapseAllToken}
+            onUpdateCategory={updateCategory}
+            onUpdateItem={updateItem}
+            copy={{
+              categoryLabel: W.editor.categoryLabel,
+              categoryEnLabel: W.editor.categoryEnLabel,
+              uncategorizedHint: W.editor.uncategorizedHint,
+              emptyCategory: W.editor.emptyCategory,
+              itemsCount: W.editor.itemsCount,
+              noResults: W.editor.noResults,
+              itemNameLabel: W.editor.itemNameLabel,
+              itemNameEnLabel: W.editor.itemNameEnLabel,
+              addEnglish: W.editor.addEnglish,
+              priceLabel: W.editor.priceLabel,
+              issueBadge: W.editor.issueBadge,
+              includeCategory: W.editor.includeCategory,
+              includeItem: W.editor.includeItem,
+            }}
+          />
 
-          <Card className="relative overflow-hidden border-emerald-200 bg-emerald-50/50">
+          <Card className="sticky bottom-4 z-20 overflow-hidden border-emerald-200 bg-white/95 shadow-lg backdrop-blur-sm">
             {importing ? (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
                 <LoadingState variant="import" size="md" title={W.loadingImport} />
               </div>
             ) : null}
-            <div className="flex flex-wrap items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-              <p className="flex-1 text-sm text-emerald-900">{W.afterImportHint}</p>
+            <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-brand-navy">{W.importConfirmTitle}</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {W.importConfirmHint(
+                    selectedCounts.categories,
+                    d.catalogEntry.count(selectedCounts.items),
+                  )}
+                </p>
+                {!reviewReport.canImport ? (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-800">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    {W.report.issueNothingSelectedHint}
+                  </p>
+                ) : (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-800">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {W.afterImportHint}
+                  </p>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={applyImport}
-                disabled={importing || selectedCounts.items === 0}
-                className={`inline-flex items-center gap-2 ${buttonClass("primary")}`}
+                disabled={importing || !reviewReport.canImport}
+                className={`inline-flex shrink-0 items-center gap-2 ${buttonClass("primary")}`}
               >
                 <Pencil className="h-4 w-4" />
                 {importing

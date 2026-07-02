@@ -28,12 +28,12 @@ export const DASHBOARD_EN = {
   loadingCatalog: "Loading catalog...",
   importWizard: {
     hint:
-      "Upload a catalog PDF — we analyze it automatically (digital + OCR for images). Review results before saving.",
+      "Upload a catalog PDF — we analyze it automatically (digital + OCR for images). You will see a report with categories, items and issues before importing.",
     processSteps: [
       "Scan — quick preview in your browser (covers/logos are skipped automatically).",
       "Analyze — server reads text from digital pages; scanned pages use OCR if needed.",
-      "Structure — categories and items are detected from the text.",
-      "Review — edit the draft, then save to your catalog.",
+      "Report — see how many categories/items were found and what needs fixing.",
+      "Review — edit, uncheck what you do not want, then import to your catalog.",
     ] as string[],
     analyzeButton: "Analyze & preview",
     processingTitle: "Analyzing catalog PDF",
@@ -67,7 +67,7 @@ export const DASHBOARD_EN = {
     ocrUsed: (n: number) => (n === 1 ? "1 page via OCR" : `${n} pages via OCR`),
     badge: "PDF IMPORT",
     phaseUpload: "Upload PDF",
-    phaseReview: "Review & import",
+    phaseReview: "Report & review before import",
     needVenueTitle: "You need a venue first",
     selectCatalogAndPdf: "Select a catalog and at least one PDF.",
     noMenuPagesScanDetail: "No menu pages found",
@@ -100,6 +100,80 @@ export const DASHBOARD_EN = {
     tableColPrice: "Price €",
     tableColNotes: "Notes",
     selectMinOneItem: (one: string) => `Select at least one ${one}.`,
+    report: {
+      title: "Analysis results",
+      subtitle: "Review what we found in the PDF before it goes into your catalog",
+      statCategories: "Categories",
+      statCategoriesSub: (withItems: number, empty: number) =>
+        `${withItems} with items · ${empty} empty`,
+      statItems: "Items",
+      statItemsSub: (selected: number) => `${selected} selected for import`,
+      statPrices: "With price",
+      statPricesSub: (without: number) =>
+        without > 0 ? `${without} without price — fill them in` : "All have prices",
+      statReady: "Ready?",
+      statReadyYes: "Yes",
+      statReadyNo: "Not yet",
+      issuesTitle: "Issues & notes",
+      issuesNone: "No major issues found — still check names and prices before importing.",
+      ocrBadge: (n: number) => (n === 1 ? "1 OCR page" : `${n} OCR pages`),
+      nextStepsTitle: "What to do now",
+      nextSteps: [
+        "Uncheck categories or items you do not want imported.",
+        "Fix names and prices in the fields — especially highlighted rows.",
+        "When you are sure, press «Import to catalog».",
+      ] as string[],
+      issueNoItems: "No items found in the PDF.",
+      issueNoItemsHint:
+        "Try other pages in Advanced or another PDF. Scanned menus need OCR.",
+      issueNoPrice: (n: number) =>
+        n === 1 ? "1 item without price." : `${n} items without price.`,
+      issueNoPriceHint: "Add a price or leave €0 — you can change it later in the catalog.",
+      issueEmptyCategories: (n: number) =>
+        n === 1 ? "1 empty category (no items)." : `${n} empty categories.`,
+      issueEmptyCategoriesHint: "They will not be imported — hidden by default.",
+      issueDuplicateCategories: (n: number) =>
+        n === 1
+          ? "1 category with possible duplicates."
+          : `${n} categories with possible duplicates.`,
+      issueItemWarnings: (n: number) =>
+        n === 1 ? "1 item needs review." : `${n} items need review.`,
+      issueItemWarningsHint: "See the Notes column — yellow price fields or short names.",
+      issueNothingSelected: "No items selected.",
+      issueNothingSelectedHint: "Check at least one item or category to import.",
+      issueOcr: "The PDF is a scanned image — OCR was used.",
+      issueOcrHint:
+        "Names or prices may be missing or wrong. Review carefully before importing.",
+    },
+    editor: {
+      toolbarTitle: "Edit draft",
+      toolbarHint:
+        "Each block is one category. Below it you see items with name and price — as in the PDF, without auto-translation.",
+      searchPlaceholder: "Search item or category…",
+      hideEmpty: "Hide empty categories",
+      showIssuesOnly: "Issues only",
+      selectAll: "Select all",
+      deselectAll: "Deselect all",
+      expandAll: "Expand all",
+      collapseAll: "Collapse all",
+      categoryLabel: "Category",
+      categoryEnLabel: "Category in English (only if in the PDF)",
+      uncategorizedHint:
+        "These items were not matched to a section in the PDF. You can import them here and reorganize later in the catalog.",
+      emptyCategory: "No items in this category",
+      itemsCount: (selected: number, total: number) => `${selected}/${total} selected`,
+      noResults: "No categories match your filters.",
+      itemNameLabel: "Item name",
+      itemNameEnLabel: "English name (only if in the PDF)",
+      addEnglish: "+ Add English",
+      priceLabel: "Price",
+      issueBadge: "Review",
+      includeCategory: "Include category in import",
+      includeItem: "Include item in import",
+    },
+    importConfirmTitle: "Ready to import",
+    importConfirmHint: (categories: number, items: string) =>
+      `${categories} categories and ${items} will be added to your selected catalog.`,
   },
   previewCatalog: "Preview",
   newCatalogPlaceholder: "New catalog (e.g. Pool Bar)",

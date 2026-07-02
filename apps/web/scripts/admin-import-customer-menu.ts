@@ -65,7 +65,7 @@ async function extractPdfForImport(buffer: Buffer, fileName: string) {
         throw new Error("OCR_SPACE_API_KEY required for scanned PDF");
       }
       const jpeg = await renderPdfPageToJpeg(buffer, p);
-      text = await ocrImageBuffer(jpeg, `${fileName}-p${p}.jpg`, { language: "gre" });
+      text = await ocrImageBuffer(jpeg, `${fileName}-p${p}.jpg`);
     }
     classified.push({ page: p, kind, selected, text });
   }
@@ -216,7 +216,7 @@ async function main() {
         await tx.item.create({
           data: {
             categoryId: category.id,
-            price: item.price,
+            price: item.price ?? 0,
             available: true,
             sortOrder: itemSort++,
             translations: {

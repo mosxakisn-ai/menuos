@@ -107,7 +107,7 @@ export async function POST(request: Request) {
           await tx.item.create({
             data: {
               categoryId: category.id,
-              price: item.price,
+              price: item.price ?? 0,
               available: true,
               sortOrder: itemSort++,
               translations: {
