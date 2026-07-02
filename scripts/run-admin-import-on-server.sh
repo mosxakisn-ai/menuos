@@ -36,7 +36,7 @@ docker run --rm --network menuos_default \
   -e DATABASE_URL="$DB_URL" \
   -e OCR_SPACE_API_KEY="$OCR_KEY" \
   -e GEMINI_API_KEY="$GEMINI_KEY" \
-  -e OCR_SPACE_LANGUAGE="${OCR_SPACE_LANGUAGE:-ell}" \
+  -e OCR_SPACE_LANGUAGE="${OCR_SPACE_LANGUAGE:-gre}" \
   -v "$ROOT:/app" \
   -w /app \
   node:20-bookworm-slim \

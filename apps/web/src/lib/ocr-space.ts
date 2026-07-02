@@ -40,9 +40,11 @@ function ocrIsTable(): boolean {
 
 function ocrLanguage(override?: string): string {
   const custom = override?.trim() || process.env.OCR_SPACE_LANGUAGE?.trim();
-  if (custom) return custom;
-  // Engine 2: explicit Greek for restaurant menus. Engine 3: auto-detect.
-  return ocrEngine() === "3" ? "auto" : "gre";
+  const engine = ocrEngine();
+  if (!custom || custom === "auto") {
+    return engine === "3" ? "auto" : "gre";
+  }
+  return custom;
 }
 
 function formatOcrError(data: OcrSpaceResponse): string {
