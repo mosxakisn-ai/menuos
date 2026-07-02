@@ -18,6 +18,27 @@ export type OrderPayload = {
   lang?: string;
 };
 
+/** Accept legacy seed/demo shapes (`qty`, missing `itemId`) before zod validation. */
+function normalizeOrderLineRaw(line: unknown): unknown {
+  if (!line || typeof line !== "object") return line;
+  const raw = line as Record<string, unknown>;
+  const quantityRaw = raw.quantity ?? raw.qty;
+  let quantity: number | undefined;
+  if (typeof quantityRaw === "number" && Number.isInteger(quantityRaw) && quantityRaw >= 1) {
+    quantity = quantityRaw;
+  } else if (typeof quantityRaw === "string" && /^\d+$/.test(quantityRaw)) {
+    quantity = Number(quantityRaw);
+  }
+  const name = typeof raw.name === "string" ? raw.name.trim() : "";
+  const hasItemId = "itemId" in raw;
+  const itemId = hasItemId
+    ? raw.itemId
+    : name
+      ? `legacy:${name}`
+      : "legacy:unknown";
+  return { ...raw, quantity, itemId };
+}
+
 export function orderLineKey(line: Pick<OrderLine, "itemId" | "extraIds" | "note">): string {
   const ids = [...(line.extraIds ?? [])].sort().join(",");
   const note = line.note?.trim() ?? "";
@@ -39,7 +60,7 @@ export function parseCartJson(raw: string | null): OrderLine[] {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .map((line) => orderLineSchema.safeParse(line))
+      .map((line) => orderLineSchema.safeParse(normalizeOrderLineRaw(line)))
       .filter((r) => r.success)
       .map((r) => r.data);
   } catch {
@@ -93,7 +114,7 @@ export function parseOrderPayload(raw: unknown): OrderPayload | null {
   const o = raw as OrderPayload;
   if (!Array.isArray(o.lines)) return null;
   const lines = o.lines
-    .map((line) => orderLineSchema.safeParse(line))
+    .map((line) => orderLineSchema.safeParse(normalizeOrderLineRaw(line)))
     .filter((r) => r.success)
     .map((r) => r.data);
   if (lines.length === 0) return null;

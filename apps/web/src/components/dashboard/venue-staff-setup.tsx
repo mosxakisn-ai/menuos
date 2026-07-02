@@ -87,9 +87,11 @@ function StationPicker({
 function StationBadges({
   stations,
   labels,
+  lang,
 }: {
   stations: string[];
   labels: Record<StaffStationOption, string>;
+  lang: "GR" | "EN";
 }) {
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -99,7 +101,7 @@ function StationBadges({
           className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-xs font-medium text-slate-700"
         >
           {labels[station as StaffStationOption] ??
-            formatStaffStationsForLang([station], "GR")}
+            formatStaffStationsForLang([station], lang)}
         </span>
       ))}
     </div>
@@ -189,7 +191,7 @@ function StaffMemberLinkActions({
 }
 
 export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
-  const { d } = useDashboardCopy();
+  const { d, lang } = useDashboardCopy();
   const S = d.pages.settings.personnel;
   const stationLabels = S.stationLabels as Record<StaffStationOption, string>;
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
@@ -514,7 +516,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                         {S.colStations}
                       </p>
                       <div className="mt-2">
-                        <StationBadges stations={member.stations} labels={stationLabels} />
+                        <StationBadges stations={member.stations} labels={stationLabels} lang={lang} />
                       </div>
                     </div>
                     <div>

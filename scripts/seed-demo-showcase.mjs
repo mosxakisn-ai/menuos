@@ -87,8 +87,8 @@ const WAITER_CALLS = [
     status: "PENDING",
     orderItems: {
       lines: [
-        { name: "Μουσακάς", qty: 2, unitPrice: "12.00", lineTotal: "24.00", detail: null },
-        { name: "Χωριάτικη", qty: 1, unitPrice: "9.50", lineTotal: "9.50", detail: null },
+        { itemId: "demo-mousakas", name: "Μουσακάς", quantity: 2, unitPrice: "12.00" },
+        { itemId: "demo-choriatiki", name: "Χωριάτικη", quantity: 1, unitPrice: "9.50" },
       ],
       total: "33.50",
     },

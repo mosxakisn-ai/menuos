@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { Prisma, prisma, WaiterCallStatus, WaiterCallType, type WaiterCall } from "@menuos/db";
-import { mergeOrderPayload, type OrderPayload, waiterCallSchema, normalizeWaiterCallLocation, waiterCallsVisibleToStaffMember } from "@menuos/shared";
+import {
+  mergeOrderPayload,
+  parseOrderPayload,
+  type OrderPayload,
+  waiterCallSchema,
+  normalizeWaiterCallLocation,
+  waiterCallsVisibleToStaffMember,
+} from "@menuos/shared";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { validateOrderItemsForVenue } from "@/lib/validate-order-items";
@@ -133,7 +140,10 @@ export async function GET(request: Request) {
   const pendingCount = calls.filter((c) => c.status === "PENDING").length;
 
   return NextResponse.json({
-    calls,
+    calls: calls.map((call) => ({
+      ...call,
+      orderItems: call.type === "ORDER" ? parseOrderPayload(call.orderItems) : null,
+    })),
     pendingCount,
     spots,
     staffMember: member ? { id: member.id, name: member.name } : null,

@@ -7,6 +7,7 @@ import {
   mergeOrderPayload,
   orderLineKey,
   parseCartJson,
+  parseOrderPayload,
   updateCartLineQty,
   type OrderLine,
 } from "./menu-cart";
@@ -83,6 +84,21 @@ describe("mergeOrderPayload", () => {
     const merged = mergeOrderPayload(existing, incoming);
     expect(merged.lines).toHaveLength(2);
     expect(merged.total).toBe("15");
+  });
+});
+
+describe("parseOrderPayload", () => {
+  it("accepts legacy demo lines with qty and no itemId", () => {
+    const parsed = parseOrderPayload({
+      lines: [{ name: "Μουσακάς", qty: 2, unitPrice: "12.00" }],
+      total: "24.00",
+    });
+    expect(parsed?.lines[0]).toMatchObject({
+      name: "Μουσακάς",
+      quantity: 2,
+      unitPrice: "12.00",
+      itemId: "legacy:Μουσακάς",
+    });
   });
 });
 
