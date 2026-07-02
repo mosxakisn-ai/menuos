@@ -43,6 +43,7 @@ import {
 } from "@/lib/pdf-page-preview";
 import {
   buildMenuImportReviewReport,
+  classifyImportTranslationWarnings,
   countSelectedImport,
   draftHasLatinOnlyNames,
   normalizeImportDraft,
@@ -315,6 +316,15 @@ export function MenuImportWizard({
     }
 
     const forceVision = options?.forceVision ?? false;
+    let progressTimer: ReturnType<typeof setInterval> | undefined;
+    let aiStepTimer: ReturnType<typeof setTimeout> | undefined;
+    const stopAnalysisTimers = () => {
+      if (progressTimer !== undefined) clearInterval(progressTimer);
+      if (aiStepTimer !== undefined) clearTimeout(aiStepTimer);
+      progressTimer = undefined;
+      aiStepTimer = undefined;
+    };
+
     if (forceVision) {
       setVisionRetrying(true);
     } else {
@@ -388,7 +398,27 @@ export function MenuImportWizard({
       if (forceVision) form.set("forceVision", "1");
       for (const file of files) form.append("files", file);
 
+      if (!forceVision) {
+        progressTimer = setInterval(() => {
+          setProgress((p) => Math.min(92, p + 1.5));
+        }, 600);
+        if (geminiConfigured) {
+          aiStepTimer = setTimeout(() => {
+            setPipeline((p) =>
+              p.map((s) => {
+                if (s.id === "extract") return { ...s, status: "done", detail: undefined };
+                if (s.id === "ai") {
+                  return { ...s, status: "active", detail: W.geminiProcessingDetail };
+                }
+                return s;
+              }),
+            );
+          }, 1500);
+        }
+      }
+
       const res = await fetch("/api/menu-import/parse", { method: "POST", body: form });
+      stopAnalysisTimers();
       const data = await res.json();
 
       if (typeof data.visionAvailable === "boolean") {
@@ -455,25 +485,15 @@ export function MenuImportWizard({
               typeof data.translatedCount === "number" &&
               data.translatedCount > 0;
             const warnings = Array.isArray(data.warnings) ? (data.warnings as string[]) : [];
-            const translateFailed = warnings.some(
-              (w) =>
-                w.includes("Μετάφραση AI δεν ολοκληρώθηκε") ||
-                w.includes("Μερική μετάφραση") ||
-                w.includes("AI translation") ||
-                w.includes("Partial translation"),
-            );
+            const { failed, partial } = classifyImportTranslationWarnings(warnings);
             if (translated) {
               return { ...s, status: "done", detail: W.geminiStepDone };
             }
-            if (translateFailed) {
-              const failedWarning = warnings.find(
-                (w) =>
-                  w.includes("Μετάφραση AI δεν ολοκληρώθηκε") ||
-                  w.includes("Μερική μετάφραση") ||
-                  w.includes("AI translation") ||
-                  w.includes("Partial translation"),
-              );
-              return { ...s, status: "error", detail: failedWarning };
+            if (failed) {
+              return { ...s, status: "error", detail: failed };
+            }
+            if (partial) {
+              return { ...s, status: "done", detail: partial };
             }
             return { ...s, status: "done" };
           }
@@ -513,6 +533,7 @@ export function MenuImportWizard({
       }
       setPhase("review");
     } catch (err) {
+      stopAnalysisTimers();
       console.error("import pipeline", err);
       if (options?.forceVision) {
         const detail = err instanceof Error && err.message.trim() ? err.message : W.parseFailed;
@@ -524,6 +545,7 @@ export function MenuImportWizard({
       const detail = err instanceof Error && err.message.trim() ? err.message : W.parseFailed;
       setFlash({ type: "error", text: detail });
     } finally {
+      stopAnalysisTimers();
       if (options?.forceVision) setVisionRetrying(false);
     }
   }, [menuId, files, pages, showFromResponse, setFlash, initialPipeline, W, lang, geminiConfigured]);

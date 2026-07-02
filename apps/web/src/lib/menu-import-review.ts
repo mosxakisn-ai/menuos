@@ -210,6 +210,26 @@ export function draftHasLatinOnlyNames(draft: MenuPdfParseResult): boolean {
   return countLatinOnlyImportNames(draft).latinOnly > 0;
 }
 
+export function classifyImportTranslationWarnings(warnings: string[]): {
+  failed?: string;
+  partial?: string;
+} {
+  let failed: string | undefined;
+  let partial: string | undefined;
+  for (const w of warnings) {
+    if (
+      !failed &&
+      (w.includes("Μετάφραση AI δεν ολοκληρώθηκε") || w.includes("AI translation did not complete"))
+    ) {
+      failed = w;
+    }
+    if (!partial && (w.startsWith("Μερική μετάφραση") || w.startsWith("Partial translation"))) {
+      partial = w;
+    }
+  }
+  return { failed, partial };
+}
+
 export function normalizeImportDraft(draft: MenuPdfParseResult): MenuPdfParseResult {
   return {
     ...draft,

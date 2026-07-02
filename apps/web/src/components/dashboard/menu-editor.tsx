@@ -129,7 +129,7 @@ export function MenuEditor({
     scrollRestoreRef.current = null;
     if (y == null) return;
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => window.scrollTo({ top: y, left: 0 }));
+      requestAnimationFrame(() => window.scrollTo({ top: y, left: 0, behavior: "instant" }));
     });
   }, []);
 

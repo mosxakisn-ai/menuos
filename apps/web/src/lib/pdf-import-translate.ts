@@ -1,4 +1,4 @@
-import { importDraftNeedsGreekTranslation } from "@/lib/menu-import-review";
+import { draftHasLatinOnlyNames, importDraftNeedsGreekTranslation } from "@/lib/menu-import-review";
 import {
   PdfTranslateError,
   translateImportDraftToGreek,
@@ -24,7 +24,22 @@ export async function enhancePdfImportWithTranslation(
     const { draft: translated, translatedCount } = await translateImportDraftToGreek(result, {
       force: options?.forceTranslate,
     });
-    if (translatedCount === 0) return result;
+    if (translatedCount === 0) {
+      const needsTranslation =
+        options?.forceTranslate === true
+          ? draftHasLatinOnlyNames(result)
+          : importDraftNeedsGreekTranslation(result);
+      if (needsTranslation) {
+        return {
+          ...result,
+          warnings: [
+            ...result.warnings,
+            "Μετάφραση AI δεν ολοκληρώθηκε — έλεγξε τα αγγλικά ονόματα ή δοκίμασε ξανά.",
+          ],
+        };
+      }
+      return result;
+    }
 
     return {
       ...translated,
