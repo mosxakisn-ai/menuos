@@ -30,8 +30,9 @@ function ocrEngine(): string {
   return process.env.OCR_SPACE_ENGINE?.trim() || "2";
 }
 
-function ocrLanguage(): string {
-  return process.env.OCR_SPACE_LANGUAGE?.trim() || "auto";
+function ocrLanguage(override?: string): string {
+  const custom = override?.trim() || process.env.OCR_SPACE_LANGUAGE?.trim();
+  return custom || "gre";
 }
 
 function formatOcrError(data: OcrSpaceResponse): string {
@@ -42,7 +43,11 @@ function formatOcrError(data: OcrSpaceResponse): string {
 }
 
 /** OCR.space — 1 image buffer → plain text (free tier: 1MB, 500 req/day). */
-export async function ocrImageBuffer(imageBuffer: Buffer, fileName: string): Promise<string> {
+export async function ocrImageBuffer(
+  imageBuffer: Buffer,
+  fileName: string,
+  options?: { language?: string },
+): Promise<string> {
   const apiKey = process.env.OCR_SPACE_API_KEY?.trim();
   if (!apiKey) {
     throw new OcrSpaceError("Δεν έχει ρυθμιστεί OCR_SPACE_API_KEY.");
@@ -59,7 +64,7 @@ export async function ocrImageBuffer(imageBuffer: Buffer, fileName: string): Pro
     new Blob([new Uint8Array(imageBuffer)], { type: "image/jpeg" }),
     fileName.endsWith(".jpg") ? fileName : `${fileName}.jpg`,
   );
-  form.append("language", ocrLanguage());
+  form.append("language", ocrLanguage(options?.language));
   form.append("isTable", "true");
   form.append("scale", "true");
   form.append("detectOrientation", "true");

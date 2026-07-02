@@ -74,10 +74,45 @@ function cleanLine(line: string): string {
   return line.replace(/\s+/g, " ").replace(/^[\d.)]+\s*/, "").trim();
 }
 
+function containsGreek(text: string): boolean {
+  return /[\u0370-\u03FF\u1F00-\u1FFF]/.test(text);
+}
+
+/** Split «Ελληνικό | English» or «Ελληνικό / English» menu lines. */
+export function splitBilingualMenuName(raw: string): { nameGr: string; nameEn?: string } {
+  const line = raw.trim();
+  if (!line) return { nameGr: line };
+
+  const pipeParts = line.split(/\s*[|¦]\s*/).map((p) => p.trim()).filter(Boolean);
+  if (pipeParts.length === 2) {
+    const [a, b] = pipeParts as [string, string];
+    if (containsGreek(a) && !containsGreek(b)) return { nameGr: a, nameEn: b };
+    if (containsGreek(b) && !containsGreek(a)) return { nameGr: b, nameEn: a };
+  }
+
+  const slash = line.match(/^(.+?)\s*\/\s*(.+)$/u);
+  if (slash) {
+    const a = slash[1]!.trim();
+    const b = slash[2]!.trim();
+    if (containsGreek(a) && isMostlyLatin(b)) return { nameGr: a, nameEn: b };
+    if (containsGreek(b) && isMostlyLatin(a)) return { nameGr: b, nameEn: a };
+  }
+
+  if (isMostlyLatin(line) && !containsGreek(line)) {
+    return { nameGr: line, nameEn: line };
+  }
+
+  return { nameGr: line };
+}
+
 function isMostlyLatin(text: string): boolean {
   const latin = (text.match(/[A-Za-z]/g) ?? []).length;
-  const greek = (text.match(/[\u0370-\u03FF]/g) ?? []).length;
+  const greek = (text.match(/[\u0370-\u03FF\u1F00-\u1FFF]/g) ?? []).length;
   return latin > greek && latin >= 3;
+}
+
+function namesFromMenuLine(raw: string): { nameGr: string; nameEn?: string } {
+  return splitBilingualMenuName(raw);
 }
 
 function isAllCapsTitle(line: string): boolean {
@@ -206,10 +241,11 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
       currentCategory = existing;
       return;
     }
+    const catNames = namesFromMenuLine(normalized);
     currentCategory = {
       id: nextId("cat"),
-      nameGr: normalized,
-      nameEn: isMostlyLatin(normalized) ? normalized : undefined,
+      nameGr: catNames.nameGr,
+      nameEn: catNames.nameEn,
       items: [],
       warnings: [],
       selected: true,
@@ -231,10 +267,11 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
           if (!currentCategory) ensureCategory("Γενικά");
           itemsFound += 1;
           itemsWithPrice += 1;
+          const itemNames = namesFromMenuLine(line);
           currentCategory!.items.push({
             id: nextId("item"),
-            nameGr: line,
-            nameEn: isMostlyLatin(line) ? line : undefined,
+            nameGr: itemNames.nameGr,
+            nameEn: itemNames.nameEn,
             price,
             warnings: itemWarnings(line, price),
             selected: true,
@@ -250,10 +287,11 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
     if (numbered) {
       if (!currentCategory) ensureCategory("Γενικά");
       itemsFound += 1;
+      const numberedNames = namesFromMenuLine(numbered);
       currentCategory!.items.push({
         id: nextId("item"),
-        nameGr: numbered,
-        nameEn: isMostlyLatin(numbered) ? numbered : undefined,
+        nameGr: numberedNames.nameGr,
+        nameEn: numberedNames.nameEn,
         price: null,
         warnings: itemWarnings(numbered, null),
         selected: true,
@@ -267,16 +305,15 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
     if (item) {
       if (!currentCategory) ensureCategory("Γενικά");
 
-      const nameGr = item.name;
-      const nameEn = isMostlyLatin(item.name) ? item.name : undefined;
-      const warnings = itemWarnings(nameGr, item.price);
+      const itemNames = namesFromMenuLine(item.name);
+      const warnings = itemWarnings(itemNames.nameGr, item.price);
       if (item.price !== null) itemsWithPrice += 1;
       itemsFound += 1;
 
       currentCategory!.items.push({
         id: nextId("item"),
-        nameGr,
-        nameEn,
+        nameGr: itemNames.nameGr,
+        nameEn: itemNames.nameEn,
         price: item.price,
         warnings,
         selected: true,
@@ -293,11 +330,12 @@ export function parseMenuTextFromPdf(text: string, sourceFile?: string): MenuPdf
     if (looksLikeNameOnlyItem(line)) {
       if (!currentCategory) ensureCategory("Γενικά");
       const name = line.replace(/^[-•●▪*]\s*/, "").trim();
+      const nameOnly = namesFromMenuLine(name);
       itemsFound += 1;
       currentCategory!.items.push({
         id: nextId("item"),
-        nameGr: name,
-        nameEn: isMostlyLatin(name) ? name : undefined,
+        nameGr: nameOnly.nameGr,
+        nameEn: nameOnly.nameEn,
         price: null,
         warnings: itemWarnings(name, null),
         selected: true,

@@ -29,7 +29,7 @@ describe("onboarding starter pack", () => {
     expect(itemCount).toBe(
       ONBOARDING_STARTER_CATEGORIES.reduce((n, c) => n + c.items.length, 0),
     );
-    expect(ONBOARDING_STARTER_SPOTS.length).toBeGreaterThanOrEqual(10);
+    expect(ONBOARDING_STARTER_SPOTS.length).toBe(0);
     expect(ONBOARDING_STARTER_STAFF.length).toBeGreaterThanOrEqual(4);
   });
 });

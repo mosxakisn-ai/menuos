@@ -2,13 +2,26 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { parseMenuTextFromPdf, resetMenuPdfParserIds } from "./menu-pdf-parser";
+import { parseMenuTextFromPdf, resetMenuPdfParserIds, splitBilingualMenuName } from "./menu-pdf-parser";
 
 const fixtureDir = dirname(fileURLToPath(import.meta.url));
 const beverageFixture = readFileSync(
   join(fixtureDir, "menu-pdf-parser.beverage.fixture.txt"),
   "utf8",
 );
+
+describe("splitBilingualMenuName", () => {
+  it("puts Greek in nameGr and English in nameEn", () => {
+    expect(splitBilingualMenuName("Χωριάτικη | Greek salad")).toEqual({
+      nameGr: "Χωριάτικη",
+      nameEn: "Greek salad",
+    });
+    expect(splitBilingualMenuName("PASTA / Ζυμαρικά")).toEqual({
+      nameGr: "Ζυμαρικά",
+      nameEn: "PASTA",
+    });
+  });
+});
 
 describe("parseMenuTextFromPdf — bilingual beverage PDF", () => {
   it("extracts categories and items from hotel drink list layout", () => {
