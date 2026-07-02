@@ -228,6 +228,27 @@ export function WaiterPanel({
     }
   }
 
+  const zoneGroups = useMemo(() => groupVenueSpotsByZone(spots), [spots]);
+
+  const displaySpots = useMemo(
+    () => filterSpotsByZone(spots, zoneFilterId, zoneGroups),
+    [spots, zoneFilterId, zoneGroups],
+  );
+
+  const displayCalls = useMemo(
+    () => filterWaiterLocationsByZone(calls, zoneFilterId, zoneGroups),
+    [calls, zoneFilterId, zoneGroups],
+  );
+
+  const displayPassSignals = useMemo(() => {
+    let rows = filterWaiterLocationsByZone(passSignals, zoneFilterId, zoneGroups);
+    if (monitorTab !== "calls" && passStationFilter !== "all") {
+      const dbStation = passStationInputToDb(passStationFilter);
+      rows = rows.filter((pass) => pass.station === dbStation);
+    }
+    return rows;
+  }, [passSignals, zoneFilterId, zoneGroups, monitorTab, passStationFilter]);
+
   if (venues.length === 0) {
     return (
       <Card>
@@ -253,31 +274,12 @@ export function WaiterPanel({
     { id: "dessert", label: W.passStation.dessert },
   ];
 
-  const zoneGroups = useMemo(() => groupVenueSpotsByZone(spots), [spots]);
-
-  const displaySpots = useMemo(
-    () => filterSpotsByZone(spots, zoneFilterId, zoneGroups),
-    [spots, zoneFilterId, zoneGroups],
-  );
-
-  const displayCalls = useMemo(
-    () => filterWaiterLocationsByZone(calls, zoneFilterId, zoneGroups),
-    [calls, zoneFilterId, zoneGroups],
-  );
-
-  const displayPassSignals = useMemo(() => {
-    let rows = filterWaiterLocationsByZone(passSignals, zoneFilterId, zoneGroups);
-    if (monitorTab !== "calls" && passStationFilter !== "all") {
-      const dbStation = passStationInputToDb(passStationFilter);
-      rows = rows.filter((pass) => pass.station === dbStation);
-    }
-    return rows;
-  }, [passSignals, zoneFilterId, zoneGroups, monitorTab, passStationFilter]);
-
   const showStationFilters = monitorTab === "all" || monitorTab === "pass";
   const showZoneFilters = zoneGroups.length > 1;
 
   const hasActivity = displayCalls.length > 0 || displayPassSignals.length > 0;
+  const isZoneFilteredEmpty =
+    zoneFilterId !== "all" && displaySpots.length === 0 && !hasActivity && spots.length > 0;
 
   return (
     <div className="space-y-6">
@@ -409,8 +411,14 @@ export function WaiterPanel({
       {displaySpots.length === 0 && !hasActivity ? (
         <Card className="border-dashed text-center">
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
-          <p className="mt-3 font-medium text-brand-navy">{W.emptyTitle}</p>
-          <p className="mt-1 text-sm text-slate-500">{W.emptyDesc}</p>
+          {isZoneFilteredEmpty ? (
+            <p className="mt-3 text-sm text-slate-500">{W.emptyZoneView}</p>
+          ) : (
+            <>
+              <p className="mt-3 font-medium text-brand-navy">{W.emptyTitle}</p>
+              <p className="mt-1 text-sm text-slate-500">{W.emptyDesc}</p>
+            </>
+          )}
         </Card>
       ) : (
         <WaiterTableGrid
