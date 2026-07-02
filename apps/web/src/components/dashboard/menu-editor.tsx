@@ -55,6 +55,12 @@ function catalogTotals(menus: Menu[]) {
   return { menus: menus.length, categories, items };
 }
 
+function menuCatalogStats(menu: Menu) {
+  const categories = menu.categories.length;
+  const items = menu.categories.reduce((n, cat) => n + cat.items.length, 0);
+  return { categories, items };
+}
+
 function parseMenuPrice(raw: string): number {
   return parseFloat(raw.trim().replace(",", "."));
 }
@@ -252,12 +258,8 @@ export function MenuEditor({
     }
   }
 
-  function menuHasData(menu: Menu) {
-    return menu.categories.length > 0;
-  }
-
-  function canDeleteMenu(menu: Menu) {
-    return menus.length > 1 && !menuHasData(menu);
+  function canDeleteMenu(_menu: Menu) {
+    return menus.length > 1;
   }
 
   async function deleteAllMenus() {
@@ -274,6 +276,7 @@ export function MenuEditor({
       const data = await res.json();
       showFromResponse(data, res.ok);
       if (res.ok) {
+        clearMenuEditState();
         setActiveMenuId(data.menu?.id ?? "");
         await loadMenus();
       }
@@ -282,16 +285,24 @@ export function MenuEditor({
     }
   }
 
+  function clearMenuEditState() {
+    setEditingItemId(null);
+    setEditingCategoryId(null);
+    setItemCategoryId(null);
+  }
+
   async function deleteMenu(menu: Menu) {
-    if (menuHasData(menu)) {
-      setFlash({ type: "error", text: d.deleteCatalogHasData });
-      return;
-    }
     if (menus.length <= 1) {
       setFlash({ type: "error", text: d.deleteCatalogLast });
       return;
     }
-    if (!confirmDestructive(d.deleteCatalogConfirm(menu.name))) return;
+
+    const stats = menuCatalogStats(menu);
+    const confirmMessage =
+      stats.categories > 0 || stats.items > 0
+        ? d.deleteCatalogWithDataConfirm(menu.name, stats)
+        : d.deleteCatalogConfirm(menu.name);
+    if (!confirmDestructive(confirmMessage)) return;
 
     setDeletingMenuId(menu.id);
     try {
@@ -300,6 +311,7 @@ export function MenuEditor({
       showFromResponse(data, res.ok);
       if (res.ok) {
         if (activeMenuId === menu.id) {
+          clearMenuEditState();
           const next = menus.find((m) => m.id !== menu.id);
           setActiveMenuId(next?.id ?? "");
         }

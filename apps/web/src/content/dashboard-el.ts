@@ -199,6 +199,31 @@ export const DASHBOARD_EL = {
   deleteCatalogLast: "Πρέπει να υπάρχει τουλάχιστον ένας κατάλογος στο κατάστημα.",
   deleteCatalogConfirm: (name: string) =>
     `Διαγραφή του καταλόγου «${name}»;\n\nΕίσαι σίγουρος; Η ενέργεια δεν αναιρείται.`,
+  deleteCatalogWithDataConfirm: (
+    name: string,
+    stats: { categories: number; items: number },
+  ) => {
+    const lines = [
+      "ΠΡΟΣΟΧΗ — μόνιμη διαγραφή",
+      "",
+      `Θα διαγραφεί ο κατάλογος «${name}»:`,
+    ];
+    if (stats.categories > 0) {
+      lines.push(
+        `• ${stats.categories} ${stats.categories === 1 ? "κατηγορία" : "κατηγορίες"}`,
+      );
+    }
+    if (stats.items > 0) {
+      lines.push(`• ${stats.items} ${stats.items === 1 ? "είδος" : "είδη"}`);
+    }
+    lines.push(
+      "",
+      "Δεν μπορούμε να τα επαναφέρουμε — χάνονται οριστικά.",
+      "",
+      "Συνέχεια;",
+    );
+    return lines.join("\n");
+  },
   deleteAllCatalogs: "Διαγραφή όλων των καταλόγων",
   deleteAllCatalogsConfirm: (stats: { menus: number; categories: number; items: number }) => {
     const lines = [

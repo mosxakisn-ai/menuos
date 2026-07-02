@@ -198,6 +198,29 @@ export const DASHBOARD_EN = {
   deleteCatalogLast: "At least one catalog must remain for this venue.",
   deleteCatalogConfirm: (name: string) =>
     `Delete catalog «${name}»?\n\nAre you sure? This cannot be undone.`,
+  deleteCatalogWithDataConfirm: (
+    name: string,
+    stats: { categories: number; items: number },
+  ) => {
+    const lines = [
+      "WARNING — permanent deletion",
+      "",
+      `Catalog «${name}» will be deleted:`,
+    ];
+    if (stats.categories > 0) {
+      lines.push(`• ${stats.categories} categor${stats.categories === 1 ? "y" : "ies"}`);
+    }
+    if (stats.items > 0) {
+      lines.push(`• ${stats.items} item${stats.items === 1 ? "" : "s"}`);
+    }
+    lines.push(
+      "",
+      "We cannot restore them — this is permanent.",
+      "",
+      "Continue?",
+    );
+    return lines.join("\n");
+  },
   deleteAllCatalogs: "Delete all catalogs",
   deleteAllCatalogsConfirm: (stats: { menus: number; categories: number; items: number }) => {
     const lines = [

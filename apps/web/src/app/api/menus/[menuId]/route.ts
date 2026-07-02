@@ -24,22 +24,9 @@ export async function DELETE(request: Request, { params }: Params) {
       const menuCount = await tx.menu.count({ where: { venueId: menu.venueId } });
       if (menuCount <= 1) throw new Error("menu_last");
 
-      const categoryCount = await tx.category.count({ where: { menuId } });
-      const itemCount = await tx.item.count({ where: { category: { menuId } } });
-      if (categoryCount > 0 || itemCount > 0) throw new Error("menu_has_data");
-
       await tx.menu.delete({ where: { id: menuId } });
     }, serializableTransaction);
   } catch (err) {
-    if (err instanceof Error && err.message === "menu_has_data") {
-      return NextResponse.json(
-        {
-          error: copy.deleteCatalogHasData,
-          code: "menu_has_data",
-        },
-        { status: 400 },
-      );
-    }
     if (err instanceof Error && err.message === "menu_last") {
       return NextResponse.json(
         {
