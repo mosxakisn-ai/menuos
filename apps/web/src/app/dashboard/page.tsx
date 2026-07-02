@@ -5,6 +5,7 @@ import { DashboardOverviewContent } from "@/components/dashboard/dashboard-overv
 import { DashboardPage as DashboardPageShell } from "@/components/dashboard/dashboard-page";
 import { getSession } from "@/lib/auth";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
+import { ensureOnboardingVenuesForOrganization } from "@/lib/seed-onboarding-venue";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { startOfTodayAthens } from "@/lib/athens-day";
 
@@ -16,6 +17,7 @@ type Props = { searchParams: Promise<{ welcome?: string }> };
 
 export default async function DashboardPage({ searchParams }: Props) {
   const session = await getSession();
+  await ensureOnboardingVenuesForOrganization(session!.organizationId);
   const sp = await searchParams;
   const org = await prisma.organization.findUnique({
     where: { id: session!.organizationId },

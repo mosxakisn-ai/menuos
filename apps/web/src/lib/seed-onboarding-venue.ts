@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Prisma } from "@menuos/db";
+import { prisma, type Prisma } from "@menuos/db";
 import {
   ONBOARDING_EXTRA_STATION_SCREEN,
   ONBOARDING_ITEM_PHOTOS,
@@ -9,6 +9,7 @@ import {
   ONBOARDING_STARTER_STAFF,
   shouldSeedOnboardingVenue,
 } from "@menuos/shared";
+import { serializableTransaction } from "@/lib/plan-limits";
 
 export { shouldSeedOnboardingVenue };
 
@@ -29,23 +30,7 @@ function itemTranslationRows(
   return rows;
 }
 
-export async function seedOnboardingVenueInTransaction(
-  tx: Prisma.TransactionClient,
-  params: {
-    organizationSlug: string;
-    venueId: string;
-    venueSlug: string;
-    menuId: string;
-  },
-): Promise<void> {
-  const { organizationSlug, venueId, venueSlug, menuId } = params;
-  if (!shouldSeedOnboardingVenue(organizationSlug, venueSlug)) return;
-
-  await tx.venueSetting.update({
-    where: { venueId },
-    data: { openingHours: ONBOARDING_OPENING_HOURS },
-  });
-
+async function seedMenuCategories(tx: Prisma.TransactionClient, menuId: string) {
   let catSort = 0;
   for (const cat of ONBOARDING_STARTER_CATEGORIES) {
     const category = await tx.category.create({
@@ -85,7 +70,9 @@ export async function seedOnboardingVenueInTransaction(
       });
     }
   }
+}
 
+async function seedSpots(tx: Prisma.TransactionClient, venueId: string) {
   let spotSort = 0;
   for (const spot of ONBOARDING_STARTER_SPOTS) {
     await tx.venueSpot.create({
@@ -97,7 +84,9 @@ export async function seedOnboardingVenueInTransaction(
       },
     });
   }
+}
 
+async function seedStaff(tx: Prisma.TransactionClient, venueId: string) {
   let staffSort = 0;
   for (const member of ONBOARDING_STARTER_STAFF) {
     await tx.venueStaffMember.create({
@@ -111,7 +100,9 @@ export async function seedOnboardingVenueInTransaction(
       },
     });
   }
+}
 
+async function seedParaliaScreen(tx: Prisma.TransactionClient, venueId: string) {
   const barScreenCount = await tx.venueStationScreen.count({
     where: { venueId, station: ONBOARDING_EXTRA_STATION_SCREEN.station },
   });
@@ -125,4 +116,97 @@ export async function seedOnboardingVenueInTransaction(
       spotPrefix: ONBOARDING_EXTRA_STATION_SCREEN.spotPrefix,
     },
   });
+}
+
+/** Idempotent starter pack — only fills missing menu, spots, staff, or screens. */
+export async function seedOnboardingVenueInTransaction(
+  tx: Prisma.TransactionClient,
+  params: {
+    organizationSlug: string;
+    venueId: string;
+    venueSlug: string;
+    menuId: string;
+  },
+): Promise<boolean> {
+  const { organizationSlug, venueId, venueSlug, menuId } = params;
+  if (!shouldSeedOnboardingVenue(organizationSlug, venueSlug)) return false;
+
+  const [categoryCount, spotCount, staffCount, paraliaScreen, settings] = await Promise.all([
+    tx.category.count({ where: { menuId } }),
+    tx.venueSpot.count({ where: { venueId } }),
+    tx.venueStaffMember.count({ where: { venueId } }),
+    tx.venueStationScreen.findFirst({
+      where: { venueId, label: ONBOARDING_EXTRA_STATION_SCREEN.label },
+      select: { id: true },
+    }),
+    tx.venueSetting.findUnique({
+      where: { venueId },
+      select: { openingHours: true },
+    }),
+  ]);
+
+  const needsMenu = categoryCount === 0;
+  const needsSpots = spotCount === 0;
+  const needsStaff = staffCount === 0;
+  const needsParalia = !paraliaScreen;
+  const needsHours = settings?.openingHours == null;
+
+  if (!needsMenu && !needsSpots && !needsStaff && !needsParalia && !needsHours) {
+    return false;
+  }
+
+  if (needsHours) {
+    await tx.venueSetting.update({
+      where: { venueId },
+      data: { openingHours: ONBOARDING_OPENING_HOURS },
+    });
+  }
+  if (needsMenu) await seedMenuCategories(tx, menuId);
+  if (needsSpots) await seedSpots(tx, venueId);
+  if (needsStaff) await seedStaff(tx, venueId);
+  if (needsParalia) await seedParaliaScreen(tx, venueId);
+
+  return true;
+}
+
+/** Backfill empty venues for one organization (e.g. on dashboard load). */
+export async function ensureOnboardingVenuesForOrganization(organizationId: string): Promise<number> {
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: {
+      slug: true,
+      venues: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          slug: true,
+          menus: {
+            orderBy: { sortOrder: "asc" },
+            take: 1,
+            select: { id: true },
+          },
+        },
+      },
+    },
+  });
+  if (!org) return 0;
+
+  let seeded = 0;
+  for (const venue of org.venues) {
+    const menuId = venue.menus[0]?.id;
+    if (!menuId) continue;
+
+    const didSeed = await prisma.$transaction(
+      async (tx) =>
+        seedOnboardingVenueInTransaction(tx, {
+          organizationSlug: org.slug,
+          venueId: venue.id,
+          venueSlug: venue.slug,
+          menuId,
+        }),
+      serializableTransaction,
+    );
+    if (didSeed) seeded += 1;
+  }
+  return seeded;
 }

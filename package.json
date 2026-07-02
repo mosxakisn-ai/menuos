@@ -14,6 +14,7 @@
     "db:push": "npm run push -w @menuos/db",
     "db:studio": "npm run studio -w @menuos/db",
     "seed:master": "node scripts/seed-master-user.mjs",
+    "seed:onboarding-backfill": "node scripts/backfill-onboarding-venues.mjs",
     "indexnow": "node scripts/submit-indexnow.mjs",
     "env:ensure": "bash scripts/ensure-env.sh",
     "sync:check": "npm run db:generate && npm test && npm run build",
