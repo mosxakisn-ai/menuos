@@ -7,9 +7,11 @@ import {
   FolderOpen,
   Info,
   ListChecks,
+  Sparkles,
 } from "lucide-react";
 import type { MenuImportIssue, MenuImportReviewReport } from "@/lib/menu-import-review";
 import { Card } from "@/components/ui/card";
+import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 function IssueIcon({ severity }: { severity: MenuImportIssue["severity"] }) {
@@ -49,6 +51,9 @@ export function MenuImportReviewReport({
   copy,
   ocrPagesUsed,
   extraction,
+  visionAvailable,
+  visionRetrying,
+  onVisionRetry,
 }: {
   report: MenuImportReviewReport;
   copy: {
@@ -74,6 +79,9 @@ export function MenuImportReviewReport({
       };
       visionUsedBadge: (n: number) => string;
       visionHint: string;
+      visionHintUnavailable: string;
+      visionRetryButton: string;
+      visionRetrying: string;
     nextStepsTitle: string;
     nextSteps: string[];
   };
@@ -85,6 +93,9 @@ export function MenuImportReviewReport({
     visionUsed?: boolean;
     visionPages?: number;
   };
+  visionAvailable?: boolean;
+  visionRetrying?: boolean;
+  onVisionRetry?: () => void;
 }) {
   const { totals, issues, canImport } = report;
   const actionableIssues = issues.filter((i) => i.severity !== "info");
@@ -117,9 +128,22 @@ export function MenuImportReviewReport({
             ) : null}
           </div>
           {extraction?.suggestsVision && !extraction.visionUsed ? (
-            <p className="mt-3 rounded-card border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              {copy.visionHint}
-            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-card border border-amber-200 bg-amber-50 px-3 py-2.5">
+              <p className="text-sm text-amber-900">
+                {visionAvailable ? copy.visionHint : copy.visionHintUnavailable}
+              </p>
+              {visionAvailable && onVisionRetry ? (
+                <button
+                  type="button"
+                  onClick={onVisionRetry}
+                  disabled={visionRetrying}
+                  className={buttonClass("secondary", "sm")}
+                >
+                  <Sparkles className="mr-1.5 inline h-4 w-4" />
+                  {visionRetrying ? copy.visionRetrying : copy.visionRetryButton}
+                </button>
+              ) : null}
+            </div>
           ) : null}
         </div>
 

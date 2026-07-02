@@ -129,6 +129,8 @@ export function MenuImportWizard({
   }, [initialPipeline]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [visionRetrying, setVisionRetrying] = useState(false);
+  const [visionAvailable, setVisionAvailable] = useState(false);
   const [draft, setDraft] = useState<
     | (MenuPdfParseResult & {
         ocrPagesUsed?: number;
@@ -160,6 +162,7 @@ export function MenuImportWizard({
     setHideEmptyCategories(true);
     setShowIssuesOnly(false);
     setSearchQuery("");
+    setVisionRetrying(false);
   }, [initialPipeline]);
 
   useEffect(() => {
@@ -249,21 +252,26 @@ export function MenuImportWizard({
     setPages((prev) => prev.map((p) => (p.id === id ? { ...p, selected: !p.selected } : p)));
   }
 
-  const runAnalysis = useCallback(async () => {
+  const runAnalysis = useCallback(async (options?: { forceVision?: boolean }) => {
     if (!menuId || files.length === 0) {
       setFlash({ type: "error", text: W.selectCatalogAndPdf });
       return;
     }
 
-    setPhase("processing");
-    setFlash(null);
-    setPipeline(initialPipeline.map((s) => ({ ...s, status: s.id === "scan" ? "active" : "pending" })));
-    setProgress(5);
+    const forceVision = options?.forceVision ?? false;
+    if (forceVision) {
+      setVisionRetrying(true);
+    } else {
+      setPhase("processing");
+      setFlash(null);
+      setPipeline(initialPipeline.map((s) => ({ ...s, status: s.id === "scan" ? "active" : "pending" })));
+      setProgress(5);
+    }
 
     let loadedPages = pages;
 
     try {
-      if (loadedPages.length === 0) {
+      if (!forceVision && loadedPages.length === 0) {
         loadedPages = await loadAllPdfPagePreviews(
           files,
           (fileIndex, fileName, page, total) => {
@@ -282,7 +290,7 @@ export function MenuImportWizard({
         setPages(loadedPages);
       }
 
-      if (!pageSelectionStats(loadedPages).canAnalyze) {
+      if (!forceVision && !pageSelectionStats(loadedPages).canAnalyze) {
         setPipeline((p) =>
           p.map((s) => ({
             ...s,
@@ -302,21 +310,30 @@ export function MenuImportWizard({
       setPipeline((p) =>
         p.map((s) => {
           if (s.id === "scan") return { ...s, status: "done", detail: undefined };
-          if (s.id === "extract") return { ...s, status: "active", detail: W.extractDetail };
+          if (s.id === "extract") return { ...s, status: "active", detail: forceVision ? W.visionRetrying : W.extractDetail };
           return s;
         }),
       );
-      setProgress(40);
+      if (!forceVision) setProgress(40);
 
       const form = new FormData();
       form.set("menuId", menuId);
       form.set("pageSelections", JSON.stringify(buildPageSelectionMap(loadedPages)));
+      if (forceVision) form.set("forceVision", "1");
       for (const file of files) form.append("files", file);
 
       const res = await fetch("/api/menu-import/parse", { method: "POST", body: form });
       const data = await res.json();
 
+      if (typeof data.visionAvailable === "boolean") {
+        setVisionAvailable(data.visionAvailable);
+      }
+
       if (!res.ok) {
+        if (forceVision) {
+          showFromResponse(data, false, res.status);
+          return;
+        }
         setPipeline((p) =>
           p.map((s) => ({
             ...s,
@@ -326,11 +343,34 @@ export function MenuImportWizard({
         );
         setPhase("upload");
         setAdvancedOpen(true);
-        showFromResponse(data, false);
+        showFromResponse(data, false, res.status);
         return;
       }
 
       const ocrUsed = (data.ocrPagesUsed as number | undefined) ?? 0;
+
+      if (forceVision) {
+        setDraft(
+          normalizeImportDraft(
+            data as MenuPdfParseResult & {
+              ocrPagesUsed?: number;
+              extraction?: {
+                path: "digital" | "ocr" | "hybrid" | "vision";
+                confidence: number;
+                suggestsVision: boolean;
+                visionUsed?: boolean;
+                visionPages?: number;
+              };
+            },
+          ),
+        );
+        if (data.extraction?.visionUsed) {
+          showFromResponse({ message: W.visionRetrySuccess }, true);
+        } else {
+          setFlash({ type: "info", text: W.visionRetryNoImprovement });
+        }
+        return;
+      }
 
       setPipeline((p) =>
         p.map((s) => {
@@ -366,10 +406,17 @@ export function MenuImportWizard({
       showFromResponse(data, true);
     } catch (err) {
       console.error("import pipeline", err);
+      if (options?.forceVision) {
+        const detail = err instanceof Error && err.message.trim() ? err.message : W.parseFailed;
+        setFlash({ type: "error", text: detail });
+        return;
+      }
       setPipeline((p) => p.map((s) => (s.status === "active" ? { ...s, status: "error" } : s)));
       setPhase("upload");
       const detail = err instanceof Error && err.message.trim() ? err.message : W.parseFailed;
       setFlash({ type: "error", text: detail });
+    } finally {
+      if (options?.forceVision) setVisionRetrying(false);
     }
   }, [menuId, files, pages, showFromResponse, setFlash, initialPipeline, W, lang]);
 
@@ -568,7 +615,7 @@ export function MenuImportWizard({
             ) : null}
             <button
               type="button"
-              onClick={runAnalysis}
+              onClick={() => void runAnalysis()}
               disabled={files.length === 0 || !menuId}
               className={`mt-4 inline-flex items-center gap-2 ${buttonClass("primary")}`}
             >
@@ -659,7 +706,7 @@ export function MenuImportWizard({
                       </div>
                       <button
                         type="button"
-                        onClick={runAnalysis}
+                        onClick={() => void runAnalysis()}
                         disabled={!pageStats.canAnalyze}
                         className={`mt-4 inline-flex items-center gap-2 ${buttonClass("secondary")}`}
                       >
@@ -706,6 +753,9 @@ export function MenuImportWizard({
             report={reviewReport}
             ocrPagesUsed={draft.ocrPagesUsed}
             extraction={draft.extraction}
+            visionAvailable={visionAvailable}
+            visionRetrying={visionRetrying}
+            onVisionRetry={() => void runAnalysis({ forceVision: true })}
             copy={{
               reportTitle: W.report.title,
               reportSubtitle: W.report.subtitle,
@@ -724,6 +774,9 @@ export function MenuImportWizard({
               extractionPath: W.report.extractionPath,
               visionUsedBadge: W.report.visionUsedBadge,
               visionHint: W.report.visionHint,
+              visionHintUnavailable: W.report.visionHintUnavailable,
+              visionRetryButton: W.report.visionRetryButton,
+              visionRetrying: W.report.visionRetrying,
               nextStepsTitle: W.report.nextStepsTitle,
               nextSteps: W.report.nextSteps,
             }}

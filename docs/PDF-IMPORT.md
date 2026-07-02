@@ -90,7 +90,7 @@ flowchart TD
 - **priceLineRatio** — πόσα είδη έχουν τιμή
 - **emptyCategoryCount** — κενές κατηγορίες από λάθος headers
 - **confidence** 0–1
-- **suggestsVision: true** — χαμηλό confidence από rules· αν λείπει `GEMINI_API_KEY`, εμφανίζεται προειδοποίηση στο review
+- **suggestsVision: true** — χαμηλό confidence από rules· εμφανίζεται hint + κουμπί «Ανάλυση με AI» (αν Vision ενεργό στο server)
 
 ---
 
@@ -108,14 +108,16 @@ flowchart TD
 ```env
 GEMINI_API_KEY=           # https://aistudio.google.com/apikey
 PDF_IMPORT_VISION=1       # 0 = off
-PDF_IMPORT_VISION_MODE=ocr  # ocr (default) | auto | always | never
+PDF_IMPORT_VISION_MODE=auto  # auto (default) | ocr | always | never
 GEMINI_MODEL=gemini-2.0-flash
 ```
 
 **Routing (`PDF_IMPORT_VISION_MODE`):**
-- `ocr` (default) — κάθε σελίδα που πέρασε OCR → 1 κλήση Gemini
-- `auto` — μόνο όταν `suggestsVision` (χαμηλό rules confidence)
+- `auto` (default) — μόνο όταν `suggestsVision` (χαμηλό rules confidence)
+- `ocr` — κάθε σελίδα που πέρασε OCR → 1 κλήση Gemini
 - `always` / `never` — force on/off
+
+Στο review, αν `suggestsVision` και δεν τρέχει Vision, εμφανίζεται κουμπί **«Ανάλυση με AI»** (force retry).
 
 Αν vision αποτύχει ή βγάλει λίγα είδη (<50% rules), **fallback** σε rules parser.
 

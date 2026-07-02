@@ -63,6 +63,10 @@ export const DASHBOARD_EL = {
     selectAll: "Όλες",
     deselectAll: "Καμία",
     reanalyze: "Ξανά ανάλυση",
+    visionRetrying: "Ανάλυση με AI…",
+    visionRetrySuccess: "Η ανάλυση με AI ολοκληρώθηκε — έλεγξε τα αποτελέσματα.",
+    visionRetryNoImprovement:
+      "Η AI ανάλυση δεν βελτίωσε το αποτέλεσμα — έλεγξε χειροκίνητα ή άλλες σελίδες.",
     ocrUsed: (n: number) =>
       n === 1 ? "1 σελίδα μέσω OCR" : `${n} σελίδες μέσω OCR`,
     badge: "IMPORT ΑΠΟ PDF",
@@ -131,7 +135,11 @@ export const DASHBOARD_EL = {
       visionUsedBadge: (n: number) =>
         n === 1 ? "1 σελίδα Vision AI" : `${n} σελίδες Vision AI`,
       visionHint:
-        "Το layout φαίνεται πολύπλοκο — έλεγξε προσεκτικά. Βάλε GEMINI_API_KEY για αυτόματη ανάλυση εικόνας.",
+        "Το layout φαίνεται πολύπλοκο — έλεγξε προσεκτικά ή δοκίμασε «Ανάλυση με AI» για καλύτερη ανάγνωση.",
+      visionHintUnavailable:
+        "Το layout φαίνεται πολύπλοκο — έλεγξε προσεκτικά ονόματα και τιμές πριν την εισαγωγή.",
+      visionRetryButton: "Ανάλυση με AI",
+      visionRetrying: "Ανάλυση…",
       nextStepsTitle: "Τι κάνεις τώρα",
       nextSteps: [
         "Ξετικίνα κατηγορίες ή είδη που δεν θέλεις να μπουν.",

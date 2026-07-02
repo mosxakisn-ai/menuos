@@ -97,12 +97,22 @@ export function useFlashMessage() {
   }, []);
 
   const showFromResponse = useCallback(
-    (data: { message?: string; error?: string; code?: string; diagnosticLogged?: boolean }, ok: boolean) => {
+    (
+      data: { message?: string; error?: string; code?: string; diagnosticLogged?: boolean },
+      ok: boolean,
+      status?: number,
+    ) => {
       if (data.message) setFlash({ type: "success", text: data.message });
       else if (data.error || data.code) {
         const text = resolveApiError(data, d.flash);
         setFlash({ type: "error", text });
-        if (!data.diagnosticLogged) {
+        const skipClientDiagnostic =
+          data.diagnosticLogged ||
+          status === 400 ||
+          status === 401 ||
+          status === 403 ||
+          status === 404;
+        if (!skipClientDiagnostic) {
           reportClientDiagnostic({
             severity: "ERROR",
             source: "client_api",
@@ -111,6 +121,7 @@ export function useFlashMessage() {
             errorCode: data.code ?? null,
             context: {
               url: typeof window !== "undefined" ? window.location.href : undefined,
+              status,
             },
           });
         }

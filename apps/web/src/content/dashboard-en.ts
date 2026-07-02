@@ -63,6 +63,10 @@ export const DASHBOARD_EN = {
     selectAll: "All",
     deselectAll: "None",
     reanalyze: "Re-analyze",
+    visionRetrying: "AI analysis…",
+    visionRetrySuccess: "AI analysis complete — review the results.",
+    visionRetryNoImprovement:
+      "AI analysis did not improve the result — review manually or try other pages.",
     ocrUsed: (n: number) => (n === 1 ? "1 page via OCR" : `${n} pages via OCR`),
     badge: "PDF IMPORT",
     phaseUpload: "Upload PDF",
@@ -130,7 +134,11 @@ export const DASHBOARD_EN = {
       },
       visionUsedBadge: (n: number) => (n === 1 ? "1 Vision AI page" : `${n} Vision AI pages`),
       visionHint:
-        "This layout looks complex — review carefully. Set GEMINI_API_KEY for automatic image analysis.",
+        "This layout looks complex — review carefully or try «AI analysis» for better reading.",
+      visionHintUnavailable:
+        "This layout looks complex — review names and prices carefully before importing.",
+      visionRetryButton: "AI analysis",
+      visionRetrying: "Analyzing…",
       nextStepsTitle: "What to do now",
       nextSteps: [
         "Uncheck categories or items you do not want imported.",

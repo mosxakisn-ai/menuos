@@ -22,11 +22,13 @@ export type PdfImportFileContext = {
 export async function enhancePdfImportWithVision(
   result: PdfImportPipelineResult,
   fileContexts: PdfImportFileContext[],
+  options?: { forceVision?: boolean },
 ): Promise<PdfImportPipelineResult> {
   if (
     !shouldRunPdfVision({
       ocrPages: result.extraction.ocrPages,
       suggestsVision: result.extraction.suggestsVision,
+      forceVision: options?.forceVision,
     })
   ) {
     return result;

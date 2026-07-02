@@ -11,6 +11,7 @@ import {
 import { dashboardCopyFromRequest, dashboardLangFromRequest } from "@/lib/dashboard-request-locale";
 import { logServerDiagnostic } from "@/lib/client-diagnostics-service";
 import { getMenuForOrganization } from "@/lib/venue-access";
+import { isPdfVisionConfigured } from "@/lib/pdf-vision-gemini";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,9 +43,11 @@ export async function POST(request: Request) {
 
   try {
     const pageSelections = parsePageSelectionMap(formData.get("pageSelections"));
-    const result = await parseUploadedPdfFiles(files, pageSelections, lang);
+    const forceVision = String(formData.get("forceVision") ?? "") === "1";
+    const result = await parseUploadedPdfFiles(files, pageSelections, lang, { forceVision });
     return NextResponse.json({
       ...result,
+      visionAvailable: isPdfVisionConfigured(),
       menu: { id: menu.id, name: menu.name, venueName: menu.venue.name },
       message:
         result.stats.itemsFound > 0

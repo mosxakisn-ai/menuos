@@ -219,6 +219,7 @@ export async function parseUploadedPdfFiles(
   files: File[],
   pageSelections?: PageSelectionMap,
   lang: DashboardLang = "EN",
+  options?: { forceVision?: boolean },
 ): Promise<PdfImportPipelineResult> {
   const P = getDashboardCopy(lang).api.pdf;
   const extracted: { name: string; text: string }[] = [];
@@ -280,7 +281,7 @@ export async function parseUploadedPdfFiles(
     ocrPages: totalOcrPages,
   });
 
-  return enhancePdfImportWithVision(rulesResult, fileContexts);
+  return enhancePdfImportWithVision(rulesResult, fileContexts, options);
 }
 
 export type { PdfImportExtractionMeta, PdfImportPipelineResult };

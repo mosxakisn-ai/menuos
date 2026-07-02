@@ -45,11 +45,13 @@ export function isPdfVisionConfigured(): boolean {
 export function shouldRunPdfVision(params: {
   ocrPages: number;
   suggestsVision: boolean;
+  forceVision?: boolean;
 }): boolean {
   if (!isPdfVisionConfigured()) return false;
   if (params.ocrPages <= 0) return false;
+  if (params.forceVision) return true;
 
-  const mode = process.env.PDF_IMPORT_VISION_MODE?.trim().toLowerCase() || "ocr";
+  const mode = process.env.PDF_IMPORT_VISION_MODE?.trim().toLowerCase() || "auto";
   if (mode === "never" || mode === "off") return false;
   if (mode === "always" || mode === "ocr") return true;
   // auto: only when rules confidence is low
