@@ -51,6 +51,22 @@ function toggleStation(
   return [...withoutAll, station];
 }
 
+const STAFF_STATION_BADGE_STYLES: Record<StaffStationOption, string> = {
+  services: "border-blue-200 bg-blue-50 text-blue-900",
+  kitchen: "border-orange-200 bg-orange-50 text-orange-900",
+  bar: "border-emerald-200 bg-emerald-50 text-emerald-900",
+  cold: "border-sky-200 bg-sky-50 text-sky-900",
+  dessert: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+  all: "border-violet-200 bg-violet-50 text-violet-900",
+};
+
+function stationBadgeStyle(station: string): string {
+  return (
+    STAFF_STATION_BADGE_STYLES[station as StaffStationOption] ??
+    "border-slate-200 bg-slate-100 text-slate-700"
+  );
+}
+
 function StationPicker({
   value,
   onChange,
@@ -72,7 +88,7 @@ function StationPicker({
             className={cn(
               "rounded-full border px-3 py-1.5 text-xs font-medium transition",
               selected
-                ? "border-brand-blue bg-blue-50 text-brand-blue"
+                ? stationBadgeStyle(station)
                 : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
             )}
           >
@@ -98,7 +114,10 @@ function StationBadges({
       {stations.map((station) => (
         <span
           key={station}
-          className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-xs font-medium text-slate-700"
+          className={cn(
+            "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
+            stationBadgeStyle(station),
+          )}
         >
           {labels[station as StaffStationOption] ??
             formatStaffStationsForLang([station], lang)}
