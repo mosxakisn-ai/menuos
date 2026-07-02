@@ -87,6 +87,7 @@ export async function createVenueHandler(request: Request, organizationId: strin
       const menuId = created.menus[0]?.id;
       if (menuId) {
         await seedOnboardingVenueInTransaction(tx, {
+          organizationId,
           organizationSlug: organization.slug,
           venueId: created.id,
           venueSlug: created.slug,

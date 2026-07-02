@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { prisma, type Prisma } from "@menuos/db";
 import {
+  countOnboardingStarterItems,
   ONBOARDING_EXTRA_STATION_SCREEN,
   ONBOARDING_ITEM_PHOTOS,
   ONBOARDING_OPENING_HOURS,
@@ -9,9 +10,18 @@ import {
   ONBOARDING_STARTER_STAFF,
   shouldSeedOnboardingVenue,
 } from "@menuos/shared";
-import { serializableTransaction } from "@/lib/plan-limits";
+import {
+  assertCanAddItemsInTransaction,
+  PlanLimitError,
+  serializableTransaction,
+} from "@/lib/plan-limits";
 
 export { shouldSeedOnboardingVenue };
+
+function isRetryableSeedError(err: unknown): boolean {
+  const code = typeof err === "object" && err && "code" in err ? String((err as { code: string }).code) : "";
+  return code === "P2034" || code === "P2002";
+}
 
 function itemTranslationRows(
   gr: string,
@@ -28,6 +38,34 @@ function itemTranslationRows(
   if (de) rows.push({ language: "DE", name: de, description: null });
   if (fr) rows.push({ language: "FR", name: fr, description: null });
   return rows;
+}
+
+async function readVenueSeedNeeds(
+  db: Prisma.TransactionClient | typeof prisma,
+  menuId: string,
+  venueId: string,
+) {
+  const [categoryCount, spotCount, staffCount, paraliaScreen, settings] = await Promise.all([
+    db.category.count({ where: { menuId } }),
+    db.venueSpot.count({ where: { venueId } }),
+    db.venueStaffMember.count({ where: { venueId } }),
+    db.venueStationScreen.findFirst({
+      where: { venueId, label: ONBOARDING_EXTRA_STATION_SCREEN.label },
+      select: { id: true },
+    }),
+    db.venueSetting.findUnique({
+      where: { venueId },
+      select: { openingHours: true },
+    }),
+  ]);
+
+  return {
+    needsMenu: categoryCount === 0,
+    needsSpots: spotCount === 0,
+    needsStaff: staffCount === 0,
+    needsParalia: !paraliaScreen,
+    needsHours: settings?.openingHours == null,
+  };
 }
 
 async function seedMenuCategories(tx: Prisma.TransactionClient, menuId: string) {
@@ -122,34 +160,34 @@ async function seedParaliaScreen(tx: Prisma.TransactionClient, venueId: string) 
 export async function seedOnboardingVenueInTransaction(
   tx: Prisma.TransactionClient,
   params: {
+    organizationId: string;
     organizationSlug: string;
     venueId: string;
     venueSlug: string;
     menuId: string;
   },
 ): Promise<boolean> {
-  const { organizationSlug, venueId, venueSlug, menuId } = params;
+  const { organizationId, organizationSlug, venueId, venueSlug, menuId } = params;
   if (!shouldSeedOnboardingVenue(organizationSlug, venueSlug)) return false;
 
-  const [categoryCount, spotCount, staffCount, paraliaScreen, settings] = await Promise.all([
-    tx.category.count({ where: { menuId } }),
-    tx.venueSpot.count({ where: { venueId } }),
-    tx.venueStaffMember.count({ where: { venueId } }),
-    tx.venueStationScreen.findFirst({
-      where: { venueId, label: ONBOARDING_EXTRA_STATION_SCREEN.label },
-      select: { id: true },
-    }),
-    tx.venueSetting.findUnique({
-      where: { venueId },
-      select: { openingHours: true },
-    }),
-  ]);
+  const needs = await readVenueSeedNeeds(tx, menuId, venueId);
+  let { needsMenu, needsSpots, needsStaff, needsParalia, needsHours } = needs;
 
-  const needsMenu = categoryCount === 0;
-  const needsSpots = spotCount === 0;
-  const needsStaff = staffCount === 0;
-  const needsParalia = !paraliaScreen;
-  const needsHours = settings?.openingHours == null;
+  if (!needsMenu && !needsSpots && !needsStaff && !needsParalia && !needsHours) {
+    return false;
+  }
+
+  if (needsMenu) {
+    try {
+      await assertCanAddItemsInTransaction(tx, organizationId, countOnboardingStarterItems());
+    } catch (err) {
+      if (err instanceof PlanLimitError) {
+        needsMenu = false;
+      } else {
+        throw err;
+      }
+    }
+  }
 
   if (!needsMenu && !needsSpots && !needsStaff && !needsParalia && !needsHours) {
     return false;
@@ -167,6 +205,17 @@ export async function seedOnboardingVenueInTransaction(
   if (needsParalia) await seedParaliaScreen(tx, venueId);
 
   return true;
+}
+
+async function venueNeedsOnboardingSeed(params: {
+  organizationSlug: string;
+  venueId: string;
+  venueSlug: string;
+  menuId: string;
+}): Promise<boolean> {
+  if (!shouldSeedOnboardingVenue(params.organizationSlug, params.venueSlug)) return false;
+  const needs = await readVenueSeedNeeds(prisma, params.menuId, params.venueId);
+  return needs.needsMenu || needs.needsSpots || needs.needsStaff || needs.needsParalia || needs.needsHours;
 }
 
 /** Backfill empty venues for one organization (e.g. on dashboard load). */
@@ -196,17 +245,26 @@ export async function ensureOnboardingVenuesForOrganization(organizationId: stri
     const menuId = venue.menus[0]?.id;
     if (!menuId) continue;
 
-    const didSeed = await prisma.$transaction(
-      async (tx) =>
-        seedOnboardingVenueInTransaction(tx, {
-          organizationSlug: org.slug,
-          venueId: venue.id,
-          venueSlug: venue.slug,
-          menuId,
-        }),
-      serializableTransaction,
-    );
-    if (didSeed) seeded += 1;
+    const params = {
+      organizationId,
+      organizationSlug: org.slug,
+      venueId: venue.id,
+      venueSlug: venue.slug,
+      menuId,
+    };
+
+    if (!(await venueNeedsOnboardingSeed(params))) continue;
+
+    try {
+      const didSeed = await prisma.$transaction(
+        async (tx) => seedOnboardingVenueInTransaction(tx, params),
+        serializableTransaction,
+      );
+      if (didSeed) seeded += 1;
+    } catch (err) {
+      if (isRetryableSeedError(err)) continue;
+      console.error("[onboarding-seed] failed for venue", venue.id, err);
+    }
   }
   return seeded;
 }

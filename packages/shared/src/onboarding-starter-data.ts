@@ -153,3 +153,7 @@ export function shouldSeedOnboardingVenue(orgSlug: string, venueSlug: string): b
   if (orgSlug === DEMO_ORG_SLUG) return false;
   return true;
 }
+
+export function countOnboardingStarterItems(): number {
+  return ONBOARDING_STARTER_CATEGORIES.reduce((sum, cat) => sum + cat.items.length, 0);
+}

@@ -17,7 +17,11 @@ type Props = { searchParams: Promise<{ welcome?: string }> };
 
 export default async function DashboardPage({ searchParams }: Props) {
   const session = await getSession();
-  await ensureOnboardingVenuesForOrganization(session!.organizationId);
+  try {
+    await ensureOnboardingVenuesForOrganization(session!.organizationId);
+  } catch (err) {
+    console.error("[onboarding-seed] dashboard backfill failed", err);
+  }
   const sp = await searchParams;
   const org = await prisma.organization.findUnique({
     where: { id: session!.organizationId },

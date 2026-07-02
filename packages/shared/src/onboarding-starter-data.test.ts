@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  countOnboardingStarterItems,
   DEMO_ORG_SLUG,
   DEMO_VENUE_SLUG,
   ONBOARDING_STARTER_CATEGORIES,
@@ -22,9 +23,12 @@ describe("shouldSeedOnboardingVenue", () => {
 
 describe("onboarding starter pack", () => {
   it("includes menu, spots, and staff samples", () => {
-    const itemCount = ONBOARDING_STARTER_CATEGORIES.reduce((n, c) => n + c.items.length, 0);
+    const itemCount = countOnboardingStarterItems();
     expect(ONBOARDING_STARTER_CATEGORIES.length).toBeGreaterThanOrEqual(3);
     expect(itemCount).toBeGreaterThanOrEqual(5);
+    expect(itemCount).toBe(
+      ONBOARDING_STARTER_CATEGORIES.reduce((n, c) => n + c.items.length, 0),
+    );
     expect(ONBOARDING_STARTER_SPOTS.length).toBeGreaterThanOrEqual(10);
     expect(ONBOARDING_STARTER_STAFF.length).toBeGreaterThanOrEqual(4);
   });
