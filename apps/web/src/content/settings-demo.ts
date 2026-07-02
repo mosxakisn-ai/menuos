@@ -1,3 +1,4 @@
+import type { TableTileState } from "@menuos/shared";
 import type { DashboardLang } from "@/content/dashboard-i18n";
 
 export type DemoStaffMember = {
@@ -18,7 +19,7 @@ export type DemoPassSignal = {
 export type DemoTableTile = {
   id?: string;
   label: string;
-  state: "idle" | "guest_call" | "kitchen_ready" | "bar_ready" | "both";
+  state: TableTileState;
   hint?: string;
 };
 
@@ -72,6 +73,7 @@ const DEMO_EL = {
     idle: "Ήσυχο",
     guest_call: "Κλήση πελάτη",
     kitchen_ready: "Έτοιμο — κουζίνα",
+    cold_ready: "Έτοιμο — κρύα",
     bar_ready: "Έτοιμο — μπαρ",
     both: "Πολλαπλά",
   },
@@ -127,6 +129,7 @@ const DEMO_EN = {
     idle: "Quiet",
     guest_call: "Guest call",
     kitchen_ready: "Kitchen ready",
+    cold_ready: "Cold ready",
     bar_ready: "Bar ready",
     both: "Multiple",
   },

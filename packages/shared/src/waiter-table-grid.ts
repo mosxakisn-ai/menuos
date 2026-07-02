@@ -1,7 +1,14 @@
 import { spotToQueryParams, waiterCallLocationMatches, type VenueSpotType, type WaiterCallLocation } from "./venue-spots";
 import type { OrderPayload } from "./menu-cart";
 
-export const TABLE_TILE_STATES = ["idle", "guest_call", "kitchen_ready", "bar_ready", "both"] as const;
+export const TABLE_TILE_STATES = [
+  "idle",
+  "guest_call",
+  "kitchen_ready",
+  "cold_ready",
+  "bar_ready",
+  "both",
+] as const;
 export type TableTileState = (typeof TABLE_TILE_STATES)[number];
 
 export type TableGridSpot = { id: string; type: VenueSpotType; label: string };
@@ -72,7 +79,11 @@ function matchesSpot(spot: TableGridSpot, location: WaiterCallLocation): boolean
 }
 
 function isKitchenStation(station: string): boolean {
-  return station === "KITCHEN" || station === "COLD";
+  return station === "KITCHEN";
+}
+
+function isColdStation(station: string): boolean {
+  return station === "COLD";
 }
 
 function isBarStation(station: string): boolean {
@@ -82,12 +93,14 @@ function isBarStation(station: string): boolean {
 function resolveTileState(
   hasGuest: boolean,
   hasKitchen: boolean,
+  hasCold: boolean,
   hasBar: boolean,
 ): TableTileState {
-  const categoryCount = [hasGuest, hasKitchen, hasBar].filter(Boolean).length;
-  if (categoryCount >= 2 || (hasKitchen && hasBar)) return "both";
+  const categoryCount = [hasGuest, hasKitchen, hasCold, hasBar].filter(Boolean).length;
+  if (categoryCount >= 2) return "both";
   if (hasGuest) return "guest_call";
   if (hasKitchen) return "kitchen_ready";
+  if (hasCold) return "cold_ready";
   if (hasBar) return "bar_ready";
   return "idle";
 }
@@ -104,12 +117,13 @@ export function buildTableGridTiles(
     const spotPasses = passSignals.filter((p) => matchesSpot(spot, p));
     const hasGuest = spotCalls.length > 0;
     const hasKitchen = spotPasses.some((p) => isKitchenStation(p.station));
+    const hasCold = spotPasses.some((p) => isColdStation(p.station));
     const hasBar = spotPasses.some((p) => isBarStation(p.station));
 
     return {
       spotId: spot.id,
       label: spot.label,
-      state: resolveTileState(hasGuest, hasKitchen, hasBar),
+      state: resolveTileState(hasGuest, hasKitchen, hasCold, hasBar),
       activeCalls: spotCalls.map((c) => ({ ...c })),
       activePasses: spotPasses.map((p) => ({ ...p, message: p.message ?? null })),
     };
@@ -138,12 +152,13 @@ export function buildTableGridTiles(
       sample?.tableNumber ?? sample?.roomNumber ?? sample?.sunbedNumber ?? "?";
     const hasGuest = group.calls.length > 0;
     const hasKitchen = group.passes.some((p) => isKitchenStation(p.station));
+    const hasCold = group.passes.some((p) => isColdStation(p.station));
     const hasBar = group.passes.some((p) => isBarStation(p.station));
 
     tiles.push({
       spotId: `${UNMAPPED_SPOT_ID_PREFIX}${key}`,
       label,
-      state: resolveTileState(hasGuest, hasKitchen, hasBar),
+      state: resolveTileState(hasGuest, hasKitchen, hasCold, hasBar),
       activeCalls: group.calls.map((c) => ({ ...c })),
       activePasses: group.passes.map((p) => ({ ...p, message: p.message ?? null })),
     });

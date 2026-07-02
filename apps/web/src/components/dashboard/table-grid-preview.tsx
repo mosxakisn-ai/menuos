@@ -1,14 +1,16 @@
 "use client";
 
+import type { TableTileState } from "@menuos/shared";
 import { cn } from "@/lib/utils";
 import type { DemoTableTile } from "@/content/settings-demo";
 
-export type TableTileState = DemoTableTile["state"];
+export type { TableTileState };
 
 export const TABLE_TILE_STYLES: Record<TableTileState, string> = {
   idle: "border-slate-200 bg-white text-slate-600",
   guest_call: "border-blue-400 bg-blue-50 text-blue-900 ring-2 ring-blue-200",
   kitchen_ready: "border-orange-400 bg-orange-50 text-orange-900 ring-2 ring-orange-200",
+  cold_ready: "border-sky-400 bg-sky-50 text-sky-900 ring-2 ring-sky-200",
   bar_ready: "border-emerald-400 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-200",
   both: "border-violet-400 bg-violet-50 text-violet-900 ring-2 ring-violet-200",
 };
@@ -18,13 +20,14 @@ export const TABLE_TILE_BADGE_STYLES: Record<TableTileState, string> = {
   idle: "bg-slate-100 text-slate-600",
   guest_call: "bg-blue-100 text-blue-900",
   kitchen_ready: "bg-orange-100 text-orange-900",
+  cold_ready: "bg-sky-100 text-sky-900",
   bar_ready: "bg-emerald-100 text-emerald-900",
   both: "bg-violet-100 text-violet-900",
 };
 
 export const PASS_STATION_BADGE_STYLES: Record<string, string> = {
   kitchen: "bg-orange-100 text-orange-900",
-  cold: "bg-orange-100 text-orange-900",
+  cold: "bg-sky-100 text-sky-900",
   bar: "bg-emerald-100 text-emerald-900",
   dessert: "bg-emerald-100 text-emerald-900",
 };
@@ -33,6 +36,7 @@ const LEGEND_STATES: TableTileState[] = [
   "idle",
   "guest_call",
   "kitchen_ready",
+  "cold_ready",
   "bar_ready",
   "both",
 ];

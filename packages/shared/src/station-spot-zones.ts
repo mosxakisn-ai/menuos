@@ -110,3 +110,45 @@ export function findZoneIdForSpot(groups: SpotZoneGroup[], spot: ZoneSpotInput):
 export function pickDefaultZoneId(groups: SpotZoneGroup[]): string | null {
   return groups[0]?.id ?? null;
 }
+
+type WaiterLocationLike = {
+  tableNumber?: string | null;
+  roomNumber?: string | null;
+  sunbedNumber?: string | null;
+};
+
+/** Resolve zone tab id for a waiter call / pass location (needs groups from venue spots). */
+export function zoneIdForWaiterLocation(
+  location: WaiterLocationLike,
+  groups: SpotZoneGroup[],
+): string | null {
+  if (groups.length === 0) return null;
+  if (location.tableNumber) {
+    return findZoneIdForSpot(groups, { type: "TABLE", label: location.tableNumber });
+  }
+  if (location.roomNumber) {
+    return findZoneIdForSpot(groups, { type: "ROOM", label: location.roomNumber });
+  }
+  if (location.sunbedNumber) {
+    return findZoneIdForSpot(groups, { type: "SUNBED", label: location.sunbedNumber });
+  }
+  return null;
+}
+
+export function filterSpotsByZone<T extends ZoneSpotInput & { id?: string }>(
+  spots: T[],
+  zoneId: string,
+  groups: SpotZoneGroup[],
+): T[] {
+  if (zoneId === "all") return spots;
+  return spots.filter((spot) => findZoneIdForSpot(groups, spot) === zoneId);
+}
+
+export function filterWaiterLocationsByZone<T extends WaiterLocationLike>(
+  items: T[],
+  zoneId: string,
+  groups: SpotZoneGroup[],
+): T[] {
+  if (zoneId === "all") return items;
+  return items.filter((item) => zoneIdForWaiterLocation(item, groups) === zoneId);
+}

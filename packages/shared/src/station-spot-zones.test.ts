@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { findZoneIdForSpot, groupVenueSpotsByZone, pickDefaultZoneId } from "./station-spot-zones";
+import {
+  filterSpotsByZone,
+  filterWaiterLocationsByZone,
+  findZoneIdForSpot,
+  groupVenueSpotsByZone,
+  pickDefaultZoneId,
+  zoneIdForWaiterLocation,
+} from "./station-spot-zones";
 
 describe("groupVenueSpotsByZone", () => {
   it("groups plain tables under Σαλόνι", () => {
@@ -48,5 +55,28 @@ describe("pickDefaultZoneId", () => {
   it("returns first group id", () => {
     const groups = groupVenueSpotsByZone([{ type: "TABLE", label: "1" }]);
     expect(pickDefaultZoneId(groups)).toBe("main");
+  });
+});
+
+describe("zone filters for waiter", () => {
+  it("filters spots and calls by zone", () => {
+    const spots = [
+      { type: "TABLE" as const, label: "5" },
+      { type: "TABLE" as const, label: "Αυλή-1" },
+    ];
+    const groups = groupVenueSpotsByZone(spots);
+
+    const patioSpots = filterSpotsByZone(
+      spots.map((s, i) => ({ ...s, id: String(i) })),
+      "prefix:αυλή",
+      groups,
+    );
+    expect(patioSpots).toHaveLength(1);
+    expect(patioSpots[0]!.label).toBe("Αυλή-1");
+
+    const calls = [{ tableNumber: "5" }, { tableNumber: "Αυλή-1" }];
+    const patioCalls = filterWaiterLocationsByZone(calls, "prefix:αυλή", groups);
+    expect(patioCalls).toHaveLength(1);
+    expect(zoneIdForWaiterLocation({ tableNumber: "Αυλή-1" }, groups)).toBe("prefix:αυλή");
   });
 });

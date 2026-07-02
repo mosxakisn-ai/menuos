@@ -126,9 +126,9 @@ function WaiterSpotTile({
   const visiblePasses =
     viewTab === "calls"
       ? []
-      : viewTab === "pass"
-        ? filterPasses(tile.activePasses, passStationFilter)
-        : tile.activePasses;
+      : passStationFilter === "all"
+        ? tile.activePasses
+        : filterPasses(tile.activePasses, passStationFilter);
   const hasActivity = visibleCalls.length > 0 || visiblePasses.length > 0;
   const displayLabel = tileDisplayLabel(tile, lang);
   const unmapped = isUnmappedTile(tile);
@@ -292,7 +292,13 @@ function tileMatchesView(
   viewTab: MonitorViewTab,
   passStationFilter: PassStationFilter,
 ): boolean {
-  if (viewTab === "all") return true;
+  if (viewTab === "all") {
+    if (passStationFilter === "all") return true;
+    return (
+      tile.activeCalls.length > 0 ||
+      filterPasses(tile.activePasses, passStationFilter).length > 0
+    );
+  }
   if (viewTab === "calls") return tile.activeCalls.length > 0;
   return filterPasses(tile.activePasses, passStationFilter).length > 0;
 }
@@ -340,7 +346,9 @@ export function WaiterTableGrid({
       ? W.emptyCallsTab
       : viewTab === "pass"
         ? W.emptyPassTab
-        : null;
+        : passStationFilter !== "all"
+          ? W.emptyFilteredView
+          : null;
 
   return (
     <div className="space-y-3">

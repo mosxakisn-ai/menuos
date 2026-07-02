@@ -32,6 +32,15 @@ describe("buildTableGridTiles", () => {
     expect(tiles.find((t) => t.label === "5")?.state).toBe("kitchen_ready");
   });
 
+  it("marks cold_ready for cold pass", () => {
+    const tiles = buildTableGridTiles(
+      spots,
+      [],
+      [{ station: "COLD", tableNumber: "5", message: "σαλάτα" }],
+    );
+    expect(tiles.find((t) => t.label === "5")?.state).toBe("cold_ready");
+  });
+
   it("marks bar_ready for bar pass", () => {
     const tiles = buildTableGridTiles(
       spots,

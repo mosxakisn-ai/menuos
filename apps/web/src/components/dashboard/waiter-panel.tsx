@@ -1,8 +1,16 @@
 "use client";
 
 import { Bell } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { formatStaffStationsForLang, type OrderPayload, type VenueSpotType } from "@menuos/shared";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  filterSpotsByZone,
+  filterWaiterLocationsByZone,
+  formatStaffStationsForLang,
+  groupVenueSpotsByZone,
+  passStationInputToDb,
+  type OrderPayload,
+  type VenueSpotType,
+} from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
   WaiterTableGrid,
@@ -68,6 +76,7 @@ export function WaiterPanel({
   const [updatingPassId, setUpdatingPassId] = useState<string | null>(null);
   const [monitorTab, setMonitorTab] = useState<MonitorViewTab>("all");
   const [passStationFilter, setPassStationFilter] = useState<PassStationFilter>("all");
+  const [zoneFilterId, setZoneFilterId] = useState<string>("all");
   const prevPendingRef = useRef<number | null>(null);
   const prevPassRef = useRef<number | null>(null);
   const prevCallsRef = useRef<WaiterCall[]>([]);
@@ -159,6 +168,8 @@ export function WaiterPanel({
     prevPassRef.current = null;
     prevCallsRef.current = [];
     pendingBaselineSetRef.current = false;
+    setZoneFilterId("all");
+    setPassStationFilter("all");
   }, [venueId]);
 
   useEffect(() => {
@@ -242,7 +253,31 @@ export function WaiterPanel({
     { id: "dessert", label: W.passStation.dessert },
   ];
 
-  const hasActivity = calls.length > 0 || passSignals.length > 0;
+  const zoneGroups = useMemo(() => groupVenueSpotsByZone(spots), [spots]);
+
+  const displaySpots = useMemo(
+    () => filterSpotsByZone(spots, zoneFilterId, zoneGroups),
+    [spots, zoneFilterId, zoneGroups],
+  );
+
+  const displayCalls = useMemo(
+    () => filterWaiterLocationsByZone(calls, zoneFilterId, zoneGroups),
+    [calls, zoneFilterId, zoneGroups],
+  );
+
+  const displayPassSignals = useMemo(() => {
+    let rows = filterWaiterLocationsByZone(passSignals, zoneFilterId, zoneGroups);
+    if (monitorTab !== "calls" && passStationFilter !== "all") {
+      const dbStation = passStationInputToDb(passStationFilter);
+      rows = rows.filter((pass) => pass.station === dbStation);
+    }
+    return rows;
+  }, [passSignals, zoneFilterId, zoneGroups, monitorTab, passStationFilter]);
+
+  const showStationFilters = monitorTab === "all" || monitorTab === "pass";
+  const showZoneFilters = zoneGroups.length > 1;
+
+  const hasActivity = displayCalls.length > 0 || displayPassSignals.length > 0;
 
   return (
     <div className="space-y-6">
@@ -299,7 +334,7 @@ export function WaiterPanel({
             type="button"
             onClick={() => {
               setMonitorTab(tab.id);
-              if (tab.id !== "pass") setPassStationFilter("all");
+              if (tab.id === "calls") setPassStationFilter("all");
             }}
             className={cn(
               "rounded-full px-3 py-1.5 text-sm font-medium transition",
@@ -313,7 +348,39 @@ export function WaiterPanel({
         ))}
       </div>
 
-      {monitorTab === "pass" ? (
+      {showZoneFilters ? (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setZoneFilterId("all")}
+            className={cn(
+              "rounded-full px-2.5 py-1 text-xs font-medium transition",
+              zoneFilterId === "all"
+                ? "bg-brand-blue/10 text-brand-blue ring-1 ring-brand-blue/20"
+                : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+            )}
+          >
+            {W.zoneFilterAll}
+          </button>
+          {zoneGroups.map((zone) => (
+            <button
+              key={zone.id}
+              type="button"
+              onClick={() => setZoneFilterId(zone.id)}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-xs font-medium transition",
+                zoneFilterId === zone.id
+                  ? "bg-brand-blue/10 text-brand-blue ring-1 ring-brand-blue/20"
+                  : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+              )}
+            >
+              {zone.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {showStationFilters ? (
         <div className="flex flex-wrap gap-2">
           {passStationFilters.map((filter) => (
             <button
@@ -333,13 +400,13 @@ export function WaiterPanel({
         </div>
       ) : null}
 
-      {spots.length === 0 && hasActivity ? (
+      {displaySpots.length === 0 && hasActivity ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           {W.emptySpotsActiveHint}
         </p>
       ) : null}
 
-      {spots.length === 0 && !hasActivity ? (
+      {displaySpots.length === 0 && !hasActivity ? (
         <Card className="border-dashed text-center">
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
           <p className="mt-3 font-medium text-brand-navy">{W.emptyTitle}</p>
@@ -347,9 +414,9 @@ export function WaiterPanel({
         </Card>
       ) : (
         <WaiterTableGrid
-          spots={spots}
-          calls={calls}
-          passSignals={passSignals}
+          spots={displaySpots}
+          calls={displayCalls}
+          passSignals={displayPassSignals}
           viewTab={monitorTab}
           passStationFilter={passStationFilter}
           updatingCallId={updatingCallId}
