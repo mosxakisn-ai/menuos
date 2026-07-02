@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
-import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
 import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
@@ -25,7 +24,6 @@ export default async function WaiterPage({ searchParams }: Props) {
   return (
     <DashboardPage>
       <LocalizedDashboardPageHeader page="waiter" />
-      <PushNotificationsPrompt />
       <WaiterPanel
         venues={venues}
         initialVenueId={

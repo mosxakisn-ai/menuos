@@ -21,8 +21,10 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
 
 export function PushNotificationsPrompt({
   staffAuth,
+  variant = "default",
 }: {
   staffAuth?: { venueId: string; staffKey?: string };
+  variant?: "default" | "settings";
 } = {}) {
   const { d } = useDashboardCopy();
   const p = d.push;
@@ -232,6 +234,8 @@ export function PushNotificationsPrompt({
               ) : null}
               {staffAuth ? (
                 <p className="mt-2 text-xs leading-relaxed text-slate-500">{p.pageOpenHint}</p>
+              ) : variant === "settings" ? (
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">{p.managerHint}</p>
               ) : null}
             </div>
           </div>

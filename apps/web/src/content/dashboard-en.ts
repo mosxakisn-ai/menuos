@@ -307,6 +307,7 @@ export const DASHBOARD_EN = {
       "Android: Open in Chrome (not Messenger). Tap Enable and allow notifications when prompted.",
     pageOpenHint:
       "While the page is open, you'll hear sounds and see calls automatically — even without push enabled.",
+    managerHint: "Receive push for calls and pass alerts for the whole venue on this device.",
   },
   photos: {
     label: "Photo (optional)",
@@ -592,6 +593,11 @@ export const DASHBOARD_EN = {
       services: {
         title: "Services",
         description: "Waiter link, push alerts and live pass — guest calls plus department messages.",
+        pushSectionTitle: "Push notifications",
+        pushHint:
+          "Enable push on this device (e.g. manager tablet). Use Chrome/Safari — not Messenger or Instagram.",
+        staffPushHint:
+          "Each waiter enables push on their own phone — open their personal link and tap Enable.",
         passTitle: "Live pass",
         passHint: "Stays visible until the waiter taps “Delivered”. The spot map updates live on the waiter panel.",
         livePanelLink: "Open live screens →",

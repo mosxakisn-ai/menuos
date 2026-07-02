@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
+import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
@@ -137,6 +138,15 @@ export function SettingsServicesPanel({
 
   return (
     <div className="space-y-5">
+      <div className={dashboardCardClass}>
+        <h2 className="text-sm font-semibold text-primary">{S.services.pushSectionTitle}</h2>
+        <p className="mt-2 text-sm text-slate-600">{S.services.pushHint}</p>
+        <div className="mt-4">
+          <PushNotificationsPrompt variant="settings" />
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-slate-500">{S.services.staffPushHint}</p>
+      </div>
+
       <div className={dashboardCardClass}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-primary">{S.services.passTitle}</h2>
