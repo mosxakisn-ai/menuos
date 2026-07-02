@@ -97,8 +97,10 @@ export function SettingsKitchenPanel({ venues }: { venues: VenueSpotVenue[] }) {
         venueId={venueId}
         onVenueChange={setVenueId}
       />
-      <StationScreensPanel station="kitchen" venues={venues} venueId={venueId} embedded />
-      <StationScreensPanel station="cold" venues={venues} venueId={venueId} embedded />
+      <div className="grid gap-5 md:grid-cols-2">
+        <StationScreensPanel station="kitchen" venues={venues} venueId={venueId} embedded />
+        <StationScreensPanel station="cold" venues={venues} venueId={venueId} embedded />
+      </div>
     </div>
   );
 }
@@ -118,8 +120,10 @@ export function SettingsBarPanel({ venues }: { venues: VenueSpotVenue[] }) {
         venueId={venueId}
         onVenueChange={setVenueId}
       />
-      <StationScreensPanel station="bar" venues={venues} venueId={venueId} embedded />
-      <StationScreensPanel station="dessert" venues={venues} venueId={venueId} embedded />
+      <div className="grid gap-5 md:grid-cols-2">
+        <StationScreensPanel station="bar" venues={venues} venueId={venueId} embedded />
+        <StationScreensPanel station="dessert" venues={venues} venueId={venueId} embedded />
+      </div>
     </div>
   );
 }
@@ -137,28 +141,28 @@ export function SettingsServicesPanel({
   const S = d.pages.settings;
 
   return (
-    <div className="space-y-5">
-      <div className={dashboardCardClass}>
+    <div className="grid gap-5 md:grid-cols-2">
+      <div className={`${dashboardCardClass} flex h-full flex-col`}>
         <h2 className="text-sm font-semibold text-primary">{S.services.pushSectionTitle}</h2>
         <p className="mt-2 text-sm text-slate-600">{S.services.pushHint}</p>
-        <div className="mt-4">
+        <div className="mt-4 flex-1">
           <PushNotificationsPrompt variant="settings" />
         </div>
         <p className="mt-3 text-xs leading-relaxed text-slate-500">{S.services.staffPushHint}</p>
       </div>
 
-      <div className={dashboardCardClass}>
+      <div className={`${dashboardCardClass} flex h-full flex-col`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-primary">{S.services.passTitle}</h2>
           <a
             href="/dashboard/waiter"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-brand-blue hover:underline"
+            className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-brand-blue hover:underline"
           >
             {S.services.livePanelLink}
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </div>
-        <p className="mt-2 text-sm text-slate-600">{S.services.passHint}</p>
+        <p className="mt-2 flex-1 text-sm text-slate-600">{S.services.passHint}</p>
         <p className="mt-3">
           <a
             href="/dashboard/history"

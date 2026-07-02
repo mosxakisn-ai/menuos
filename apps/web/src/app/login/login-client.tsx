@@ -10,7 +10,13 @@ import { useI18n } from "@/i18n/context";
 import { formatMessage } from "@/lib/format-message";
 import { resolveAuthError } from "@/lib/resolve-auth-error";
 
-export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string }) {
+export default function LoginPageClient({
+  trialDaysGen,
+  callbackUrl,
+}: {
+  trialDaysGen: string;
+  callbackUrl?: string | null;
+}) {
   const router = useRouter();
   const { m } = useI18n();
   const L = m.pages.auth.login;
@@ -37,7 +43,7 @@ export default function LoginPageClient({ trialDaysGen }: { trialDaysGen: string
       setError(resolveAuthError(data, authErrors, L.failed));
       return;
     }
-    router.push("/dashboard");
+    router.push(callbackUrl ?? "/dashboard");
     router.refresh();
   }
 

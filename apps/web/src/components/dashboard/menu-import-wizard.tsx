@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -16,6 +16,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MenuPdfParseResult, ParsedMenuCategoryDraft, ParsedMenuItemDraft } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import { CatalogPills } from "@/components/dashboard/catalog-pills";
 import {
   MenuImportCategoryEditor,
   MenuImportEditorToolbar,
@@ -44,6 +45,11 @@ import {
   patchAllItems,
 } from "@/lib/menu-import-review";
 import { cn } from "@/lib/utils";
+import {
+  buildMenusPageUrl,
+  buildMenusImportUrl,
+  resolveMenuIdForVenue,
+} from "@/lib/menus-nav-url";
 
 type Venue = {
   id: string;
@@ -99,10 +105,13 @@ export function MenuImportWizard({
     [W],
   );
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>("upload");
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
   const venue = venues.find((v) => v.id === venueId);
-  const [menuId, setMenuId] = useState(venue?.menus[0]?.id ?? "");
+  const [menuId, setMenuId] = useState(() =>
+    resolveMenuIdForVenue(searchParams.get("menu"), venue?.menus ?? []),
+  );
   const [files, setFiles] = useState<File[]>([]);
   const [pages, setPages] = useState<PdfPagePreview[]>([]);
   const [pipeline, setPipeline] = useState<PipelineStep[]>(initialPipeline);
@@ -127,6 +136,38 @@ export function MenuImportWizard({
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   const pageStats = useMemo(() => pageSelectionStats(pages), [pages]);
+  const activeMenu = venue?.menus.find((m) => m.id === menuId);
+
+  useEffect(() => {
+    const venueParam = searchParams.get("venue");
+    if (venueParam && venueParam !== venueId) {
+      setVenueId(venueParam);
+    }
+  }, [searchParams, venueId]);
+
+  useEffect(() => {
+    const menus = venue?.menus ?? [];
+    if (menus.length === 0) return;
+    const resolved = resolveMenuIdForVenue(searchParams.get("menu"), menus);
+    setMenuId((prev) => (prev === resolved ? prev : resolved));
+  }, [searchParams, venue?.menus]);
+
+  function syncImportUrl(next: { venueId: string; menuId?: string }) {
+    router.replace(buildMenusImportUrl(next), { scroll: false });
+  }
+
+  function selectMenu(nextMenuId: string) {
+    setMenuId(nextMenuId);
+    syncImportUrl({ venueId, menuId: nextMenuId });
+  }
+
+  useEffect(() => {
+    if (!venueId || !menuId) return;
+    const venueParam = searchParams.get("venue");
+    const menuParam = searchParams.get("menu");
+    if (venueParam === venueId && menuParam === menuId) return;
+    syncImportUrl({ venueId, menuId });
+  }, [venueId, menuId, searchParams]);
 
   const selectedCounts = useMemo(() => {
     if (!draft) return { categories: 0, items: 0 };
@@ -172,7 +213,9 @@ export function MenuImportWizard({
   function onVenueChange(id: string) {
     setVenueId(id);
     const v = venues.find((x) => x.id === id);
-    setMenuId(v?.menus[0]?.id ?? "");
+    const nextMenuId = v?.menus[0]?.id ?? "";
+    setMenuId(nextMenuId);
+    syncImportUrl({ venueId: id, menuId: nextMenuId || undefined });
     resetAll();
   }
 
@@ -376,7 +419,7 @@ export function MenuImportWizard({
       showFromResponse(data, res.ok);
       if (res.ok) {
         setTimeout(() => {
-          router.push(`/dashboard/menus?venue=${venueId}`);
+          router.push(buildMenusPageUrl({ venueId, menuId }));
           router.refresh();
         }, 1200);
       }
@@ -441,21 +484,31 @@ export function MenuImportWizard({
                   ))}
                 </select>
               </label>
-              <label className="block text-sm">
-                <span className="font-medium text-brand-navy">{d.menu}</span>
-                <select
-                  value={menuId}
-                  onChange={(e) => setMenuId(e.target.value)}
-                  className="mt-1 w-full rounded-button border border-slate-200 px-3 py-2.5"
+              <div className="flex items-end">
+                <Link
+                  href={buildMenusPageUrl({ venueId, menuId })}
+                  className={`inline-flex h-10 w-full items-center justify-center ${buttonClass("secondary", "md")}`}
                 >
-                  {(venue?.menus ?? []).map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  {d.pages.import.backToCatalog}
+                </Link>
+              </div>
             </div>
+
+            {venue && venue.menus.length > 0 ? (
+              <div className="mt-4 border-t border-slate-100 pt-4">
+                <p className="font-semibold text-brand-navy">{W.activeCatalogTitle}</p>
+                <p className="mt-1 text-xs text-slate-500">{W.activeCatalogHint}</p>
+                <CatalogPills
+                  menus={venue.menus}
+                  activeMenuId={menuId}
+                  onSelect={selectMenu}
+                  className="mt-3"
+                />
+                {activeMenu ? (
+                  <p className="mt-2 text-sm font-semibold text-brand-blue">{activeMenu.name}</p>
+                ) : null}
+              </div>
+            ) : null}
           </Card>
 
           <Card>
@@ -600,6 +653,24 @@ export function MenuImportWizard({
             </button>
           </div>
 
+          {venue && venue.menus.length > 0 ? (
+            <Card className="border-brand-blue/20 bg-brand-blue/[0.03]">
+              <p className="font-semibold text-brand-navy">{W.activeCatalogTitle}</p>
+              <p className="mt-1 text-xs text-slate-500">{W.activeCatalogHint}</p>
+              <CatalogPills
+                menus={venue.menus}
+                activeMenuId={menuId}
+                onSelect={selectMenu}
+                className="mt-3"
+              />
+              {activeMenu ? (
+                <p className="mt-2 text-sm font-semibold text-brand-blue">
+                  {W.importTargetConfirm(activeMenu.name)}
+                </p>
+              ) : null}
+            </Card>
+          ) : null}
+
           <MenuImportReviewReport
             report={reviewReport}
             ocrPagesUsed={draft.ocrPagesUsed}
@@ -717,7 +788,7 @@ export function MenuImportWizard({
       ) : null}
 
       <p className="text-center text-sm text-slate-500">
-        <Link href={`/dashboard/menus?venue=${venueId}`} className="text-brand-blue hover:underline">
+        <Link href={buildMenusPageUrl({ venueId, menuId })} className="text-brand-blue hover:underline">
           {W.manualEditLink}
         </Link>
       </p>

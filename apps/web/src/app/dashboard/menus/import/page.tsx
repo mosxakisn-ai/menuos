@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { prisma } from "@menuos/db";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
 import { MenuImportPageIntro } from "@/components/dashboard/menu-import-page-intro";
@@ -12,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildDashboardPageMetadata("import", "/dashboard/menus/import");
 }
 
-type Props = { searchParams: Promise<{ venue?: string }> };
+type Props = { searchParams: Promise<{ venue?: string; menu?: string }> };
 
 export default async function MenuImportPage({ searchParams }: Props) {
   const session = await getSession();
@@ -34,8 +35,10 @@ export default async function MenuImportPage({ searchParams }: Props) {
 
   return (
     <DashboardPage>
-      <MenuImportPageIntro venueId={sp.venue} />
-      <MenuImportWizard venues={venues} initialVenueId={sp.venue} />
+      <MenuImportPageIntro venueId={sp.venue} menuId={sp.menu} />
+      <Suspense fallback={null}>
+        <MenuImportWizard venues={venues} initialVenueId={sp.venue} />
+      </Suspense>
     </DashboardPage>
   );
 }

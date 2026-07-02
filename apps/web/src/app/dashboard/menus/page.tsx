@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { prisma } from "@menuos/db";
 import { MenuEditor } from "@/components/dashboard/menu-editor";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
@@ -11,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildDashboardPageMetadata("menus", "/dashboard/menus");
 }
 
-type Props = { searchParams: Promise<{ venue?: string; welcome?: string }> };
+type Props = { searchParams: Promise<{ venue?: string; menu?: string; welcome?: string }> };
 
 export default async function MenusPage({ searchParams }: Props) {
   const session = await getSession();
@@ -27,12 +28,14 @@ export default async function MenusPage({ searchParams }: Props) {
   return (
     <DashboardPage>
       <LocalizedDashboardPageHeader page="menus" />
-      <MenuEditor
-        venues={venues}
-        initialVenueId={sp.venue}
-        welcome={sp.welcome === "1"}
-        canImportPdf={canImportPdf}
-      />
+      <Suspense fallback={null}>
+        <MenuEditor
+          venues={venues}
+          initialVenueId={sp.venue}
+          welcome={sp.welcome === "1"}
+          canImportPdf={canImportPdf}
+        />
+      </Suspense>
     </DashboardPage>
   );
 }

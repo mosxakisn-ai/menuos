@@ -70,6 +70,10 @@ export const DASHBOARD_EN = {
     phaseReview: "Report & review before import",
     needVenueTitle: "You need a venue first",
     selectCatalogAndPdf: "Select a catalog and at least one PDF.",
+    activeCatalogTitle: "Import target",
+    activeCatalogHint:
+      "Same catalog as on the Catalogs page — everything you import from PDF goes here.",
+    importTargetConfirm: (name: string) => `Items will be imported into «${name}».`,
     noMenuPagesScanDetail: "No menu pages found",
     noMenuPages:
       "No menu pages found. Open Advanced and select pages manually.",
@@ -183,6 +187,30 @@ export const DASHBOARD_EN = {
   deleteCatalogLast: "At least one catalog must remain for this venue.",
   deleteCatalogConfirm: (name: string) =>
     `Delete catalog «${name}»?\n\nAre you sure? This cannot be undone.`,
+  deleteAllCatalogs: "Delete all catalogs",
+  deleteAllCatalogsConfirm: (stats: { menus: number; categories: number; items: number }) => {
+    const lines = [
+      "WARNING — permanent deletion",
+      "",
+      "ALL catalogs for this venue will be deleted:",
+      `• ${stats.menus} catalog${stats.menus === 1 ? "" : "s"}`,
+    ];
+    if (stats.categories > 0) {
+      lines.push(`• ${stats.categories} categor${stats.categories === 1 ? "y" : "ies"}`);
+    }
+    if (stats.items > 0) {
+      lines.push(`• ${stats.items} item${stats.items === 1 ? "" : "s"}`);
+    }
+    lines.push(
+      "",
+      "We cannot restore them — this is permanent.",
+      "",
+      "You will get one empty catalog to start fresh.",
+      "",
+      "Continue?",
+    );
+    return lines.join("\n");
+  },
   roleLabels: {
     ADMIN: "Administrator",
     MANAGER: "Manager",
@@ -799,6 +827,7 @@ export const DASHBOARD_EN = {
     invalidPrice: "Enter a valid price (e.g. 4.50).",
     categoryNameRequired: "Enter a category name.",
     loadingSubtitle: "Loading categories and items",
+    syncCatalogHint: "Same selection as PDF import — items appear here.",
     editPrice: "Change price",
     qrBadge: "Badge on QR menu",
     active: "Active",
@@ -867,6 +896,10 @@ export const DASHBOARD_EN = {
     categoryUpdated: "Category updated.",
     categoryDeleted: "Category deleted.",
     menuDeleted: "Catalog deleted.",
+    allMenusDeleted: (stats: { menus: number; items: number }) =>
+      stats.items > 0
+        ? `Deleted ${stats.menus} catalogs and ${stats.items} items. One empty catalog remains.`
+        : `Deleted ${stats.menus} catalogs. One empty catalog remains.`,
     venueSaved: "Settings saved.",
     venueCreated: "Venue created! Now add categories and items.",
     menuCreated: "Catalog created.",

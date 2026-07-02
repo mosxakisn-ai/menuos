@@ -71,6 +71,10 @@ export const DASHBOARD_EL = {
     phaseReview: "Αναφορά & έλεγχος πριν την εισαγωγή",
     needVenueTitle: "Χρειάζεσαι κατάστημα πρώτα",
     selectCatalogAndPdf: "Επίλεξε κατάλογο και τουλάχιστον ένα PDF.",
+    activeCatalogTitle: "Στόχος εισαγωγής",
+    activeCatalogHint:
+      "Ο ίδιος κατάλογος με τη σελίδα Κατάλογοι — ό,τι εισάγεις από PDF θα μπει εδώ.",
+    importTargetConfirm: (name: string) => `Τα είδη θα εισαχθούν στον κατάλογο «${name}».`,
     noMenuPagesScanDetail: "Δεν βρέθηκαν σελίδες μενού",
     noMenuPages: "Δεν βρέθηκαν σελίδες μενού. Άνοιξε «Προχωρημένα» και επίλεξε σελίδες χειροκίνητα.",
     extractDetail: "Digital + OCR…",
@@ -183,6 +187,32 @@ export const DASHBOARD_EL = {
   deleteCatalogLast: "Πρέπει να υπάρχει τουλάχιστον ένας κατάλογος στο κατάστημα.",
   deleteCatalogConfirm: (name: string) =>
     `Διαγραφή του καταλόγου «${name}»;\n\nΕίσαι σίγουρος; Η ενέργεια δεν αναιρείται.`,
+  deleteAllCatalogs: "Διαγραφή όλων των καταλόγων",
+  deleteAllCatalogsConfirm: (stats: { menus: number; categories: number; items: number }) => {
+    const lines = [
+      "ΠΡΟΣΟΧΗ — μόνιμη διαγραφή",
+      "",
+      "Θα διαγραφούν ΟΛΟΙ οι κατάλογοι αυτού του καταστήματος:",
+      `• ${stats.menus} ${stats.menus === 1 ? "κατάλογος" : "κατάλογοι"}`,
+    ];
+    if (stats.categories > 0) {
+      lines.push(
+        `• ${stats.categories} ${stats.categories === 1 ? "κατηγορία" : "κατηγορίες"}`,
+      );
+    }
+    if (stats.items > 0) {
+      lines.push(`• ${stats.items} ${stats.items === 1 ? "είδος" : "είδη"}`);
+    }
+    lines.push(
+      "",
+      "Δεν μπορούμε να τα επαναφέρουμε — χάνονται οριστικά.",
+      "",
+      "Θα μείνει ένας κενός κατάλογος για να ξεκινήσεις από την αρχή.",
+      "",
+      "Συνέχεια;",
+    );
+    return lines.join("\n");
+  },
   roleLabels: {
     ADMIN: "Διαχειριστής",
     MANAGER: "Υπεύθυνος",
@@ -807,6 +837,7 @@ export const DASHBOARD_EL = {
     invalidPrice: "Βάλε έγκυρη τιμή (π.χ. 4.50).",
     categoryNameRequired: "Βάλε όνομα κατηγορίας.",
     loadingSubtitle: "Φόρτωση κατηγοριών και ειδών",
+    syncCatalogHint: "Ίδια επιλογή και στην εισαγωγή PDF — τα είδη εμφανίζονται εδώ.",
     editPrice: "Αλλαγή τιμής",
     qrBadge: "Ετικέτα στο QR menu",
     active: "Ενεργό",
@@ -875,6 +906,10 @@ export const DASHBOARD_EL = {
     categoryUpdated: "Η κατηγορία ενημερώθηκε.",
     categoryDeleted: "Η κατηγορία διαγράφηκε.",
     menuDeleted: "Ο κατάλογος διαγράφηκε.",
+    allMenusDeleted: (stats: { menus: number; items: number }) =>
+      stats.items > 0
+        ? `Διαγράφηκαν ${stats.menus} κατάλογοι και ${stats.items} είδη. Έμεινε ένας κενός κατάλογος.`
+        : `Διαγράφηκαν ${stats.menus} κατάλογοι. Έμεινε ένας κενός κατάλογος.`,
     venueSaved: "Οι ρυθμίσεις αποθηκεύτηκαν.",
     venueCreated: "Το κατάστημα δημιουργήθηκε! Πρόσθεσε τώρα κατηγορίες και είδη.",
     menuCreated: "Ο κατάλογος δημιουργήθηκε.",

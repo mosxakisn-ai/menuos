@@ -2,6 +2,7 @@
 
 import { ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
 import { LoadingSkeleton, LoadingState } from "@/components/ui/loading-state";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -20,6 +21,7 @@ import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { confirmDestructive } from "@/lib/confirm-action";
+import { buildMenusImportUrl, buildMenusPageUrl, resolveMenuIdForVenue } from "@/lib/menus-nav-url";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +42,18 @@ type Category = {
 };
 type Menu = { id: string; name: string; categories: Category[] };
 type Venue = { id: string; name: string; slug: string };
+
+function catalogTotals(menus: Menu[]) {
+  let categories = 0;
+  let items = 0;
+  for (const menu of menus) {
+    categories += menu.categories.length;
+    for (const cat of menu.categories) {
+      items += cat.items.length;
+    }
+  }
+  return { menus: menus.length, categories, items };
+}
 
 function parseMenuPrice(raw: string): number {
   return parseFloat(raw.trim().replace(",", "."));
@@ -62,6 +76,8 @@ export function MenuEditor({
   const [loading, setLoading] = useState(false);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const { d } = useDashboardCopy();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (welcome) {
@@ -97,6 +113,7 @@ export function MenuEditor({
   const [newMenuName, setNewMenuName] = useState("");
   const [addingMenu, setAddingMenu] = useState(false);
   const [deletingMenuId, setDeletingMenuId] = useState<string | null>(null);
+  const [deletingAllMenus, setDeletingAllMenus] = useState(false);
 
   const loadMenus = useCallback(async () => {
     if (!venueId) return;
@@ -119,6 +136,37 @@ export function MenuEditor({
       setLoading(false);
     }
   }, [venueId, showFromResponse]);
+
+  useEffect(() => {
+    const venueParam = searchParams.get("venue");
+    if (venueParam && venueParam !== venueId) {
+      setVenueId(venueParam);
+    }
+  }, [searchParams, venueId]);
+
+  useEffect(() => {
+    if (menus.length === 0) return;
+    const resolved = resolveMenuIdForVenue(searchParams.get("menu"), menus);
+    setActiveMenuId((prev) => (prev === resolved ? prev : resolved));
+  }, [searchParams, menus]);
+
+  useEffect(() => {
+    if (!venueId || !activeMenuId) return;
+    const venueParam = searchParams.get("venue");
+    const menuParam = searchParams.get("menu");
+    if (venueParam === venueId && menuParam === activeMenuId) return;
+    router.replace(buildMenusPageUrl({ venueId, menuId: activeMenuId }), { scroll: false });
+  }, [venueId, activeMenuId, searchParams, router]);
+
+  function selectActiveMenu(menuId: string) {
+    setActiveMenuId(menuId);
+    router.replace(buildMenusPageUrl({ venueId, menuId }), { scroll: false });
+  }
+
+  function changeVenue(nextVenueId: string) {
+    setVenueId(nextVenueId);
+    router.replace(buildMenusPageUrl({ venueId: nextVenueId }), { scroll: false });
+  }
 
   useEffect(() => {
     loadMenus();
@@ -211,6 +259,28 @@ export function MenuEditor({
 
   function canDeleteMenu(menu: Menu) {
     return menus.length > 1 && !menuHasData(menu);
+  }
+
+  async function deleteAllMenus() {
+    if (!venueId || menus.length === 0) return;
+
+    const totals = catalogTotals(menus);
+    if (!confirmDestructive(d.deleteAllCatalogsConfirm(totals))) return;
+
+    setDeletingAllMenus(true);
+    try {
+      const res = await fetch(`/api/menus?venueId=${encodeURIComponent(venueId)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      showFromResponse(data, res.ok);
+      if (res.ok) {
+        setActiveMenuId(data.menu?.id ?? "");
+        await loadMenus();
+      }
+    } finally {
+      setDeletingAllMenus(false);
+    }
   }
 
   async function deleteMenu(menu: Menu) {
@@ -395,7 +465,7 @@ export function MenuEditor({
           <span className={dashboardLabelClass}>{d.venue}</span>
           <select
             value={venueId}
-            onChange={(e) => setVenueId(e.target.value)}
+            onChange={(e) => changeVenue(e.target.value)}
             className={dashboardFieldClass}
           >
             {venues.map((v) => (
@@ -409,7 +479,7 @@ export function MenuEditor({
           <>
             {canImportPdf ? (
               <a
-                href={`/dashboard/menus/import?venue=${venueId}`}
+                href={buildMenusImportUrl({ venueId, menuId: activeMenuId || undefined })}
                 className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
               >
                 {d.importPdf}
@@ -449,7 +519,18 @@ export function MenuEditor({
         <>
           {menus.length > 0 ? (
             <Card>
-              <h2 className="font-semibold text-brand-navy">{d.menus}</h2>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h2 className="font-semibold text-brand-navy">{d.menus}</h2>
+                <button
+                  type="button"
+                  disabled={deletingAllMenus}
+                  onClick={() => void deleteAllMenus()}
+                  className="text-sm font-semibold text-red-600 underline-offset-2 hover:text-red-700 hover:underline disabled:opacity-50"
+                >
+                  {deletingAllMenus ? "..." : d.deleteAllCatalogs}
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-slate-500">{d.menuEditor.syncCatalogHint}</p>
               <DashboardScrollRow className="mt-3" innerClassName="flex gap-2 pb-0.5">
                 {menus.map((m) => {
                   const isActive = activeMenu?.id === m.id;
@@ -466,7 +547,7 @@ export function MenuEditor({
                     >
                       <button
                         type="button"
-                        onClick={() => setActiveMenuId(m.id)}
+                        onClick={() => selectActiveMenu(m.id)}
                         className="px-4 py-1.5"
                       >
                         {m.name}

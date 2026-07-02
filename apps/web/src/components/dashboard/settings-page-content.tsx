@@ -39,8 +39,8 @@ function SettingsGeneralTab({
   const { d, roleLabel } = useDashboardCopy();
 
   return (
-    <div className="space-y-5">
-      <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+    <div className="grid gap-5 lg:grid-cols-3 lg:items-start">
+      <div className="space-y-5">
         <div className={dashboardCardClass}>
           <h2 className="text-sm font-semibold text-primary">{d.account}</h2>
           <dl className="mt-4 divide-y divide-slate-100 text-sm">
@@ -67,7 +67,11 @@ function SettingsGeneralTab({
         </div>
       </div>
 
-      {canEditVenues ? <SettingsForm venues={venues} /> : null}
+      {canEditVenues ? (
+        <div className="lg:col-span-2">
+          <SettingsForm venues={venues} />
+        </div>
+      ) : null}
     </div>
   );
 }

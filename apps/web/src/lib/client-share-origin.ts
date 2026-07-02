@@ -1,11 +1,18 @@
-/** Origin for copied share links — 0.0.0.0 is a bind address, not reachable in browsers. */
+import { getPublicAppUrl, isUnreachableBrowserHost, resolvePublicOrigin } from "@/lib/public-app-origin";
+
+/** Origin for copied share links — never 0.0.0.0; uses NEXT_PUBLIC_APP_URL when set. */
 export function clientShareOrigin(): string {
   if (typeof window === "undefined") return "";
-  const { protocol, hostname, port } = window.location;
-  const host =
-    hostname === "0.0.0.0" || hostname === "[::]" || hostname === "::"
-      ? "localhost"
-      : hostname;
-  const portSuffix = port ? `:${port}` : "";
-  return `${protocol}//${host}${portSuffix}`;
+  const { hostname, port } = window.location;
+  if (isUnreachableBrowserHost(hostname)) {
+    const publicBase = getPublicAppUrl();
+    try {
+      const pub = new URL(publicBase);
+      if (!pub.port && port) return `${pub.protocol}//${pub.hostname}:${port}`;
+      return pub.origin;
+    } catch {
+      return resolvePublicOrigin(window.location.origin);
+    }
+  }
+  return window.location.origin;
 }

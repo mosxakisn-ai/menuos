@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { resolveStaffAuthBySlug } from "@/lib/staff-auth";
 import { STAFF_SESSION_COOKIE } from "@/lib/staff-auth-constants";
 import { getOrganizationPlanContext } from "@/lib/billing";
+import { resolvePublicOrigin } from "@/lib/public-app-origin";
 import { createStaffSessionToken, staffSessionCookieOptions } from "@/lib/staff-session";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
   }
 
   const token = createStaffSessionToken(auth.venue.id, key);
-  const redirectTo = new URL(`/s/${venueSlug}`, url.origin);
+  const redirectTo = new URL(`/s/${venueSlug}`, resolvePublicOrigin(request));
   const response = NextResponse.redirect(redirectTo, 302);
   response.cookies.set(STAFF_SESSION_COOKIE, token, staffSessionCookieOptions());
   return response;

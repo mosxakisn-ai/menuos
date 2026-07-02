@@ -31,8 +31,14 @@ export function StaffWaiterInvalidLink({
           <code className="text-xs">0.0.0.0</code>). Στο κινητό χρησιμοποίησε την IP του PC στο Wi‑Fi.
         </p>
         <Link
-          href="/login"
+          href="/dashboard/settings?tab=services"
           className="mt-5 inline-block text-sm font-semibold text-brand-blue hover:underline"
+        >
+          Ρυθμίσεις → Services
+        </Link>
+        <Link
+          href="/login?callbackUrl=%2Fdashboard%2Fsettings%3Ftab%3Dservices"
+          className="mt-3 block text-xs text-slate-500 hover:text-brand-blue hover:underline"
         >
           Σύνδεση διαχειριστή
         </Link>

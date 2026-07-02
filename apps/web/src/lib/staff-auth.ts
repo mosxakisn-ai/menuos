@@ -3,6 +3,7 @@ import { prisma } from "@menuos/db";
 import type { SessionPayload } from "@/lib/auth";
 import { getSession } from "@/lib/auth";
 import { getOrganizationPlanContext } from "@/lib/billing";
+import { APP_URL } from "@/lib/config";
 import { getVenueForOrganization } from "@/lib/venue-access";
 import { readStaffSessionFromCookies } from "@/lib/staff-session";
 
@@ -240,8 +241,7 @@ export async function requireWaiterCallAccess(
 }
 
 export function buildStaffWaiterUrl(slug: string, staffToken: string): string {
-  const base = process.env.APP_URL?.replace(/\/$/, "") ?? "https://menuos.gr";
-  const url = new URL(`/s/${slug}`, base);
+  const url = new URL(`/s/${slug}`, APP_URL);
   url.searchParams.set("key", staffToken);
   return url.toString();
 }

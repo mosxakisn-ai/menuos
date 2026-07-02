@@ -3,10 +3,17 @@
 import Link from "next/link";
 import { LocalizedDashboardPageHeader, DashboardDocumentTitle } from "@/components/dashboard/localized-dashboard-page-header";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { buildMenusPageUrl } from "@/lib/menus-nav-url";
 
-export function MenuImportPageIntro({ venueId }: { venueId?: string }) {
+export function MenuImportPageIntro({
+  venueId,
+  menuId,
+}: {
+  venueId?: string;
+  menuId?: string;
+}) {
   const { d } = useDashboardCopy();
-  const href = `/dashboard/menus${venueId ? `?venue=${venueId}` : ""}`;
+  const href = buildMenusPageUrl({ venueId, menuId });
 
   return (
     <div className="space-y-4">

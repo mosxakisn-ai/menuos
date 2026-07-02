@@ -7,6 +7,7 @@ import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { DashboardLocaleProvider } from "@/components/dashboard/dashboard-locale-provider";
 import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
 import { getSession } from "@/lib/auth";
+import { loginUrlWithCallback } from "@/lib/safe-callback-url";
 import { isTrialPlan, isTrialStillActive, getTrialPeriodDays } from "@menuos/shared";
 import { organizationHasActiveSubscription } from "@/lib/billing";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
@@ -20,10 +21,13 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
-
   const headersList = await headers();
+  const session = await getSession();
+  if (!session) {
+    const pathname = headersList.get("x-menuos-pathname") ?? "/dashboard";
+    const search = headersList.get("x-menuos-search") ?? "";
+    redirect(loginUrlWithCallback(pathname + search));
+  }
   if (headersList.get("x-menuos-check-subscription") === "1") {
     const active = await organizationHasActiveSubscription(session.organizationId);
     if (!active) {

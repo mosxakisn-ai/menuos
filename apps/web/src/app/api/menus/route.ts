@@ -87,3 +87,56 @@ export async function POST(request: Request) {
     throw err;
   }
 }
+
+export async function DELETE(request: Request) {
+  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  if (auth.response) return auth.response;
+
+  const copy = dashboardCopyFromRequest(request);
+  const venueId = new URL(request.url).searchParams.get("venueId");
+  if (!venueId) {
+    return NextResponse.json({ code: "invalid_input" }, { status: 400 });
+  }
+
+  const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
+  if (!venue) {
+    return NextResponse.json({ code: "not_found" }, { status: 404 });
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const menuCount = await tx.menu.count({ where: { venueId } });
+    if (menuCount === 0) {
+      throw new Error("no_menus");
+    }
+
+    const categoryCount = await tx.category.count({ where: { menu: { venueId } } });
+    const itemCount = await tx.item.count({ where: { category: { menu: { venueId } } } });
+
+    await tx.menu.deleteMany({ where: { venueId } });
+
+    const menu = await tx.menu.create({
+      data: {
+        venueId,
+        name: copy.api.defaultMenuName,
+        type: "RESTAURANT",
+        sortOrder: 0,
+      },
+    });
+
+    return {
+      deletedMenus: menuCount,
+      deletedCategories: categoryCount,
+      deletedItems: itemCount,
+      menu,
+    };
+  }, serializableTransaction);
+
+  return NextResponse.json({
+    ok: true,
+    message: copy.api.allMenusDeleted({
+      menus: result.deletedMenus,
+      items: result.deletedItems,
+    }),
+    ...result,
+  });
+}

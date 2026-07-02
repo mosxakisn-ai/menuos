@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { LOCALE_COOKIE, LOCALE_REQUEST_HEADER, resolveLocale } from "@/i18n/types";
 import { SESSION_COOKIE } from "@/lib/config";
 import { verifySessionToken } from "@/lib/auth";
+import { loginUrlWithCallback } from "@/lib/safe-callback-url";
 import { SUPERVISOR_COOKIE } from "@/lib/supervisor-auth-constants";
 import { verifySupervisorTokenEdge } from "@/lib/supervisor-auth-edge";
 
@@ -82,14 +83,15 @@ export async function middleware(request: NextRequest) {
     }
     response = NextResponse.next({ request: { headers: requestHeaders } });
   } else if (pathname.startsWith("/dashboard")) {
+    const returnTo = pathname + request.nextUrl.search;
     const token = request.cookies.get(SESSION_COOKIE)?.value;
     if (!token) {
-      response = NextResponse.redirect(new URL("/login", request.url));
+      response = NextResponse.redirect(new URL(loginUrlWithCallback(returnTo), request.url));
       return applyLocale(request, response);
     }
     const session = await verifySessionToken(token);
     if (!session) {
-      response = NextResponse.redirect(new URL("/login", request.url));
+      response = NextResponse.redirect(new URL(loginUrlWithCallback(returnTo), request.url));
       return applyLocale(request, response);
     }
 
