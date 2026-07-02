@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
   buildTableGridTiles,
   formatOrderLineDetail,
@@ -313,6 +313,7 @@ export function WaiterTableGrid({
   updatingPassId,
   onUpdateCall,
   onUpdatePass,
+  legendEnd,
 }: {
   spots: TableGridSpot[];
   calls: TableGridCall[];
@@ -323,6 +324,7 @@ export function WaiterTableGrid({
   updatingPassId: string | null;
   onUpdateCall: (callId: string, status: "ACKNOWLEDGED" | "COMPLETED") => void;
   onUpdatePass: (signalId: string, status: "PICKED_UP" | "DELIVERED") => void;
+  legendEnd?: ReactNode;
 }) {
   const { d, lang } = useDashboardCopy();
   const W = d.waiter;
@@ -353,7 +355,16 @@ export function WaiterTableGrid({
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold text-brand-navy">{W.tableGridTitle}</h2>
-      <TableGridLegend stateLabels={stateLabels} className={hasConfiguredSpots ? "hidden sm:flex" : "hidden"} />
+      {hasConfiguredSpots ? (
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <TableGridLegend stateLabels={stateLabels} compact className="min-w-0 flex-1" />
+          {legendEnd ? (
+            <div className="ml-auto flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-x-2 gap-y-1 text-right">
+              {legendEnd}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <p className={cn("text-xs text-slate-500 sm:hidden", !hasConfiguredSpots && "hidden")}>
         {W.tableGridLegendHint}
       </p>

@@ -281,6 +281,44 @@ export function WaiterPanel({
   const isZoneFilteredEmpty =
     zoneFilterId !== "all" && displaySpots.length === 0 && !hasActivity && spots.length > 0;
 
+  const venueStatusEnd = (
+    <>
+      {staffViaCookie || staffKey || venues.length === 1 ? (
+        <p className="text-[11px] text-slate-700 sm:text-xs">
+          <span className="font-medium text-brand-navy">{d.venue}: </span>
+          {activeVenue?.name ?? "—"}
+        </p>
+      ) : (
+        <label className="text-[11px] sm:text-xs">
+          <span className="sr-only">{d.venue}</span>
+          <select
+            value={venueId}
+            onChange={(e) => setVenueId(e.target.value)}
+            className="max-w-[9rem] rounded-button border border-slate-200 px-2 py-1 text-[11px] sm:max-w-none sm:px-2.5 sm:py-1.5 sm:text-xs"
+          >
+            {venues.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {pendingCount > 0 || passCount > 0 ? (
+        <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 sm:px-2.5 sm:text-xs">
+          <Bell className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+          <span className="truncate">
+            {pendingCount > 0 ? W.pendingCount(pendingCount) : null}
+            {pendingCount > 0 && passCount > 0 ? " · " : null}
+            {passCount > 0 ? W.passCount(passCount) : null}
+          </span>
+        </span>
+      ) : (
+        <span className="text-[10px] text-slate-500 sm:text-xs">{W.refreshHint}</span>
+      )}
+    </>
+  );
+
   return (
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
@@ -294,61 +332,6 @@ export function WaiterPanel({
           {W.staffViewBadge(staffMember.name, formatStaffStationsForLang(staffMember.stations, lang))}
         </p>
       ) : null}
-
-      <div className="flex flex-wrap items-center gap-4">
-        {staffViaCookie || staffKey || venues.length === 1 ? (
-          <p className="text-sm">
-            <span className="font-medium text-brand-navy">{d.venue}: </span>
-            <span className="text-slate-700">{activeVenue?.name ?? "—"}</span>
-          </p>
-        ) : (
-          <label className="block text-sm">
-            <span className="font-medium text-brand-navy">{d.venue}</span>
-            <select
-              value={venueId}
-              onChange={(e) => setVenueId(e.target.value)}
-              className="mt-1 block min-w-[200px] rounded-button border border-slate-200 px-3 py-2.5"
-            >
-              {venues.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {pendingCount > 0 || passCount > 0 ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">
-            <Bell className="h-4 w-4" />
-            {pendingCount > 0 ? W.pendingCount(pendingCount) : null}
-            {pendingCount > 0 && passCount > 0 ? " · " : null}
-            {passCount > 0 ? W.passCount(passCount) : null}
-          </span>
-        ) : (
-          <span className="text-sm text-slate-500">{W.refreshHint}</span>
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {monitorTabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => {
-              setMonitorTab(tab.id);
-              if (tab.id === "calls") setPassStationFilter("all");
-            }}
-            className={cn(
-              "rounded-full px-3 py-1.5 text-sm font-medium transition",
-              monitorTab === tab.id
-                ? "bg-brand-navy text-white shadow-sm"
-                : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
       {showZoneFilters ? (
         <div className="flex flex-wrap gap-2">
@@ -402,6 +385,27 @@ export function WaiterPanel({
         </div>
       ) : null}
 
+      <div className="flex flex-wrap gap-2">
+        {monitorTabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => {
+              setMonitorTab(tab.id);
+              if (tab.id === "calls") setPassStationFilter("all");
+            }}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-sm font-medium transition",
+              monitorTab === tab.id
+                ? "bg-brand-navy text-white shadow-sm"
+                : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {displaySpots.length === 0 && hasActivity ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           {W.emptySpotsActiveHint}
@@ -410,6 +414,9 @@ export function WaiterPanel({
 
       {displaySpots.length === 0 && !hasActivity ? (
         <Card className="border-dashed text-center">
+          <div className="mb-4 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 border-b border-slate-100 pb-4 text-right">
+            {venueStatusEnd}
+          </div>
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
           {isZoneFilteredEmpty ? (
             <p className="mt-3 text-sm text-slate-500">{W.emptyZoneView}</p>
@@ -429,6 +436,7 @@ export function WaiterPanel({
           passStationFilter={passStationFilter}
           updatingCallId={updatingCallId}
           updatingPassId={updatingPassId}
+          legendEnd={venueStatusEnd}
           onUpdateCall={(callId, status) => void updateStatus(callId, status)}
           onUpdatePass={(signalId, status) => void updatePassStatus(signalId, status)}
         />

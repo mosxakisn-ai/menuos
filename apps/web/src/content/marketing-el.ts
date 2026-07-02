@@ -1,6 +1,6 @@
 export const MARKETING = {
   tagline: "Scan. Browse. Enjoy.",
-  contactEmail: "info@b-os.gr",
+  contactEmail: "info@qrmenus.info",
   contactPhone: "210 700 0925",
   contactPhoneTel: "+302107000925",
   contactFacebook: "https://www.facebook.com/MenuOs.Greece/",

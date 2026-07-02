@@ -69,7 +69,7 @@ export const PAGES_EN = {
     ctaButton: "Start now — free {trialDays}",
     cta: {
       title: "Want a demo first?",
-      description: "Call 210 700 0925 or email info@b-os.gr — we'll walk you through live.",
+      description: "Call 210 700 0925 or email info@qrmenus.info — we'll walk you through live.",
       primary: "Contact",
       secondary: "All services",
     },
@@ -271,7 +271,7 @@ export const PAGES_EN = {
       cooldown: "Wait {s}s before resending the code.",
       mail_failed: "Could not send email. Try again shortly.",
       duplicate: "This email or organization already exists.",
-      server_error: "Server issue. Try again shortly or email info@b-os.gr.",
+      server_error: "Server issue. Try again shortly or email info@qrmenus.info.",
     },
     login: {
       title: "Welcome back",
@@ -311,7 +311,7 @@ export const PAGES_EN = {
       sendOtpFailed: "Failed to send code.",
       registerFailed: "Registration failed.",
       networkError: "Connection error. Check your internet and try again.",
-      serverError: "Server issue. Try again shortly or email info@b-os.gr.",
+      serverError: "Server issue. Try again shortly or email info@qrmenus.info.",
       otpSeconds: "{s} sec",
       otpMinutes: "{m} min",
       otpMinutesSeconds: "{m}:{s}",

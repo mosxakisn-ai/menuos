@@ -54,7 +54,7 @@ export const SEO_PAGES_EN = {
   contact: {
     title: "Contact — Support & Enterprise",
     description:
-      "Contact the MenuOS team for a trial, Enterprise pricing or support. Tel. +30 210 700 0925, info@b-os.gr",
+      "Contact the MenuOS team for a trial, Enterprise pricing or support. Tel. +30 210 700 0925, info@qrmenus.info",
     path: "/epikoinonia",
     breadcrumbLabel: "Contact",
   },

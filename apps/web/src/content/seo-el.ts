@@ -4,7 +4,7 @@ export const SEO_SITE = {
   locale: "el_GR",
   language: "el-GR",
   region: "GR",
-  contactEmail: "info@b-os.gr",
+  contactEmail: "info@qrmenus.info",
   contactPhone: "210 700 0925",
   contactPhoneTel: "+302107000925",
   contactFacebook: "https://www.facebook.com/MenuOs.Greece/",
@@ -96,7 +96,7 @@ export const SEO_PAGES = {
   contact: {
     title: "Επικοινωνία — Υποστήριξη & Enterprise",
     description:
-      "Επικοινωνήστε με την ομάδα MenuOS για δοκιμή, τιμολόγηση Enterprise ή υποστήριξη. Τηλ. 210 700 0925, info@b-os.gr",
+      "Επικοινωνήστε με την ομάδα MenuOS για δοκιμή, τιμολόγηση Enterprise ή υποστήριξη. Τηλ. 210 700 0925, info@qrmenus.info",
     path: "/epikoinonia",
     breadcrumbLabel: "Επικοινωνία",
     keywords: ["MenuOS επικοινωνία", "QR menu support"],

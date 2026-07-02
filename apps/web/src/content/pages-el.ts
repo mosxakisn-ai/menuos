@@ -74,7 +74,7 @@ export const PAGES_EL = {
     ctaButton: "Ξεκίνα τώρα — δωρεάν {trialDays}",
     cta: {
       title: "Θέλεις να το δεις πριν ξεκινήσεις;",
-      description: "Κάλεσέ μας στο 210 700 0925 ή γράψε στο info@b-os.gr — θα σου τα δείξουμε ζωντανά.",
+      description: "Κάλεσέ μας στο 210 700 0925 ή γράψε στο info@qrmenus.info — θα σου τα δείξουμε ζωντανά.",
       primary: "Επικοινωνία",
       secondary: "Όλες οι υπηρεσίες",
     },
@@ -280,7 +280,7 @@ export const PAGES_EL = {
       cooldown: "Περίμενε {s} δευτ. πριν ξαναστείλεις κωδικό.",
       mail_failed: "Δεν ήταν δυνατή η αποστολή email. Δοκίμασε ξανά σε λίγο.",
       duplicate: "Το email ή ο οργανισμός υπάρχει ήδη.",
-      server_error: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr.",
+      server_error: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@qrmenus.info.",
     },
     login: {
       title: "Καλώς ήρθες πίσω",
@@ -322,7 +322,7 @@ export const PAGES_EL = {
       sendOtpFailed: "Αποτυχία αποστολής κωδικού.",
       registerFailed: "Η εγγραφή απέτυχε.",
       networkError: "Σφάλμα σύνδεσης. Έλεγξε το internet και δοκίμασε ξανά.",
-      serverError: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@b-os.gr.",
+      serverError: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο ή γράψε στο info@qrmenus.info.",
       otpSeconds: "{s} δευτ.",
       otpMinutes: "{m} λεπ.",
       otpMinutesSeconds: "{m}:{s}",

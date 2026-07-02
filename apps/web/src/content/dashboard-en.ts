@@ -123,7 +123,7 @@ export const DASHBOARD_EN = {
     checkoutFailed: "Checkout could not start. Please try again.",
     cancelled: "Payment was cancelled. You were not charged.",
     confirming: "Confirming your payment...",
-    confirmFailed: "Confirmation failed. If you were charged, email info@b-os.gr.",
+    confirmFailed: "Confirmation failed. If you were charged, email info@qrmenus.info.",
     activated: "Subscription activated. Thank you!",
     activatedDev: "Plan activated (dev mode).",
     inactiveTitle: "Active subscription required",

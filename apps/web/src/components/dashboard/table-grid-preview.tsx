@@ -44,17 +44,20 @@ const LEGEND_STATES: TableTileState[] = [
 export function TableGridLegend({
   stateLabels,
   className,
+  compact = false,
 }: {
   stateLabels: Record<TableTileState, string>;
   className?: string;
+  compact?: boolean;
 }) {
   return (
-    <ul className={cn("flex flex-wrap gap-2", className)}>
+    <ul className={cn("flex flex-wrap gap-1.5 sm:gap-2", className)}>
       {LEGEND_STATES.map((state) => (
         <li key={state}>
           <span
             className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold leading-tight",
+              "inline-flex items-center rounded-full font-semibold leading-tight",
+              compact ? "px-1.5 py-px text-[10px] sm:px-2 sm:py-0.5 sm:text-xs" : "px-2.5 py-0.5 text-xs",
               TABLE_TILE_BADGE_STYLES[state],
             )}
           >

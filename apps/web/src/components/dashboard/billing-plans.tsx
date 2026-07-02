@@ -199,8 +199,8 @@ export function BillingPlans({
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
           {enterprisePlan?.description ?? B.enterpriseFallback}{" "}
           {B.contactUs}{" "}
-          <a href="mailto:info@b-os.gr" className="font-semibold text-brand-blue hover:underline">
-            info@b-os.gr
+          <a href="mailto:info@qrmenus.info" className="font-semibold text-brand-blue hover:underline">
+            info@qrmenus.info
           </a>
         </p>
       </div>
