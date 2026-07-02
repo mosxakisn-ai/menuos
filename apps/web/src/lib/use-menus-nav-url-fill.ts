@@ -28,12 +28,19 @@ export function useMenusNavUrlFill(
   const replaceTimesRef = useRef<number[]>([]);
   const loopReportedRef = useRef(false);
   const buildUrl = mode === "import" ? buildMenusImportUrl : buildMenusPageUrl;
+  const searchKey = searchParams.toString();
 
   useEffect(() => {
     filledRef.current = false;
     loopReportedRef.current = false;
     replaceTimesRef.current = [];
   }, [params.venueId]);
+
+  // Allow URL fill again after browser back / stale ?menu= (unless nav loop was reported).
+  useEffect(() => {
+    if (loopReportedRef.current) return;
+    filledRef.current = menusNavParamsMatchUrl(params, searchParams);
+  }, [searchKey, params.venueId, params.menuId, searchParams, params]);
 
   useEffect(() => {
     if (!enabled || !params.venueId || !params.menuId) return;

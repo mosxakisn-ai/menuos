@@ -31,7 +31,7 @@ export function ChangePasswordForm({ compact = false }: { compact?: boolean }) {
         setConfirmPassword("");
         setFlash({ type: "success", text: d.changePassword.success });
       } else {
-        showFromResponse(data, false);
+        showFromResponse(data, false, res.status);
       }
     } catch {
       setFlash({ type: "error", text: d.billing.networkError });

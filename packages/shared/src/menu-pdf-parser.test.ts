@@ -28,6 +28,7 @@ describe("splitBilingualMenuName", () => {
       nameEn: "Espresso Martini",
     });
     expect(splitBilingualMenuName("PASTA")).toEqual({ nameGr: "PASTA", nameEn: "PASTA" });
+    expect(splitBilingualMenuName("Pi")).toEqual({ nameGr: "Pi", nameEn: "Pi" });
   });
 });
 

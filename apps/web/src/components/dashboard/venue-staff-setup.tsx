@@ -297,7 +297,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         body: JSON.stringify({ name: name.trim(), roleLabel: roleLabel.trim(), stations }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setName("");
         setRoleLabel("");
@@ -330,7 +330,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setEditingId(null);
         await reload();
@@ -348,7 +348,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         method: "DELETE",
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) await reload();
     } finally {
       setBusy(null);

@@ -70,7 +70,7 @@ export function SettingsForm({ venues }: { venues: SettingsVenue[] }) {
         }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) router.refresh();
     } finally {
       setSaving(false);

@@ -46,7 +46,7 @@ export function QrGenerator({
         setPngDataUrl(data.pngDataUrl);
         setFlash({ type: "success", text: Q.generatedSuccess });
       } else {
-        showFromResponse(data, false);
+        showFromResponse(data, false, res.status);
       }
     } finally {
       setLoading(false);

@@ -201,7 +201,7 @@ export function WaiterPanel({
         }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) await load();
     } finally {
       setUpdatingPassId(null);
@@ -222,7 +222,7 @@ export function WaiterPanel({
         }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) await load();
     } finally {
       setUpdatingCallId(null);

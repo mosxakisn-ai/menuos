@@ -40,6 +40,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   unknown: "Άλλο",
 };
 
+const SOURCE_LABELS: Record<string, string> = {
+  client_api: "API (browser)",
+  client_nav: "Πλοήγηση",
+  server: "Server",
+  client: "Browser",
+};
+
 function formatWhen(iso: string) {
   return new Date(iso).toLocaleString("el-GR", {
     day: "2-digit",
@@ -331,7 +338,8 @@ export function SupervisorHelpDeskClient() {
                                 <p className="mt-0.5 font-mono text-xs text-slate-500">{report.errorCode}</p>
                               ) : null}
                               <p className="mt-1 text-xs text-slate-400">
-                                {formatWhen(report.lastSeenAt)} · {report.source}
+                                {formatWhen(report.lastSeenAt)} ·{" "}
+                                {SOURCE_LABELS[report.source] ?? report.source}
                                 {report.userEmail ? ` · ${report.userEmail}` : ""}
                               </p>
                             </div>

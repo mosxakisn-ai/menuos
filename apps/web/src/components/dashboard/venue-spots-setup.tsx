@@ -69,7 +69,7 @@ export function VenueSpotsSetup({
         body: JSON.stringify({ type: spotType, label: label.trim() }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setLabel("");
         await reload();
@@ -109,7 +109,7 @@ export function VenueSpotsSetup({
         }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) await reload();
     } finally {
       setBusy(null);
@@ -123,7 +123,7 @@ export function VenueSpotsSetup({
     try {
       const res = await fetch(`/api/venues/${venueId}/spots/${spotId}`, { method: "DELETE" });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         if (editingId === spotId) {
           setEditingId(null);
@@ -150,7 +150,7 @@ export function VenueSpotsSetup({
         body: JSON.stringify({ label: editLabel.trim() }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setEditingId(null);
         setEditLabel("");

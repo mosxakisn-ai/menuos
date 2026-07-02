@@ -41,7 +41,7 @@ export default function NewVenuePage() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) {
-      showFromResponse(data, false);
+      showFromResponse(data, false, res.status);
       return;
     }
     showFromResponse(data, true);

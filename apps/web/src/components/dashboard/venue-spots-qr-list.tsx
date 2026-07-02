@@ -84,7 +84,7 @@ export function VenueSpotsQrList({
     const data = (await res.json()) as { pngDataUrl?: string; menuUrl?: string; error?: string };
     if (generation !== venueGenerationRef.current) return null;
     if (!res.ok || !data.pngDataUrl || !data.menuUrl) {
-      showFromResponse(data, false);
+      showFromResponse(data, false, res.status);
       return null;
     }
     const qr: QrData = { pngDataUrl: data.pngDataUrl, menuUrl: data.menuUrl };

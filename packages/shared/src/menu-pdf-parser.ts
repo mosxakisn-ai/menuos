@@ -165,7 +165,7 @@ export function dropDuplicateBilingualName(names: {
 function isMostlyLatin(text: string): boolean {
   const latin = (text.match(/[A-Za-z]/g) ?? []).length;
   const greek = (text.match(/[\u0370-\u03FF\u1F00-\u1FFF]/g) ?? []).length;
-  return latin > greek && latin >= 3;
+  return latin > greek && latin >= 2;
 }
 
 /** ALL CAPS section title without price — ΖΥΜΑΡΙΚΑ, ΣΟΥΠΕΣ, PASTA. */

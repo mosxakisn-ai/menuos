@@ -16,6 +16,8 @@ export function shouldReportClientApiError(
   if (status !== undefined && status >= 500) return true;
   if (data.code && SKIP_CLIENT_DIAGNOSTIC_CODES.has(data.code)) return false;
   if (status !== undefined && status >= 400 && (data.error || data.code)) return true;
+  // Safety net when callers omit HTTP status but API returned an error code.
+  if (status === undefined && data.code) return true;
   if (data.error) return true;
   return false;
 }

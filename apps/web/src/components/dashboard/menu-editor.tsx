@@ -191,7 +191,7 @@ export function MenuEditor({
         }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setCatNameGr("");
         await loadMenus();
@@ -224,7 +224,7 @@ export function MenuEditor({
         }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setItemForm({ nameGr: "", price: "", descriptionGr: "", label: "", photoUrl: "" });
         setItemCategoryId(null);
@@ -246,7 +246,7 @@ export function MenuEditor({
         body: JSON.stringify({ venueId, name: newMenuName.trim() }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setNewMenuName("");
         await loadMenus();
@@ -273,7 +273,7 @@ export function MenuEditor({
         method: "DELETE",
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         clearMenuEditState();
         setActiveMenuId(data.menu?.id ?? "");
@@ -307,7 +307,7 @@ export function MenuEditor({
     try {
       const res = await fetch(`/api/menus/${menu.id}`, { method: "DELETE" });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         if (activeMenuId === menu.id) {
           clearMenuEditState();
@@ -328,7 +328,7 @@ export function MenuEditor({
       body: JSON.stringify({ label }),
     });
     const data = await res.json();
-    showFromResponse(data, res.ok);
+    showFromResponse(data, res.ok, res.status);
     if (res.ok) await loadMenus();
   }
 
@@ -362,7 +362,7 @@ export function MenuEditor({
         }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setEditingItemId(null);
         await loadMenus();
@@ -379,7 +379,7 @@ export function MenuEditor({
       body: JSON.stringify({ available: !item.available }),
     });
     const data = await res.json();
-    showFromResponse(data, res.ok);
+    showFromResponse(data, res.ok, res.status);
     if (res.ok) await loadMenus();
   }
 
@@ -387,7 +387,7 @@ export function MenuEditor({
     if (!(await confirmDestructive(d.catalogEntry.deleteConfirm))) return;
     const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
     const data = await res.json();
-    showFromResponse(data, res.ok);
+    showFromResponse(data, res.ok, res.status);
     if (res.ok) await loadMenus();
   }
 
@@ -404,7 +404,7 @@ export function MenuEditor({
     }
     const res = await fetch(`/api/categories/${cat.id}`, { method: "DELETE" });
     const data = await res.json();
-    showFromResponse(data, res.ok);
+    showFromResponse(data, res.ok, res.status);
     if (res.ok) await loadMenus();
   }
 
@@ -432,7 +432,7 @@ export function MenuEditor({
         body: JSON.stringify({ nameGr: editCategoryNameGr.trim() }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setEditingCategoryId(null);
         await loadMenus();
