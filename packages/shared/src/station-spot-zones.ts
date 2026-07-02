@@ -15,7 +15,7 @@ export type SpotZoneGroup = {
 };
 
 const MAIN_ZONE_ID = "main";
-const MAIN_ZONE_LABEL = "Σαλόνι";
+const MAIN_ZONE_LABEL = "Τραπέζια";
 const SUNBED_ZONE_ID = "sunbed";
 const SUNBED_ZONE_LABEL = "Ξαπλώστρες";
 const ROOM_ZONE_ID = "room";

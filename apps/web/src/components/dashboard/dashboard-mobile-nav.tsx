@@ -27,8 +27,8 @@ export function DashboardMobileNav({
     { href: "/dashboard/qr", label: d.nav.qrShort, icon: QrCode },
     { href: "/dashboard/waiter", label: d.nav.callsShort, icon: Monitor },
     { href: "/dashboard/history", label: d.nav.history, icon: History },
-    { href: "/dashboard/billing", label: d.subscription, icon: CreditCard },
     { href: "/dashboard/settings", label: d.settings, icon: Settings },
+    { href: "/dashboard/billing", label: d.subscription, icon: CreditCard },
   ];
   const allowedHrefs = new Set(dashboardNavHrefsForRole(userRole));
   const visibleLinks = links.filter((link) => allowedHrefs.has(link.href));

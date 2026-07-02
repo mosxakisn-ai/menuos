@@ -18,6 +18,31 @@ import {
 
 export { shouldSeedOnboardingVenue };
 
+export type OnboardingSeedScope = {
+  /** Sample catalog — only on brand-new venue create, never on dashboard backfill. */
+  menu?: boolean;
+  spots?: boolean;
+  staff?: boolean;
+  paraliaScreen?: boolean;
+  hours?: boolean;
+};
+
+const DEFAULT_CREATE_SEED: Required<OnboardingSeedScope> = {
+  menu: true,
+  spots: true,
+  staff: true,
+  paraliaScreen: true,
+  hours: true,
+};
+
+const DASHBOARD_BACKFILL_SEED: Required<OnboardingSeedScope> = {
+  menu: false,
+  spots: false,
+  staff: false,
+  paraliaScreen: false,
+  hours: true,
+};
+
 function isRetryableSeedError(err: unknown): boolean {
   const code = typeof err === "object" && err && "code" in err ? String((err as { code: string }).code) : "";
   return code === "P2034" || code === "P2002";
@@ -166,12 +191,18 @@ export async function seedOnboardingVenueInTransaction(
     venueSlug: string;
     menuId: string;
   },
+  scope: OnboardingSeedScope = DEFAULT_CREATE_SEED,
 ): Promise<boolean> {
   const { organizationId, organizationSlug, venueId, venueSlug, menuId } = params;
   if (!shouldSeedOnboardingVenue(organizationSlug, venueSlug)) return false;
 
+  const seed = { ...DEFAULT_CREATE_SEED, ...scope };
   const needs = await readVenueSeedNeeds(tx, menuId, venueId);
-  let { needsMenu, needsSpots, needsStaff, needsParalia, needsHours } = needs;
+  let needsMenu = needs.needsMenu && seed.menu;
+  let needsSpots = needs.needsSpots && seed.spots;
+  let needsStaff = needs.needsStaff && seed.staff;
+  let needsParalia = needs.needsParalia && seed.paraliaScreen;
+  let needsHours = needs.needsHours && seed.hours;
 
   if (!needsMenu && !needsSpots && !needsStaff && !needsParalia && !needsHours) {
     return false;
@@ -207,15 +238,24 @@ export async function seedOnboardingVenueInTransaction(
   return true;
 }
 
-async function venueNeedsOnboardingSeed(params: {
-  organizationSlug: string;
-  venueId: string;
-  venueSlug: string;
-  menuId: string;
-}): Promise<boolean> {
+async function venueNeedsOnboardingSeed(
+  params: {
+    organizationSlug: string;
+    venueId: string;
+    venueSlug: string;
+    menuId: string;
+  },
+  scope: Required<OnboardingSeedScope>,
+): Promise<boolean> {
   if (!shouldSeedOnboardingVenue(params.organizationSlug, params.venueSlug)) return false;
   const needs = await readVenueSeedNeeds(prisma, params.menuId, params.venueId);
-  return needs.needsMenu || needs.needsSpots || needs.needsStaff || needs.needsParalia || needs.needsHours;
+  return (
+    (needs.needsMenu && scope.menu) ||
+    (needs.needsSpots && scope.spots) ||
+    (needs.needsStaff && scope.staff) ||
+    (needs.needsParalia && scope.paraliaScreen) ||
+    (needs.needsHours && scope.hours)
+  );
 }
 
 /** Backfill empty venues for one organization (e.g. on dashboard load). */
@@ -253,11 +293,11 @@ export async function ensureOnboardingVenuesForOrganization(organizationId: stri
       menuId,
     };
 
-    if (!(await venueNeedsOnboardingSeed(params))) continue;
+    if (!(await venueNeedsOnboardingSeed(params, DASHBOARD_BACKFILL_SEED))) continue;
 
     try {
       const didSeed = await prisma.$transaction(
-        async (tx) => seedOnboardingVenueInTransaction(tx, params),
+        async (tx) => seedOnboardingVenueInTransaction(tx, params, DASHBOARD_BACKFILL_SEED),
         serializableTransaction,
       );
       if (didSeed) seeded += 1;

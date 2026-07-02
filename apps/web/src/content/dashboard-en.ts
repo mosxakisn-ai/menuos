@@ -231,6 +231,7 @@ export const DASHBOARD_EN = {
     monitorTabPass: "Pass",
     passFilterAll: "All",
     zoneFilterAll: "All zones",
+    zonePickHeading: "Pick a zone",
     emptyCallsTab: "No active calls right now.",
     emptyPassTab: "No active pass notifications.",
     emptyFilteredView: "No active activity with these filters.",

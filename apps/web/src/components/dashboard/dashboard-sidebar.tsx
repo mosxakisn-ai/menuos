@@ -27,8 +27,8 @@ const navItems: { href: string; icon: LucideIcon; match?: "exact" }[] = [
   { href: "/dashboard/qr", icon: QrCode },
   { href: "/dashboard/waiter", icon: Monitor },
   { href: "/dashboard/history", icon: History },
-  { href: "/dashboard/billing", icon: CreditCard },
   { href: "/dashboard/settings", icon: Settings },
+  { href: "/dashboard/billing", icon: CreditCard },
 ];
 
 function sidebarNavLabel(href: string, d: ReturnType<typeof useDashboardCopy>["d"]): string {

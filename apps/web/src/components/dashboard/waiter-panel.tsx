@@ -8,6 +8,7 @@ import {
   formatStaffStationsForLang,
   groupVenueSpotsByZone,
   passStationInputToDb,
+  zoneIdForWaiterLocation,
   type OrderPayload,
   type VenueSpotType,
 } from "@menuos/shared";
@@ -249,6 +250,36 @@ export function WaiterPanel({
     return rows;
   }, [passSignals, zoneFilterId, zoneGroups, monitorTab, passStationFilter]);
 
+  const zoneActivityCounts = useMemo(() => {
+    const counts = new Map<string, { pending: number; pass: number }>();
+    const bump = (zoneId: string | null, kind: "pending" | "pass") => {
+      if (!zoneId) return;
+      const cur = counts.get(zoneId) ?? { pending: 0, pass: 0 };
+      if (kind === "pending") cur.pending += 1;
+      else cur.pass += 1;
+      counts.set(zoneId, cur);
+    };
+    for (const call of calls) {
+      if (call.status === "PENDING") {
+        bump(zoneIdForWaiterLocation(call, zoneGroups), "pending");
+      }
+    }
+    for (const pass of passSignals) {
+      if (pass.status === "READY" || pass.status === "PICKED_UP") {
+        bump(zoneIdForWaiterLocation(pass, zoneGroups), "pass");
+      }
+    }
+    return counts;
+  }, [calls, passSignals, zoneGroups]);
+
+  function zoneActivityTotal(zoneId: string): { pending: number; pass: number; total: number } {
+    if (zoneId === "all") {
+      return { pending: pendingCount, pass: passCount, total: pendingCount + passCount };
+    }
+    const row = zoneActivityCounts.get(zoneId) ?? { pending: 0, pass: 0 };
+    return { ...row, total: row.pending + row.pass };
+  }
+
   if (venues.length === 0) {
     return (
       <Card>
@@ -276,6 +307,42 @@ export function WaiterPanel({
 
   const showStationFilters = monitorTab === "all" || monitorTab === "pass";
   const showZoneFilters = zoneGroups.length > 1;
+
+  function renderZoneButton(zoneId: string, label: string) {
+    const selected = zoneFilterId === zoneId;
+    const activity = zoneActivityTotal(zoneId);
+    return (
+      <button
+        key={zoneId}
+        type="button"
+        onClick={() => setZoneFilterId(zoneId)}
+        className={cn(
+          "flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 px-3 py-3 text-center transition sm:min-h-[4.25rem] sm:px-4",
+          selected
+            ? "border-brand-blue bg-brand-blue text-white shadow-md shadow-brand-blue/20"
+            : activity.total > 0
+              ? "border-amber-300 bg-amber-50 text-brand-navy hover:border-amber-400"
+              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
+        )}
+      >
+        <span className={cn("text-base font-bold leading-tight sm:text-lg", selected && "text-white")}>
+          {label}
+        </span>
+        {activity.total > 0 ? (
+          <span
+            className={cn(
+              "text-2xl font-extrabold tabular-nums leading-none sm:text-3xl",
+              selected ? "text-white" : "text-amber-700",
+            )}
+          >
+            {activity.total}
+          </span>
+        ) : (
+          <span className={cn("text-xs", selected ? "text-white/80" : "text-slate-400")}>—</span>
+        )}
+      </button>
+    );
+  }
 
   const hasActivity = displayCalls.length > 0 || displayPassSignals.length > 0;
   const isZoneFilteredEmpty =
@@ -320,60 +387,61 @@ export function WaiterPanel({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
+      {showZoneFilters ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:mb-3 sm:text-sm">
+            {W.zonePickHeading}
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {renderZoneButton("all", W.zoneFilterAll)}
+            {zoneGroups.map((zone) => renderZoneButton(zone.id, zone.label))}
+          </div>
+        </section>
+      ) : null}
+
       {isManagerView ? (
-        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
           {W.managerViewBadge}
         </p>
       ) : staffMember ? (
-        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
           {W.staffViewBadge(staffMember.name, formatStaffStationsForLang(staffMember.stations, lang))}
         </p>
       ) : null}
 
-      {showZoneFilters ? (
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
+        {monitorTabs.map((tab) => (
           <button
+            key={tab.id}
             type="button"
-            onClick={() => setZoneFilterId("all")}
+            onClick={() => {
+              setMonitorTab(tab.id);
+              if (tab.id === "calls") setPassStationFilter("all");
+            }}
             className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-medium transition",
-              zoneFilterId === "all"
-                ? "bg-brand-blue/10 text-brand-blue ring-1 ring-brand-blue/20"
+              "rounded-full px-2.5 py-1 text-xs font-medium transition sm:px-3 sm:py-1.5 sm:text-sm",
+              monitorTab === tab.id
+                ? "bg-brand-navy text-white shadow-sm"
                 : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
             )}
           >
-            {W.zoneFilterAll}
+            {tab.label}
           </button>
-          {zoneGroups.map((zone) => (
-            <button
-              key={zone.id}
-              type="button"
-              onClick={() => setZoneFilterId(zone.id)}
-              className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-medium transition",
-                zoneFilterId === zone.id
-                  ? "bg-brand-blue/10 text-brand-blue ring-1 ring-brand-blue/20"
-                  : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
-              )}
-            >
-              {zone.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
+        ))}
+      </div>
 
       {showStationFilters ? (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {passStationFilters.map((filter) => (
             <button
               key={filter.id}
               type="button"
               onClick={() => setPassStationFilter(filter.id)}
               className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-medium transition",
+                "rounded-full px-2 py-0.5 text-[11px] font-medium transition sm:px-2.5 sm:py-1 sm:text-xs",
                 passStationFilter === filter.id
                   ? "bg-orange-100 text-orange-900 ring-1 ring-orange-200"
                   : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
@@ -384,27 +452,6 @@ export function WaiterPanel({
           ))}
         </div>
       ) : null}
-
-      <div className="flex flex-wrap gap-2">
-        {monitorTabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => {
-              setMonitorTab(tab.id);
-              if (tab.id === "calls") setPassStationFilter("all");
-            }}
-            className={cn(
-              "rounded-full px-3 py-1.5 text-sm font-medium transition",
-              monitorTab === tab.id
-                ? "bg-brand-navy text-white shadow-sm"
-                : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
       {displaySpots.length === 0 && hasActivity ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">

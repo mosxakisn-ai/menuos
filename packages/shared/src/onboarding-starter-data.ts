@@ -109,15 +109,8 @@ export const ONBOARDING_STARTER_CATEGORIES: OnboardingStarterCategory[] = [
   },
 ];
 
-export const ONBOARDING_STARTER_SPOTS: { type: "TABLE" | "SUNBED" | "ROOM"; label: string }[] = [
-  ...Array.from({ length: 8 }, (_, i) => ({ type: "TABLE" as const, label: String(i + 1) })),
-  { type: "TABLE", label: "Αυλή-1" },
-  { type: "TABLE", label: "Αυλή-2" },
-  { type: "SUNBED", label: "paralia-1" },
-  { type: "SUNBED", label: "paralia-2" },
-  { type: "ROOM", label: "101" },
-  { type: "ROOM", label: "102" },
-];
+/** Spots are configured by the owner in Ρυθμίσεις → Ταμπλό — not auto-seeded. */
+export const ONBOARDING_STARTER_SPOTS: { type: "TABLE" | "SUNBED" | "ROOM"; label: string }[] = [];
 
 export const ONBOARDING_STARTER_STAFF: {
   name: string;

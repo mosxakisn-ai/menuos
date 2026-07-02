@@ -12,8 +12,8 @@ const ALL_DASHBOARD_NAV_HREFS = [
   "/dashboard/qr",
   "/dashboard/waiter",
   "/dashboard/history",
-  "/dashboard/billing",
   "/dashboard/settings",
+  "/dashboard/billing",
 ] as const;
 
 const STAFF_DASHBOARD_NAV_HREFS = ["/dashboard/waiter", "/dashboard/settings"] as const;

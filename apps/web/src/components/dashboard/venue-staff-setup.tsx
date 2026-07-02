@@ -14,7 +14,6 @@ import {
   dashboardFormGridClass,
   dashboardLabelClass,
 } from "@/components/dashboard/dashboard-page";
-import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import {
   DashboardIconButton,
   dashboardTextActionClass,
@@ -25,7 +24,7 @@ import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
 import { buildStaffShareUrl } from "@/lib/staff-share-url";
 import { cn } from "@/lib/utils";
 
-type Venue = { id: string; name: string; slug: string; staffToken?: string };
+type Venue = { id: string; name: string; slug: string };
 type StaffMember = {
   id: string;
   name: string;
@@ -240,11 +239,6 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const loadGenerationRef = useRef(0);
 
   const venue = venues.find((v) => v.id === venueId);
-  const [sharedStaffToken, setSharedStaffToken] = useState(venue?.staffToken ?? "");
-
-  useEffect(() => {
-    setSharedStaffToken(venue?.staffToken ?? "");
-  }, [venue?.staffToken]);
 
   function onMemberTokenRotated(memberId: string, memberToken: string) {
     setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, memberToken } : m)));
@@ -577,26 +571,6 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           </ul>
         )}
       </div>
-
-      {venue?.slug && sharedStaffToken ? (
-        <details className={`${dashboardCardClass} group`}>
-          <summary className="cursor-pointer list-none text-sm font-semibold text-primary marker:content-none [&::-webkit-details-marker]:hidden">
-            <span className="inline-flex items-center gap-2">
-              {S.sharedLinkTitle}
-              <span className="text-xs font-normal text-slate-500">({S.sharedLinkOptional})</span>
-            </span>
-          </summary>
-          <p className="mt-3 text-sm text-slate-600">{S.sharedLinkHint}</p>
-          <div className="mt-4">
-            <WaiterShareLink
-              venueSlug={venue.slug}
-              staffToken={sharedStaffToken}
-              venueId={venue.id}
-              onStaffTokenRotated={setSharedStaffToken}
-            />
-          </div>
-        </details>
-      ) : null}
     </div>
   );
 }

@@ -4,8 +4,13 @@ import {
   getDashboardCopy,
   type DashboardLang,
 } from "@/content/dashboard-i18n";
+import {
+  classifyPdfImportPage,
+  ensureAnalyzablePageSelection,
+  type PdfPageKind,
+} from "@/lib/pdf-import-page-classify";
 
-export type PdfPageKind = "digital" | "scan" | "cover";
+export type { PdfPageKind };
 
 export type PdfPagePreview = {
   id: string;
@@ -20,47 +25,8 @@ export type PdfPagePreview = {
   selected: boolean;
 };
 
-const MIN_DIGITAL_CHARS = 50;
-const COVER_MAX_CHARS = 25;
-
 export function pageSelectionKey(fileIndex: number, fileName: string): string {
   return `${fileIndex}:${fileName}`;
-}
-
-function classifyPage(
-  textLength: number,
-  pageNumber: number,
-  totalPages: number,
-  lang: DashboardLang = "EN",
-): { kind: PdfPageKind; skipReason?: string; selected: boolean } {
-  const skip = getDashboardCopy(lang).importWizard;
-  if (textLength < COVER_MAX_CHARS) {
-    const reason =
-      pageNumber === 1
-        ? skip.skipCoverFirst
-        : pageNumber === totalPages
-          ? skip.skipCoverLast
-          : skip.skipLowText;
-    return { kind: "cover", skipReason: reason, selected: false };
-  }
-
-  if (pageNumber === 1 && textLength < MIN_DIGITAL_CHARS) {
-    return {
-      kind: "cover",
-      skipReason: skip.skipBanner,
-      selected: false,
-    };
-  }
-
-  if (textLength < MIN_DIGITAL_CHARS) {
-    return {
-      kind: "scan",
-      skipReason: skip.skipScan,
-      selected: true,
-    };
-  }
-
-  return { kind: "digital", selected: true };
 }
 
 async function getPdfJs() {
@@ -111,7 +77,20 @@ export async function loadPdfPagePreviews(
       renderPageThumbnail(page),
       pageTextLength(page),
     ]);
-    const classified = classifyPage(textLength, pageNumber, totalPages, lang);
+    const classified = classifyPdfImportPage(textLength, pageNumber, totalPages);
+    const skip = getDashboardCopy(lang).importWizard;
+    const skipReason =
+      classified.kind === "cover"
+        ? pageNumber === 1 && totalPages > 1
+          ? skip.skipCoverFirst
+          : pageNumber === totalPages && totalPages > 1
+            ? skip.skipCoverLast
+            : pageNumber === 1
+              ? skip.skipBanner
+              : skip.skipLowText
+        : classified.kind === "scan"
+          ? skip.skipScan
+          : undefined;
     pages.push({
       id: `${fileIndex}-${pageNumber}`,
       fileName: file.name,
@@ -121,7 +100,7 @@ export async function loadPdfPagePreviews(
       thumbnailUrl,
       textLength,
       kind: classified.kind,
-      skipReason: classified.skipReason,
+      skipReason,
       selected: classified.selected,
     });
   }
@@ -145,14 +124,19 @@ export async function loadAllPdfPagePreviews(
     );
     all.push(...pages);
   }
-  return all;
+  return ensurePdfPagesAnalyzable(all);
+}
+
+/** When every page is image-only, auto-select all for OCR instead of blocking import. */
+export function ensurePdfPagesAnalyzable(pages: PdfPagePreview[]): PdfPagePreview[] {
+  return ensureAnalyzablePageSelection(pages).map((p) => ({ ...p, skipReason: undefined }));
 }
 
 /** All selected menu pages (digital + scan), keyed by file index. */
 export function buildPageSelectionMap(pages: PdfPagePreview[]): Record<string, number[]> {
   const map: Record<string, number[]> = {};
   for (const p of pages) {
-    if (!p.selected || p.kind === "cover") continue;
+    if (!p.selected) continue;
     const key = pageSelectionKey(p.fileIndex, p.fileName);
     if (!map[key]) map[key] = [];
     map[key]!.push(p.pageNumber);
@@ -175,7 +159,7 @@ export function pageSelectionStats(pages: PdfPagePreview[]) {
     scanSelectedCount: scanSelected.length,
     scanTotalCount: scanTotal.length,
     coverTotalCount: coverTotal.length,
-    canAnalyze: selected.some((p) => p.kind === "digital" || p.kind === "scan"),
+    canAnalyze: pages.some((p) => p.selected),
   };
 }
 

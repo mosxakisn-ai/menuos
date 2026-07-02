@@ -1,25 +1,30 @@
 /**
- * Προσομοίωση PDF import pipeline (όπως το wizard + API).
- * Usage: npx tsx scripts/simulate-pdf-import.ts <path-to.pdf>
+ * Προσομοίωση PDF import pipeline (ίδια λογική με το wizard + API).
+ *
+ * Usage:
+ *   npm run test:pdf-import
+ *   npm run test:pdf-import -- path/to/other.pdf
  */
 import { readFileSync, existsSync } from "node:fs";
-import { basename } from "node:path";
+import { basename, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseMenuTextFromPdf, resetMenuPdfParserIds } from "@menuos/shared";
 import { extractTextFromPdfBuffer } from "@/lib/pdf-extract";
 import { isOcrSpaceConfigured } from "@/lib/ocr-space";
 import { renderPdfPageToJpeg } from "@/lib/pdf-page-render";
+import {
+  classifyPdfImportPage,
+  ensureAnalyzablePageSelection,
+  selectMenuImportPages,
+  type PdfPageKind,
+} from "@/lib/pdf-import-page-classify";
 
-const MIN_DIGITAL = 50;
-const COVER_MAX = 25;
+const DEFAULT_FIXTURE = join(
+  fileURLToPath(new URL(".", import.meta.url)),
+  "../test-fixtures/pdf/stegnakozas-menu-25.pdf",
+);
 
-type PageKind = "digital" | "scan" | "cover";
-
-function classify(textLen: number, page: number, total: number): PageKind {
-  if (textLen < COVER_MAX) return "cover";
-  if (page === 1 && textLen < MIN_DIGITAL) return "cover";
-  if (textLen < MIN_DIGITAL) return "scan";
-  return "digital";
-}
+const MIN_TEXT_CHARS = 15;
 
 async function getPageCount(buffer: Buffer): Promise<number> {
   const { PDFParse } = await import("pdf-parse");
@@ -33,9 +38,10 @@ async function getPageCount(buffer: Buffer): Promise<number> {
 }
 
 async function main() {
-  const pdfPath = process.argv[2];
-  if (!pdfPath || !existsSync(pdfPath)) {
-    console.error("Usage: npx tsx scripts/simulate-pdf-import.ts <path-to.pdf>");
+  const pdfPath = resolve(process.argv[2] ?? DEFAULT_FIXTURE);
+  if (!existsSync(pdfPath)) {
+    console.error(`PDF not found: ${pdfPath}`);
+    console.error("Usage: npm run test:pdf-import -- [path-to.pdf]");
     process.exit(1);
   }
 
@@ -50,31 +56,29 @@ async function main() {
   console.log(`📦 Μέγεθος: ${sizeKb} KB`);
   console.log(`🔑 OCR.space: ${isOcrSpaceConfigured() ? "✅ configured" : "❌ OCR_SPACE_API_KEY λείπει"}\n`);
 
-  // Step 1: Scan
   console.log("▶ Βήμα 1/4 — Σάρωση PDF...");
   const totalPages = await getPageCount(buffer);
   console.log(`   Σελίδες: ${totalPages}\n`);
 
-  const pages: Array<{
+  const classified: Array<{
     page: number;
-    kind: PageKind;
+    kind: PdfPageKind;
     textLen: number;
     selected: boolean;
     text: string;
     ocrUsed: boolean;
   }> = [];
 
-  // Step 2: Per-page analysis
   console.log("▶ Βήμα 2/4 — Ανάλυση σελίδων...");
   for (let p = 1; p <= totalPages; p += 1) {
-    let text = await extractTextFromPdfBuffer(buffer, [p]);
+    const embedded = await extractTextFromPdfBuffer(buffer, [p]);
+    const { kind, selected: autoSelected } = classifyPdfImportPage(embedded.length, p, totalPages);
+    let selected = autoSelected;
+    let text = embedded;
     let ocrUsed = false;
 
-    const kind = classify(text.length, p, totalPages);
-    let selected = kind === "digital" || kind === "scan";
-
-    if (text.length < 15 && kind === "scan" && isOcrSpaceConfigured()) {
-      process.stdout.write(`   Σελ. ${p}: OCR... `);
+    if (selected && text.length < MIN_TEXT_CHARS && isOcrSpaceConfigured()) {
+      process.stdout.write(`   Σελ. ${p}: ${kind} → OCR... `);
       try {
         const jpeg = await renderPdfPageToJpeg(buffer, p);
         const { ocrImageBuffer } = await import("@/lib/ocr-space");
@@ -85,27 +89,46 @@ async function main() {
         console.log(`FAIL — ${err instanceof Error ? err.message : err}`);
       }
     } else {
-      console.log(`   Σελ. ${p}: ${kind.padEnd(7)} | ${text.length} chars${selected ? " ✓" : " (skip)"}`);
+      console.log(
+        `   Σελ. ${p}: ${kind.padEnd(7)} | ${embedded.length} chars embedded${selected ? " ✓" : " (skip)"}`,
+      );
     }
 
-    pages.push({ page: p, kind, textLen: text.length, selected, text, ocrUsed });
+    classified.push({
+      page: p,
+      kind,
+      textLen: text.length,
+      selected,
+      text,
+      ocrUsed,
+    });
   }
 
-  const selectedPages = pages.filter((p) => p.selected && p.textLen >= 15);
+  let pages = selectMenuImportPages(classified);
+  pages = ensureAnalyzablePageSelection(pages);
+
+  const selectedPages = pages.filter((p) => p.selected);
+  const withText = selectedPages.filter((p) => p.textLen >= MIN_TEXT_CHARS);
+
   console.log(`\n   Επιλεγμένες: ${selectedPages.length}/${totalPages}`);
+  console.log(`   Με κείμενο (μετά OCR): ${withText.length}`);
   console.log(`   OCR κλήσεις: ${pages.filter((p) => p.ocrUsed).length}\n`);
 
   if (selectedPages.length === 0) {
+    console.error("❌ Αποτυχία — καμία σελίδα επιλέχθηκε.");
+    process.exit(1);
+  }
+
+  if (withText.length === 0) {
     console.error("❌ Αποτυχία — καμία σελίδα με κείμενο.");
     if (!isOcrSpaceConfigured()) {
-      console.error("   → Βάλε OCR_SPACE_API_KEY στο .env για scan PDF.");
+      console.error("   → Βάλε OCR_SPACE_API_KEY στο .env για σαρωμένα PDF.");
     }
     process.exit(1);
   }
 
-  // Step 3: Merge + parse
   console.log("▶ Βήμα 3/4 — Parsing κατηγοριών & ειδών...");
-  const mergedText = selectedPages.map((p) => p.text).join("\n\n");
+  const mergedText = withText.map((p) => p.text).join("\n\n");
   resetMenuPdfParserIds();
   const result = parseMenuTextFromPdf(mergedText, fileName);
 
@@ -121,7 +144,6 @@ async function main() {
     }
   }
 
-  // Step 4: Preview sample
   console.log("\n▶ Βήμα 4/4 — Preview (δείγμα):\n");
   for (const cat of result.categories.slice(0, 4)) {
     console.log(`   📁 ${cat.nameGr}${cat.nameEn ? ` / ${cat.nameEn}` : ""}`);
@@ -139,7 +161,7 @@ async function main() {
   if (result.stats.itemsFound > 0) {
     console.log(`✅ Επιτυχία — ${result.stats.itemsFound} είδη έτοιμα για preview/import`);
   } else {
-    console.log("⚠️  Parsing OK αλλά 0 είδη — ίσως χρειάζεται AI για layout");
+    console.log("⚠️  Parsing OK αλλά 0 είδη — ίσως χρειάζεται χειροκίνητη διόρθωση");
   }
   console.log("═══════════════════════════════════════════\n");
 }

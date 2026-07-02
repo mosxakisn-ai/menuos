@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { passStationInputSchema, type PassStationInput } from "./pass-signal";
+import { STATION_SCREEN_SPOT_PREFIX_PATTERN } from "./station-screen-spots";
 
 export const STATION_SCREEN_LABEL_MAX = 40;
 export const STATION_SCREENS_MAX_PER_STATION = 12;

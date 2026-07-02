@@ -31,6 +31,7 @@ import {
   loadAllPdfPagePreviews,
   pageSelectionStats,
   selectMenuPagesOnly,
+  ensurePdfPagesAnalyzable,
   type PdfPagePreview,
 } from "@/lib/pdf-page-preview";
 import { cn } from "@/lib/utils";
@@ -177,6 +178,7 @@ export function MenuImportWizard({
           lang,
         );
         loadedPages = selectMenuPagesOnly(loadedPages);
+        loadedPages = ensurePdfPagesAnalyzable(loadedPages);
         setPages(loadedPages);
       }
 

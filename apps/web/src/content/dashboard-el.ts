@@ -234,6 +234,7 @@ export const DASHBOARD_EL = {
     monitorTabPass: "Πάσο",
     passFilterAll: "Όλα",
     zoneFilterAll: "Όλες οι ζώνες",
+    zonePickHeading: "Διάλεξε ζώνη",
     emptyCallsTab: "Καμία ενεργή κλήση αυτή τη στιγμή.",
     emptyPassTab: "Καμία ενεργή ειδοποίηση πάσου.",
     emptyFilteredView: "Καμία ενεργή κίνηση με αυτά τα φίλτρα.",
