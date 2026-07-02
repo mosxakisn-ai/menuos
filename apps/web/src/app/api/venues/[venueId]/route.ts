@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { venueUpdateSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
+import { canManageVenueSecrets } from "@/lib/dashboard-roles";
 import { getVenueForOrganization } from "@/lib/venue-access";
+import { stripVenueSecrets } from "@/lib/venue-secrets";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
 type Params = { params: Promise<{ venueId: string }> };
@@ -17,7 +19,9 @@ export async function GET(_req: Request, { params }: Params) {
     return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
   }
 
-  return NextResponse.json({ venue });
+  return NextResponse.json({
+    venue: stripVenueSecrets(venue, canManageVenueSecrets(auth.session!.role)),
+  });
 }
 
 export async function PATCH(request: Request, { params }: Params) {

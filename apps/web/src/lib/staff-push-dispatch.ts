@@ -23,11 +23,14 @@ type StaffMemberPushRow = {
 function pushUrlForSub(
   venueSlug: string,
   venueStaffToken: string,
-  staffMemberId: string | null,
+  sub: PushSubRow,
   membersById: Map<string, StaffMemberPushRow>,
 ): string {
-  if (staffMemberId) {
-    const member = membersById.get(staffMemberId);
+  if (!sub.staffMemberId && sub.venueId === null) {
+    return "/dashboard/waiter";
+  }
+  if (sub.staffMemberId) {
+    const member = membersById.get(sub.staffMemberId);
     if (member) return buildStaffWaiterUrl(venueSlug, member.memberToken);
   }
   return buildStaffWaiterUrl(venueSlug, venueStaffToken);
@@ -52,7 +55,7 @@ function filterSubsForPassSignal(
     })
     .map((sub) => ({
       ...sub,
-      url: pushUrlForSub(venueSlug, venueStaffToken, sub.staffMemberId, membersById),
+      url: pushUrlForSub(venueSlug, venueStaffToken, sub, membersById),
     }));
 }
 
@@ -74,7 +77,7 @@ function filterSubsForWaiterCall(
     })
     .map((sub) => ({
       ...sub,
-      url: pushUrlForSub(venueSlug, venueStaffToken, sub.staffMemberId, membersById),
+      url: pushUrlForSub(venueSlug, venueStaffToken, sub, membersById),
     }));
 }
 

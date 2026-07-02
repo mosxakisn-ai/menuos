@@ -102,7 +102,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <DashboardLocaleProvider initialLang={initialLang}>
       <div className="dashboard-shell flex min-h-screen bg-brand-surface">
-        <DashboardSidebar initialPendingCount={initialMonitorCount} subscription={subscription} />
+        <DashboardSidebar
+          initialPendingCount={initialMonitorCount}
+          subscription={subscription}
+          userRole={session.role}
+        />
         <div className="flex min-w-0 flex-1 flex-col">
           <DashboardHeader
             businessName={business.name}
@@ -122,7 +126,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
           </main>
         </div>
-        <DashboardMobileNav initialPendingCount={initialMonitorCount} />
+        <DashboardMobileNav initialPendingCount={initialMonitorCount} userRole={session.role} />
       </div>
     </DashboardLocaleProvider>
   );

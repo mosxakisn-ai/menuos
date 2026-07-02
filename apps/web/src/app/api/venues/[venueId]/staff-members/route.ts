@@ -3,12 +3,13 @@ import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
 import { venueStaffMemberCreateSchema, zodFirstErrorMessage } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
+import { canManageVenueSecrets } from "@/lib/dashboard-roles";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ venueId: string }> };
 
 export async function GET(_req: Request, { params }: Params) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requireActiveSubscription();
   if (auth.response) return auth.response;
 
   const { venueId } = await params;
@@ -17,9 +18,24 @@ export async function GET(_req: Request, { params }: Params) {
     return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
   }
 
+  const includeSecrets = canManageVenueSecrets(auth.session!.role);
   const members = await prisma.venueStaffMember.findMany({
     where: { venueId },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    ...(includeSecrets
+      ? {}
+      : {
+          select: {
+            id: true,
+            name: true,
+            roleLabel: true,
+            stations: true,
+            sortOrder: true,
+            venueId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
   });
 
   return NextResponse.json({ members });

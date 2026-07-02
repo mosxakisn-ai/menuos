@@ -24,7 +24,7 @@ export async function POST(_req: Request, { params }: Params) {
       data: { staffToken },
     }),
     prisma.pushSubscription.deleteMany({
-      where: { venueId },
+      where: { venueId, staffMemberId: null, userId: null },
     }),
   ]);
 

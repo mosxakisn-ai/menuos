@@ -7,9 +7,16 @@ import { DashboardLanguageSwitcher } from "@/components/dashboard/dashboard-lang
 import { DashboardCountBadge } from "@/components/dashboard/dashboard-ui";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { usePendingWaiterCount } from "@/hooks/use-pending-waiter-count";
+import { dashboardNavHrefsForRole } from "@/lib/dashboard-roles";
 import { cn } from "@/lib/utils";
 
-export function DashboardMobileNav({ initialPendingCount = 0 }: { initialPendingCount?: number }) {
+export function DashboardMobileNav({
+  initialPendingCount = 0,
+  userRole,
+}: {
+  initialPendingCount?: number;
+  userRole: string;
+}) {
   const pathname = usePathname();
   const { d } = useDashboardCopy();
   const pendingCount = usePendingWaiterCount(initialPendingCount);
@@ -23,6 +30,8 @@ export function DashboardMobileNav({ initialPendingCount = 0 }: { initialPending
     { href: "/dashboard/billing", label: d.subscription, icon: CreditCard },
     { href: "/dashboard/settings", label: d.settings, icon: Settings },
   ];
+  const allowedHrefs = new Set(dashboardNavHrefsForRole(userRole));
+  const visibleLinks = links.filter((link) => allowedHrefs.has(link.href));
 
   return (
     <>
@@ -31,7 +40,7 @@ export function DashboardMobileNav({ initialPendingCount = 0 }: { initialPending
       </div>
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 bg-white/95 px-0.5 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
         <ul className="mx-auto flex max-w-lg justify-between">
-          {links.map(({ href, label, icon: Icon, exact }) => {
+          {visibleLinks.map(({ href, label, icon: Icon, exact }) => {
             const active = exact ? pathname === href : pathname.startsWith(href);
             const showBadge = href === "/dashboard/waiter" && pendingCount > 0;
             return (

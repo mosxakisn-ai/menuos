@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { prisma } from "@menuos/db";
 import { getTrialPeriodDays } from "@menuos/shared";
 import { DashboardOverviewContent } from "@/components/dashboard/dashboard-overview-content";
@@ -17,6 +18,7 @@ type Props = { searchParams: Promise<{ welcome?: string }> };
 
 export default async function DashboardPage({ searchParams }: Props) {
   const session = await getSession();
+  if (session!.role === "STAFF") redirect("/dashboard/waiter");
   try {
     await ensureOnboardingVenuesForOrganization(session!.organizationId);
   } catch (err) {

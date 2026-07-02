@@ -1,14 +1,30 @@
 import Link from "next/link";
 
-export function StaffWaiterInvalidLink({ venueSlug }: { venueSlug: string }) {
+export function StaffWaiterInvalidLink({
+  venueSlug,
+  invalidKey = false,
+}: {
+  venueSlug: string;
+  invalidKey?: boolean;
+}) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-brand-surface/40 px-4">
       <div className="max-w-md rounded-card border border-slate-200 bg-white p-6 text-center shadow-soft">
         <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">MenuOS</p>
         <h1 className="mt-2 font-serif text-xl font-bold text-primary">Σύνδεσμος σερβιτόρου</h1>
         <p className="mt-3 text-sm text-slate-600">
-          Αυτός ο σύνδεσμος δεν είναι έγκυρος ή έληξε. Χρησιμοποίησε τον <strong>πλήρη σύνδεσμο</strong> από
-          το dashboard (Waiter → Αντιγραφή συνδέσμου) — όχι μόνο το <code className="text-xs">/s/{venueSlug}</code>.
+          {invalidKey ? (
+            <>
+              Ο κωδικός στον σύνδεσμο δεν είναι έγκυρος ή έληξε. Ζήτησε νέο{" "}
+              <strong>προσωπικό link</strong> από τον υπεύθυνο (Ρυθμίσεις → Services).
+            </>
+          ) : (
+            <>
+              Αυτός ο σύνδεσμος δεν είναι έγκυρος ή έληξε. Χρησιμοποίησε τον <strong>πλήρη σύνδεσμο</strong>{" "}
+              από Ρυθμίσεις → Services — όχι μόνο το{" "}
+              <code className="text-xs">/s/{venueSlug}</code>.
+            </>
+          )}
         </p>
         <p className="mt-3 text-xs text-slate-500">
           Τοπική ανάπτυξη: άνοιξε <code className="text-xs">http://localhost:3000</code> (όχι{" "}

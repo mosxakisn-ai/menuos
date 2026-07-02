@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { StaffWaiterInvalidLink } from "@/components/dashboard/staff-waiter-invalid-link";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
@@ -23,7 +23,7 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
 
   if (incomingKey) {
     const auth = await resolveStaffAuthBySlug(venueSlug, incomingKey);
-    if (!auth) notFound();
+    if (!auth) return <StaffWaiterInvalidLink venueSlug={venueSlug} invalidKey />;
     const params = new URLSearchParams({ venueSlug, key: incomingKey });
     redirect(`/api/staff/session?${params.toString()}`);
   }

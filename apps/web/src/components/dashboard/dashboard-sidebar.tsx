@@ -17,6 +17,7 @@ import { DashboardCountBadge } from "@/components/dashboard/dashboard-ui";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { DashboardSidebarSubscription } from "@/components/dashboard/dashboard-sidebar-subscription";
 import { usePendingWaiterCount } from "@/hooks/use-pending-waiter-count";
+import { dashboardNavHrefsForRole } from "@/lib/dashboard-roles";
 import type { SubscriptionDisplayInput } from "@/lib/subscription-display";
 import { cn } from "@/lib/utils";
 
@@ -59,20 +60,25 @@ function isNavActive(pathname: string, href: string, match?: "exact") {
 export function DashboardSidebar({
   initialPendingCount,
   subscription,
+  userRole,
 }: {
   initialPendingCount: number;
   subscription: SubscriptionDisplayInput | null;
+  userRole: string;
 }) {
   const pathname = usePathname();
   const { d, lang } = useDashboardCopy();
   const pendingCount = usePendingWaiterCount(initialPendingCount);
+  const allowedHrefs = new Set(dashboardNavHrefsForRole(userRole));
+  const visibleNavItems = navItems.filter((item) => allowedHrefs.has(item.href));
+  const homeHref = userRole === "STAFF" ? "/dashboard/waiter" : "/dashboard";
 
   return (
     <aside className="hidden min-h-screen w-64 shrink-0 flex-col bg-sidebar-gradient p-6 text-white md:flex">
-      <Logo href="/dashboard" dark showTagline markSize={36} />
+      <Logo href={homeHref} dark showTagline markSize={36} />
       <p className="mt-2 text-xs text-slate-400">{d.layout.tagline}</p>
       <nav className="mt-6 flex min-h-0 flex-1 flex-col space-y-1">
-        {navItems.map(({ href, icon: Icon, match }) => {
+        {visibleNavItems.map(({ href, icon: Icon, match }) => {
           const active = isNavActive(pathname, href, match);
           return (
             <Link

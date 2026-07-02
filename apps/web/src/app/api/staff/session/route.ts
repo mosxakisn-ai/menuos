@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolveStaffAuthBySlug } from "@/lib/staff-auth";
 import { STAFF_SESSION_COOKIE } from "@/lib/staff-auth-constants";
-import { APP_URL } from "@/lib/config";
+import { getOrganizationPlanContext } from "@/lib/billing";
 import { createStaffSessionToken, staffSessionCookieOptions } from "@/lib/staff-session";
 
 export const dynamic = "force-dynamic";
@@ -21,8 +21,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Μη έγκυρος σύνδεσμος σερβιτόρου." }, { status: 404 });
   }
 
+  const plan = await getOrganizationPlanContext(auth.venue.organizationId);
+  if (!plan?.active) {
+    return NextResponse.json(
+      { error: "Η συνδρομή δεν είναι ενεργή.", code: "subscription_inactive" },
+      { status: 403 },
+    );
+  }
+
   const token = createStaffSessionToken(auth.venue.id, key);
-  const redirectTo = new URL(`/s/${venueSlug}`, APP_URL);
+  const redirectTo = new URL(`/s/${venueSlug}`, url.origin);
   const response = NextResponse.redirect(redirectTo, 302);
   response.cookies.set(STAFF_SESSION_COOKIE, token, staffSessionCookieOptions());
   return response;

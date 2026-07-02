@@ -24,14 +24,27 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = event.notification.data?.url ?? "/";
+  const targetOrigin = (() => {
+    try {
+      return new URL(url, self.location.origin).origin;
+    } catch {
+      return self.location.origin;
+    }
+  })();
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
-        if ("focus" in client && /menuos\.gr/i.test(client.url)) {
-          if ("navigate" in client) {
-            return client.navigate(url);
+        if ("focus" in client) {
+          try {
+            if (new URL(client.url).origin === targetOrigin) {
+              if ("navigate" in client) {
+                return client.navigate(url);
+              }
+              return client.focus();
+            }
+          } catch {
+            /* ignore malformed client URL */
           }
-          return client.focus();
         }
       }
       if (self.clients.openWindow) {
