@@ -242,8 +242,8 @@ export const DASHBOARD_EL = {
     emptyTitle: "Καμία ενεργή κλήση",
     emptyDesc:
       "Όταν πελάτης στείλει παραγγελία, καλέσει σερβιτόρο ή ζητήσει λογαριασμό από το QR menu, θα εμφανιστεί εδώ.",
-    goButton: "Πήγαινε",
-    completeButton: "Ολοκλήρωση",
+    goButton: "Αποδοχή",
+    completeButton: "Έτοιμο",
     orderTotal: "Σύνολο",
     callStatus: {
       PENDING: "Σε αναμονή",
@@ -259,12 +259,12 @@ export const DASHBOARD_EL = {
     passSection: "Πάσα τμημάτων",
     passEmpty: "Καμία ενεργή ειδοποίηση πάσου.",
     passCount: (n: number) => `${n} πάσο`,
-    passPickedUp: "Πήρα",
-    passDelivered: "Παρέδωσα",
+    passPickedUp: "OK",
+    passDelivered: "Έτοιμο",
     passStatus: {
       READY: "Έτοιμο",
-      PICKED_UP: "Πήρα",
-      DELIVERED: "Παραδόθηκε",
+      PICKED_UP: "Σε εξέλιξη",
+      DELIVERED: "Έτοιμο",
     },
     passStation: {
       kitchen: "Κουζίνα",
@@ -606,7 +606,7 @@ export const DASHBOARD_EL = {
         staffPushHint:
           "Κάθε σερβιτόρος ενεργοποιεί push στο δικό του κινητό — ανοίγει το προσωπικό link και πατά «Ενεργοποίηση».",
         passTitle: "Live πάσα",
-        passHint: "Μένει μέχρι ο σερβιτόρος πατήσει «Παρέδωσα». Ο χάρτης θέσεων ενημερώνεται live στον πίνακα σερβιτόρου.",
+        passHint: "Μένει μέχρι ο σερβιτόρος πατήσει «Έτοιμο». Ο χάρτης θέσεων ενημερώνεται live.",
         livePanelLink: "Άνοιγμα live οθονών →",
         historyLink: "Ιστορικό παραδόσεων →",
         staffLinksHint: "Links σερβιτόρων: Ρυθμίσεις → Προσωπικό (ένα link ανά άτομο).",

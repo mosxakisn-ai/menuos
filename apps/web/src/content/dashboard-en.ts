@@ -239,8 +239,8 @@ export const DASHBOARD_EN = {
     emptyTitle: "No active calls",
     emptyDesc:
       "When a customer places an order, calls the waiter or requests the bill from the QR menu, it will appear here.",
-    goButton: "On my way",
-    completeButton: "Complete",
+    goButton: "Accept",
+    completeButton: "Done",
     orderTotal: "Total",
     callStatus: {
       PENDING: "Pending",
@@ -256,12 +256,12 @@ export const DASHBOARD_EN = {
     passSection: "Department pass",
     passEmpty: "No active pass notifications.",
     passCount: (n: number) => `${n} pass`,
-    passPickedUp: "Picked up",
-    passDelivered: "Delivered",
+    passPickedUp: "OK",
+    passDelivered: "Done",
     passStatus: {
       READY: "Ready",
-      PICKED_UP: "Picked up",
-      DELIVERED: "Delivered",
+      PICKED_UP: "In progress",
+      DELIVERED: "Done",
     },
     passStation: {
       kitchen: "Kitchen",
@@ -599,7 +599,7 @@ export const DASHBOARD_EN = {
         staffPushHint:
           "Each waiter enables push on their own phone — open their personal link and tap Enable.",
         passTitle: "Live pass",
-        passHint: "Stays visible until the waiter taps “Delivered”. The spot map updates live on the waiter panel.",
+        passHint: "Stays visible until the waiter taps Done. The spot map updates live.",
         livePanelLink: "Open live screens →",
         historyLink: "Delivery history →",
         staffLinksHint: "Waiter links: Settings → Personnel (one link per staff member).",
