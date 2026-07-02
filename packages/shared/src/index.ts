@@ -26,6 +26,7 @@ export * from "./menu-languages";
 export * from "./menu-auto-translate";
 export * from "./menu-pdf-parser";
 export * from "./demo-venue";
+export * from "./onboarding-starter-data";
 export * from "./menu-cart";
 export * from "./venue-spots";
 export * from "./item-extras";

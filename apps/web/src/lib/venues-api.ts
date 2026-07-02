@@ -15,6 +15,7 @@ import {
   serializableTransaction,
 } from "@/lib/plan-limits";
 import { legacyVenueScreenToken } from "@/lib/station-screens";
+import { seedOnboardingVenueInTransaction } from "@/lib/seed-onboarding-venue";
 import { allocateGlobalVenueSlug, baseVenueSlug } from "@/lib/venue-slug";
 
 const DEFAULT_STATION_SCREENS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
@@ -50,6 +51,10 @@ export async function createVenueHandler(request: Request, organizationId: strin
   try {
     const venue = await prisma.$transaction(async (tx) => {
       await assertCanAddVenueInTransaction(tx, organizationId);
+      const organization = await tx.organization.findUniqueOrThrow({
+        where: { id: organizationId },
+        select: { slug: true },
+      });
       const created = await tx.venue.create({
         data: {
           organizationId,
@@ -76,6 +81,16 @@ export async function createVenueHandler(request: Request, organizationId: strin
             screenToken: legacyVenueScreenToken(created, station),
             sortOrder: 0,
           },
+        });
+      }
+
+      const menuId = created.menus[0]?.id;
+      if (menuId) {
+        await seedOnboardingVenueInTransaction(tx, {
+          organizationSlug: organization.slug,
+          venueId: created.id,
+          venueSlug: created.slug,
+          menuId,
         });
       }
 

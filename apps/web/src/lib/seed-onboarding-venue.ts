@@ -1,0 +1,128 @@
+import { randomUUID } from "node:crypto";
+import type { Prisma } from "@menuos/db";
+import {
+  ONBOARDING_EXTRA_STATION_SCREEN,
+  ONBOARDING_ITEM_PHOTOS,
+  ONBOARDING_OPENING_HOURS,
+  ONBOARDING_STARTER_CATEGORIES,
+  ONBOARDING_STARTER_SPOTS,
+  ONBOARDING_STARTER_STAFF,
+  shouldSeedOnboardingVenue,
+} from "@menuos/shared";
+
+export { shouldSeedOnboardingVenue };
+
+function itemTranslationRows(
+  gr: string,
+  en: string,
+  de?: string,
+  fr?: string,
+  descriptionGr?: string,
+) {
+  const rows: { language: "GR" | "EN" | "DE" | "FR"; name: string; description: string | null }[] =
+    [
+      { language: "GR", name: gr, description: descriptionGr ?? null },
+      { language: "EN", name: en, description: null },
+    ];
+  if (de) rows.push({ language: "DE", name: de, description: null });
+  if (fr) rows.push({ language: "FR", name: fr, description: null });
+  return rows;
+}
+
+export async function seedOnboardingVenueInTransaction(
+  tx: Prisma.TransactionClient,
+  params: {
+    organizationSlug: string;
+    venueId: string;
+    venueSlug: string;
+    menuId: string;
+  },
+): Promise<void> {
+  const { organizationSlug, venueId, venueSlug, menuId } = params;
+  if (!shouldSeedOnboardingVenue(organizationSlug, venueSlug)) return;
+
+  await tx.venueSetting.update({
+    where: { venueId },
+    data: { openingHours: ONBOARDING_OPENING_HOURS },
+  });
+
+  let catSort = 0;
+  for (const cat of ONBOARDING_STARTER_CATEGORIES) {
+    const category = await tx.category.create({
+      data: {
+        menuId,
+        sortOrder: catSort++,
+        translations: {
+          create: [
+            { language: "GR", name: cat.nameGr },
+            { language: "EN", name: cat.nameEn },
+            ...(cat.nameDe ? [{ language: "DE" as const, name: cat.nameDe }] : []),
+            ...(cat.nameFr ? [{ language: "FR" as const, name: cat.nameFr }] : []),
+          ],
+        },
+      },
+    });
+
+    let itemSort = 0;
+    for (const item of cat.items) {
+      await tx.item.create({
+        data: {
+          categoryId: category.id,
+          price: item.price,
+          sortOrder: itemSort++,
+          available: true,
+          photoUrl: ONBOARDING_ITEM_PHOTOS[item.nameGr] ?? null,
+          translations: {
+            create: itemTranslationRows(
+              item.nameGr,
+              item.nameEn,
+              item.nameDe,
+              item.nameFr,
+              item.descriptionGr,
+            ),
+          },
+        },
+      });
+    }
+  }
+
+  let spotSort = 0;
+  for (const spot of ONBOARDING_STARTER_SPOTS) {
+    await tx.venueSpot.create({
+      data: {
+        venueId,
+        type: spot.type,
+        label: spot.label,
+        sortOrder: spotSort++,
+      },
+    });
+  }
+
+  let staffSort = 0;
+  for (const member of ONBOARDING_STARTER_STAFF) {
+    await tx.venueStaffMember.create({
+      data: {
+        venueId,
+        name: member.name,
+        roleLabel: member.roleLabel,
+        stations: member.stations,
+        memberToken: randomUUID(),
+        sortOrder: staffSort++,
+      },
+    });
+  }
+
+  const barScreenCount = await tx.venueStationScreen.count({
+    where: { venueId, station: ONBOARDING_EXTRA_STATION_SCREEN.station },
+  });
+  await tx.venueStationScreen.create({
+    data: {
+      venueId,
+      station: ONBOARDING_EXTRA_STATION_SCREEN.station,
+      label: ONBOARDING_EXTRA_STATION_SCREEN.label,
+      screenToken: randomUUID(),
+      sortOrder: barScreenCount,
+      spotPrefix: ONBOARDING_EXTRA_STATION_SCREEN.spotPrefix,
+    },
+  });
+}

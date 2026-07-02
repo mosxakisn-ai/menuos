@@ -1,5 +1,7 @@
 /** Public demo venue seeded by scripts/seed-master-user.mjs */
 export const DEMO_VENUE_SLUG = "demo-taverna";
+/** Master org that owns the public demo — never auto-seed onboarding data here. */
+export const DEMO_ORG_SLUG = "menuos-master";
 export const DEMO_TABLE = "12";
 
 export type SiteLocale = "el" | "en";
