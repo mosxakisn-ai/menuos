@@ -88,17 +88,6 @@ function SettingsPageBody({
     switch (tab) {
       case "general":
         return <SettingsGeneralTab email={email} name={name} role={role} venues={venues} />;
-      case "personnel":
-        return (
-          <SettingsPersonnelPanel
-            venues={venues.map((v) => ({
-              id: v.id,
-              name: v.name,
-              slug: v.slug,
-              staffToken: v.staffToken,
-            }))}
-          />
-        );
       case "kitchen":
         return <SettingsKitchenPanel venues={venues} />;
       case "bar":
@@ -106,7 +95,19 @@ function SettingsPageBody({
       case "tables":
         return <SettingsTablesPanel venues={spotVenues} />;
       case "services":
-        return <SettingsServicesPanel venues={venues} />;
+        return (
+          <div className="space-y-5">
+            <SettingsServicesPanel venues={venues} />
+            <SettingsPersonnelPanel
+              venues={venues.map((v) => ({
+                id: v.id,
+                name: v.name,
+                slug: v.slug,
+                staffToken: v.staffToken,
+              }))}
+            />
+          </div>
+        );
       default:
         return null;
     }

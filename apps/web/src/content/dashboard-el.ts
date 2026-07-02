@@ -411,8 +411,8 @@ export const DASHBOARD_EL = {
     waiter: {
       title: "Οθόνες",
       description:
-        "Live χάρτης θέσεων, κλήσεις και πάσο — ενημερώνεται αυτόματα. Τα links προσωπικού ρυθμίζονται από Ρυθμίσεις → Προσωπικό.",
-      setupLink: "Ρυθμίσεις → Προσωπικό",
+        "Live χάρτης θέσεων, κλήσεις και πάσο — ενημερώνεται αυτόματα. Τα links ρυθμίζονται από Ρυθμίσεις → Services.",
+      setupLink: "Ρυθμίσεις → Services",
     },
     billing: {
       title: "Συνδρομή",
@@ -446,15 +446,14 @@ export const DASHBOARD_EL = {
       description: "Λογαριασμός, προσωπικό, τμήματα και ταμπλό.",
       tabs: {
         general: "Γενικά",
-        personnel: "Προσωπικό",
+        services: "Services",
         kitchen: "Κουζίνα",
         bar: "Μπαρ",
         tables: "Ταμπλό",
-        services: "Υπηρεσίες",
       },
       demoBadge: "Δείγμα — για δοκιμές UI",
       personnel: {
-        title: "Προσωπικό",
+        title: "Services",
         description:
           "Κάθε μέλος έχει δικό του link σερβιτόρου — μοιράστε το στο κινητό/tablet του. Τα τμήματα φιλτράρουν ποιες ειδοποιήσεις πάσου βλέπει.",
         addTitle: "Νέο μέλος",
@@ -482,7 +481,7 @@ export const DASHBOARD_EL = {
         delete: "Διαγραφή",
         saveEdit: "Αποθήκευση",
         stationLabels: {
-          services: "Σερβιτόριο",
+          services: "Services",
           kitchen: "Κουζίνα",
           bar: "Μπαρ",
           cold: "Κρύα",

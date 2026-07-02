@@ -158,7 +158,6 @@ export function SettingsServicesPanel({
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </p>
-        <p className="mt-4 text-xs text-slate-500">{S.services.staffLinksHint}</p>
       </div>
     </div>
   );

@@ -7,17 +7,16 @@ import { cn } from "@/lib/utils";
 
 export const SETTINGS_TAB_IDS = [
   "general",
-  "personnel",
+  "services",
   "kitchen",
   "bar",
   "tables",
-  "services",
 ] as const;
 
 export type SettingsTabId = (typeof SETTINGS_TAB_IDS)[number];
 
 function resolveSettingsTab(value: string | null): SettingsTabId {
-  if (value === "waiters") return "services";
+  if (value === "waiters" || value === "personnel") return "services";
   if (value && SETTINGS_TAB_IDS.includes(value as SettingsTabId)) {
     return value as SettingsTabId;
   }

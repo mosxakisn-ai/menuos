@@ -406,8 +406,8 @@ export const DASHBOARD_EN = {
     waiter: {
       title: "Screens",
       description:
-        "Live spot map, calls and pass — updates automatically. Personal staff links are set in Settings → Personnel.",
-      setupLink: "Settings → Personnel",
+        "Live spot map, calls and pass — updates automatically. Staff links are set in Settings → Services.",
+      setupLink: "Settings → Services",
     },
     billing: {
       title: "Subscription",
@@ -441,15 +441,14 @@ export const DASHBOARD_EN = {
       description: "Account, staff, departments and table board.",
       tabs: {
         general: "General",
-        personnel: "Personnel",
+        services: "Services",
         kitchen: "Kitchen",
         bar: "Bar",
         tables: "Tables",
-        services: "Services",
       },
       demoBadge: "Sample — UI preview",
       personnel: {
-        title: "Personnel",
+        title: "Services",
         description:
           "Each member gets a personal waiter link for their phone or tablet. Department tags filter which pass alerts they see.",
         addTitle: "New member",
