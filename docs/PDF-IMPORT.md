@@ -106,10 +106,20 @@ flowchart TD
 **Env:**
 
 ```env
-GEMINI_API_KEY=           # https://aistudio.google.com/apikey
+GEMINI_API_KEY=           # https://aistudio.google.com/apikey (free tier — no card)
 PDF_IMPORT_VISION=1       # 0 = off
 PDF_IMPORT_VISION_MODE=auto  # auto (default) | ocr | always | never
 GEMINI_MODEL=gemini-2.0-flash
+```
+
+**Free tier (δοκιμή):** Google AI Studio δίνει δωρεάν κλήσεις στο `gemini-2.0-flash` (~1.500/ημέρα, χωρίς κάρτα). Αρκεί για δοκιμές PDF import και λίγους πελάτες. Όταν χρειαστείς περισσότερα, ενεργοποιείς billing στο AI Studio.
+
+**Setup:**
+
+```bash
+bash scripts/set-gemini-key.sh AIzaSy...
+bash scripts/check-gemini-key.sh
+# prod: APP_DIR=/opt/menuos bash scripts/set-gemini-key.sh KEY && docker compose -f docker-compose.prod.yml up -d menuos-web
 ```
 
 **Routing (`PDF_IMPORT_VISION_MODE`):**
