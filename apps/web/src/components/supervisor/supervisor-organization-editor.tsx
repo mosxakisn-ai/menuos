@@ -67,6 +67,9 @@ export function SupervisorOrganizationEditor({
   const [notes, setNotes] = useState(initial.notes ?? "");
 
   const [plan, setPlan] = useState(initial.plan);
+  const [periodEnd, setPeriodEnd] = useState(
+    initial.currentPeriodEnd ? initial.currentPeriodEnd.slice(0, 10) : "",
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +92,9 @@ export function SupervisorOrganizationEditor({
       setCity(data.organization.city ?? "");
       setNotes(data.organization.notes ?? "");
       setPlan(data.organization.plan);
+      setPeriodEnd(
+        data.organization.currentPeriodEnd ? data.organization.currentPeriodEnd.slice(0, 10) : "",
+      );
     } catch {
       setError("Αποτυχία φόρτωσης στοιχείων.");
     } finally {
@@ -127,6 +133,9 @@ export function SupervisorOrganizationEditor({
         setCity(data.organization.city ?? "");
         setNotes(data.organization.notes ?? "");
         setPlan(data.organization.plan);
+        setPeriodEnd(
+          data.organization.currentPeriodEnd ? data.organization.currentPeriodEnd.slice(0, 10) : "",
+        );
         onSaved(data.organization);
       } else {
         onSaved();
@@ -394,14 +403,49 @@ export function SupervisorOrganizationEditor({
                 <option value="ENTERPRISE">ENTERPRISE</option>
               </select>
             </label>
-            <button
-              type="button"
-              disabled={saving || plan === organization.plan}
-              className={buttonClass("primary", "sm")}
-              onClick={() => void save({ plan, status: planStatusForSave(plan) }, "Αποθήκευση συνδρομής.")}
-            >
-              {saving ? "Αποθήκευση…" : "Αποθήκευση πακέτου"}
-            </button>
+            {plan !== "TRIAL" ? (
+              <label className="block text-sm">
+                <span className={dashboardLabelClass}>Λήξη περιόδου (YYYY-MM-DD)</span>
+                <input
+                  type="date"
+                  className={dashboardFieldClass}
+                  value={periodEnd}
+                  onChange={(e) => setPeriodEnd(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Για ενεργή συνδρομή χωρίς Stripe — π.χ. 2030-12-31
+                </p>
+              </label>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={saving || plan === organization.plan}
+                className={buttonClass("primary", "sm")}
+                onClick={() => void save({ plan, status: planStatusForSave(plan) }, "Αποθήκευση πακέτου.")}
+              >
+                {saving ? "Αποθήκευση…" : "Αποθήκευση πακέτου"}
+              </button>
+              {plan !== "TRIAL" && periodEnd ? (
+                <button
+                  type="button"
+                  disabled={saving}
+                  className={buttonClass("secondary", "sm")}
+                  onClick={() =>
+                    void save(
+                      {
+                        plan,
+                        status: "ACTIVE",
+                        currentPeriodEnd: periodEnd,
+                      },
+                      "Ενημερώθηκε η ημερομηνία λήξης.",
+                    )
+                  }
+                >
+                  {saving ? "Αποθήκευση…" : "Αποθήκευση λήξης"}
+                </button>
+              ) : null}
+            </div>
           </div>
         )}
 

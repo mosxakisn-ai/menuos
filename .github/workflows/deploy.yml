@@ -45,10 +45,12 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
-          debug: true
+          port: 22
+          protocol: tcp
           timeout: 30m
           command_timeout: 25m
+          script_stop: true
+          debug: true
           script: |
             set -euo pipefail
             APP_DIR="/opt/menuos"

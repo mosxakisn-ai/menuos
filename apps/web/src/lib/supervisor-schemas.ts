@@ -31,6 +31,11 @@ export const supervisorOrganizationUpdateSchema = z
     status: z.enum(["ACTIVE", "TRIALING", "PAST_DUE", "CANCELED"]).optional(),
     extendTrialDays: z.number().int().min(1).max(90).optional(),
     grantProMonths: z.number().int().min(1).max(60).optional(),
+    currentPeriodEnd: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+      .optional(),
   })
   .refine(
     (data) =>
@@ -45,7 +50,8 @@ export const supervisorOrganizationUpdateSchema = z
       data.plan !== undefined ||
       data.status !== undefined ||
       data.extendTrialDays !== undefined ||
-      data.grantProMonths !== undefined,
+      data.grantProMonths !== undefined ||
+      data.currentPeriodEnd !== undefined,
     { message: "Nothing to update" },
   );
 

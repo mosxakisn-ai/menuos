@@ -367,7 +367,8 @@ export async function updateOrganizationForSupervisor(
     input.plan !== undefined ||
     input.status !== undefined ||
     input.extendTrialDays !== undefined ||
-    input.grantProMonths !== undefined;
+    input.grantProMonths !== undefined ||
+    input.currentPeriodEnd !== undefined;
 
   if (!hasSubscriptionPatch) {
     const updated = await getOrganizationForSupervisor(id);
@@ -389,6 +390,22 @@ export async function updateOrganizationForSupervisor(
     data.status = "ACTIVE";
     data.trialEndsAt = null;
     data.currentPeriodEnd = periodEnd;
+  } else if (input.currentPeriodEnd) {
+    const periodEnd = new Date(`${input.currentPeriodEnd}T23:59:59.999Z`);
+    if (!Number.isFinite(periodEnd.getTime())) {
+      throw new Error("invalid_period_end");
+    }
+    data.trialEndsAt = null;
+    data.currentPeriodEnd = periodEnd;
+    if (!data.plan) {
+      const sub = await prisma.subscription.findUnique({ where: { organizationId: id } });
+      if (sub?.plan && sub.plan !== "TRIAL") {
+        data.plan = sub.plan;
+      } else {
+        data.plan = "PRO";
+      }
+    }
+    if (!data.status) data.status = "ACTIVE";
   } else {
     if (input.plan) data.plan = input.plan as SubscriptionPlan;
     if (input.status) data.status = input.status as SubscriptionStatus;
