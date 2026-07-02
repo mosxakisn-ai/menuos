@@ -154,10 +154,7 @@ export function SupervisorHelpDeskClient() {
 
   return (
     <DashboardPage wide>
-      <DashboardPageHeader
-        title="Help Desk"
-        description="Διαγνωστικά σφάλματα πελατών — αόρατα στο panel τους. Βλέπεις το πρόβλημα πριν σε πάρουν τηλέφωνο."
-      />
+      <DashboardPageHeader title="Help Desk" />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Kpi label="Ανοιχτά" value={summary?.openCount ?? 0} accent="border-red-100/80" />
