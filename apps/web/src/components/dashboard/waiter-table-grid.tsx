@@ -132,42 +132,31 @@ function WaiterSpotTile({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-xl border p-3 shadow-sm transition",
+        "flex h-full min-h-[14rem] flex-col rounded-xl border p-3 shadow-sm transition",
         TABLE_TILE_STYLES[tile.state],
-        hasActivity ? "min-h-[10.5rem]" : "aspect-square items-center justify-center text-center",
       )}
     >
-      <div
-        className={cn(
-          "flex w-full gap-2",
-          hasActivity ? "items-start justify-between" : "flex-col items-center justify-center",
-        )}
-      >
-        <span
-          className={cn(
-            "font-serif text-2xl font-bold tabular-nums leading-none",
-            hasActivity ? "shrink-0" : "",
-            unmapped ? "text-left text-lg leading-tight" : "",
-          )}
-        >
-          {displayLabel}
-        </span>
-        <div className={cn("flex flex-col items-end gap-1", hasActivity ? "shrink text-right" : "")}>
-          {unmapped ? (
-            <span className="inline-flex max-w-full rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
-              {labels.unmappedSpotBadge}
-            </span>
-          ) : null}
-          <TileStateBadge
-            state={tile.state}
-            label={stateLabels[tile.state]}
-            className={hasActivity ? "text-right" : "mt-2"}
-          />
-        </div>
-      </div>
-
       {hasActivity ? (
-        <div className="mt-2.5 flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+        <>
+          <div className="flex w-full shrink-0 items-start justify-between gap-2">
+            <span
+              className={cn(
+                "font-serif text-2xl font-bold tabular-nums leading-none",
+                unmapped ? "text-left text-lg leading-tight" : "",
+              )}
+            >
+              {displayLabel}
+            </span>
+            <div className="flex shrink flex-col items-end gap-1 text-right">
+              {unmapped ? (
+                <span className="inline-flex max-w-full rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                  {labels.unmappedSpotBadge}
+                </span>
+              ) : null}
+              <TileStateBadge state={tile.state} label={stateLabels[tile.state]} className="text-right" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
           {visibleCalls.map((call, index) => (
             <div
               key={call.id ?? `call-${index}`}
@@ -277,8 +266,19 @@ function WaiterSpotTile({
               </div>
             );
           })}
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
+          <span className="font-serif text-2xl font-bold tabular-nums leading-none">{displayLabel}</span>
+          {unmapped ? (
+            <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+              {labels.unmappedSpotBadge}
+            </span>
+          ) : null}
+          <TileStateBadge state={tile.state} label={stateLabels[tile.state]} />
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -350,7 +350,7 @@ export function WaiterTableGrid({
           {emptyMessage}
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 items-stretch gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
           {tiles.map((tile) => (
             <WaiterSpotTile
               key={tile.spotId}
