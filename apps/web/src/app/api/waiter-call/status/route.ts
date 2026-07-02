@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { normalizeWaiterCallLocation, parseOrderPayload, waiterCallLocationMatches } from "@menuos/shared";
+import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
 function publicOrderSummary(raw: unknown) {
@@ -35,6 +36,20 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { error: "Πολλές προσπάθειες. Δοκίμασε αργότερα.", code: "rate_limited" },
       { status: 429 },
+    );
+  }
+
+  const venue = await prisma.venue.findUnique({
+    where: { slug: venueSlug },
+    include: { organization: { include: { subscription: true } } },
+  });
+  if (!venue) {
+    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
+  }
+  if (!organizationIsPubliclyActive(venue.organization.subscription)) {
+    return NextResponse.json(
+      { error: "Η υπηρεσία δεν είναι διαθέσιμη.", code: "subscription_inactive" },
+      { status: 403 },
     );
   }
 

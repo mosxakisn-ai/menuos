@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { type PaidSubscriptionPlanId } from "@menuos/shared";
 import { getPlanFromCatalog } from "@/lib/plan-catalog-service";
 import { APP_URL } from "@/lib/config";
+import { safeReturnPath } from "@/lib/safe-return-path";
 import {
   appendStripeCheckoutPresentation,
   buildSubscriptionCheckoutCopy,
@@ -92,8 +93,7 @@ export async function createPlanCheckoutSession(input: {
     throw new Error("This plan does not require Stripe checkout");
   }
 
-  const returnPath = input.returnPath ?? "/dashboard/billing";
-  const safeReturn = returnPath.startsWith("/") ? returnPath : `/${returnPath}`;
+  const safeReturn = safeReturnPath(input.returnPath);
   const sep = safeReturn.includes("?") ? "&" : "?";
   const successUrl = `${APP_URL}${safeReturn}${sep}billing=confirm&session_id={CHECKOUT_SESSION_ID}&plan=${input.planId}`;
   const cancelUrl = `${APP_URL}${safeReturn}${sep}billing=cancelled&plan=${input.planId}`;

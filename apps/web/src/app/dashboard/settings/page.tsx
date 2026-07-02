@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
+import type { UserRole } from "@menuos/db";
 import { SettingsPageContent } from "@/components/dashboard/settings-page-content";
 import { getSession } from "@/lib/auth";
+import { canManageVenueSecrets } from "@/lib/dashboard-roles";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -10,7 +12,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function SettingsPage() {
   const session = await getSession();
-  const venues = await prisma.venue.findMany({
+  const canManage = canManageVenueSecrets(session!.role as UserRole);
+  const venuesRaw = await prisma.venue.findMany({
     where: { organizationId: session!.organizationId },
     select: {
       id: true,
@@ -20,11 +23,15 @@ export default async function SettingsPage() {
       logoUrl: true,
       primaryColor: true,
       secondaryColor: true,
-      staffToken: true,
-      kitchenScreenToken: true,
-      barScreenToken: true,
-      coldScreenToken: true,
-      dessertScreenToken: true,
+      ...(canManage
+        ? {
+            staffToken: true,
+            kitchenScreenToken: true,
+            barScreenToken: true,
+            coldScreenToken: true,
+            dessertScreenToken: true,
+          }
+        : {}),
     },
     orderBy: { createdAt: "asc" },
   });
@@ -34,7 +41,8 @@ export default async function SettingsPage() {
       email={session!.email}
       name={session!.name}
       role={session!.role}
-      venues={venues}
+      canManageVenue={canManage}
+      venues={venuesRaw}
     />
   );
 }

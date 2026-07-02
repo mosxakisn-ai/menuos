@@ -15,20 +15,28 @@ export const SETTINGS_TAB_IDS = [
 
 export type SettingsTabId = (typeof SETTINGS_TAB_IDS)[number];
 
-function resolveSettingsTab(value: string | null): SettingsTabId {
-  if (value === "waiters" || value === "personnel") return "services";
-  if (value && SETTINGS_TAB_IDS.includes(value as SettingsTabId)) {
+function resolveSettingsTab(value: string | null, allowedTabs: readonly SettingsTabId[]): SettingsTabId {
+  if (value === "waiters" || value === "personnel") {
+    return allowedTabs.includes("services") ? "services" : "general";
+  }
+  if (value && allowedTabs.includes(value as SettingsTabId)) {
     return value as SettingsTabId;
   }
   return "general";
 }
 
-export function SettingsTabs({ children }: { children: (tab: SettingsTabId) => React.ReactNode }) {
+export function SettingsTabs({
+  children,
+  allowedTabs = SETTINGS_TAB_IDS,
+}: {
+  children: (tab: SettingsTabId) => React.ReactNode;
+  allowedTabs?: readonly SettingsTabId[];
+}) {
   const { d } = useDashboardCopy();
   const router = useRouter();
   const searchParams = useSearchParams();
   const raw = searchParams.get("tab");
-  const activeTab: SettingsTabId = resolveSettingsTab(raw);
+  const activeTab: SettingsTabId = resolveSettingsTab(raw, allowedTabs);
   const tabs = d.pages.settings.tabs;
 
   const selectTab = useCallback(
@@ -48,7 +56,7 @@ export function SettingsTabs({ children }: { children: (tab: SettingsTabId) => R
         className="-mx-1 flex gap-1 overflow-x-auto border-b border-slate-200 px-1 pb-px"
         aria-label={d.pages.settings.title}
       >
-        {SETTINGS_TAB_IDS.map((id) => {
+        {allowedTabs.map((id) => {
           const selected = activeTab === id;
           return (
             <button

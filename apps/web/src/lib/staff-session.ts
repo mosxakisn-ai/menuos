@@ -8,11 +8,11 @@ export type StaffSessionPayload = {
 };
 
 function staffSessionSecret(): string {
-  const secret = process.env.NEXTAUTH_SECRET?.trim();
-  if (!secret) {
-    throw new Error("NEXTAUTH_SECRET is required for staff sessions");
+  const raw = process.env.NEXTAUTH_SECRET?.trim();
+  if (!raw && process.env.NODE_ENV === "production") {
+    throw new Error("NEXTAUTH_SECRET is required in production");
   }
-  return secret;
+  return raw ?? "dev-secret-change-in-production-min-32";
 }
 
 function safeEqual(a: string, b: string): boolean {

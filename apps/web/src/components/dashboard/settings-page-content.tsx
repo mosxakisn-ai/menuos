@@ -11,7 +11,7 @@ import {
   SettingsServicesPanel,
   SettingsTablesPanel,
 } from "@/components/dashboard/settings-staff-panels";
-import { SettingsTabs, type SettingsTabId } from "@/components/dashboard/settings-tabs";
+import { SettingsTabs, type SettingsTabId, SETTINGS_TAB_IDS } from "@/components/dashboard/settings-tabs";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
 export type SettingsVenueFull = SettingsVenue & {
@@ -28,11 +28,13 @@ function SettingsGeneralTab({
   name,
   role,
   venues,
+  canEditVenues,
 }: {
   email: string;
   name: string;
   role: string;
   venues: SettingsVenue[];
+  canEditVenues: boolean;
 }) {
   const { d, roleLabel } = useDashboardCopy();
 
@@ -65,7 +67,7 @@ function SettingsGeneralTab({
         </div>
       </div>
 
-      <SettingsForm venues={venues} />
+      {canEditVenues ? <SettingsForm venues={venues} /> : null}
     </div>
   );
 }
@@ -74,20 +76,33 @@ function SettingsPageBody({
   email,
   name,
   role,
+  canManageVenue,
   venues,
 }: {
   email: string;
   name: string;
   role: string;
+  canManageVenue: boolean;
   venues: SettingsVenueFull[];
 }) {
   const { d } = useDashboardCopy();
   const spotVenues = venues.map((v) => ({ id: v.id, name: v.name, slug: v.slug }));
+  const allowedTabs: SettingsTabId[] = canManageVenue
+    ? [...SETTINGS_TAB_IDS]
+    : ["general"];
 
   function renderTab(tab: SettingsTabId) {
     switch (tab) {
       case "general":
-        return <SettingsGeneralTab email={email} name={name} role={role} venues={venues} />;
+        return (
+          <SettingsGeneralTab
+            email={email}
+            name={name}
+            role={role}
+            venues={venues}
+            canEditVenues={canManageVenue}
+          />
+        );
       case "kitchen":
         return <SettingsKitchenPanel venues={venues} />;
       case "bar":
@@ -116,7 +131,7 @@ function SettingsPageBody({
   return (
     <DashboardPage wide className="space-y-5">
       <DashboardPageHeader title={d.pages.settings.title} description={d.pages.settings.description} />
-      <SettingsTabs>{(tab) => renderTab(tab)}</SettingsTabs>
+      <SettingsTabs allowedTabs={allowedTabs}>{(tab) => renderTab(tab)}</SettingsTabs>
     </DashboardPage>
   );
 }
@@ -125,16 +140,24 @@ export function SettingsPageContent({
   email,
   name,
   role,
+  canManageVenue,
   venues,
 }: {
   email: string;
   name: string;
   role: string;
+  canManageVenue: boolean;
   venues: SettingsVenueFull[];
 }) {
   return (
     <Suspense fallback={null}>
-      <SettingsPageBody email={email} name={name} role={role} venues={venues} />
+      <SettingsPageBody
+        email={email}
+        name={name}
+        role={role}
+        canManageVenue={canManageVenue}
+        venues={venues}
+      />
     </Suspense>
   );
 }
