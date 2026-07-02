@@ -18,6 +18,7 @@ import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { clientShareOrigin } from "@/lib/client-share-origin";
+import { cn } from "@/lib/utils";
 
 type Venue = { id: string; name: string; slug: string; staffToken?: string };
 type StaffMember = {
@@ -33,6 +34,76 @@ function memberWaiterUrl(venueSlug: string, memberToken: string): string {
   u.searchParams.set("venueSlug", venueSlug);
   u.searchParams.set("key", memberToken);
   return u.toString();
+}
+
+function toggleStation(
+  current: StaffStationOption[],
+  station: StaffStationOption,
+): StaffStationOption[] {
+  if (station === "all") {
+    return current.includes("all") ? [] : ["all"];
+  }
+  const withoutAll = current.filter((s) => s !== "all");
+  if (withoutAll.includes(station)) {
+    const next = withoutAll.filter((s) => s !== station);
+    return next.length > 0 ? next : ["services"];
+  }
+  return [...withoutAll, station];
+}
+
+function StationPicker({
+  value,
+  onChange,
+  labels,
+}: {
+  value: StaffStationOption[];
+  onChange: (next: StaffStationOption[]) => void;
+  labels: Record<StaffStationOption, string>;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {STAFF_STATION_OPTIONS.map((station) => {
+        const selected = value.includes(station);
+        return (
+          <button
+            key={station}
+            type="button"
+            onClick={() => onChange(toggleStation(value, station))}
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+              selected
+                ? "border-brand-blue bg-blue-50 text-brand-blue"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+            )}
+          >
+            {labels[station]}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function StationBadges({
+  stations,
+  labels,
+}: {
+  stations: string[];
+  labels: Record<StaffStationOption, string>;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {stations.map((station) => (
+        <span
+          key={station}
+          className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-xs font-medium text-slate-700"
+        >
+          {labels[station as StaffStationOption] ??
+            formatStaffStationsForLang([station], "GR")}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function StaffMemberLinkActions({
@@ -93,12 +164,12 @@ function StaffMemberLinkActions({
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
       <button
         type="button"
         disabled={busy}
         onClick={() => void copy()}
-        className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+        className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
       >
         {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
         {copied ? labels.copied : labels.copyLink}
@@ -107,7 +178,7 @@ function StaffMemberLinkActions({
         type="button"
         disabled={busy || rotating}
         onClick={() => void rotate()}
-        className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+        className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
         title={labels.rotateLink}
       >
         <RefreshCw className={`h-3.5 w-3.5 ${rotating ? "animate-spin" : ""}`} />
@@ -118,9 +189,9 @@ function StaffMemberLinkActions({
 }
 
 export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
-  const { d, lang } = useDashboardCopy();
+  const { d } = useDashboardCopy();
   const S = d.pages.settings.personnel;
-  const spotLang = lang === "EN" ? "EN" : "GR";
+  const stationLabels = S.stationLabels as Record<StaffStationOption, string>;
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
   const [members, setMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(false);
@@ -169,21 +240,6 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   useEffect(() => {
     void reload();
   }, [reload]);
-
-  function toggleStation(
-    current: StaffStationOption[],
-    station: StaffStationOption,
-  ): StaffStationOption[] {
-    if (station === "all") {
-      return current.includes("all") ? [] : ["all"];
-    }
-    const withoutAll = current.filter((s) => s !== "all");
-    if (withoutAll.includes(station)) {
-      const next = withoutAll.filter((s) => s !== station);
-      return next.length > 0 ? next : ["services"];
-    }
-    return [...withoutAll, station];
-  }
 
   async function addMember(e: React.FormEvent) {
     e.preventDefault();
@@ -262,42 +318,19 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     );
   }
 
-  function StationPicker({
-    value,
-    onChange,
-  }: {
-    value: StaffStationOption[];
-    onChange: (next: StaffStationOption[]) => void;
-  }) {
-    return (
-      <div className="flex flex-wrap gap-2">
-        {STAFF_STATION_OPTIONS.map((station) => {
-          const selected = value.includes(station);
-          return (
-            <button
-              key={station}
-              type="button"
-              onClick={() => onChange(toggleStation(value, station))}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                selected
-                  ? "border-brand-blue bg-blue-50 text-brand-blue"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-            >
-              {S.stationLabels[station]}
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
+  const linkLabels = {
+    copyLink: S.copyLink,
+    copied: S.copied,
+    rotateLink: S.rotateLink,
+    rotateConfirm: S.rotateConfirm,
+  };
 
   return (
     <div className="space-y-5">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       <div className={dashboardCardClass}>
-        <h2 className="text-sm font-semibold text-primary">{S.title}</h2>
+        <h2 className="text-base font-semibold text-brand-navy">{S.title}</h2>
         <p className="mt-2 text-sm text-slate-600">{S.description}</p>
 
         {venues.length > 1 ? (
@@ -321,9 +354,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           </p>
         )}
 
-        <form onSubmit={(e) => void addMember(e)} className="mt-6 space-y-4 border-t border-slate-100 pt-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{S.addTitle}</p>
-          <div className={dashboardFormGridClass}>
+        <form
+          onSubmit={(e) => void addMember(e)}
+          className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/40 p-4 sm:p-5"
+        >
+          <p className="text-sm font-semibold text-brand-navy">{S.addTitle}</p>
+          <div className={`${dashboardFormGridClass} mt-4`}>
             <label className="block">
               <span className={dashboardLabelClass}>{S.colName}</span>
               <input
@@ -345,136 +381,164 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
               />
             </label>
           </div>
-          <div>
+          <div className="mt-4">
             <span className={dashboardLabelClass}>{S.colStations}</span>
+            <p className="mt-1 text-xs text-slate-500">{S.stationsHint}</p>
             <div className="mt-2">
-              <StationPicker value={stations} onChange={setStations} />
+              <StationPicker value={stations} onChange={setStations} labels={stationLabels} />
             </div>
           </div>
-          <button
-            type="submit"
-            disabled={busy !== null || !name.trim() || !roleLabel.trim()}
-            className={`inline-flex items-center gap-1 ${buttonClass("primary", "md")}`}
-          >
-            <Plus className="h-4 w-4" />
-            {busy === "add" ? S.saving : S.addStaff}
-          </button>
+          <div className="mt-4 flex justify-end">
+            <button
+              type="submit"
+              disabled={busy !== null || !name.trim() || !roleLabel.trim()}
+              className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "md")}`}
+            >
+              <Plus className="h-4 w-4" />
+              {busy === "add" ? S.saving : S.addStaff}
+            </button>
+          </div>
         </form>
       </div>
 
       <div className={dashboardCardClass}>
+        <h3 className="text-sm font-semibold text-brand-navy">{S.listTitle}</h3>
+
         {loading ? (
-          <p className="text-sm text-slate-500">{S.loading}</p>
+          <p className="mt-4 text-sm text-slate-500">{S.loading}</p>
         ) : members.length === 0 ? (
-          <p className="text-sm text-slate-500">{S.empty}</p>
+          <p className="mt-4 text-sm text-slate-500">{S.empty}</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-left text-slate-500">
-                  <th className="pb-3 pr-4 font-medium">{S.colName}</th>
-                  <th className="pb-3 pr-4 font-medium">{S.colRole}</th>
-                  <th className="pb-3 pr-4 font-medium">{S.colStations}</th>
-                  <th className="pb-3 pr-4 font-medium">{S.colLink}</th>
-                  <th className="pb-3 font-medium">{S.colActions}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {members.map((member) =>
-                  editingId === member.id ? (
-                    <tr key={member.id}>
-                      <td className="py-3 pr-4">
+          <ul className="mt-4 space-y-3">
+            {members.map((member) => {
+              const isEditing = editingId === member.id;
+              const isBusy = busy !== null;
+
+              if (isEditing) {
+                return (
+                  <li
+                    key={member.id}
+                    className="rounded-xl border-2 border-brand-blue/25 bg-blue-50/30 p-4 sm:p-5"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue">
+                      {S.editTitle}
+                    </p>
+                    <div className={`${dashboardFormGridClass} mt-4`}>
+                      <label className="block">
+                        <span className={dashboardLabelClass}>{S.colName}</span>
                         <input
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
                           maxLength={60}
                           className={dashboardFieldClass}
+                          autoFocus
                         />
-                      </td>
-                      <td className="py-3 pr-4">
+                      </label>
+                      <label className="block">
+                        <span className={dashboardLabelClass}>{S.colRole}</span>
                         <input
                           value={editRole}
                           onChange={(e) => setEditRole(e.target.value)}
                           maxLength={40}
                           className={dashboardFieldClass}
                         />
-                      </td>
-                      <td className="py-3 pr-4">
-                        <StationPicker value={editStations} onChange={setEditStations} />
-                      </td>
-                      <td className="py-3 pr-4" />
-                      <td className="py-3">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={busy !== null}
-                            onClick={() => void saveEdit(member.id)}
-                            className={buttonClass("primary", "sm")}
-                          >
-                            {S.saveEdit}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingId(null)}
-                            className={buttonClass("secondary", "sm")}
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    <tr key={member.id}>
-                      <td className="py-3 pr-4 font-medium text-brand-navy">{member.name}</td>
-                      <td className="py-3 pr-4 text-slate-700">{member.roleLabel}</td>
-                      <td className="py-3 pr-4 text-slate-600">
-                        {formatStaffStationsForLang(member.stations, spotLang)}
-                      </td>
-                      <td className="py-3 pr-4">
+                      </label>
+                    </div>
+                    <div className="mt-4">
+                      <span className={dashboardLabelClass}>{S.colStations}</span>
+                      <div className="mt-2">
+                        <StationPicker
+                          value={editStations}
+                          onChange={setEditStations}
+                          labels={stationLabels}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(null)}
+                        className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
+                      >
+                        <X className="h-4 w-4" />
+                        {S.cancelEdit}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy || !editName.trim() || !editRole.trim()}
+                        onClick={() => void saveEdit(member.id)}
+                        className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
+                      >
+                        {S.saveEdit}
+                      </button>
+                    </div>
+                  </li>
+                );
+              }
+
+              return (
+                <li
+                  key={member.id}
+                  className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 sm:p-5"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-base font-semibold text-brand-navy">{member.name}</p>
+                      <p className="mt-0.5 text-sm text-slate-600">{member.roleLabel}</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => startEdit(member)}
+                        className={buttonClass("secondary", "sm")}
+                        aria-label={S.edit}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => void removeMember(member.id, member.name)}
+                        className={`${buttonClass("secondary", "sm")} text-red-700`}
+                        aria-label={S.delete}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 sm:items-center">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                        {S.colStations}
+                      </p>
+                      <div className="mt-2">
+                        <StationBadges stations={member.stations} labels={stationLabels} />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                        {S.colLink}
+                      </p>
+                      <div className="mt-2">
                         {venue?.slug ? (
                           <StaffMemberLinkActions
                             venueId={venueId}
                             venueSlug={venue.slug}
                             member={member}
-                            labels={{
-                              copyLink: S.copyLink,
-                              copied: S.copied,
-                              rotateLink: S.rotateLink,
-                              rotateConfirm: S.rotateConfirm,
-                            }}
-                            busy={busy !== null}
+                            labels={linkLabels}
+                            busy={isBusy}
                             onTokenRotated={onMemberTokenRotated}
                           />
                         ) : null}
-                      </td>
-                      <td className="py-3">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={busy !== null}
-                            onClick={() => startEdit(member)}
-                            className={buttonClass("secondary", "sm")}
-                            aria-label={S.edit}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busy !== null}
-                            onClick={() => void removeMember(member.id, member.name)}
-                            className={buttonClass("secondary", "sm")}
-                            aria-label={S.delete}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ),
-                )}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
 
