@@ -72,6 +72,8 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
   useEffect(() => {
     loadGenerationRef.current += 1;
     setSignals([]);
+    setSpots([]);
+    setStaffMembers([]);
     setLoadError(false);
   }, [venueId]);
 

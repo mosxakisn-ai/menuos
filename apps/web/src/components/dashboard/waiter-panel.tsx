@@ -242,7 +242,7 @@ export function WaiterPanel({
     { id: "dessert", label: W.passStation.dessert },
   ];
 
-  const hasActivity = pendingCount > 0 || passCount > 0;
+  const hasActivity = calls.length > 0 || passSignals.length > 0;
 
   return (
     <div className="space-y-6">
