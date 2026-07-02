@@ -146,7 +146,7 @@ export function SettingsServicesPanel({
         <h2 className="text-sm font-semibold text-primary">{S.services.pushSectionTitle}</h2>
         <p className="mt-2 text-sm text-slate-600">{S.services.pushHint}</p>
         <div className="mt-4 flex-1">
-          <PushNotificationsPrompt variant="settings" />
+          <PushNotificationsPrompt variant="settings" flat />
         </div>
         <p className="mt-3 text-xs leading-relaxed text-slate-500">{S.services.staffPushHint}</p>
       </div>

@@ -75,6 +75,8 @@ export const DASHBOARD_EL = {
     activeCatalogHint:
       "Ο ίδιος κατάλογος με τη σελίδα Κατάλογοι — ό,τι εισάγεις από PDF θα μπει εδώ.",
     importTargetConfirm: (name: string) => `Τα είδη θα εισαχθούν στον κατάλογο «${name}».`,
+    changeCatalogConfirm: (name: string) =>
+      `Αλλαγή στόχου σε «${name}»;\n\nΤα είδη του PDF θα εισαχθούν στον νέο κατάλογο — όχι στον προηγούμενο.`,
     noMenuPagesScanDetail: "Δεν βρέθηκαν σελίδες μενού",
     noMenuPages: "Δεν βρέθηκαν σελίδες μενού. Άνοιξε «Προχωρημένα» και επίλεξε σελίδες χειροκίνητα.",
     extractDetail: "Digital + OCR…",

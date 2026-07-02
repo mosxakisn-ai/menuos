@@ -103,40 +103,45 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ code: "not_found" }, { status: 404 });
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    const menuCount = await tx.menu.count({ where: { venueId } });
-    if (menuCount === 0) {
-      throw new Error("no_menus");
-    }
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const menuCount = await tx.menu.count({ where: { venueId } });
+      if (menuCount === 0) throw new Error("no_menus");
 
-    const categoryCount = await tx.category.count({ where: { menu: { venueId } } });
-    const itemCount = await tx.item.count({ where: { category: { menu: { venueId } } } });
+      const categoryCount = await tx.category.count({ where: { menu: { venueId } } });
+      const itemCount = await tx.item.count({ where: { category: { menu: { venueId } } } });
 
-    await tx.menu.deleteMany({ where: { venueId } });
+      await tx.menu.deleteMany({ where: { venueId } });
 
-    const menu = await tx.menu.create({
-      data: {
-        venueId,
-        name: copy.api.defaultMenuName,
-        type: "RESTAURANT",
-        sortOrder: 0,
-      },
-    });
+      const menu = await tx.menu.create({
+        data: {
+          venueId,
+          name: copy.api.defaultMenuName,
+          type: "RESTAURANT",
+          sortOrder: 0,
+        },
+      });
 
-    return {
-      deletedMenus: menuCount,
-      deletedCategories: categoryCount,
-      deletedItems: itemCount,
-      menu,
-    };
-  }, serializableTransaction);
+      return {
+        deletedMenus: menuCount,
+        deletedCategories: categoryCount,
+        deletedItems: itemCount,
+        menu,
+      };
+    }, serializableTransaction);
 
-  return NextResponse.json({
+    return NextResponse.json({
     ok: true,
     message: copy.api.allMenusDeleted({
       menus: result.deletedMenus,
       items: result.deletedItems,
     }),
     ...result,
-  });
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === "no_menus") {
+      return NextResponse.json({ code: "not_found" }, { status: 404 });
+    }
+    throw err;
+  }
 }

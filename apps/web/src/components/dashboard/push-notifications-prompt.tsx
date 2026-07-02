@@ -22,9 +22,12 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
 export function PushNotificationsPrompt({
   staffAuth,
   variant = "default",
+  flat = false,
 }: {
   staffAuth?: { venueId: string; staffKey?: string };
   variant?: "default" | "settings";
+  /** Render without outer Card — for embedding inside settings panel card. */
+  flat?: boolean;
 } = {}) {
   const { d } = useDashboardCopy();
   const p = d.push;
@@ -165,8 +168,12 @@ export function PushNotificationsPrompt({
   }
 
   const canEnable = (state === "prompt" || state === "failed") && !inApp;
+  const Shell = flat ? "div" : Card;
 
   if (state === "loading") {
+    if (flat) {
+      return <p className="text-sm text-slate-500">{p.checking}</p>;
+    }
     return (
       <Card className="border-slate-200 bg-white">
         <p className="text-sm text-slate-500">{p.checking}</p>
@@ -191,8 +198,16 @@ export function PushNotificationsPrompt({
                   ? p.inAppBrowser
                   : p.description;
 
+  const panelClass = cn(
+    flat ? "rounded-xl border p-4" : undefined,
+    "border-brand-blue/20 bg-brand-blue/5",
+    justEnabled && "border-emerald-300 bg-emerald-50/80",
+    state === "failed" && "border-amber-300 bg-amber-50/80",
+    state === "subscribed" && !justEnabled && "border-emerald-200/80 bg-emerald-50/40",
+  );
+
   return (
-    <div className="space-y-3">
+    <div className={flat ? undefined : "space-y-3"}>
       {inApp ? (
         <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           <p className="flex items-start gap-2 font-semibold">
@@ -202,14 +217,7 @@ export function PushNotificationsPrompt({
         </div>
       ) : null}
 
-      <Card
-        className={cn(
-          "border-brand-blue/20 bg-brand-blue/5",
-          justEnabled && "border-emerald-300 bg-emerald-50/80",
-          state === "failed" && "border-amber-300 bg-amber-50/80",
-          state === "subscribed" && !justEnabled && "border-emerald-200/80 bg-emerald-50/40",
-        )}
-      >
+      <Shell className={panelClass}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-3">
             {justEnabled || state === "subscribed" ? (
@@ -261,7 +269,7 @@ export function PushNotificationsPrompt({
             </button>
           )}
         </div>
-      </Card>
+      </Shell>
     </div>
   );
 }

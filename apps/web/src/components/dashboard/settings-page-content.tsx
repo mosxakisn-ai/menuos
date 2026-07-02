@@ -39,7 +39,11 @@ function SettingsGeneralTab({
   const { d, roleLabel } = useDashboardCopy();
 
   return (
-    <div className="grid gap-5 lg:grid-cols-3 lg:items-start">
+    <div
+      className={
+        canEditVenues ? "grid gap-5 lg:grid-cols-3 lg:items-start" : "mx-auto grid max-w-lg gap-5"
+      }
+    >
       <div className="space-y-5">
         <div className={dashboardCardClass}>
           <h2 className="text-sm font-semibold text-primary">{d.account}</h2>

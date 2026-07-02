@@ -11,6 +11,7 @@ describe("safe-callback-url", () => {
   it("rejects external URLs", () => {
     expect(safeDashboardCallbackUrl("https://evil.com/dashboard")).toBeNull();
     expect(safeDashboardCallbackUrl("//evil.com/dashboard")).toBeNull();
+    expect(safeDashboardCallbackUrl("/dashboard/../login")).toBeNull();
   });
 
   it("builds login URL with encoded callback", () => {

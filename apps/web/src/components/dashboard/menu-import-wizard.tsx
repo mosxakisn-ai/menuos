@@ -30,6 +30,7 @@ import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { confirmDestructive } from "@/lib/confirm-action";
 import {
   buildPageSelectionMap,
   loadAllPdfPagePreviews,
@@ -138,12 +139,28 @@ export function MenuImportWizard({
   const pageStats = useMemo(() => pageSelectionStats(pages), [pages]);
   const activeMenu = venue?.menus.find((m) => m.id === menuId);
 
+  const resetAll = useCallback(() => {
+    setDraft(null);
+    setPages([]);
+    setPhase("upload");
+    setPipeline(initialPipeline);
+    setProgress(0);
+    setAdvancedOpen(false);
+    setHideEmptyCategories(true);
+    setShowIssuesOnly(false);
+    setSearchQuery("");
+  }, [initialPipeline]);
+
   useEffect(() => {
     const venueParam = searchParams.get("venue");
-    if (venueParam && venueParam !== venueId) {
-      setVenueId(venueParam);
-    }
-  }, [searchParams, venueId]);
+    if (!venueParam || venueParam === venueId) return;
+    const v = venues.find((x) => x.id === venueParam);
+    if (!v) return;
+    setVenueId(venueParam);
+    const nextMenuId = resolveMenuIdForVenue(searchParams.get("menu"), v.menus);
+    setMenuId(nextMenuId);
+    resetAll();
+  }, [searchParams, venueId, venues, resetAll]);
 
   useEffect(() => {
     const menus = venue?.menus ?? [];
@@ -157,8 +174,12 @@ export function MenuImportWizard({
   }
 
   function selectMenu(nextMenuId: string) {
+    if (nextMenuId === menuId) return;
+    if (phase === "review" && draft) {
+      const targetName = venue?.menus.find((m) => m.id === nextMenuId)?.name ?? "";
+      if (!confirmDestructive(W.changeCatalogConfirm(targetName))) return;
+    }
     setMenuId(nextMenuId);
-    syncImportUrl({ venueId, menuId: nextMenuId });
   }
 
   useEffect(() => {
@@ -197,18 +218,6 @@ export function MenuImportWizard({
       draft.ocrPagesUsed ?? 0,
     );
   }, [draft, W.report]);
-
-  function resetAll() {
-    setDraft(null);
-    setPages([]);
-    setPhase("upload");
-    setPipeline(initialPipeline);
-    setProgress(0);
-    setAdvancedOpen(false);
-    setHideEmptyCategories(true);
-    setShowIssuesOnly(false);
-    setSearchQuery("");
-  }
 
   function onVenueChange(id: string) {
     setVenueId(id);

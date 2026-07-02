@@ -74,6 +74,8 @@ export const DASHBOARD_EN = {
     activeCatalogHint:
       "Same catalog as on the Catalogs page — everything you import from PDF goes here.",
     importTargetConfirm: (name: string) => `Items will be imported into «${name}».`,
+    changeCatalogConfirm: (name: string) =>
+      `Switch target to «${name}»?\n\nPDF items will be imported into this catalog — not the previous one.`,
     noMenuPagesScanDetail: "No menu pages found",
     noMenuPages:
       "No menu pages found. Open Advanced and select pages manually.",

@@ -158,9 +158,8 @@ export function MenuEditor({
     router.replace(buildMenusPageUrl({ venueId, menuId: activeMenuId }), { scroll: false });
   }, [venueId, activeMenuId, searchParams, router]);
 
-  function selectActiveMenu(menuId: string) {
-    setActiveMenuId(menuId);
-    router.replace(buildMenusPageUrl({ venueId, menuId }), { scroll: false });
+  function selectActiveMenu(id: string) {
+    setActiveMenuId(id);
   }
 
   function changeVenue(nextVenueId: string) {
