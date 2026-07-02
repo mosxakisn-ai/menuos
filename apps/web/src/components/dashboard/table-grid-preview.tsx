@@ -13,6 +13,22 @@ export const TABLE_TILE_STYLES: Record<TableTileState, string> = {
   both: "border-violet-400 bg-violet-50 text-violet-900 ring-2 ring-violet-200",
 };
 
+/** Compact badge on live grid tiles — matches tile border colors. */
+export const TABLE_TILE_BADGE_STYLES: Record<TableTileState, string> = {
+  idle: "bg-slate-100 text-slate-600",
+  guest_call: "bg-blue-100 text-blue-900",
+  kitchen_ready: "bg-orange-100 text-orange-900",
+  bar_ready: "bg-emerald-100 text-emerald-900",
+  both: "bg-violet-100 text-violet-900",
+};
+
+export const PASS_STATION_BADGE_STYLES: Record<string, string> = {
+  kitchen: "bg-orange-100 text-orange-900",
+  cold: "bg-orange-100 text-orange-900",
+  bar: "bg-emerald-100 text-emerald-900",
+  dessert: "bg-emerald-100 text-emerald-900",
+};
+
 const LEGEND_STATES: TableTileState[] = [
   "idle",
   "guest_call",
@@ -58,7 +74,7 @@ export function TableGridPreview({
   return (
     <div
       className={cn(
-        "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6",
+        "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4",
         className,
       )}
     >
@@ -72,11 +88,14 @@ export function TableGridPreview({
           )}
         >
           <span className="font-serif text-xl font-bold tabular-nums">{tile.label}</span>
-          {tile.hint ? (
-            <span className="mt-1 line-clamp-2 text-[10px] font-medium leading-tight opacity-90">
-              {tile.hint}
-            </span>
-          ) : null}
+          <span
+            className={cn(
+              "mt-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none",
+              TABLE_TILE_BADGE_STYLES[tile.state],
+            )}
+          >
+            {stateLabels[tile.state]}
+          </span>
         </div>
       ))}
     </div>

@@ -13,7 +13,12 @@ import {
   type TableGridTile,
   type TableTileState,
 } from "@menuos/shared";
-import { TableGridLegend, TABLE_TILE_STYLES } from "@/components/dashboard/table-grid-preview";
+import {
+  PASS_STATION_BADGE_STYLES,
+  TABLE_TILE_BADGE_STYLES,
+  TABLE_TILE_STYLES,
+  TableGridLegend,
+} from "@/components/dashboard/table-grid-preview";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -45,13 +50,36 @@ function filterPasses(
   return passes.filter((pass) => pass.station === dbStation);
 }
 
+function TileStateBadge({
+  state,
+  label,
+  className,
+}: {
+  state: TableTileState;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[10px] font-semibold leading-tight",
+        TABLE_TILE_BADGE_STYLES[state],
+        className,
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
 function WaiterSpotTile({
   tile,
   viewTab,
   passStationFilter,
   callTypeLabels,
-  passStationLabels,
+  passReadyLabels,
   callStatusLabels,
+  stateLabels,
   labels,
   updatingCallId,
   updatingPassId,
@@ -62,8 +90,9 @@ function WaiterSpotTile({
   viewTab: MonitorViewTab;
   passStationFilter: PassStationFilter;
   callTypeLabels: Record<string, string>;
-  passStationLabels: Record<string, string>;
+  passReadyLabels: Record<string, string>;
   callStatusLabels: Record<string, string>;
+  stateLabels: Record<TableTileState, string>;
   labels: {
     goButton: string;
     completeButton: string;
@@ -71,6 +100,7 @@ function WaiterSpotTile({
     passDelivered: string;
     newItems: string;
     orderTotal: string;
+    guestCall: string;
   };
   updatingCallId: string | null;
   updatingPassId: string | null;
@@ -85,54 +115,64 @@ function WaiterSpotTile({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-xl border p-2 shadow-sm transition",
+        "flex flex-col rounded-xl border p-3 shadow-sm transition",
         TABLE_TILE_STYLES[tile.state],
-        hasActivity ? "min-h-[9.5rem]" : "aspect-square items-center justify-center text-center",
+        hasActivity ? "min-h-[10.5rem]" : "aspect-square items-center justify-center text-center",
       )}
     >
-      <span
+      <div
         className={cn(
-          "font-serif text-xl font-bold tabular-nums",
-          hasActivity ? "shrink-0" : "",
+          "flex w-full gap-2",
+          hasActivity ? "items-start justify-between" : "flex-col items-center justify-center",
         )}
       >
-        {tile.label}
-      </span>
+        <span
+          className={cn(
+            "font-serif text-2xl font-bold tabular-nums leading-none",
+            hasActivity ? "shrink-0" : "",
+          )}
+        >
+          {tile.label}
+        </span>
+        <TileStateBadge
+          state={tile.state}
+          label={stateLabels[tile.state]}
+          className={hasActivity ? "shrink text-right" : "mt-2"}
+        />
+      </div>
 
       {hasActivity ? (
-        <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+        <div className="mt-2.5 flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
           {visibleCalls.map((call, index) => (
             <div
               key={call.id ?? `call-${index}`}
-              className="rounded-lg border border-black/5 bg-white/60 p-1.5"
+              className="rounded-lg border border-blue-200/80 bg-white/70 p-2"
             >
-              <p className="text-[10px] font-semibold leading-tight">
-                {callTypeLabels[call.type] ?? call.type}
-                {isOrderUpdated(call) && call.status === "PENDING" ? (
-                  <span className="ml-1 rounded bg-amber-200 px-1 py-px text-[8px] font-bold uppercase text-amber-900">
-                    {labels.newItems}
-                  </span>
-                ) : null}
-              </p>
+              <TileStateBadge state="guest_call" label={callTypeLabels[call.type] ?? labels.guestCall} />
+              {isOrderUpdated(call) && call.status === "PENDING" ? (
+                <span className="ml-1 inline-flex rounded bg-amber-200 px-1.5 py-px text-[9px] font-bold uppercase text-amber-900">
+                  {labels.newItems}
+                </span>
+              ) : null}
               {call.type === "ORDER" && call.orderItems?.lines?.length ? (
-                <p className="mt-0.5 line-clamp-2 text-[9px] leading-tight text-slate-600">
+                <p className="mt-1.5 line-clamp-3 text-[11px] leading-snug text-slate-700">
                   {formatOrderSummary(call)}
                   {call.orderItems.total ? ` · €${call.orderItems.total}` : null}
                 </p>
               ) : null}
               {call.status === "ACKNOWLEDGED" ? (
-                <p className="mt-0.5 text-[9px] text-slate-500">
+                <p className="mt-1 text-[10px] text-slate-500">
                   {callStatusLabels[call.status] ?? call.status}
                 </p>
               ) : null}
               {call.id ? (
-                <div className="mt-1.5 flex flex-wrap gap-1">
+                <div className="mt-2 flex flex-wrap gap-1.5">
                   {call.status === "PENDING" ? (
                     <button
                       type="button"
                       disabled={updatingCallId !== null}
                       onClick={() => onUpdateCall(call.id!, "ACKNOWLEDGED")}
-                      className={cn(buttonClass("primary", "sm"), "min-h-7 px-2 py-1 text-[10px]")}
+                      className={cn(buttonClass("primary", "sm"), "min-h-8 px-2.5 py-1 text-[11px]")}
                     >
                       {labels.goButton}
                     </button>
@@ -144,7 +184,7 @@ function WaiterSpotTile({
                       onClick={() => onUpdateCall(call.id!, "COMPLETED")}
                       className={cn(
                         buttonClass("secondary", "sm"),
-                        "inline-flex min-h-7 items-center gap-0.5 px-2 py-1 text-[10px]",
+                        "inline-flex min-h-8 items-center gap-0.5 px-2.5 py-1 text-[11px]",
                       )}
                     >
                       <Check className="h-3 w-3" />
@@ -158,27 +198,39 @@ function WaiterSpotTile({
 
           {visiblePasses.map((pass, index) => {
             const stationKey = passStationDbToInput(pass.station);
-            const baseStationLabel =
-              passStationLabels[stationKey as keyof typeof passStationLabels] ?? pass.station;
-            const stationLabel = pass.stationScreenLabel?.trim()
-              ? `${baseStationLabel} (${pass.stationScreenLabel.trim()})`
-              : baseStationLabel;
-            const detail = pass.message?.trim() || stationLabel;
+            const readyLabel =
+              passReadyLabels[stationKey as keyof typeof passReadyLabels] ??
+              passReadyLabels.kitchen;
+            const badgeStyle =
+              PASS_STATION_BADGE_STYLES[stationKey] ?? PASS_STATION_BADGE_STYLES.kitchen;
+            const message = pass.message?.trim();
 
             return (
               <div
                 key={pass.id ?? `pass-${index}`}
-                className="rounded-lg border border-black/5 bg-white/60 p-1.5"
+                className="rounded-lg border border-black/5 bg-white/70 p-2"
               >
-                <p className="line-clamp-2 text-[10px] font-semibold leading-tight">{detail}</p>
+                <span
+                  className={cn(
+                    "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold leading-tight",
+                    badgeStyle,
+                  )}
+                >
+                  {readyLabel}
+                </span>
+                {message ? (
+                  <p className="mt-1.5 line-clamp-3 text-[11px] font-medium leading-snug text-slate-700">
+                    {message}
+                  </p>
+                ) : null}
                 {pass.id ? (
-                  <div className="mt-1.5 flex flex-wrap gap-1">
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     {pass.status === "READY" ? (
                       <button
                         type="button"
                         disabled={updatingPassId !== null}
                         onClick={() => onUpdatePass(pass.id!, "PICKED_UP")}
-                        className={cn(buttonClass("secondary", "sm"), "min-h-7 px-2 py-1 text-[10px]")}
+                        className={cn(buttonClass("secondary", "sm"), "min-h-8 px-2.5 py-1 text-[11px]")}
                       >
                         {labels.passPickedUp}
                       </button>
@@ -189,7 +241,7 @@ function WaiterSpotTile({
                       onClick={() => onUpdatePass(pass.id!, "DELIVERED")}
                       className={cn(
                         buttonClass("primary", "sm"),
-                        "inline-flex min-h-7 items-center gap-0.5 px-2 py-1 text-[10px]",
+                        "inline-flex min-h-8 items-center gap-0.5 px-2.5 py-1 text-[11px]",
                       )}
                     >
                       <Check className="h-3 w-3" />
@@ -258,13 +310,14 @@ export function WaiterTableGrid({
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold text-brand-navy">{W.tableGridTitle}</h2>
-      <TableGridLegend stateLabels={stateLabels} />
+      <TableGridLegend stateLabels={stateLabels} className="hidden sm:flex" />
+      <p className="text-xs text-slate-500 sm:hidden">{W.tableGridLegendHint}</p>
       {tiles.length === 0 && emptyMessage ? (
         <p className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
           {emptyMessage}
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
           {tiles.map((tile) => (
             <WaiterSpotTile
               key={tile.spotId}
@@ -272,8 +325,9 @@ export function WaiterTableGrid({
               viewTab={viewTab}
               passStationFilter={passStationFilter}
               callTypeLabels={W.callType}
-              passStationLabels={W.passStation}
+              passReadyLabels={W.passReadyLabel}
               callStatusLabels={W.callStatus}
+              stateLabels={stateLabels}
               labels={{
                 goButton: W.goButton,
                 completeButton: W.completeButton,
@@ -281,6 +335,7 @@ export function WaiterTableGrid({
                 passDelivered: W.passDelivered,
                 newItems: W.newItems,
                 orderTotal: W.orderTotal,
+                guestCall: stateLabels.guest_call,
               }}
               updatingCallId={updatingCallId}
               updatingPassId={updatingPassId}

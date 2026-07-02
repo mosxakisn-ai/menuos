@@ -272,7 +272,14 @@ export const DASHBOARD_EL = {
       cold: "Κρύα",
       dessert: "Γλυκά",
     },
+    passReadyLabel: {
+      kitchen: "Έτοιμο — κουζίνα",
+      bar: "Έτοιμο — μπαρ",
+      cold: "Έτοιμο — κρύα",
+      dessert: "Έτοιμο — γλυκά",
+    },
     tableGridTitle: "Χάρτης θέσεων",
+    tableGridLegendHint: "Η κατάσταση εμφανίζεται πάνω σε κάθε κάρτα.",
     tableStateLabels: {
       idle: "Ήσυχο",
       guest_call: "Κλήση πελάτη",

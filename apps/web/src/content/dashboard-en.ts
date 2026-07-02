@@ -269,7 +269,14 @@ export const DASHBOARD_EN = {
       cold: "Cold",
       dessert: "Dessert",
     },
+    passReadyLabel: {
+      kitchen: "Ready — kitchen",
+      bar: "Ready — bar",
+      cold: "Ready — cold",
+      dessert: "Ready — dessert",
+    },
     tableGridTitle: "Spot map",
+    tableGridLegendHint: "Status is shown on each card.",
     tableStateLabels: {
       idle: "Quiet",
       guest_call: "Guest call",
