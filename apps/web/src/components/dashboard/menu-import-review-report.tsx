@@ -132,7 +132,7 @@ export function MenuImportReviewReport({
               <p className="text-sm text-amber-900">
                 {visionAvailable ? copy.visionHint : copy.visionHintUnavailable}
               </p>
-              {visionAvailable && onVisionRetry ? (
+              {visionAvailable && onVisionRetry && (ocrPagesUsed ?? 0) > 0 ? (
                 <button
                   type="button"
                   onClick={onVisionRetry}

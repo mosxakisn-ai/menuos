@@ -67,6 +67,8 @@ export const DASHBOARD_EL = {
     visionRetrySuccess: "Η ανάλυση με AI ολοκληρώθηκε — έλεγξε τα αποτελέσματα.",
     visionRetryNoImprovement:
       "Η AI ανάλυση δεν βελτίωσε το αποτέλεσμα — έλεγξε χειροκίνητα ή άλλες σελίδες.",
+    visionRetryConfirm:
+      "Η AI ανάλυση θα αντικαταστήσει το προσχέδιο (ονόματα, τιμές, επιλογές). Να συνεχίσω;",
     ocrUsed: (n: number) =>
       n === 1 ? "1 σελίδα μέσω OCR" : `${n} σελίδες μέσω OCR`,
     badge: "IMPORT ΑΠΟ PDF",

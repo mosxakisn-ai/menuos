@@ -108,10 +108,8 @@ export function useFlashMessage() {
         setFlash({ type: "error", text });
         const skipClientDiagnostic =
           data.diagnosticLogged ||
-          status === 400 ||
-          status === 401 ||
-          status === 403 ||
-          status === 404;
+          (status !== undefined && status < 500) ||
+          (data.code !== undefined && data.code !== null && data.code !== "");
         if (!skipClientDiagnostic) {
           reportClientDiagnostic({
             severity: "ERROR",

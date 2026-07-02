@@ -460,6 +460,11 @@ export function MenuImportWizard({
     setDraft((d) => (d ? patchAllItems(d, { selected }) : d));
   }
 
+  async function runVisionRetry() {
+    if (!confirmDestructive(W.visionRetryConfirm)) return;
+    await runAnalysis({ forceVision: true });
+  }
+
   async function applyImport() {
     if (!draft || !menuId) return;
 
@@ -494,7 +499,7 @@ export function MenuImportWizard({
         body: JSON.stringify({ menuId, categories }),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok);
+      showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setTimeout(() => {
           router.push(buildMenusPageUrl({ venueId, menuId }));
@@ -755,7 +760,7 @@ export function MenuImportWizard({
             extraction={draft.extraction}
             visionAvailable={visionAvailable}
             visionRetrying={visionRetrying}
-            onVisionRetry={() => void runAnalysis({ forceVision: true })}
+            onVisionRetry={() => void runVisionRetry()}
             copy={{
               reportTitle: W.report.title,
               reportSubtitle: W.report.subtitle,

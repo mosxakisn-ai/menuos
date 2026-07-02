@@ -67,6 +67,8 @@ export const DASHBOARD_EN = {
     visionRetrySuccess: "AI analysis complete — review the results.",
     visionRetryNoImprovement:
       "AI analysis did not improve the result — review manually or try other pages.",
+    visionRetryConfirm:
+      "AI analysis will replace the draft (names, prices, selections). Continue?",
     ocrUsed: (n: number) => (n === 1 ? "1 page via OCR" : `${n} pages via OCR`),
     badge: "PDF IMPORT",
     phaseUpload: "Upload PDF",

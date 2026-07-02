@@ -105,10 +105,7 @@ export async function enhancePdfImportWithVision(
     digitalPagesUsed: result.digitalPagesUsed,
     document,
     extraction: {
-      path:
-        result.extraction.digitalPages > 0
-          ? "hybrid"
-          : "vision",
+      path: "vision",
       digitalPages: result.extraction.digitalPages,
       ocrPages: result.extraction.ocrPages,
       confidence: quality.confidence,
