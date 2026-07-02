@@ -158,7 +158,7 @@ export const DASHBOARD_EL = {
       translateHint:
         "Τα ονόματα είναι στα αγγλικά — πάτα «Μετάφραση στα ελληνικά» για αυτόματη μετάφραση με AI.",
       translateHintUnavailable:
-        "Τα ονόματα φαίνονται στα αγγλικά — συμπλήρωσε τα ελληνικά χειροκίνητα ή ρύθμισε GEMINI_API_KEY στο server.",
+        "Τα ονόματα φαίνονται στα αγγλικά — συμπλήρωσε τα ελληνικά χειροκίνητα. Η αυτόματη μετάφραση AI δεν είναι ακόμα ενεργή.",
       translateButton: "Μετάφραση στα ελληνικά",
       translateRetrying: "Μετάφραση…",
       nextStepsTitle: "Τι κάνεις τώρα",
@@ -986,7 +986,7 @@ export const DASHBOARD_EL = {
         `Βρέθηκαν ${items} σε ${categories} κατηγορίες. Έλεγξέ τα πριν την εισαγωγή.`,
       parseEmpty: (many: string) => `Δεν βρέθηκαν ${many} — δοκίμασε άλλο PDF ή πρόσθεσε χειροκίνητα.`,
       parseFailed: "Αποτυχία ανάγνωσης PDF. Δοκίμασε ξανά ή πρόσθεσε τον κατάλογο χειροκίνητα.",
-      translateUnavailable: "Η μετάφραση AI δεν είναι διαθέσιμη — λείπει GEMINI_API_KEY στο server.",
+      translateUnavailable: "Η μετάφραση AI δεν είναι διαθέσιμη ακόμα — συμπλήρωσε τα ελληνικά χειροκίνητα.",
       translateInvalidDraft: "Άκυρο προσχέδιο — ξανατρέξε την ανάλυση PDF.",
       translateNothingNeeded: "Δεν χρειάζεται μετάφραση — τα ονόματα είναι ήδη στα ελληνικά.",
       translateSuccess: (n: number) =>
@@ -1005,10 +1005,11 @@ export const DASHBOARD_EL = {
       noText: (name: string, pageHint: string, ocrHint: string) =>
         `Το «${name}» δεν έδωσε αναγνωρίσιμο κείμενο${pageHint}.${ocrHint}`,
       ocrNoText: " Το OCR δεν βρήκε κείμενο — δοκίμασε άλλες σελίδες ή χειροκίνητη εισαγωγή.",
-      ocrNotConfigured: " Βάλε OCR_SPACE_API_KEY στο server για σαρωμένα PDF.",
+      ocrNotConfigured: " Για σαρωμένα PDF χρειάζεται ειδική ρύθμιση — δοκίμασε PDF με selectable κείμενο ή επικοινώνησε μαζί μας.",
       noPagesSelectedOcr:
         "Δεν βρέθηκε κείμενο στις επιλεγμένες σελίδες. Δοκίμασε «Προχωρημένα → Επιλογή σελίδων».",
-      noPagesSelectedNoOcr: "Δεν βρέθηκε digital κείμενο. Ρύθμισε OCR_SPACE_API_KEY για σαρωμένα PDF.",
+      noPagesSelectedNoOcr:
+        "Δεν βρέθηκε κείμενο στο PDF. Για σαρωμένα μενού δοκίμασε άλλο PDF ή επικοινώνησε μαζί μας.",
       pagesHint: (pages: number[]) => ` (σελίδες ${pages.join(", ")})`,
     },
   },

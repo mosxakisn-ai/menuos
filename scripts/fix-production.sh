@@ -46,6 +46,11 @@ if [ -z "${MAILBOX_PASSWORD:-}" ]; then
 else
   echo "  OK: MAILBOX_PASSWORD is set"
 fi
+if [ -z "${GEMINI_API_KEY:-}" ]; then
+  echo "  WARN: GEMINI_API_KEY empty — PDF AI vision & translate disabled."
+else
+  echo "  OK: GEMINI_API_KEY is set"
+fi
 if [ "$missing" -eq 1 ]; then
   echo "Fix .env and re-run."
   exit 1

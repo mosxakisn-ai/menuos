@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { isMailConfigured } from "@/lib/mail";
+import { isPdfVisionConfigured } from "@/lib/pdf-vision-gemini";
 
 export async function GET() {
   const checks: Record<string, "ok" | "fail"> = {
     database: "fail",
     mail: isMailConfigured() ? "ok" : "fail",
+    gemini: isPdfVisionConfigured() ? "ok" : "fail",
   };
 
   try {
@@ -26,7 +28,9 @@ export async function GET() {
           ? "Η βάση δεδομένων δεν απαντά — έλεγξε Postgres και DATABASE_URL στο server."
           : checks.mail === "fail"
             ? "Ρύθμισε MAILBOX_PASSWORD στο .env για αποστολή email."
-            : undefined,
+            : checks.gemini === "fail"
+              ? "GEMINI_API_KEY κενό — PDF AI (Vision + μετάφραση) απενεργοποιημένο."
+              : undefined,
     },
     { status: healthy ? 200 : 503 },
   );

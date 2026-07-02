@@ -157,7 +157,7 @@ export const DASHBOARD_EN = {
       translateHint:
         "Names are in English — press «Translate to Greek» for automatic AI translation.",
       translateHintUnavailable:
-        "Names appear to be in English — fill in Greek manually or configure GEMINI_API_KEY on the server.",
+        "Names appear to be in English — fill in Greek manually. Automatic AI translation is not enabled yet.",
       translateButton: "Translate to Greek",
       translateRetrying: "Translating…",
       nextStepsTitle: "What to do now",
@@ -973,7 +973,7 @@ export const DASHBOARD_EN = {
         `Found ${items} in ${categories} categories. Review before importing.`,
       parseEmpty: (many: string) => `No ${many} found — try another PDF or add manually.`,
       parseFailed: "Could not read PDF. Try again or add the catalog manually.",
-      translateUnavailable: "AI translation is not available — GEMINI_API_KEY is missing on the server.",
+      translateUnavailable: "AI translation is not available yet — fill in Greek manually.",
       translateInvalidDraft: "Invalid draft — run PDF analysis again.",
       translateNothingNeeded: "No translation needed — names are already in Greek.",
       translateSuccess: (n: number) =>
@@ -992,10 +992,11 @@ export const DASHBOARD_EN = {
       noText: (name: string, pageHint: string, ocrHint: string) =>
         `«${name}» did not yield recognizable text${pageHint}.${ocrHint}`,
       ocrNoText: " OCR found no text — try other pages or manual entry.",
-      ocrNotConfigured: " Set OCR_SPACE_API_KEY on the server for scanned PDFs.",
+      ocrNotConfigured: " Scanned PDFs need extra setup — try a PDF with selectable text or contact support.",
       noPagesSelectedOcr:
         "No text on selected pages. Try Advanced → page selection.",
-      noPagesSelectedNoOcr: "No digital text found. Configure OCR_SPACE_API_KEY for scanned PDFs.",
+      noPagesSelectedNoOcr:
+        "No text found in the PDF. For scanned menus try another PDF or contact support.",
       pagesHint: (pages: number[]) => ` (pages ${pages.join(", ")})`,
     },
   },
