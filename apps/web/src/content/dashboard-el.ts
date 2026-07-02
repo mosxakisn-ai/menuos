@@ -576,8 +576,8 @@ export const DASHBOARD_EL = {
     waiter: {
       title: "Οθόνες",
       description:
-        "Live χάρτης θέσεων, κλήσεις και πάσο — ενημερώνεται αυτόματα. Τα links ρυθμίζονται από Ρυθμίσεις → Services.",
-      setupLink: "Ρυθμίσεις → Services",
+        "Live χάρτης θέσεων, κλήσεις και πάσο — ενημερώνεται αυτόματα. Τα links ρυθμίζονται από Ρυθμίσεις → Προσωπικό.",
+      setupLink: "Ρυθμίσεις → Προσωπικό",
     },
     billing: {
       title: "Συνδρομή",
@@ -611,14 +611,14 @@ export const DASHBOARD_EL = {
       description: "Λογαριασμός, προσωπικό, τμήματα και ταμπλό.",
       tabs: {
         general: "Γενικά",
-        services: "Services",
+        services: "Προσωπικό",
         kitchen: "Κουζίνα",
         bar: "Μπαρ",
         tables: "Ταμπλό",
       },
       demoBadge: "Δείγμα — για δοκιμές UI",
       personnel: {
-        title: "Services",
+        title: "Προσωπικό",
         description:
           "Κάθε μέλος έχει δικό του link σερβιτόρου — μοιράστε το στο κινητό/tablet του. Τα τμήματα φιλτράρουν ποιες ειδοποιήσεις πάσου βλέπει.",
         addTitle: "Νέο μέλος",
@@ -771,7 +771,7 @@ export const DASHBOARD_EL = {
         passHint: "Μένει μέχρι ο σερβιτόρος πατήσει «Έτοιμο». Ο χάρτης θέσεων ενημερώνεται live.",
         livePanelLink: "Άνοιγμα live οθονών →",
         historyLink: "Ιστορικό παραδόσεων →",
-        staffLinksHint: "Links σερβιτόρων: Ρυθμίσεις → Services (ένα link ανά άτομο).",
+        staffLinksHint: "Links σερβιτόρων: Ρυθμίσεις → Προσωπικό (ένα link ανά άτομο).",
         minutesAgo: (n: number) => `πριν ${n} λεπ.`,
         tableLabel: (n: string) => `Τραπέζι ${n}`,
         historyTitle: "Ιστορικό πάσου",

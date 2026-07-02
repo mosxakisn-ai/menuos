@@ -566,8 +566,8 @@ export const DASHBOARD_EN = {
     waiter: {
       title: "Screens",
       description:
-        "Live spot map, calls and pass — updates automatically. Staff links are set in Settings → Services.",
-      setupLink: "Settings → Services",
+        "Live spot map, calls and pass — updates automatically. Staff links are set in Settings → Staff.",
+      setupLink: "Settings → Staff",
     },
     billing: {
       title: "Subscription",
@@ -601,14 +601,14 @@ export const DASHBOARD_EN = {
       description: "Account, staff, departments and table board.",
       tabs: {
         general: "General",
-        services: "Services",
+        services: "Staff",
         kitchen: "Kitchen",
         bar: "Bar",
         tables: "Tables",
       },
       demoBadge: "Sample — UI preview",
       personnel: {
-        title: "Services",
+        title: "Staff",
         description:
           "Each member gets a personal waiter link for their phone or tablet. Department tags filter which pass alerts they see.",
         addTitle: "New member",
@@ -759,7 +759,7 @@ export const DASHBOARD_EN = {
         passHint: "Stays visible until the waiter taps Done. The spot map updates live.",
         livePanelLink: "Open live screens →",
         historyLink: "Delivery history →",
-        staffLinksHint: "Waiter links: Settings → Services (one link per staff member).",
+        staffLinksHint: "Waiter links: Settings → Staff (one link per staff member).",
         minutesAgo: (n: number) => `${n} min ago`,
         tableLabel: (n: string) => `Table ${n}`,
         historyTitle: "Pass history",
