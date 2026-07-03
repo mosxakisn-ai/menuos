@@ -1,23 +1,9 @@
 import type { PassSignal, PassStation } from "@menuos/db";
-import { formatWaiterCallLocation, passStationDbToInput } from "@menuos/shared";
+import { formatWaiterCallLocation, passPushTitle, passStationDbToInput, stationDisplayLabel } from "@menuos/shared";
 import { fireStaffPushNotify } from "@/lib/staff-push-notify";
 import { pushPassSignalToStaff } from "@/lib/staff-push-dispatch";
 import { buildStaffWaiterUrl } from "@/lib/staff-auth";
-
-function stationTitle(station: PassStation): string {
-  switch (station) {
-    case "KITCHEN":
-      return "Έλα πάσο — κουζίνα";
-    case "BAR":
-      return "Έτοιμο το ποτό";
-    case "COLD":
-      return "Έτοιμο — κρύα";
-    case "DESSERT":
-      return "Έτοιμο — γλυκά";
-    default:
-      return "Ειδοποίηση πάσου";
-  }
-}
+import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 
 export function pushStaffPassSignal(
   venue: { id: string; name: string; slug: string; staffToken: string; organizationId: string },
@@ -40,9 +26,12 @@ async function notifyStaffPassSignal(
     stationScreen?: { label: string } | null;
   },
 ) {
+  const opsConfig = await getVenueOperationsConfig(venue.id);
+  const stationInput = passStationDbToInput(signal.station);
   const loc = formatWaiterCallLocation(signal);
-  const stationName = signal.stationScreen?.label?.trim();
-  const title = stationName ? `${stationTitle(signal.station)} (${stationName})` : stationTitle(signal.station);
+  const screenName = signal.stationScreen?.label?.trim();
+  const baseTitle = passPushTitle(opsConfig, stationInput);
+  const title = screenName ? `${baseTitle} (${screenName})` : baseTitle;
   const detail = signal.message?.trim();
   const body = detail ? `${loc} · ${detail}` : `${venue.name} · ${loc}`;
   const payload = JSON.stringify({
@@ -63,13 +52,11 @@ async function notifyStaffPassSignal(
   });
 }
 
-export function passStationLabel(station: PassStation, lang: "GR" | "EN"): string {
-  const input = passStationDbToInput(station);
-  const labels: Record<string, { GR: string; EN: string }> = {
-    kitchen: { GR: "Κουζίνα", EN: "Kitchen" },
-    bar: { GR: "Μπαρ", EN: "Bar" },
-    cold: { GR: "Κρύα", EN: "Cold" },
-    dessert: { GR: "Γλυκά", EN: "Dessert" },
-  };
-  return labels[input]?.[lang] ?? station;
+export async function passStationLabel(
+  venueId: string,
+  station: PassStation,
+  lang: "GR" | "EN" = "GR",
+): Promise<string> {
+  const opsConfig = await getVenueOperationsConfig(venueId);
+  return stationDisplayLabel(opsConfig, passStationDbToInput(station), lang);
 }

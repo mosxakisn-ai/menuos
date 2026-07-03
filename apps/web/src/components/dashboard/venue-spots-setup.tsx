@@ -181,8 +181,6 @@ export function VenueSpotsSetup({
 
   return (
     <div className="space-y-5">
-      <VenueOperationsConfigPanel venues={venues} initialVenueId={venueId} />
-
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       <div className={dashboardCardClass}>
@@ -396,6 +394,13 @@ export function VenueSpotsSetup({
           </div>
         ) : null}
       </div>
+
+      <VenueOperationsConfigPanel
+        venues={venues}
+        initialVenueId={venueId}
+        sections={["zones"]}
+        showHeader={false}
+      />
     </div>
   );
 }

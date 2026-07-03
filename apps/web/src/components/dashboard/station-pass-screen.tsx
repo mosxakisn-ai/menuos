@@ -32,6 +32,7 @@ type ScreenContext = {
   venueName: string;
   venueSlug: string;
   station: PassStationInput;
+  stationLabel?: string;
   screenLabel?: string | null;
   spotPrefix?: string | null;
   quickComments?: string[];
@@ -200,6 +201,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   useScreenWakeLock();
 
   const quickComments = ctx?.quickComments?.length ? ctx.quickComments : C.quickComments;
+  const displayStationTitle = ctx?.stationLabel?.trim() || C.title;
 
   const load = useCallback(async () => {
     if (!venueSlug || !stationKey) {
@@ -347,7 +349,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-cyan-400">MenuOS</p>
             <h1 className="font-serif text-2xl font-bold sm:text-3xl">
-              {ctx?.screenLabel ? `${C.title} · ${ctx.screenLabel}` : C.title}
+              {ctx?.screenLabel ? `${displayStationTitle} · ${ctx.screenLabel}` : displayStationTitle}
             </h1>
             {ctx ? <p className="mt-1 text-sm text-slate-400 sm:text-base">{ctx.venueName}</p> : null}
           </div>

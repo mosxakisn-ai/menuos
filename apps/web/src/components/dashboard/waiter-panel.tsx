@@ -11,6 +11,7 @@ import {
   groupVenueSpotsByZone,
   mergeTableStateLabels,
   passStationInputToDb,
+  stationDisplayLabel,
   zoneIdForWaiterLocation,
   type OrderPayload,
   type VenueSpotType,
@@ -290,16 +291,17 @@ export function WaiterPanel({
   }
 
   const passStationFilters: { id: PassStationFilter; label: string }[] = useMemo(() => {
+    const langCode = lang === "EN" ? "EN" : "GR";
     const all = [
       { id: "all" as const, label: W.passFilterAll },
-      { id: "kitchen" as const, label: W.passStation.kitchen },
-      { id: "bar" as const, label: W.passStation.bar },
-      { id: "cold" as const, label: W.passStation.cold },
-      { id: "dessert" as const, label: W.passStation.dessert },
+      { id: "kitchen" as const, label: stationDisplayLabel(opsConfig ?? undefined, "kitchen", langCode) },
+      { id: "bar" as const, label: stationDisplayLabel(opsConfig ?? undefined, "bar", langCode) },
+      { id: "cold" as const, label: stationDisplayLabel(opsConfig ?? undefined, "cold", langCode) },
+      { id: "dessert" as const, label: stationDisplayLabel(opsConfig ?? undefined, "dessert", langCode) },
     ];
     if (!opsConfig) return all;
     return filterEnabledPassStationFilters(all, opsConfig);
-  }, [W.passFilterAll, W.passStation, opsConfig]);
+  }, [W.passFilterAll, opsConfig, lang]);
 
   useEffect(() => {
     if (passStationFilter === "all" || !opsConfig) return;
@@ -312,6 +314,17 @@ export function WaiterPanel({
     () => mergeTableStateLabels(opsConfig ?? undefined, lang === "EN" ? "EN" : "GR"),
     [opsConfig, lang],
   );
+
+  const passReadyLabels = useMemo(() => {
+    const langCode = lang === "EN" ? "EN" : "GR";
+    const prefix = langCode === "EN" ? "Ready — " : "Έτοιμο — ";
+    return {
+      kitchen: prefix + stationDisplayLabel(opsConfig ?? undefined, "kitchen", langCode),
+      bar: prefix + stationDisplayLabel(opsConfig ?? undefined, "bar", langCode),
+      cold: prefix + stationDisplayLabel(opsConfig ?? undefined, "cold", langCode),
+      dessert: prefix + stationDisplayLabel(opsConfig ?? undefined, "dessert", langCode),
+    };
+  }, [opsConfig, lang]);
 
   if (venues.length === 0) {
     return (
@@ -511,6 +524,7 @@ export function WaiterPanel({
           updatingPassId={updatingPassId}
           legendEnd={venueStatusEnd}
           stateLabels={tableStateLabels}
+          passReadyLabels={passReadyLabels}
           onUpdateCall={(callId, status) => void updateStatus(callId, status)}
           onUpdatePass={(signalId, status) => void updatePassStatus(signalId, status)}
         />

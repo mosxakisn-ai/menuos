@@ -8,6 +8,7 @@ import {
   passDbStationsForStaffMember,
   passSignalVisibleToStaffMember,
   passStationInputToDb,
+  stationDisplayLabel,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
@@ -171,6 +172,7 @@ export async function POST(request: Request) {
         location: locLabel,
         message: signal.message,
         stationScreenLabel: signal.stationScreen?.label ?? null,
+        stationDisplayName: stationDisplayLabel(opsConfig, parsed.data.station),
       });
       pushStaffPassSignal(venueFull, signal);
     }

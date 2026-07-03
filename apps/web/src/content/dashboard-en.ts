@@ -663,13 +663,41 @@ export const DASHBOARD_EN = {
     },
     settings: {
       title: "Settings",
-      description: "Account, spots, staff and department screens.",
+      description: "Posts, links, spots, messages and staff — all in one place.",
       tabs: {
         general: "General",
-        services: "Staff",
-        kitchen: "Kitchen",
-        bar: "Bar",
-        tables: "Spots",
+        staff: "Staff",
+        posts: "Posts",
+        links: "Links",
+        venue: "Venue",
+        messages: "Messages",
+        tables: "Tables",
+      },
+      postsTab: {
+        title: "Posts / departments",
+        description:
+          "Which zones you run — kitchen, bar, garden, beach, roof, etc. Set a custom name for each post.",
+        hint: "Enable only what you use.\nThe name appears on waiter panel, push and tablet screens.",
+      },
+      linksTab: {
+        title: "Screen links",
+        description:
+          "Open each link on a tablet at the matching post — no login. Only active posts are shown.",
+        hint: "Copy or open the link on the tablet.\nFor a 2nd zone (e.g. Beach): add a new screen with a label.",
+        loading: "Loading posts…",
+        empty: "No active posts. Go to «Posts» and enable at least one.",
+      },
+      messagesTab: {
+        title: "Messages",
+        description: "Quick buttons on tablet screens and what waiters see on the spot map.",
+      },
+      venueTab: {
+        title: "Venue",
+        description: "Name, colours and logo — what guests see on the QR menu.",
+      },
+      tablesTab: {
+        title: "Tables & spots",
+        description: "Set up tables, sunbeds and rooms — per zone (garden, beach, hall, etc.).",
       },
       setupLinksTitle: "Setup:",
       demoBadge: "Sample — UI preview",
@@ -825,7 +853,7 @@ export const DASHBOARD_EN = {
         loading: "Loading settings…",
         departmentsTitle: "Active departments",
         departmentsHint:
-          "Shown in Settings, waiter panel and station screens. E.g. taverna: Kitchen + Bar only.",
+          "Toggle with checkbox and set your own name (e.g. «Grill» instead of «Kitchen»). Shown on waiter panel, push and station screens.",
         quickChipsTitle: "Quick messages",
         quickChipsHint: "One-tap buttons on kitchen/bar tablets.",
         chipPlaceholder: "New message…",

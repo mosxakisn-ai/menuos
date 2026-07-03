@@ -8,11 +8,12 @@ import {
   passSignalStationScreenWhere,
   passStationInputSchema,
   passStationInputToDb,
+  quickChipsForStation,
+  stationDisplayLabel,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
 import { resolvePrimaryStationScreen } from "@/lib/station-screens";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
-import { quickChipsForStation } from "@menuos/shared";
 import { startOfTodayAthens } from "@/lib/athens-day";
 
 export async function GET(request: Request) {
@@ -121,6 +122,7 @@ export async function GET(request: Request) {
     venueName: auth.venue.name,
     venueSlug: auth.venue.slug,
     station,
+    stationLabel: stationDisplayLabel(opsConfig, station),
     screenLabel: auth.stationScreen?.label ?? null,
     spotPrefix: auth.stationScreen?.spotPrefix ?? null,
     quickComments: quickChipsForStation(opsConfig, station),

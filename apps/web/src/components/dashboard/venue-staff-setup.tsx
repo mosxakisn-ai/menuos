@@ -4,7 +4,9 @@ import { Check, Copy, ExternalLink, Pencil, Plus, RefreshCw, Trash2, X } from "l
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   formatStaffStationsForLang,
+  PASS_STATION_INPUTS,
   STAFF_STATION_OPTIONS,
+  stationDisplayLabel,
   type StaffStationOption,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -20,6 +22,7 @@ import {
 } from "@/components/dashboard/dashboard-action-button";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
 import { buildStaffShareUrl } from "@/lib/staff-share-url";
 import { cn } from "@/lib/utils";
@@ -233,8 +236,17 @@ function StaffMemberLinkActions({
 export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const { d, lang } = useDashboardCopy();
   const S = d.pages.settings.personnel;
-  const stationLabels = S.stationLabels as Record<StaffStationOption, string>;
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
+  const { config: opsConfig } = useVenueOperationsConfig(venueId);
+  const stationLabels = useMemo(() => {
+    const base = { ...S.stationLabels } as Record<StaffStationOption, string>;
+    if (!opsConfig) return base;
+    const langCode = lang === "EN" ? "EN" : "GR";
+    for (const station of PASS_STATION_INPUTS) {
+      base[station] = stationDisplayLabel(opsConfig, station, langCode);
+    }
+    return base;
+  }, [S.stationLabels, opsConfig, lang]);
   const [members, setMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");

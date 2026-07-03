@@ -5,12 +5,15 @@ import {
   passSignalStationCancelSchema,
   passSignalStatusUpdateSchema,
   passSignalVisibleToStaffMember,
+  passStationDbToInput,
   passStationInputToDb,
+  stationDisplayLabel,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
 import { logPassSignalStatusChange } from "@/lib/push-diagnostics";
 import { resolvePrimaryStationScreen } from "@/lib/station-screens";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
+import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 
 type Props = { params: Promise<{ signalId: string }> };
 
@@ -91,6 +94,7 @@ export async function PATCH(request: Request, { params }: Props) {
   });
 
   if (next === "PICKED_UP" || next === "DELIVERED") {
+    const opsConfig = await getVenueOperationsConfig(existing.venueId);
     logPassSignalStatusChange({
       organizationId: existing.venue.organizationId,
       venueId: existing.venueId,
@@ -100,6 +104,7 @@ export async function PATCH(request: Request, { params }: Props) {
       status: next,
       staffMemberName: member?.name ?? null,
       readyAt: existing.readyAt,
+      stationDisplayName: stationDisplayLabel(opsConfig, passStationDbToInput(existing.station)),
     });
   }
 
@@ -174,6 +179,7 @@ export async function DELETE(request: Request, { params }: Props) {
 
   await prisma.passSignal.delete({ where: { id: signalId } });
 
+  const opsConfig = await getVenueOperationsConfig(existing.venueId);
   logPassSignalStatusChange({
     organizationId: existing.venue.organizationId,
     venueId: existing.venueId,
@@ -182,6 +188,7 @@ export async function DELETE(request: Request, { params }: Props) {
     location: formatWaiterCallLocation(existing),
     status: "CANCELED",
     readyAt: existing.readyAt,
+    stationDisplayName: stationDisplayLabel(opsConfig, passStationDbToInput(existing.station)),
   });
 
   return NextResponse.json({ message: "Η ειδοποίηση ακυρώθηκε." });

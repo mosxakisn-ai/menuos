@@ -7,23 +7,33 @@ import { cn } from "@/lib/utils";
 
 export const SETTINGS_TAB_IDS = [
   "general",
-  "services",
-  "kitchen",
-  "bar",
+  "staff",
+  "posts",
+  "links",
+  "venue",
+  "messages",
   "tables",
 ] as const;
 
 export type SettingsTabId = (typeof SETTINGS_TAB_IDS)[number];
 
+const LEGACY_TAB_REDIRECTS: Record<string, SettingsTabId> = {
+  waiters: "staff",
+  personnel: "staff",
+  services: "staff",
+  kitchen: "links",
+  bar: "links",
+  cold: "links",
+  dessert: "links",
+  spots: "tables",
+  seats: "tables",
+};
+
 function resolveSettingsTab(value: string | null, allowedTabs: readonly SettingsTabId[]): SettingsTabId {
-  if (value === "waiters" || value === "personnel") {
-    return allowedTabs.includes("services") ? "services" : "general";
-  }
-  if (value === "spots" || value === "seats") {
-    return allowedTabs.includes("tables") ? "tables" : "general";
-  }
-  if (value && allowedTabs.includes(value as SettingsTabId)) {
-    return value as SettingsTabId;
+  if (value) {
+    const legacy = LEGACY_TAB_REDIRECTS[value];
+    if (legacy && allowedTabs.includes(legacy)) return legacy;
+    if (allowedTabs.includes(value as SettingsTabId)) return value as SettingsTabId;
   }
   return "general";
 }

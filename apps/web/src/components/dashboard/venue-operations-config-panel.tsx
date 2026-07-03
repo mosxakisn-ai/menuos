@@ -4,10 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PassStationInput, TableTileState, VenueOperationsConfig } from "@menuos/shared";
 import {
   DEFAULT_PASS_QUICK_CHIPS,
+  DEFAULT_STATION_LABELS_EL,
+  DEFAULT_STATION_LABELS_EN,
   DEFAULT_TABLE_STATE_LABELS_EL,
   groupVenueSpotsByZone,
   mergeTableStateLabels,
   PASS_STATION_INPUTS,
+  stationDisplayLabel,
   TABLE_TILE_STATES,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -24,12 +27,20 @@ import { buttonClass } from "@/components/ui/button";
 
 type Venue = { id: string; name: string };
 
+export type OpsConfigSection = "departments" | "chips" | "map" | "zones";
+
+const ALL_OPS_SECTIONS: OpsConfigSection[] = ["departments", "chips", "map", "zones"];
+
 const STATION_LABEL_KEYS: Record<PassStationInput, "kitchen" | "bar" | "cold" | "dessert"> = {
   kitchen: "kitchen",
   bar: "bar",
   cold: "cold",
   dessert: "dessert",
 };
+
+function defaultStationLabel(station: PassStationInput, lang: "GR" | "EN"): string {
+  return lang === "EN" ? DEFAULT_STATION_LABELS_EN[station] : DEFAULT_STATION_LABELS_EL[station];
+}
 
 export function useVenueOperationsConfig(venueId: string) {
   const [config, setConfig] = useState<VenueOperationsConfig | null>(null);
@@ -120,13 +131,18 @@ function ChipEditor({
 export function VenueOperationsConfigPanel({
   venues,
   initialVenueId,
+  sections = ALL_OPS_SECTIONS,
+  showHeader = true,
 }: {
   venues: Venue[];
   initialVenueId?: string;
+  sections?: OpsConfigSection[];
+  showHeader?: boolean;
 }) {
   const { d, lang } = useDashboardCopy();
   const O = d.pages.settings.operations;
   const P = d.pages.settings.personnel.stationLabels;
+  const show = (s: OpsConfigSection) => sections.includes(s);
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
   const { spots: panelSpots } = useVenueSpots(venueId);
   const zoneGroups = useMemo(
@@ -196,6 +212,22 @@ export function VenueOperationsConfigPanel({
     setDraft({ ...draft, quickChips: Object.keys(next).length ? next : undefined });
   }
 
+  function setStationLabel(station: PassStationInput, value: string) {
+    if (!draft) return;
+    const trimmed = value.trim();
+    const next = { ...(draft.stationLabels ?? {}) };
+    const fallback = defaultStationLabel(station, lang === "EN" ? "EN" : "GR");
+    if (!trimmed || trimmed === fallback) {
+      delete next[station];
+    } else {
+      next[station] = trimmed;
+    }
+    setDraft({
+      ...draft,
+      stationLabels: Object.keys(next).length ? next : undefined,
+    });
+  }
+
   function setTableStateLabel(state: TableTileState, value: string) {
     if (!draft) return;
     const trimmed = value.trim();
@@ -236,10 +268,12 @@ export function VenueOperationsConfigPanel({
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       <div className={dashboardCardClass}>
-        <DashboardSectionTitle title={O.title} description={O.description} />
+        {showHeader ? (
+          <DashboardSectionTitle title={O.title} description={O.description} />
+        ) : null}
 
         {venues.length > 1 ? (
-          <label className="mt-4 block max-w-md">
+          <label className={showHeader ? "mt-4 block max-w-md" : "block max-w-md"}>
             <span className={dashboardLabelClass}>{d.venue}</span>
             <select
               value={venueId}
@@ -258,35 +292,52 @@ export function VenueOperationsConfigPanel({
         {loading || !draft ? (
           <p className="mt-4 text-sm text-slate-500">{O.loading}</p>
         ) : (
-          <div className="mt-6 space-y-8">
+          <div className={showHeader ? "mt-6 space-y-8" : "mt-4 space-y-8"}>
+            {show("departments") ? (
             <section>
               <h3 className="text-sm font-semibold text-brand-navy">{O.departmentsTitle}</h3>
               <p className="mt-1 text-sm text-slate-600">{O.departmentsHint}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <ul className="mt-3 space-y-2">
                 {PASS_STATION_INPUTS.map((station) => {
                   const active = draft.enabledStations.includes(station);
+                  const displayName = stationDisplayLabel(
+                    draft,
+                    station,
+                    lang === "EN" ? "EN" : "GR",
+                  );
                   return (
-                    <label
+                    <li
                       key={station}
-                      className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition ${
+                      className={`flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
                         active
-                          ? "border-brand-blue bg-brand-blue/10 text-brand-navy"
-                          : "border-slate-200 bg-white text-slate-500"
+                          ? "border-brand-blue/30 bg-brand-blue/5"
+                          : "border-slate-100 bg-white opacity-80"
                       }`}
                     >
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={active}
+                          onChange={() => toggleStation(station)}
+                          className="accent-brand-blue"
+                        />
+                        <span className="sr-only">{P[STATION_LABEL_KEYS[station]]}</span>
+                      </label>
                       <input
-                        type="checkbox"
-                        checked={active}
-                        onChange={() => toggleStation(station)}
-                        className="accent-brand-blue"
+                        value={displayName}
+                        onChange={(e) => setStationLabel(station, e.target.value)}
+                        maxLength={40}
+                        placeholder={P[STATION_LABEL_KEYS[station]]}
+                        className={`${dashboardFieldClass} min-w-[10rem] flex-1 text-sm`}
                       />
-                      {P[STATION_LABEL_KEYS[station]]}
-                    </label>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </section>
+            ) : null}
 
+            {show("chips") ? (
             <section>
               <h3 className="text-sm font-semibold text-brand-navy">{O.quickChipsTitle}</h3>
               <p className="mt-1 text-sm text-slate-600">{O.quickChipsHint}</p>
@@ -294,6 +345,11 @@ export function VenueOperationsConfigPanel({
                 {PASS_STATION_INPUTS.filter((s) => draft.enabledStations.includes(s)).map(
                   (station) => {
                     const chips = draft.quickChips?.[station] ?? DEFAULT_PASS_QUICK_CHIPS[station];
+                    const deptName = stationDisplayLabel(
+                      draft,
+                      station,
+                      lang === "EN" ? "EN" : "GR",
+                    );
                     return (
                       <div
                         key={station}
@@ -301,7 +357,7 @@ export function VenueOperationsConfigPanel({
                       >
                         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                           <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">
-                            {P[STATION_LABEL_KEYS[station]]}
+                            {deptName}
                           </p>
                           <button
                             type="button"
@@ -322,7 +378,9 @@ export function VenueOperationsConfigPanel({
                 )}
               </div>
             </section>
+            ) : null}
 
+            {show("map") ? (
             <section>
               <h3 className="text-sm font-semibold text-brand-navy">{O.mapLabelsTitle}</h3>
               <p className="mt-1 text-sm text-slate-600">{O.mapLabelsHint}</p>
@@ -345,8 +403,9 @@ export function VenueOperationsConfigPanel({
                 <TableGridLegend stateLabels={previewLabels} />
               </div>
             </section>
+            ) : null}
 
-            {zoneGroups && zoneGroups.length > 0 ? (
+            {show("zones") && zoneGroups && zoneGroups.length > 0 ? (
               <section>
                 <h3 className="text-sm font-semibold text-brand-navy">{O.zonesTitle}</h3>
                 <p className="mt-1 text-sm text-slate-600">{O.zonesHint}</p>

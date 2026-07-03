@@ -315,6 +315,7 @@ export function WaiterTableGrid({
   onUpdatePass,
   legendEnd,
   stateLabels: stateLabelsProp,
+  passReadyLabels: passReadyLabelsProp,
 }: {
   spots: TableGridSpot[];
   calls: TableGridCall[];
@@ -327,9 +328,11 @@ export function WaiterTableGrid({
   onUpdatePass: (signalId: string, status: "PICKED_UP" | "DELIVERED") => void;
   legendEnd?: ReactNode;
   stateLabels?: Record<TableTileState, string>;
+  passReadyLabels?: Record<string, string>;
 }) {
   const { d, lang } = useDashboardCopy();
   const W = d.waiter;
+  const passReadyLabels = passReadyLabelsProp ?? (W.passReadyLabel as Record<string, string>);
 
   const tiles = useMemo(() => {
     const built = buildTableGridTiles(spots, calls, passSignals);
@@ -383,7 +386,7 @@ export function WaiterTableGrid({
               viewTab={viewTab}
               passStationFilter={passStationFilter}
               callTypeLabels={W.callType}
-              passReadyLabels={W.passReadyLabel}
+              passReadyLabels={passReadyLabels}
               callStatusLabels={W.callStatus}
               stateLabels={stateLabels}
               labels={{

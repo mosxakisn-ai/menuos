@@ -2,10 +2,19 @@
 
 import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  DEFAULT_ENABLED_STATIONS,
+  type PassStationInput,
+} from "@menuos/shared";
 import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
+import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
 import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
+import {
+  useVenueOperationsConfig,
+  VenueOperationsConfigPanel,
+} from "@/components/dashboard/venue-operations-config-panel";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import type { SettingsTabId } from "@/components/dashboard/settings-tabs";
@@ -29,20 +38,22 @@ function useVenuePicker(venues: VenueSpotVenue[]) {
   return { venueId, setVenueId };
 }
 
-function DepartmentTabIntro({
+function TabIntro({
   title,
   description,
   hint,
   venues,
   venueId,
   onVenueChange,
+  hideVenuePicker = false,
 }: {
   title: string;
   description: string;
-  hint: string;
+  hint?: string;
   venues: VenueSpotVenue[];
   venueId: string;
   onVenueChange: (id: string) => void;
+  hideVenuePicker?: boolean;
 }) {
   const { d } = useDashboardCopy();
 
@@ -50,12 +61,14 @@ function DepartmentTabIntro({
     <div className={dashboardCardClass}>
       <h2 className="text-base font-semibold text-brand-navy">{title}</h2>
       <p className="mt-2 text-sm text-slate-600">{description}</p>
-      <ul className="mt-3 list-inside list-disc space-y-1 text-xs text-slate-500">
-        {hint.split("\n").map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ul>
-      {venues.length > 1 ? (
+      {hint ? (
+        <ul className="mt-3 list-inside list-disc space-y-1 text-xs text-slate-500">
+          {hint.split("\n").map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      ) : null}
+      {!hideVenuePicker && venues.length > 1 ? (
         <label className="mt-4 block max-w-md">
           <span className={dashboardLabelClass}>{d.venue}</span>
           <select
@@ -83,57 +96,118 @@ export function SettingsPersonnelPanel({
   return <VenueStaffSetup venues={venues} />;
 }
 
-export function SettingsKitchenPanel({ venues }: { venues: VenueSpotVenue[] }) {
+export function SettingsPostsPanel({ venues }: { venues: VenueSpotVenue[] }) {
   const { d } = useDashboardCopy();
-  const S = d.pages.settings;
-  const { venueId, setVenueId } = useVenuePicker(venues);
+  const T = d.pages.settings.postsTab;
 
   return (
     <div className="space-y-5">
-      <DepartmentTabIntro
-        title={S.kitchenTab.title}
-        description={S.kitchenTab.description}
-        hint={S.kitchenTab.steps}
-        venues={venues}
-        venueId={venueId}
-        onVenueChange={setVenueId}
-      />
-      <div className="grid gap-5 md:grid-cols-2">
-        <StationScreensPanel station="kitchen" venues={venues} venueId={venueId} embedded />
-        <StationScreensPanel station="cold" venues={venues} venueId={venueId} embedded />
-      </div>
+      <TabIntro title={T.title} description={T.description} hint={T.hint} venues={venues} venueId="" onVenueChange={() => {}} hideVenuePicker />
+      <VenueOperationsConfigPanel venues={venues} sections={["departments"]} showHeader={false} />
     </div>
   );
 }
 
-export function SettingsBarPanel({ venues }: { venues: VenueSpotVenue[] }) {
+export function SettingsLinksPanel({ venues }: { venues: VenueSpotVenue[] }) {
   const { d } = useDashboardCopy();
-  const S = d.pages.settings;
+  const L = d.pages.settings.linksTab;
   const { venueId, setVenueId } = useVenuePicker(venues);
+  const { config: opsConfig, loading } = useVenueOperationsConfig(venueId);
+
+  const enabledStations: PassStationInput[] =
+    opsConfig?.enabledStations?.length ? opsConfig.enabledStations : [...DEFAULT_ENABLED_STATIONS];
 
   return (
     <div className="space-y-5">
-      <DepartmentTabIntro
-        title={S.barTab.title}
-        description={S.barTab.description}
-        hint={S.barTab.steps}
+      <TabIntro
+        title={L.title}
+        description={L.description}
+        hint={L.hint}
         venues={venues}
         venueId={venueId}
         onVenueChange={setVenueId}
       />
-      <div className="grid gap-5 md:grid-cols-2">
-        <StationScreensPanel station="bar" venues={venues} venueId={venueId} embedded />
-        <StationScreensPanel station="dessert" venues={venues} venueId={venueId} embedded />
-      </div>
+      {loading ? (
+        <p className="text-sm text-slate-500">{L.loading}</p>
+      ) : enabledStations.length === 0 ? (
+        <div className={dashboardCardClass}>
+          <p className="text-sm text-slate-600">{L.empty}</p>
+        </div>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2">
+          {enabledStations.map((station) => (
+            <StationScreensPanel
+              key={station}
+              station={station}
+              venues={venues}
+              venueId={venueId}
+              embedded
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function SettingsVenuePanel({ venues }: { venues: SettingsVenue[] }) {
+  const { d } = useDashboardCopy();
+  const T = d.pages.settings.venueTab;
+
+  return (
+    <div className="space-y-5">
+      <TabIntro
+        title={T.title}
+        description={T.description}
+        venues={venues.map((v) => ({ id: v.id, name: v.name, slug: v.slug }))}
+        venueId=""
+        onVenueChange={() => {}}
+        hideVenuePicker
+      />
+      <SettingsForm venues={venues} />
+    </div>
+  );
+}
+
+export function SettingsMessagesPanel({ venues }: { venues: VenueSpotVenue[] }) {
+  const { d } = useDashboardCopy();
+  const T = d.pages.settings.messagesTab;
+
+  return (
+    <div className="space-y-5">
+      <TabIntro
+        title={T.title}
+        description={T.description}
+        venues={venues}
+        venueId=""
+        onVenueChange={() => {}}
+        hideVenuePicker
+      />
+      <VenueOperationsConfigPanel venues={venues} sections={["chips", "map"]} showHeader={false} />
     </div>
   );
 }
 
 export function SettingsTablesPanel({ venues }: { venues: VenueSpotVenue[] }) {
-  return <VenueSpotsSetup venues={venues} />;
+  const { d } = useDashboardCopy();
+  const T = d.pages.settings.tablesTab;
+
+  return (
+    <div className="space-y-5">
+      <TabIntro
+        title={T.title}
+        description={T.description}
+        venues={venues}
+        venueId=""
+        onVenueChange={() => {}}
+        hideVenuePicker
+      />
+      <VenueSpotsSetup venues={venues} />
+    </div>
+  );
 }
 
-const SETUP_LINK_TABS: SettingsTabId[] = ["tables", "services", "kitchen", "bar"];
+const SETUP_LINK_TABS: SettingsTabId[] = ["tables", "staff", "posts", "links"];
 
 export function SettingsSetupLinks({ className }: { className?: string }) {
   const { d } = useDashboardCopy();
@@ -200,4 +274,14 @@ export function SettingsGeneralExtrasPanel() {
       </div>
     </div>
   );
+}
+
+/** @deprecated Use SettingsLinksPanel — kept for imports during migration */
+export function SettingsKitchenPanel({ venues }: { venues: VenueSpotVenue[] }) {
+  return <SettingsLinksPanel venues={venues} />;
+}
+
+/** @deprecated Use SettingsLinksPanel */
+export function SettingsBarPanel({ venues }: { venues: VenueSpotVenue[] }) {
+  return <SettingsLinksPanel venues={venues} />;
 }

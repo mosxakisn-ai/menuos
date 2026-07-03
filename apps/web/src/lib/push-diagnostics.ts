@@ -17,7 +17,9 @@ export type PushDispatchResult = {
 const SLOW_PASS_SECONDS = 120;
 const SLOW_WAITER_CALL_SECONDS = 180;
 
-function stationLabel(station: PassStation): string {
+function stationLabel(station: PassStation, displayName?: string | null): string {
+  const custom = displayName?.trim();
+  if (custom) return custom;
   const key = passStationDbToInput(station);
   const labels: Record<string, string> = {
     kitchen: "Κουζίνα",
@@ -191,8 +193,9 @@ export function logPassSignalCreated(input: {
   location: string;
   message?: string | null;
   stationScreenLabel?: string | null;
+  stationDisplayName?: string | null;
 }): void {
-  const station = stationLabel(input.station);
+  const station = stationLabel(input.station, input.stationDisplayName);
   const detail = input.message?.trim();
   logStaffFlowAudit({
     organizationId: input.organizationId,
@@ -220,10 +223,11 @@ export function logPassSignalStatusChange(input: {
   status: "PICKED_UP" | "DELIVERED" | "CANCELED";
   staffMemberName?: string | null;
   readyAt: Date;
+  stationDisplayName?: string | null;
 }): void {
   const seconds = waitSeconds(input.readyAt);
   const staff = actorLabel(input.staffMemberName);
-  const station = stationLabel(input.station);
+  const station = stationLabel(input.station, input.stationDisplayName);
 
   if (input.status === "CANCELED") {
     logStaffFlowAudit({

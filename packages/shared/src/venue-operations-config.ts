@@ -34,15 +34,39 @@ export const DEFAULT_TABLE_STATE_LABELS_EN: Record<TableTileState, string> = {
   both: "Multiple",
 };
 
+export const DEFAULT_STATION_LABELS_EL: Record<PassStationInput, string> = {
+  kitchen: "Κουζίνα",
+  bar: "Μπαρ",
+  cold: "Κρύα",
+  dessert: "Γλυκά",
+};
+
+export const DEFAULT_STATION_LABELS_EN: Record<PassStationInput, string> = {
+  kitchen: "Kitchen",
+  bar: "Bar",
+  cold: "Cold prep",
+  dessert: "Dessert",
+};
+
 const tableTileStateSchema = z.enum(
   TABLE_TILE_STATES as unknown as [TableTileState, ...TableTileState[]],
 );
 
 const quickChipSchema = z.string().trim().min(1).max(60);
 const zoneLabelSchema = z.string().trim().min(1).max(40);
+const stationLabelSchema = z.string().trim().min(1).max(40);
 
 export const venueOperationsConfigSchema = z.object({
   enabledStations: z.array(passStationInputSchema).min(1).max(4),
+  stationLabels: z
+    .object({
+      kitchen: stationLabelSchema.optional(),
+      bar: stationLabelSchema.optional(),
+      cold: stationLabelSchema.optional(),
+      dessert: stationLabelSchema.optional(),
+    })
+    .partial()
+    .optional(),
   quickChips: z
     .object({
       kitchen: z.array(quickChipSchema).max(12),
@@ -93,6 +117,8 @@ export function mergeVenueOperationsConfig(
     enabledStations: patch.enabledStations
       ? uniqueStations(patch.enabledStations)
       : current.enabledStations,
+    stationLabels:
+      patch.stationLabels !== undefined ? patch.stationLabels : current.stationLabels,
     quickChips: patch.quickChips !== undefined ? patch.quickChips : current.quickChips,
     tableStateLabels:
       patch.tableStateLabels !== undefined ? patch.tableStateLabels : current.tableStateLabels,
@@ -106,6 +132,36 @@ export function isPassStationEnabled(
   station: PassStationInput,
 ): boolean {
   return config.enabledStations.includes(station);
+}
+
+export function stationDisplayLabel(
+  config: VenueOperationsConfig | undefined,
+  station: PassStationInput,
+  lang: "GR" | "EN" = "GR",
+): string {
+  const custom = config?.stationLabels?.[station]?.trim();
+  if (custom) return custom;
+  return lang === "EN" ? DEFAULT_STATION_LABELS_EN[station] : DEFAULT_STATION_LABELS_EL[station];
+}
+
+export function passPushTitle(
+  config: VenueOperationsConfig | undefined,
+  station: PassStationInput,
+  lang: "GR" | "EN" = "GR",
+): string {
+  const name = stationDisplayLabel(config, station, lang);
+  switch (station) {
+    case "kitchen":
+      return lang === "EN" ? `Pass pickup — ${name}` : `Έλα πάσο — ${name}`;
+    case "bar":
+      return lang === "EN" ? `Ready — ${name}` : `Έτοιμο — ${name}`;
+    case "cold":
+      return lang === "EN" ? `Ready — ${name}` : `Έτοιμο — ${name}`;
+    case "dessert":
+      return lang === "EN" ? `Ready — ${name}` : `Έτοιμο — ${name}`;
+    default:
+      return lang === "EN" ? "Pass alert" : "Ειδοποίηση πάσου";
+  }
 }
 
 export function quickChipsForStation(
