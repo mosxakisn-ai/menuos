@@ -1,6 +1,6 @@
-/** Curated Unsplash URLs for demo-taverna (food & drinks). w=900&q=85 for sharp mobile cards. */
+/** Curated Unsplash URLs for demo-taverna (food & drinks). w=480 for menu card thumbnails. */
 const U = (id) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&h=675&q=85`;
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=480&h=360&q=75`;
 
 export const DEMO_PHOTOS = {
   Χωριάτικη: U("photo-1592417817098-8fd3d9eb14a5"),

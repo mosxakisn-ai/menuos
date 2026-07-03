@@ -5,6 +5,10 @@ import { getAllSeoLandingPaths } from "@/lib/seo-landing";
 import { absoluteUrl } from "@/lib/seo";
 import { trialDayLabels } from "@/lib/trial-marketing";
 
+function mdLink(label: string, path: string): string {
+  return `- [${label}](${absoluteUrl(path)})`;
+}
+
 export async function GET() {
   const trialDays = await getTrialDaysFromCatalog();
   const { trialDaysGen } = trialDayLabels(trialDays);
@@ -13,51 +17,56 @@ export async function GET() {
   const pro = catalog.find((e) => e.id === "PRO");
   const basicPrice = basic ? formatPlanPriceDisplay(basic.priceMonthly, basic.priceDisplay) : "€9.99";
   const proPrice = pro ? formatPlanPriceDisplay(pro.priceMonthly, pro.priceDisplay) : "€19.99";
-  const staticPages = Object.values(SEO_PAGES).map((p) => absoluteUrl(p.path));
-  const landings = getAllSeoLandingPaths().map((path) => absoluteUrl(path));
-  const blogPosts = SEO_BLOG_POSTS.map((post) => absoluteUrl(`/blog/${post.slug}`));
+  const staticPages = Object.values(SEO_PAGES);
+  const landings = getAllSeoLandingPaths();
+  const blogPosts = SEO_BLOG_POSTS;
 
   const lines = [
-    `# ${SEO_SITE.name} (${SEO_SITE.url.replace("https://", "")})`,
+    `# ${SEO_SITE.name}`,
     "",
-    "> Ψηφιακό menu με QR και Live 360° συντονισμό για εστιατόρια, ξενοδοχεία και bars στην Ελλάδα.",
+    `> Ψηφιακό menu με QR και Live 360° συντονισμό για εστιατόρια, ξενοδοχεία και bars στην Ελλάδα.`,
+    "",
+    `Website: ${SEO_SITE.url}`,
     "",
     "## Τι κάνουμε",
     "- Online πλατφόρμα για ψηφιακό menu με QR codes",
-    "- MenuOS Live · 360° — live συντονισμός κλήσεων και παραγγελιών από QR",
+    "- [MenuOS Live · 360°](https://menuos.gr/live-360) — live συντονισμός κλήσεων και παραγγελιών από QR",
     "- Πολυγλωσσικό QR menu (Ελληνικά, English, Deutsch, Français)",
     "- Online διαχείριση για ενημέρωση τιμών και πιάτων",
     "- Κλήση σερβιτόρου / room service από το menu",
     `- Δωρεάν δοκιμή ${trialDaysGen}`,
-    `- Τιμές: Basic ${basicPrice}/μήνα, Pro ${proPrice}/μήνα (Live 360° included)`,
+    `- Τιμές: [Basic ${basicPrice}/μήνα](https://menuos.gr/pricing), [Pro ${proPrice}/μήνα](https://menuos.gr/pricing)`,
     "",
     "## Κύριες σελίδες",
-    ...staticPages.map((url) => `- ${url}`),
+    ...staticPages.map((p) => mdLink(p.breadcrumbLabel, p.path)),
     "",
     `## SEO landings (${landings.length})`,
-    ...landings.slice(0, 40).map((url) => `- ${url}`),
-    ...(landings.length > 40 ? [`- … και ${landings.length - 40} ακόμα (δείτε sitemap)`] : []),
+    ...landings.slice(0, 40).map((path) => mdLink(path.replace(/^\//, ""), path)),
+    ...(landings.length > 40
+      ? [`- [Full sitemap](${absoluteUrl("/sitemap.xml")}) — ${landings.length} landing URLs`]
+      : []),
     "",
     "## Blog",
-    `- ${absoluteUrl(SEO_BLOG_INDEX.path)}`,
-    ...blogPosts.map((url) => `- ${url}`),
+    mdLink(SEO_BLOG_INDEX.breadcrumbLabel, SEO_BLOG_INDEX.path),
+    ...blogPosts.map((post) => mdLink(post.title, `/blog/${post.slug}`)),
     "",
-    "## SEO",
-    `- Sitemap: ${absoluteUrl("/sitemap.xml")}`,
-    `- RSS: ${absoluteUrl("/feed.xml")}`,
+    "## SEO & discovery",
+    `- [Sitemap](${absoluteUrl("/sitemap.xml")})`,
+    `- [Image sitemap](${absoluteUrl("/sitemap-images.xml")})`,
+    `- [RSS feed](${absoluteUrl("/feed.xml")})`,
+    `- [Demo QR menu](${absoluteUrl("/m/demo-taverna?table=12")})`,
     "- English UI: append ?lang=en to any marketing URL",
-    "- Guest QR menus: 4 languages (EL, EN, DE, FR)",
     "",
     "## Επικοινωνία",
-    `- Τηλέφωνο: ${SEO_SITE.contactPhone}`,
-    `- Email: ${SEO_SITE.contactEmail}`,
+    `- Τηλέφωνο: [${SEO_SITE.contactPhone}](tel:${SEO_SITE.contactPhoneTel})`,
+    `- Email: [${SEO_SITE.contactEmail}](mailto:${SEO_SITE.contactEmail})`,
     `- Facebook: ${SEO_SITE.contactFacebook}`,
     "",
   ];
 
   return new Response(lines.join("\n"), {
     headers: {
-      "Content-Type": "text/plain; charset=utf-8",
+      "Content-Type": "text/markdown; charset=utf-8",
       "Cache-Control": "public, max-age=86400",
     },
   });

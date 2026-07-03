@@ -10,6 +10,7 @@ import {
 import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
+import { optimizeMenuCardPhotoUrl } from "@/lib/menu-photo-url";
 import { cn } from "@/lib/utils";
 
 export function ItemLabelBadge({
@@ -99,6 +100,7 @@ export function MenuItemCard({
   const badge = isItemLabel(label) ? label : null;
   const Comp = onClick ? "button" : "div";
   const [imgFailed, setImgFailed] = useState(false);
+  const cardPhotoSrc = optimizeMenuCardPhotoUrl(photoUrl);
 
   useEffect(() => {
     setImgFailed(false);
@@ -144,10 +146,12 @@ export function MenuItemCard({
       <div className="relative aspect-[4/3] w-full bg-slate-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={photoUrl}
+          src={cardPhotoSrc}
           alt={name}
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
+          decoding="async"
+          sizes="(max-width: 640px) 50vw, 280px"
           onError={() => setImgFailed(true)}
         />
         {badge ? (

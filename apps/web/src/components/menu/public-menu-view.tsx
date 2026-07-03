@@ -25,6 +25,7 @@ import {
   computeItemUnitPrice,
   formatExtraPriceSuffix,
   updateCartLineQty,
+  isItemLabel,
   type OrderLine,
   type OrderPayload,
   type QrMenuLanguage,
@@ -33,7 +34,7 @@ import { LogoMark } from "@/components/brand/logo-mark";
 import { cn } from "@/lib/utils";
 import { ItemLabelBadge, MenuItemCard, MenuItemRow } from "@/components/menu/menu-item-card";
 import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
-import { isItemLabel } from "@menuos/shared";
+import { optimizeMenuCardPhotoUrl, optimizeMenuLogoUrl } from "@/lib/menu-photo-url";
 
 type Translation = {
   language: SupportedLanguage;
@@ -749,8 +750,10 @@ export function PublicMenuView({
               {venue.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={venue.logoUrl}
+                  src={optimizeMenuLogoUrl(venue.logoUrl, isEmbedded ? 40 : 56)}
                   alt={venue.name}
+                  width={isEmbedded ? 40 : 56}
+                  height={isEmbedded ? 40 : 56}
                   className={cn(
                     "shrink-0 rounded-full border-2 border-white/30 object-cover shadow-lg",
                     isEmbedded ? "mt-0.5 h-10 w-10" : "mt-0.5 h-14 w-14",
@@ -1206,9 +1209,11 @@ export function PublicMenuView({
                     <div className="relative -mx-6 mb-4 aspect-[4/3] overflow-hidden bg-slate-100">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={selectedItem.photoUrl}
+                        src={optimizeMenuCardPhotoUrl(selectedItem.photoUrl, 360)}
                         alt={tr?.name ?? ""}
                         className="h-full w-full object-cover"
+                        decoding="async"
+                        sizes="100vw"
                       />
                       {isItemLabel(selectedItem.label) ? (
                         <div className="absolute left-3 top-3">
