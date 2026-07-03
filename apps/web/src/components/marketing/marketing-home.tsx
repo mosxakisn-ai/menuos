@@ -3,10 +3,10 @@
 import Link from "next/link";
 import {
   ArrowDown,
-  Bell,
   Building2,
   Check,
   Globe,
+  Orbit,
   QrCode,
   Smartphone,
   Sparkles,
@@ -28,7 +28,7 @@ import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n/context";
 
-const serviceIcons = [QrCode, Globe, Bell, UtensilsCrossed, Building2, Smartphone];
+const serviceIcons = [QrCode, Globe, Orbit, UtensilsCrossed, Building2, Smartphone];
 
 export function MarketingHome() {
   const { m } = useI18n();
@@ -146,7 +146,7 @@ export function MarketingHome() {
       <section id="pos-leitourgei" className="border-y border-slate-100 bg-brand-surface/80 py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <SectionHeader title={h.steps.title} />
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
+          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {h.steps.items.map(({ step, title, text }) => (
               <div
                 key={step}

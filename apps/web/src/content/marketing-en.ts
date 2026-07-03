@@ -112,6 +112,11 @@ export const MARKETING_EN = {
           title: "Place your QR codes",
           text: "Download QR codes and put them on tables. Guests scan and view the menu.",
         },
+        {
+          step: "4",
+          title: "Connect your team",
+          text: "MenuOS Live · 360° — staff links, push with table number, no login.",
+        },
       ],
     },
     services: {
@@ -126,8 +131,8 @@ export const MARKETING_EN = {
           text: "Support for many languages — one tap on the guest's phone.",
         },
         {
-          title: "Call waiter & notifications",
-          text: "One tap for the guest — staff get a push alert on mobile, with table or room number.",
+          title: "MenuOS Live · 360°",
+          text: "Guest calls, ready dishes and push alerts for staff — all connected to one QR.",
         },
         {
           title: "Management dashboard",
@@ -149,6 +154,7 @@ export const MARKETING_EN = {
         "Lower cost than reprinting menus every season.",
         "Tourists understand the menu in their language.",
         "Update prices and availability in seconds.",
+        "Live 360° coordination — calls and ready dishes around one QR.",
         "Premium look that fits hotels and restaurants.",
       ],
     },
@@ -195,6 +201,10 @@ export const MARKETING_EN = {
         {
           q: "What happens after the trial?",
           a: "Choose Basic or Pro, or contact us for Enterprise.",
+        },
+        {
+          q: "What is MenuOS Live · 360°?",
+          a: "Live alerts for waiters, kitchen and bar — connected to the same QR menu.",
         },
       ],
     },
@@ -264,12 +274,12 @@ export const MARKETING_EN = {
     services: {
       badge: "Full platform",
       hero:
-        "From table QR to dashboard — every tool for a modern digital menu, without complexity.",
+        "From table QR to Live 360° coordination — every tool for modern hospitality, without complexity.",
       intro:
-        "MenuOS is not just «PDF with QR». It's a live menu with photos, multiple languages, call waiter and instant price updates — built for the Greek hospitality market.",
+        "MenuOS is not just «PDF with QR». It's a live menu with photos, multiple languages, MenuOS Live · 360° and instant price updates — built for the Greek hospitality market.",
       introParagraphs: [
-        "MenuOS combines a digital catalog, QR codes per table or room, waiter calls with push notifications, and online management from any device. Ideal for restaurants, tavernas, hotels, beach bars, pool bars and room service — with no app install for guests.",
-        "Instead of reprinting every season, you change prices and items in seconds. Tourists see the menu in their language, with photos and descriptions. Staff get notified when someone calls the waiter or orders — with the exact table or room number from the QR link.",
+        "MenuOS combines a digital catalog, QR codes per table or room, waiter calls with push notifications, and live coordination for kitchen and bar — with no app install for guests.",
+        "Instead of reprinting every season, you change prices and items in seconds. Tourists see the menu in their language. Staff get alerts for calls and ready dishes — with the table number from the QR.",
       ],
     },
     howItWorks: {
@@ -277,7 +287,7 @@ export const MARKETING_EN = {
       hero: "From sign-up to QR on the table — simple steps, no special setup.",
       introParagraphs: [
         "After free sign-up, you create a venue, add categories and items, and download print-ready QR codes — in under an hour for a full menu.",
-        "Each QR can include a table (?table=12), room (?room=101) or sunbed number — so waiter calls and orders reach the right spot. Guests open the menu on their phone, no app required; you update prices and availability live from the dashboard.",
+        "Each QR can include a table (?table=12), room (?room=101) or sunbed number — so Live 360° alerts reach the right spot. Guests open the menu on their phone, no app required.",
       ],
     },
     qrMenu: {

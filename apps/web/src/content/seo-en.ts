@@ -4,7 +4,7 @@ export const SEO_SITE_EN = {
   language: "en",
   defaultTitle: "MenuOS — Digital QR menu for restaurants & hotels",
   description:
-    "Digital QR menu for restaurants, hotels and bars in Greece. Guests scan, browse prices and photos — you update the menu online in minutes.",
+    "Digital QR menu and Live 360° coordination for restaurants, hotels and bars in Greece. Guests scan — you update online in minutes.",
   breadcrumbHome: "Home",
 } as const;
 
@@ -26,7 +26,7 @@ export const SEO_PAGES_EN = {
   services: {
     title: "Services — Digital menu & QR codes",
     description:
-      "MenuOS services: digital menu, QR codes, multiple languages, call waiter, online panel for restaurants and hotels.",
+      "MenuOS services: digital menu, QR codes, Live 360°, multiple languages, call waiter — for restaurants and hotels.",
     path: "/ypiresies",
     breadcrumbLabel: "Services",
   },

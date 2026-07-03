@@ -125,8 +125,7 @@
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-up,
     .animate-fade-up-delay,
-    .animate-fade-up-delay-2,
-    .animate-live360-segment {
+    .animate-fade-up-delay-2 {
       opacity: 1 !important;
       animation: none !important;
       transform: none !important;

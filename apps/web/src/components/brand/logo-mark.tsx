@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 type LogoMarkProps = {
@@ -7,6 +8,8 @@ type LogoMarkProps = {
 
 /** QR-frame icon with M — matches MenuOS brand identity */
 export function LogoMark({ className, size = 40 }: LogoMarkProps) {
+  const gradientId = useId();
+
   return (
     <svg
       width={size}
@@ -18,12 +21,12 @@ export function LogoMark({ className, size = 40 }: LogoMarkProps) {
       aria-hidden
     >
       <defs>
-        <linearGradient id="menuos-grad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+        <linearGradient id={gradientId} x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
           <stop stopColor="#2563EB" />
           <stop offset="1" stopColor="#06B6D4" />
         </linearGradient>
       </defs>
-      <rect x="2" y="2" width="44" height="44" rx="10" fill="url(#menuos-grad)" />
+      <rect x="2" y="2" width="44" height="44" rx="10" fill={`url(#${gradientId})`} />
       {/* QR corner squares */}
       <rect x="8" y="8" width="10" height="10" rx="2" fill="white" fillOpacity="0.95" />
       <rect x="30" y="8" width="10" height="10" rx="2" fill="white" fillOpacity="0.95" />

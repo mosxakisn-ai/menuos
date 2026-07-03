@@ -43,7 +43,7 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
     priceDisplay: "€0",
     periodLabel: " / 7 ημέρες",
     description: "Για να δοκιμάσεις την πλατφόρμα πριν επιλέξεις πλάνο.",
-    features: ["1 κατάστημα", "1 κατάλογος", "50 είδη", "QR codes", "Πολλαπλές γλώσσες", "Χωρίς κάρτα"],
+    features: ["1 κατάστημα", "1 κατάλογος", "50 είδη", "QR codes", "Live 360°", "Πολλαπλές γλώσσες", "Χωρίς κάρτα"],
     maxVenues: 1,
     maxMenusPerVenue: 1,
     maxItems: 50,
@@ -61,7 +61,7 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
     priceDisplay: "€9.99",
     periodLabel: "/μήνα",
     description: "Ιδανικό για εστιατόριο, cafe ή μοναδικό κατάστημα.",
-    features: ["1 κατάστημα", "3 κατάλογοι", "Απεριόριστα είδη", "QR codes", "Κλήση σερβιτόρου", "Πολλαπλές γλώσσες"],
+    features: ["1 κατάστημα", "3 κατάλογοι", "Απεριόριστα είδη", "QR codes", "Κλήση σερβιτόρου", "Live 360°", "Πολλαπλές γλώσσες"],
     maxVenues: 1,
     maxMenusPerVenue: 3,
     maxItems: null,
@@ -79,7 +79,7 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
     priceDisplay: "€19.99",
     periodLabel: "/μήνα",
     description: "Για ξενοδοχεία και επιχειρήσεις με πολλαπλούς χώρους.",
-    features: ["3 καταστήματα", "Απεριόριστοι κατάλογοι", "Κλήση σερβιτόρου", "Πολλαπλές γλώσσες", "Προτεραιότητα", "PDF import"],
+    features: ["3 καταστήματα", "Απεριόριστοι κατάλογοι", "Live 360°", "Κλήση σερβιτόρου", "Πολλαπλές γλώσσες", "Προτεραιότητα", "PDF import"],
     maxVenues: 3,
     maxMenusPerVenue: null,
     maxItems: null,
@@ -146,6 +146,36 @@ export function invalidatePlanCatalogCache() {
   cache = null;
 }
 
+function mergeFeaturesWithSeed(current: string[], seed: string[]): string[] {
+  const extras = current.filter((feature) => !seed.includes(feature));
+  return [...seed, ...extras];
+}
+
+async function syncPlanCatalogFeaturesFromSeed(): Promise<boolean> {
+  let anyChanged = false;
+  for (const planId of SUBSCRIPTION_PLANS) {
+    const seed = DEFAULT_CATALOG[planId];
+    const row = await prisma.planCatalog.findUnique({
+      where: { plan: planId as SubscriptionPlan },
+      select: { features: true },
+    });
+    if (!row) continue;
+
+    const current = parseFeatures(row.features);
+    const merged = mergeFeaturesWithSeed(current, seed.features);
+    const changed =
+      merged.length !== current.length || merged.some((feature, index) => feature !== current[index]);
+    if (!changed) continue;
+
+    await prisma.planCatalog.update({
+      where: { plan: planId as SubscriptionPlan },
+      data: { features: merged },
+    });
+    anyChanged = true;
+  }
+  return anyChanged;
+}
+
 export async function ensurePlanCatalogSeeded(): Promise<void> {
   for (const planId of SUBSCRIPTION_PLANS) {
     const seed = DEFAULT_CATALOG[planId];
@@ -178,6 +208,9 @@ export async function ensurePlanCatalogSeeded(): Promise<void> {
     where: { plan: "PRO", maxGeminiTokensPerMonth: null },
     data: { maxGeminiTokensPerMonth: 500_000 },
   });
+
+  const featuresSynced = await syncPlanCatalogFeaturesFromSeed();
+  if (featuresSynced) invalidatePlanCatalogCache();
 }
 
 export async function listPlanCatalogEntries(): Promise<PlanCatalogEntry[]> {

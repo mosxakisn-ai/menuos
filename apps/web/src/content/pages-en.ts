@@ -45,6 +45,12 @@ export const PAGES_EN = {
         bullets: ["Less delay", "Better service", "Rate limit for safety"],
       },
       {
+        title: "MenuOS Live · 360°",
+        description:
+          "Live alerts for waiters, kitchen and bar — connected to the same QR menu. No POS.",
+        bullets: ["Push to mobile", "Ready dish & drink", "Staff link, no login"],
+      },
+      {
         title: "Print-ready QR codes",
         description: "Download QR for tables, rooms, bar or pool. Optional table= / room= in links.",
         bullets: ["High-res export", "Branded look", "Quick placement"],
@@ -65,7 +71,7 @@ export const PAGES_EN = {
     heroTitle: "How it works",
     eyebrow: "The process",
     sectionTitle: "From sign-up to live menu",
-    sectionDesc: "Six simple steps. No install, no reprints — set up from the dashboard.",
+    sectionDesc: "Seven simple steps. No install, no reprints — set up from the dashboard.",
     ctaButton: "Start now — free {trialDays}",
     cta: {
       title: "Want a demo first?",
@@ -90,9 +96,14 @@ export const PAGES_EN = {
         detail: "Allergens, ingredients and availability — all online.",
       },
       {
-        title: "QR codes & placement",
+        title: "QR codes on tables",
         body: "Download QR codes from the dashboard and place on tables, rooms or bar.",
-        detail: "Links like ?table=12 help call waiter know where the guest is.",
+        detail: "Links like ?table=12 help staff know where the guest is.",
+      },
+      {
+        title: "MenuOS Live · 360°",
+        body: "Send links to waiters and kitchen/bar screens. Push alerts with table number — no login.",
+        detail: "Guest calls, ready dishes: all connected around the same QR.",
       },
       {
         title: "Guest experience",
@@ -127,6 +138,10 @@ export const PAGES_EN = {
       { q: "Does it fit hotels?", a: "Yes — pool bar, breakfast, room service. Separate menu per area." },
       { q: "How many languages?", a: "Multiple languages on the QR menu — one tap to switch." },
       { q: "Can I change prices quickly?", a: "Yes. From the dashboard — changes appear instantly." },
+      {
+        q: "What is MenuOS Live · 360°?",
+        a: "Live alerts for waiters, kitchen and bar — connected to the same QR menu. No guest app.",
+      },
     ],
     cta: {
       title: "Ready for a premium QR menu?",
@@ -160,7 +175,7 @@ export const PAGES_EN = {
   about: {
     heroTitle: "About us",
     paragraphs: [
-      "MenuOS is a Greek digital QR menu platform. Our goal: every restaurant, hotel or bar offers a modern mobile menu — without building their own app.",
+      "MenuOS is a Greek digital QR menu platform with Live 360° coordination for your team. Our goal: every restaurant, hotel or bar offers a modern mobile menu — without building their own app.",
       "We know Greek hospitality: seasonality, tourists, multiple QR languages, fast price changes.",
       "We don't sell hardware. We give you an online service: build menu, print QR, guests scan.",
     ],
@@ -205,7 +220,7 @@ export const PAGES_EN = {
         price: "€0",
         period: " / {trialDays}",
         description: "Try the platform before choosing a plan.",
-        features: ["1 venue", "1 menu", "50 items", "QR codes", "Multiple languages", "No card"],
+        features: ["1 venue", "1 menu", "50 items", "QR codes", "Live 360°", "Multiple languages", "No card"],
         cta: "Sign up",
       },
       {
@@ -213,7 +228,7 @@ export const PAGES_EN = {
         price: "€9.99",
         period: "/month",
         description: "Ideal for restaurant, café or single venue.",
-        features: ["1 venue", "3 menus", "Unlimited items", "QR codes", "Call waiter", "Multiple languages"],
+        features: ["1 venue", "3 menus", "Unlimited items", "QR codes", "Call waiter", "Live 360°", "Multiple languages"],
         cta: "Start Basic",
         badge: "Popular",
         highlighted: true,
@@ -223,7 +238,7 @@ export const PAGES_EN = {
         price: "€19.99",
         period: "/month",
         description: "For hotels and businesses with multiple areas.",
-        features: ["3 venues", "Unlimited menus", "Call waiter", "Multiple languages", "Priority support", "PDF import"],
+        features: ["3 venues", "Unlimited menus", "Live 360°", "Call waiter", "Multiple languages", "Priority support", "PDF import"],
         cta: "Start Pro",
       },
     ],

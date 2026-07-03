@@ -2,6 +2,7 @@ import {
   Bell,
   Globe,
   LayoutDashboard,
+  Orbit,
   Palette,
   QrCode,
   Shield,
@@ -23,7 +24,7 @@ export async function generateMetadata() {
   return generateMarketingMetadata("services");
 }
 
-const serviceIcons = [QrCode, LayoutDashboard, UtensilsCrossed, Globe, Bell, QrCode, Palette, Shield];
+const serviceIcons = [QrCode, LayoutDashboard, UtensilsCrossed, Globe, Bell, Orbit, QrCode, Palette, Shield];
 
 export default async function ServicesPage() {
   const locale = await getServerLocale();

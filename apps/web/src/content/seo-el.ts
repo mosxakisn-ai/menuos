@@ -13,7 +13,7 @@ export const SEO_SITE = {
   defaultTitle: "MenuOS — Ψηφιακό menu με QR για εστιατόρια & ξενοδοχεία",
   titleTemplate: "%s | MenuOS",
   description:
-    "Ψηφιακό menu με QR για εστιατόρια, ξενοδοχεία και bars στην Ελλάδα. Οι πελάτες σκανάρουν, βλέπουν τιμές και ενημερωμένο κατάλογο — εσείς το αλλάζετε online σε λεπτά.",
+    "Ψηφιακό menu με QR και live συντονισμό 360° για εστιατόρια, ξενοδοχεία και bars. Ο πελάτης σκανάρει — εσείς ενημερώνετε online σε λεπτά.",
 
   keywords: [
     "QR menu",
@@ -64,7 +64,7 @@ export const SEO_PAGES = {
   services: {
     title: "Υπηρεσίες — Ψηφιακό menu & QR codes",
     description:
-      "Υπηρεσίες MenuOS: ψηφιακό menu, QR codes, πολλαπλές γλώσσες, κλήση σερβιτόρου, online διαχείριση για εστιατόρια και ξενοδοχεία.",
+      "Υπηρεσίες MenuOS: ψηφιακό menu, QR codes, Live 360°, πολλαπλές γλώσσες, κλήση σερβιτόρου — για εστιατόρια και ξενοδοχεία.",
     path: "/ypiresies",
     breadcrumbLabel: "Υπηρεσίες",
     keywords: ["υπηρεσίες QR menu", "ψηφιακό menu SaaS", "menu platform εστιατόριο"],
