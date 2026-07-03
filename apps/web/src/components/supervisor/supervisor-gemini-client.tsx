@@ -57,6 +57,13 @@ function usagePercent(row: SupervisorGeminiRow): number | null {
   return Math.min(100, Math.round((row.geminiTokensThisMonth / row.geminiTokenLimit) * 100));
 }
 
+function overrideDraftMatchesSaved(row: SupervisorGeminiRow, draft: string): boolean {
+  const trimmed = draft.trim();
+  const saved =
+    row.geminiTokenLimitOverride != null ? String(row.geminiTokenLimitOverride) : "";
+  return trimmed === saved;
+}
+
 export function SupervisorGeminiClient() {
   const [rows, setRows] = useState<SupervisorGeminiRow[]>([]);
   const [totalTokens, setTotalTokens] = useState(0);
@@ -253,6 +260,8 @@ export function SupervisorGeminiClient() {
                 const effectiveLimit = hasOverride
                   ? row.geminiTokenLimitOverride
                   : row.planDefaultLimit;
+                const draft = overrideDraft[row.id] ?? "";
+                const unchanged = overrideDraftMatchesSaved(row, draft);
 
                 return (
                   <tr key={row.id} className="border-b border-slate-50 last:border-0 hover:bg-brand-blue/[0.03]">
@@ -304,10 +313,11 @@ export function SupervisorGeminiClient() {
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         <button
                           type="button"
-                          disabled={savingId === row.id}
+                          disabled={savingId === row.id || unchanged}
                           className={cn(
                             buttonClass("primary", "sm"),
                             "inline-flex items-center gap-1 px-2 py-1 text-xs",
+                            unchanged && "opacity-50",
                           )}
                           onClick={() => void saveOverride(row)}
                         >
