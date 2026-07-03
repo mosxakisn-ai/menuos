@@ -149,6 +149,29 @@ export function buildPricingOffersSchema(
   };
 }
 
+export function buildLandingServiceSchema(input: {
+  name: string;
+  path: string;
+  description: string;
+  locale?: MarketingLocale;
+  areaName?: string;
+}) {
+  const isEn = input.locale === "en";
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: input.name,
+    description: input.description,
+    url: absoluteUrl(input.path),
+    inLanguage: schemaLanguage(input.locale ?? "el"),
+    provider: { "@id": `${APP_URL}/#organization` },
+    areaServed: input.areaName
+      ? { "@type": "City", name: input.areaName }
+      : { "@type": "Country", name: isEn ? "Greece" : "Ελλάδα" },
+    serviceType: isEn ? "Digital QR menu platform" : "Πλατφόρμα ψηφιακού menu με QR",
+  };
+}
+
 export function marketingPageSchema(input: {
   page: { title: string; description: string; path: string; breadcrumbLabel: string };
   faq?: readonly FaqItem[];

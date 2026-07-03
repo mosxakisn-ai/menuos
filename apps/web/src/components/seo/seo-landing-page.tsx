@@ -6,9 +6,9 @@ import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { buttonClass } from "@/components/ui/button";
 import { getServerLocale } from "@/i18n/server";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
-import { getSeoLandingBreadcrumbs, getSeoLandingCopy } from "@/lib/seo-landing-content";
+import { getSeoLandingBreadcrumbs, getSeoLandingCopy, getSeoLandingAreaName } from "@/lib/seo-landing-content";
 import type { SeoLandingConfig } from "@/lib/seo-landing";
-import { buildBreadcrumbSchema, buildFAQPageSchema, buildWebPageSchema } from "@/lib/seo-structured-data";
+import { buildBreadcrumbSchema, buildFAQPageSchema, buildLandingServiceSchema, buildWebPageSchema } from "@/lib/seo-structured-data";
 
 export async function SeoLandingPage({ config }: { config: SeoLandingConfig }) {
   const locale = await getServerLocale();
@@ -26,6 +26,13 @@ export async function SeoLandingPage({ config }: { config: SeoLandingConfig }) {
       path: config.path,
       description: copy.metaDescription,
       locale,
+    }),
+    buildLandingServiceSchema({
+      name: copy.h1,
+      path: config.path,
+      description: copy.metaDescription,
+      locale,
+      areaName: getSeoLandingAreaName(config, locale),
     }),
     buildFAQPageSchema(copy.faq),
   ];

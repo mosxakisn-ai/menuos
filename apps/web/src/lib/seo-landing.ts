@@ -8,7 +8,17 @@ export type SeoVerticalSlug =
   | "beach-bar"
   | "pool-bar"
   | "room-service"
-  | "spa";
+  | "spa"
+  | "cafeteria"
+  | "bar"
+  | "cocktail-bar"
+  | "winery"
+  | "cafe"
+  | "bakery"
+  | "food-truck"
+  | "pizzeria"
+  | "taverna"
+  | "canteen";
 
 export type SeoCitySlug =
   | "rodos"
@@ -36,7 +46,18 @@ export type SeoCitySlug =
   | "iraklio"
   | "sifnos"
   | "larisa"
-  | "volos";
+  | "volos"
+  | "kefalonia"
+  | "syros"
+  | "tinos"
+  | "kastoria"
+  | "alexandroupoli"
+  | "preveza"
+  | "nafplio"
+  | "pylos"
+  | "loutraki"
+  | "arachova"
+  | "katerini";
 
 export type SeoLandingKind = "product" | "vertical" | "city" | "city-vertical";
 
@@ -402,12 +423,102 @@ const LANDINGS: SeoLandingConfig[] = [
     city: "volos",
     vertical: "estiatorio",
   }),
+
+  landing({ kind: "vertical", path: "/cafeteria/qr-menu", product: "qr-menu", vertical: "cafeteria" }),
+  landing({ kind: "vertical", path: "/bar/qr-menu", product: "qr-menu", vertical: "bar" }),
+  landing({
+    kind: "vertical",
+    path: "/cocktail-bar/digital-menu",
+    product: "digital-menu",
+    vertical: "cocktail-bar",
+  }),
+  landing({
+    kind: "vertical",
+    path: "/winery/digital-menu",
+    product: "digital-menu",
+    vertical: "winery",
+  }),
+  landing({ kind: "vertical", path: "/cafe/qr-menu", product: "qr-menu", vertical: "cafe" }),
+  landing({ kind: "vertical", path: "/bakery/qr-menu", product: "qr-menu", vertical: "bakery" }),
+  landing({
+    kind: "vertical",
+    path: "/food-truck/qr-menu",
+    product: "qr-menu",
+    vertical: "food-truck",
+  }),
+  landing({ kind: "vertical", path: "/pizzeria/qr-menu", product: "qr-menu", vertical: "pizzeria" }),
+  landing({ kind: "vertical", path: "/taverna/qr-menu", product: "qr-menu", vertical: "taverna" }),
+  landing({ kind: "vertical", path: "/canteen/qr-menu", product: "qr-menu", vertical: "canteen" }),
+
+  landing({ kind: "city", path: "/kefalonia/qr-menu", product: "qr-menu", city: "kefalonia" }),
+  landing({ kind: "city", path: "/syros/digital-menu", product: "digital-menu", city: "syros" }),
+  landing({ kind: "city", path: "/tinos/qr-menu", product: "qr-menu", city: "tinos" }),
+  landing({ kind: "city", path: "/kastoria/digital-menu", product: "digital-menu", city: "kastoria" }),
+  landing({
+    kind: "city",
+    path: "/alexandroupoli/qr-menu",
+    product: "qr-menu",
+    city: "alexandroupoli",
+  }),
+  landing({ kind: "city", path: "/preveza/digital-menu", product: "digital-menu", city: "preveza" }),
+  landing({ kind: "city", path: "/nafplio/qr-menu", product: "qr-menu", city: "nafplio" }),
+  landing({ kind: "city", path: "/pylos/digital-menu", product: "digital-menu", city: "pylos" }),
+  landing({ kind: "city", path: "/loutraki/qr-menu", product: "qr-menu", city: "loutraki" }),
+  landing({ kind: "city", path: "/arachova/digital-menu", product: "digital-menu", city: "arachova" }),
+  landing({ kind: "city", path: "/katerini/qr-menu", product: "qr-menu", city: "katerini" }),
+
+  landing({
+    kind: "city-vertical",
+    path: "/nafplio/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "nafplio",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/kefalonia/beach-bar/qr-menu",
+    product: "qr-menu",
+    city: "kefalonia",
+    vertical: "beach-bar",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/syros/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "syros",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/tinos/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "tinos",
+    vertical: "estiatorio",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/nafplio/taverna/qr-menu",
+    product: "qr-menu",
+    city: "nafplio",
+    vertical: "taverna",
+  }),
+  landing({
+    kind: "city-vertical",
+    path: "/arachova/estiatorio/qr-menu",
+    product: "qr-menu",
+    city: "arachova",
+    vertical: "estiatorio",
+  }),
 ];
 
 const LANDING_BY_PATH = new Map(LANDINGS.map((entry) => [entry.path, entry]));
 
 export function getAllSeoLandingPaths(): string[] {
   return LANDINGS.map((entry) => entry.path);
+}
+
+export function getAllSeoLandingConfigs(): SeoLandingConfig[] {
+  return LANDINGS;
 }
 
 export function getAllSeoLandingSlugParams(): string[][] {
@@ -493,10 +604,23 @@ export const SEO_FOOTER_HUB = {
       labelEl: "Εστιατόριο · Ρέθυμνο",
       labelEn: "Restaurant · Rethymno",
     },
+    {
+      href: "/nafplio/estiatorio/qr-menu",
+      labelEl: "Εστιατόριο · Ναύπλιο",
+      labelEn: "Restaurant · Nafplio",
+    },
+    {
+      href: "/kefalonia/beach-bar/qr-menu",
+      labelEl: "Beach bar · Κεφαλονιά",
+      labelEn: "Beach bar · Kefalonia",
+    },
   ] as const,
   verticals: [
     { href: "/live-360", labelEl: "Live 360° · συντονισμός", labelEn: "Live 360° · coordination" },
     { href: "/estiatorio/qr-menu", labelEl: "Εστιατόριο · QR menu", labelEn: "Restaurant · QR menu" },
+    { href: "/taverna/qr-menu", labelEl: "Ταβέρνα · QR menu", labelEn: "Taverna · QR menu" },
+    { href: "/pizzeria/qr-menu", labelEl: "Πιτσαρία · QR menu", labelEn: "Pizzeria · QR menu" },
+    { href: "/cafe/qr-menu", labelEl: "Café · QR menu", labelEn: "Café · QR menu" },
     { href: "/xenodocheio/digital-menu", labelEl: "Ξενοδοχείο · digital menu", labelEn: "Hotel · digital menu" },
     { href: "/beach-bar/qr-menu", labelEl: "Beach bar · QR menu", labelEn: "Beach bar · QR menu" },
     { href: "/pool-bar/digital-menu", labelEl: "Pool bar · digital menu", labelEn: "Pool bar · digital menu" },

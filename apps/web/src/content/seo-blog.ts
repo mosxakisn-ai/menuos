@@ -1,3 +1,5 @@
+import { SEO_BLOG_TOPICAL_POSTS } from "@/content/seo-blog-topical";
+
 export type SeoBlogSection = {
   heading?: string;
   paragraphs: string[];
@@ -462,6 +464,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
       },
     ],
   },
+  ...SEO_BLOG_TOPICAL_POSTS,
 ];
 
 export const SEO_BLOG_INDEX = {

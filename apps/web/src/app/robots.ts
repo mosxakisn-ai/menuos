@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: ["/", "/llms.txt"],
       disallow: DISALLOW,
     },
-    sitemap: absoluteUrl("/sitemap.xml"),
+    sitemap: [absoluteUrl("/sitemap.xml"), absoluteUrl("/sitemap-images.xml")],
     host: absoluteUrl("/"),
   };
 }

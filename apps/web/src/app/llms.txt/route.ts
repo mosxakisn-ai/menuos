@@ -44,6 +44,7 @@ export async function GET() {
     "",
     "## SEO",
     `- Sitemap: ${absoluteUrl("/sitemap.xml")}`,
+    `- RSS: ${absoluteUrl("/feed.xml")}`,
     "- English UI: append ?lang=en to any marketing URL",
     "- Guest QR menus: 4 languages (EL, EN, DE, FR)",
     "",
