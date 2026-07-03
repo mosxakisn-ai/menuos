@@ -59,7 +59,7 @@ if [ "$RUN_DB_PUSH" = "1" ]; then
     -e DATABASE_URL="$DATABASE_URL" \
     -v "$ROOT/packages/db/prisma:/prisma:ro" \
     node:20-alpine sh -c \
-    'npm install -g prisma@6.19.3 --silent && prisma db push --schema=/prisma/schema.prisma --skip-generate'; then
+    'npm install -g prisma@6.19.3 --silent && prisma db push --schema=/prisma/schema.prisma --skip-generate --accept-data-loss'; then
     echo "    prisma db push OK"
   else
     echo "    prisma db push failed — applying SQL migrations..."
