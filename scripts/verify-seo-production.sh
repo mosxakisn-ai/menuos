@@ -26,7 +26,6 @@ check_url() {
 
 failed=0
 check_url "/sitemap.xml" || failed=1
-check_url "/sitemap/pages.xml" || failed=1
 check_url "/sitemap-images.xml" || failed=1
 check_url "/feed.xml" || failed=1
 check_url "/llms.txt" || failed=1

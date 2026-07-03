@@ -1,13 +1,7 @@
 import type { MetadataRoute } from "next";
-import { buildSitemapSegment, SITEMAP_SEGMENT_IDS, type SitemapSegmentId } from "@/lib/seo-sitemap";
+import { buildSitemapSegment, SITEMAP_SEGMENT_IDS } from "@/lib/seo-sitemap";
 
-export async function generateSitemaps() {
-  return SITEMAP_SEGMENT_IDS.map((id) => ({ id }));
-}
-
-export default async function sitemap(props: {
-  id: Promise<SitemapSegmentId>;
-}): Promise<MetadataRoute.Sitemap> {
-  const id = await props.id;
-  return buildSitemapSegment(id);
+/** Single sitemap index at /sitemap.xml (GSC + IndexNow). Tier logic lives in seo-sitemap.ts. */
+export default function sitemap(): MetadataRoute.Sitemap {
+  return SITEMAP_SEGMENT_IDS.flatMap((id) => buildSitemapSegment(id));
 }
