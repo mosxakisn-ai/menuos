@@ -61,16 +61,19 @@ export function SupervisorGeminiClient() {
   const [rows, setRows] = useState<SupervisorGeminiRow[]>([]);
   const [totalTokens, setTotalTokens] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("");
   const [overrideDraft, setOverrideDraft] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) {
+      setLoading(true);
+      setLoadError(null);
+    }
     try {
       const res = await fetch("/api/supervisor/gemini", { credentials: "same-origin" });
       if (!res.ok) throw new Error("failed");
@@ -88,10 +91,13 @@ export function SupervisorGeminiClient() {
           ]),
         ),
       );
+      setLoadError(null);
     } catch {
-      setError("Αποτυχία φόρτωσης. Δοκίμασε ξανά.");
+      if (!opts?.silent) {
+        setLoadError("Αποτυχία φόρτωσης. Δοκίμασε ξανά.");
+      }
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   }, []);
 
@@ -116,12 +122,12 @@ export function SupervisorGeminiClient() {
     const trimmed = (overrideDraft[row.id] ?? "").trim();
     const parsed = trimmed === "" ? null : Number.parseInt(trimmed, 10);
     if (parsed !== null && (!Number.isFinite(parsed) || parsed < 0)) {
-      setError("Μη έγκυρο όριο tokens.");
+      setActionError("Μη έγκυρο όριο tokens.");
       return;
     }
 
     setSavingId(row.id);
-    setError(null);
+    setActionError(null);
     try {
       const res = await fetch(`/api/supervisor/organizations/${row.id}`, {
         method: "PATCH",
@@ -131,13 +137,13 @@ export function SupervisorGeminiClient() {
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "failed");
+        throw new Error(data.error ?? "Αποτυχία αποθήκευσης.");
       }
-      await load();
+      await load({ silent: true });
       setSavedId(row.id);
       setTimeout(() => setSavedId(null), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Αποτυχία αποθήκευσης.");
+      setActionError(err instanceof Error ? err.message : "Αποτυχία αποθήκευσης.");
     } finally {
       setSavingId(null);
     }
@@ -208,18 +214,25 @@ export function SupervisorGeminiClient() {
         </label>
       </Card>
 
-      {error ? (
+      {loadError ? (
         <Card className="mt-4 border-red-100 bg-red-50/50 p-4">
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-red-700">{loadError}</p>
           <button type="button" className={`mt-3 ${buttonClass("secondary", "sm")}`} onClick={() => void load()}>
             Δοκίμασε ξανά
           </button>
         </Card>
       ) : loading ? (
         <p className="mt-4 text-sm text-slate-500">Φόρτωση πελατών…</p>
-      ) : filtered.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-500">Δεν βρέθηκαν πελάτες.</p>
       ) : (
+        <>
+          {actionError ? (
+            <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {actionError}
+            </p>
+          ) : null}
+          {filtered.length === 0 ? (
+            <p className="mt-4 text-sm text-slate-500">Δεν βρέθηκαν πελάτες.</p>
+          ) : (
         <div className="mt-5 overflow-x-auto rounded-card border border-slate-200 bg-white shadow-card">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-slate-100 bg-brand-surface text-xs uppercase text-slate-500">
@@ -320,6 +333,8 @@ export function SupervisorGeminiClient() {
             </tbody>
           </table>
         </div>
+          )}
+        </>
       )}
 
       <p className="mt-4 text-xs text-slate-500">

@@ -6,7 +6,7 @@ import {
   organizationHasPaidPlan,
   type OrganizationActivity,
 } from "@menuos/shared";
-import { getPlanPriceMap, getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
+import { getPlanPriceMap, getTrialDaysFromCatalog, listPlanCatalogEntries } from "@/lib/plan-catalog-service";
 import { getGeminiUsageSummaries, getTotalGeminiMonthlyUsage } from "@/lib/gemini-usage-service";
 import type { SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
 
@@ -519,27 +519,33 @@ export async function listGeminiRowsForSupervisor(): Promise<SupervisorGeminiRow
       name: true,
       geminiTokenLimitOverride: true,
       users: {
-        where: { role: "ADMIN" },
-        take: 1,
         orderBy: { createdAt: "asc" },
-        select: { email: true },
+        select: { email: true, role: true, createdAt: true },
       },
       subscription: { select: { plan: true, status: true } },
     },
     orderBy: { name: "asc" },
   });
 
-  const summaries = await getGeminiUsageSummaries(orgs.map((org) => org.id));
+  const [summaries, catalogEntries] = await Promise.all([
+    getGeminiUsageSummaries(orgs.map((org) => org.id)),
+    listPlanCatalogEntries(),
+  ]);
+  const planLimitFromCatalog = new Map(
+    catalogEntries.map((entry) => [entry.id, entry.maxGeminiTokensPerMonth]),
+  );
 
   return orgs.map((org) => {
     const plan = org.subscription?.plan ?? "TRIAL";
     const summary = summaries.get(org.id);
-    const planDefaultLimit = getPlan(plan).maxGeminiTokensPerMonth;
+    const planDefaultLimit =
+      planLimitFromCatalog.get(plan) ?? getPlan(plan).maxGeminiTokensPerMonth;
+    const admin = pickPrimaryOrgUser(org.users);
 
     return {
       id: org.id,
       name: org.name,
-      adminEmail: org.users[0]?.email ?? "—",
+      adminEmail: admin?.email ?? "—",
       plan,
       status: org.subscription?.status ?? "TRIALING",
       geminiTokensThisMonth: summary?.usage ?? 0,
