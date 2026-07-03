@@ -675,7 +675,7 @@ export const DASHBOARD_EL = {
       title: "Ρυθμίσεις",
       description: "Πόστα, links, θέσεις, μηνύματα και προσωπικό — όλα από εδώ.",
       tabs: {
-        general: "Γενικά",
+        general: "Λογαριασμός",
         staff: "Προσωπικό",
         posts: "Πόστα",
         links: "Link",
@@ -717,7 +717,7 @@ export const DASHBOARD_EL = {
           "Οι χώροι που βλέπει ο σερβιτόρος — Τραπέζια, Αυλή, Όροφος, Ξαπλώστρες, Δωμάτια.",
         hint: "Δημιουργούνται αυτόματα από τα ονόματα θέσεων (π.χ. Αυλή-1 → χώρος «Αυλή»).\nΆλλαξε εδώ πώς εμφανίζονται στον σερβιτόρο.",
         previewTitle: "Προεπισκόπηση",
-        previewHint: "Έτσι εμφανίζονται στο «Διάλεξε χώρο» του σερβιτόρου.",
+        previewHint: "Έτσι εμφανίζονται στο «Διάλεξε χώρο» — ενημερώνεται live καθώς γράφεις.",
         empty: "Δεν έχεις θέσεις ακόμα. Πρόσθεσε τραπέζια ή χαπλώστρες στο tab «Τραπέζια».",
         spotCount: (n: number) => `${n} θέσεις`,
       },
@@ -753,7 +753,7 @@ export const DASHBOARD_EL = {
         sharedLinkOptional: "προαιρετικό",
         sharedLinkHint: "Backup — όλοι βλέπουν όλες τις κλήσεις και τα πάσο. Προτιμήστε προσωπικό link ανά άτομο.",
         namePlaceholder: "π.χ. Μαρία Π.",
-        rolePlaceholder: "π.χ. Σερβιτόρος",
+        rolePlaceholder: "Επίλεξε ρόλο",
         loading: "Φόρτωση...",
         empty: "Δεν έχεις προσθέσει προσωπικό ακόμα.",
         deleteConfirm: (name: string) =>
@@ -897,6 +897,11 @@ export const DASHBOARD_EL = {
         zonesTitle: "Ονόματα χώρων",
         zonesHint:
           "Οι χώροι δημιουργούνται από τα ονόματα θέσεων (π.χ. Αυλή-1). Άλλαξε εδώ πώς εμφανίζονται.",
+        zonesPreviewTitle: "Προεπισκόπηση",
+        zonesPreviewHint: "Έτσι εμφανίζονται στο «Διάλεξε χώρο» του σερβιτόρου — ενημερώνεται live.",
+        zonesSourceLabel: "Πηγή",
+        zonesNameLabel: "Όνομα χώρου",
+        zonesCountLabel: "Θέσεις",
         save: "Αποθήκευση",
         saving: "Αποθήκευση…",
         reload: "Επαναφόρτωση",

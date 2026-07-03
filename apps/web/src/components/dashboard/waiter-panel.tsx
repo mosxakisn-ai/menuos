@@ -356,7 +356,7 @@ export function WaiterPanel({
         type="button"
         onClick={() => setZoneFilterId(zoneId)}
         className={cn(
-          "flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 px-3 py-3 text-center transition sm:min-h-[4.25rem] sm:px-4",
+          "flex min-h-[4rem] w-[calc(50%-0.25rem)] max-w-[9.5rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 px-3 py-3 text-center transition sm:min-h-[4.25rem] sm:w-[calc(33.333%-0.5rem)] sm:px-4 lg:w-[calc(25%-0.5rem)]",
           selected
             ? "border-brand-blue bg-brand-blue text-white shadow-md shadow-brand-blue/20"
             : activity.total > 0
@@ -434,7 +434,7 @@ export function WaiterPanel({
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:mb-3 sm:text-sm">
             {W.zonePickHeading}
           </p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="flex flex-wrap justify-center gap-2">
             {renderZoneButton("all", W.zoneFilterAll)}
             {zoneGroups.map((zone) => renderZoneButton(zone.id, zone.label))}
           </div>

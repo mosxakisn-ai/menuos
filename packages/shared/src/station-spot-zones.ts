@@ -111,6 +111,25 @@ export function pickDefaultZoneId(groups: SpotZoneGroup[]): string | null {
   return groups[0]?.id ?? null;
 }
 
+/** Human hint for where a zone comes from (settings UI). */
+export function zoneSourceHint(zone: SpotZoneGroup, lang: "GR" | "EN" = "GR"): string {
+  if (zone.id.startsWith("prefix:")) {
+    return lang === "EN"
+      ? `Spots like «${zone.label}-1»`
+      : `Θέσεις τύπου «${zone.label}-1»`;
+  }
+  if (zone.id === MAIN_ZONE_ID) {
+    return lang === "EN" ? "Tables without prefix (e.g. 12)" : "Τραπέζια χωρίς prefix (π.χ. 12)";
+  }
+  if (zone.id === SUNBED_ZONE_ID) {
+    return lang === "EN" ? "Sunbed spot type" : "Τύπος ξαπλώστρα";
+  }
+  if (zone.id === ROOM_ZONE_ID) {
+    return lang === "EN" ? "Room spot type" : "Τύπος δωμάτιο";
+  }
+  return zone.id;
+}
+
 type WaiterLocationLike = {
   tableNumber?: string | null;
   roomNumber?: string | null;

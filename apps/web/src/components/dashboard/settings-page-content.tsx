@@ -41,28 +41,26 @@ function SettingsGeneralTab({
 
   return (
     <div className="space-y-5">
-      <div className="mx-auto grid max-w-lg gap-5 lg:max-w-none lg:grid-cols-2">
-        <div className={dashboardCardClass}>
-          <h2 className="text-sm font-semibold text-primary">{d.account}</h2>
-          <dl className="mt-4 divide-y divide-slate-100 text-sm">
-            <div className="flex flex-col gap-1 py-3 first:pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <dt className="shrink-0 text-slate-500">{d.accountEmail}</dt>
-              <dd className="font-medium text-primary sm:text-right">{email}</dd>
-            </div>
-            <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <dt className="shrink-0 text-slate-500">{d.pages.settings.nameLabel}</dt>
-              <dd className="text-slate-700 sm:text-right">{name}</dd>
-            </div>
-            <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <dt className="shrink-0 text-slate-500">{d.pages.settings.roleLabel}</dt>
-              <dd className="text-slate-700 sm:text-right">{roleLabel(role)}</dd>
-            </div>
-          </dl>
-        </div>
+      <div className={dashboardCardClass}>
+        <h2 className="text-sm font-semibold text-primary">{d.account}</h2>
+        <dl className="mt-4 divide-y divide-slate-100 text-sm">
+          <div className="flex flex-col gap-1 py-3 first:pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <dt className="shrink-0 text-slate-500">{d.accountEmail}</dt>
+            <dd className="font-medium text-primary sm:text-right">{email}</dd>
+          </div>
+          <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <dt className="shrink-0 text-slate-500">{d.pages.settings.nameLabel}</dt>
+            <dd className="text-slate-700 sm:text-right">{name}</dd>
+          </div>
+          <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <dt className="shrink-0 text-slate-500">{d.pages.settings.roleLabel}</dt>
+            <dd className="text-slate-700 sm:text-right">{roleLabel(role)}</dd>
+          </div>
+        </dl>
 
-        <div className={dashboardCardClass}>
+        <div className="mt-6 border-t border-slate-100 pt-6">
           <h2 className="text-sm font-semibold text-primary">{d.changePassword.title}</h2>
-          <div className="mt-4">
+          <div className="mt-4 max-w-md">
             <ChangePasswordForm compact />
           </div>
         </div>

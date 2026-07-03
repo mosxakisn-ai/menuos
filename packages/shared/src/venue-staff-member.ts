@@ -20,7 +20,67 @@ export const staffStationOptionSchema = z.enum(STAFF_STATION_OPTIONS);
 const staffAssignmentSchema = z.string().trim().min(1).max(40);
 
 const staffMemberNameSchema = z.string().trim().min(1).max(60);
-const staffMemberRoleSchema = z.string().trim().min(1).max(40);
+
+export const STAFF_ROLE_LABELS_EL = [
+  "Σερβιτόρος",
+  "Μάγειρας Α",
+  "Μάγειρας Β",
+  "Σερβιτόρος Β",
+  "Ταμπλίστας",
+  "Καθαριότητα",
+] as const;
+
+export const STAFF_ROLE_LABELS_EN = [
+  "Waiter",
+  "Cook A",
+  "Cook B",
+  "Waiter B",
+  "Busser",
+  "Cleaning",
+] as const;
+
+const ALL_STAFF_ROLE_LABELS = new Set<string>([
+  ...STAFF_ROLE_LABELS_EL,
+  ...STAFF_ROLE_LABELS_EN,
+]);
+
+/** Predefined roles from older seeds — still accepted on save. */
+export const LEGACY_STAFF_ROLE_LABELS = [
+  "Μάγειρας",
+  "Μπαρ",
+  "Manager",
+  "Σερβιτόρος παραλίας",
+  "Μπαρ παραλίας",
+  "Κρύα κουζίνα",
+  "Kitchen",
+  "Bar",
+] as const;
+
+export function staffRoleOptionsForLang(lang: "GR" | "EN" = "GR"): readonly string[] {
+  return lang === "EN" ? STAFF_ROLE_LABELS_EN : STAFF_ROLE_LABELS_EL;
+}
+
+export function isAllowedStaffRole(roleLabel: string): boolean {
+  const trimmed = roleLabel.trim();
+  return ALL_STAFF_ROLE_LABELS.has(trimmed) || LEGACY_STAFF_ROLE_LABELS.includes(trimmed as (typeof LEGACY_STAFF_ROLE_LABELS)[number]);
+}
+
+export function staffRoleOptionsWithLegacy(
+  lang: "GR" | "EN",
+  current?: string,
+): string[] {
+  const options = [...staffRoleOptionsForLang(lang)];
+  const trimmed = current?.trim();
+  if (trimmed && !options.includes(trimmed)) return [trimmed, ...options];
+  return options;
+}
+
+const staffMemberRoleSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(40)
+  .refine(isAllowedStaffRole, { message: "Invalid staff role" });
 
 export const venueStaffMemberCreateSchema = z.object({
   name: staffMemberNameSchema,

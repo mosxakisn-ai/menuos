@@ -7,6 +7,7 @@ import {
   DEFAULT_STATION_LABELS_EL,
   DEFAULT_STATION_LABELS_EN,
   DEFAULT_TABLE_STATE_LABELS_EL,
+  applyZoneLabelOverrides,
   enabledVenuePosts,
   groupVenueSpotsByZone,
   listVenuePosts,
@@ -16,6 +17,7 @@ import {
   PASS_STATION_INPUTS,
   syncLegacyFromPosts,
   TABLE_TILE_STATES,
+  zoneSourceHint,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
@@ -141,6 +143,7 @@ export function VenueOperationsConfigPanel({
 }) {
   const { d, lang } = useDashboardCopy();
   const O = d.pages.settings.operations;
+  const Z = d.pages.settings.spacesTab;
   const P = d.pages.settings.personnel.stationLabels;
   const show = (s: OpsConfigSection) => sections.includes(s);
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
@@ -162,6 +165,12 @@ export function VenueOperationsConfigPanel({
     if (config) setDraft(config);
     else setDraft(null);
   }, [config]);
+
+  const langCode = lang === "EN" ? "EN" : "GR";
+  const previewZones = useMemo(() => {
+    if (!zoneGroups?.length || !draft) return zoneGroups ?? [];
+    return applyZoneLabelOverrides(zoneGroups, draft.zoneLabels);
+  }, [zoneGroups, draft]);
 
   if (venues.length === 0) return null;
 
@@ -289,7 +298,6 @@ export function VenueOperationsConfigPanel({
     ? mergeTableStateLabels(draft, lang === "EN" ? "EN" : "GR")
     : stateLabelDefaults;
 
-  const langCode = lang === "EN" ? "EN" : "GR";
   const draftPosts = draft ? listVenuePosts(draft, langCode) : [];
   const enabledPosts = draft ? enabledVenuePosts(draft, langCode) : [];
 
@@ -482,22 +490,70 @@ export function VenueOperationsConfigPanel({
               <section>
                 <h3 className="text-sm font-semibold text-brand-navy">{O.zonesTitle}</h3>
                 <p className="mt-1 text-sm text-slate-600">{O.zonesHint}</p>
-                <ul className="mt-3 space-y-2">
-                  {zoneGroups.map((zone) => (
-                    <li
-                      key={zone.id}
-                      className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-100 px-3 py-2"
-                    >
-                      <span className="text-xs text-slate-400">{zone.id}</span>
-                      <input
-                        value={draft.zoneLabels?.[zone.id] ?? zone.label}
-                        onChange={(e) => setZoneLabel(zone.id, e.target.value)}
-                        maxLength={40}
-                        className={`${dashboardFieldClass} min-w-[10rem] flex-1 text-sm`}
-                      />
-                    </li>
-                  ))}
-                </ul>
+
+                {previewZones && previewZones.length > 0 ? (
+                  <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                    <h4 className="text-center text-sm font-semibold text-brand-navy">
+                      {O.zonesPreviewTitle}
+                    </h4>
+                    <p className="mt-1 text-center text-xs text-slate-500">{O.zonesPreviewHint}</p>
+                    <div className="mt-4 flex flex-wrap justify-center gap-2">
+                      {previewZones.map((zone) => (
+                        <div
+                          key={zone.id}
+                          className="flex min-h-[4.5rem] w-[calc(50%-0.25rem)] max-w-[9.5rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 border-slate-200 bg-white px-3 py-3 text-center sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5rem)]"
+                        >
+                          <span className="text-sm font-bold leading-tight text-brand-navy sm:text-base">
+                            {zone.label}
+                          </span>
+                          <span className="text-2xl font-extrabold tabular-nums leading-none text-amber-700">
+                            {zone.spots.length}
+                          </span>
+                          <span className="text-[10px] text-slate-400 sm:text-xs">
+                            {Z.spotCount(zone.spots.length)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="mt-4 overflow-x-auto rounded-xl border border-slate-100">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th className="px-3 py-2.5">{O.zonesSourceLabel}</th>
+                        <th className="px-3 py-2.5">{O.zonesNameLabel}</th>
+                        <th className="px-3 py-2.5 text-center">{O.zonesCountLabel}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {zoneGroups.map((zone) => (
+                        <tr key={zone.id} className="border-b border-slate-50 last:border-0">
+                          <td className="px-3 py-2.5 align-middle text-xs text-slate-500">
+                            {zoneSourceHint(zone, langCode)}
+                          </td>
+                          <td className="px-3 py-2.5 align-middle">
+                            <input
+                              value={draft.zoneLabels?.[zone.id] ?? zone.label}
+                              onChange={(e) => setZoneLabel(zone.id, e.target.value)}
+                              maxLength={40}
+                              className={`${dashboardFieldClass} w-full min-w-[8rem] text-center text-sm`}
+                            />
+                          </td>
+                          <td className="px-3 py-2.5 align-middle text-center tabular-nums text-slate-600">
+                            {zone.spots.length}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            ) : show("zones") ? (
+              <section>
+                <h3 className="text-sm font-semibold text-brand-navy">{O.zonesTitle}</h3>
+                <p className="mt-4 text-sm text-slate-600">{Z.empty}</p>
               </section>
             ) : null}
 

@@ -90,25 +90,32 @@ export function SettingsForm({ venues }: { venues: SettingsVenue[] }) {
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       <div className={dashboardCardClass}>
-        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-semibold text-brand-navy">{d.pages.settings.appearanceTitle}</h2>
-            <p className="mt-1 text-sm leading-relaxed text-slate-500">{d.pages.settings.appearanceDesc}</p>
-          </div>
-          <label className="block w-full sm:max-w-xs sm:shrink-0">
-            <span className={dashboardLabelClass}>{d.venue}</span>
-            <select
-              value={venueId}
-              onChange={(e) => selectVenue(e.target.value)}
-              className={dashboardFieldClass}
-            >
-              {venues.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="space-y-4 text-left">
+          <p className="text-sm leading-relaxed text-slate-600">
+            {d.pages.settings.venueTab.description}
+          </p>
+          {venues.length > 1 ? (
+            <label className="block max-w-md">
+              <span className={dashboardLabelClass}>{d.venue}</span>
+              <select
+                value={venueId}
+                onChange={(e) => selectVenue(e.target.value)}
+                className={dashboardFieldClass}
+              >
+                {venues.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : venue ? (
+            <p className="text-sm text-slate-600">
+              <span className={dashboardLabelClass}>{d.venue}: </span>
+              <span className="font-medium text-brand-navy">{venue.name}</span>
+            </p>
+          ) : null}
+          <h2 className="text-sm font-semibold text-brand-navy">{d.pages.settings.appearanceTitle}</h2>
         </div>
 
         <form onSubmit={onSubmit} className={cn(dashboardFormGridClass, "mt-6")}>

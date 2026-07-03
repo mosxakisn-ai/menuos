@@ -665,7 +665,7 @@ export const DASHBOARD_EN = {
       title: "Settings",
       description: "Posts, links, spots, messages and staff — all in one place.",
       tabs: {
-        general: "General",
+        general: "Account",
         staff: "Staff",
         posts: "Posts",
         links: "Links",
@@ -742,7 +742,7 @@ export const DASHBOARD_EN = {
         sharedLinkOptional: "optional",
         sharedLinkHint: "Backup — everyone sees all calls and pass alerts. Prefer a personal link per staff member.",
         namePlaceholder: "e.g. Maria P.",
-        rolePlaceholder: "e.g. Waiter",
+        rolePlaceholder: "Choose role",
         loading: "Loading...",
         empty: "No staff added yet.",
         deleteConfirm: (name: string) =>
@@ -883,7 +883,12 @@ export const DASHBOARD_EN = {
         mapLabelsHint: "What waiters see on each table/spot tile.",
         zonesTitle: "Space names",
         zonesHint:
-          "Spaces come from spot names (e.g. Beach-1). Customize how they appear here.",
+          "Spaces come from spot names (e.g. Patio-1). Customize how they appear here.",
+        zonesPreviewTitle: "Preview",
+        zonesPreviewHint: "This is how they appear in the waiter «Pick a space» panel — updates live.",
+        zonesSourceLabel: "Source",
+        zonesNameLabel: "Space name",
+        zonesCountLabel: "Spots",
         save: "Save",
         saving: "Saving…",
         reload: "Reload",

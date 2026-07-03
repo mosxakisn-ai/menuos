@@ -1,18 +1,15 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  applyZoneLabelOverrides,
   enabledVenuePosts,
-  groupVenueSpotsByZone,
 } from "@menuos/shared";
 import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
 import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
-import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
 import {
   useVenueOperationsConfig,
   VenueOperationsConfigPanel,
@@ -154,19 +151,8 @@ export function SettingsLinksPanel({ venues }: { venues: VenueSpotVenue[] }) {
 }
 
 export function SettingsVenuePanel({ venues }: { venues: SettingsVenue[] }) {
-  const { d } = useDashboardCopy();
-  const T = d.pages.settings.venueTab;
-
   return (
     <div className="space-y-5">
-      <TabIntro
-        title={T.title}
-        description={T.description}
-        venues={venues.map((v) => ({ id: v.id, name: v.name, slug: v.slug }))}
-        venueId=""
-        onVenueChange={() => {}}
-        hideVenuePicker
-      />
       <SettingsForm venues={venues} />
     </div>
   );
@@ -214,13 +200,6 @@ export function SettingsSpacesPanel({ venues }: { venues: VenueSpotVenue[] }) {
   const { d } = useDashboardCopy();
   const Z = d.pages.settings.spacesTab;
   const { venueId, setVenueId } = useVenuePicker(venues);
-  const { spots, loading: spotsLoading } = useVenueSpots(venueId);
-  const { config: opsConfig } = useVenueOperationsConfig(venueId);
-
-  const zoneGroups = useMemo(() => {
-    const raw = groupVenueSpotsByZone(spots.map((s) => ({ type: s.type, label: s.label })));
-    return applyZoneLabelOverrides(raw, opsConfig?.zoneLabels);
-  }, [spots, opsConfig?.zoneLabels]);
 
   return (
     <div className="space-y-5">
@@ -232,35 +211,6 @@ export function SettingsSpacesPanel({ venues }: { venues: VenueSpotVenue[] }) {
         venueId={venueId}
         onVenueChange={setVenueId}
       />
-
-      {spotsLoading ? (
-        <p className="text-sm text-slate-500">{d.pages.settings.operations.loading}</p>
-      ) : zoneGroups.length === 0 ? (
-        <div className={dashboardCardClass}>
-          <p className="text-sm text-slate-600">{Z.empty}</p>
-        </div>
-      ) : (
-        <div className={dashboardCardClass}>
-          <h3 className="text-sm font-semibold text-brand-navy">{Z.previewTitle}</h3>
-          <p className="mt-1 text-sm text-slate-600">{Z.previewHint}</p>
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {zoneGroups.map((zone) => (
-              <div
-                key={zone.id}
-                className="flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 border-slate-200 bg-white px-3 py-3 text-center"
-              >
-                <span className="text-base font-bold leading-tight text-brand-navy sm:text-lg">
-                  {zone.label}
-                </span>
-                <span className="text-2xl font-extrabold tabular-nums leading-none text-amber-700 sm:text-3xl">
-                  {zone.spots.length}
-                </span>
-                <span className="text-xs text-slate-400">{Z.spotCount(zone.spots.length)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <VenueOperationsConfigPanel
         venues={venues}

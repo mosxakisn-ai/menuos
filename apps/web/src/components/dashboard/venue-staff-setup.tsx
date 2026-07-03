@@ -8,6 +8,8 @@ import {
   listVenuePosts,
   STAFF_SPECIAL_OPTIONS,
   staffAssignmentLabelForLang,
+  staffRoleOptionsForLang,
+  staffRoleOptionsWithLegacy,
   staffStationLabelForLang,
   type PassStationInput,
   type VenuePost,
@@ -74,6 +76,33 @@ function assignmentBadgeStyle(assignment: string, posts: VenuePost[]): string {
   const post = posts.find((row) => row.id === assignment);
   if (post) return POST_STATION_BADGE_STYLES[post.station];
   return "border-slate-200 bg-slate-100 text-slate-700";
+}
+
+function RoleSelect({
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  options: readonly string[];
+  placeholder: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={dashboardFieldClass}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((role) => (
+        <option key={role} value={role}>
+          {role}
+        </option>
+      ))}
+    </select>
+  );
 }
 
 function PostPicker({
@@ -442,12 +471,11 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
             </label>
             <label className="block">
               <span className={dashboardLabelClass}>{S.colRole}</span>
-              <input
+              <RoleSelect
                 value={roleLabel}
-                onChange={(e) => setRoleLabel(e.target.value)}
-                maxLength={40}
+                onChange={setRoleLabel}
+                options={staffRoleOptionsForLang(langCode)}
                 placeholder={S.rolePlaceholder}
-                className={dashboardFieldClass}
               />
             </label>
           </div>
@@ -529,11 +557,11 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       </label>
                       <label className="block">
                         <span className={dashboardLabelClass}>{S.colRole}</span>
-                        <input
+                        <RoleSelect
                           value={editRole}
-                          onChange={(e) => setEditRole(e.target.value)}
-                          maxLength={40}
-                          className={dashboardFieldClass}
+                          onChange={setEditRole}
+                          options={staffRoleOptionsWithLegacy(langCode, editRole)}
+                          placeholder={S.rolePlaceholder}
                         />
                       </label>
                     </div>
