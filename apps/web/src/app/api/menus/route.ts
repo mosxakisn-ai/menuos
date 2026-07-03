@@ -8,7 +8,7 @@ import { getVenueForOrganization } from "@/lib/venue-access";
 import { logServerDiagnostic } from "@/lib/client-diagnostics-service";
 
 export async function GET(request: Request) {
-  const auth = await requireActiveSubscription();
+  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const copy = dashboardCopyFromRequest(request);

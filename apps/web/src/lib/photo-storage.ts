@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { getR2PublicUrl, isR2Enabled } from "@/lib/r2-config";
+import { isR2Enabled } from "@/lib/r2-config";
 import { signedPhotoServeUrl } from "@/lib/photo-signing";
 import { uploadToR2 } from "@/lib/r2-storage";
 
@@ -23,7 +23,7 @@ export async function saveMenuPhoto(organizationId: string, optimized: Buffer): 
 
   if (isR2Enabled()) {
     await uploadToR2(key, optimized, "image/webp");
-    return getR2PublicUrl(key);
+    return signedPhotoServeUrl(key);
   }
 
   const root = getPhotoUploadDir();

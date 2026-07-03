@@ -52,6 +52,16 @@ async function claimWebhookEvent(eventId: string): Promise<"claimed" | "duplicat
   }
 }
 
+async function shouldSyncStripeSubscription(
+  metadata: Record<string, string>,
+  stripeSubId: string | null,
+): Promise<boolean> {
+  if (isMenuOsStripeMetadata(metadata)) return true;
+  if (!stripeSubId) return false;
+  const row = await prisma.subscription.findFirst({ where: { stripeSubId } });
+  return Boolean(row);
+}
+
 export async function POST(req: NextRequest) {
   if (!isStripeEnabled()) {
     return NextResponse.json({ error: "Stripe not configured" }, { status: 503 });
@@ -133,7 +143,7 @@ export async function POST(req: NextRequest) {
           ? metadata.planId
           : await planIdFromStripeSubscription(subscription);
 
-      if (isMenuOsStripeMetadata(metadata) || stripeSubId) {
+      if (await shouldSyncStripeSubscription(metadata, stripeSubId)) {
         await syncSubscriptionFromStripe({
           organizationId: metadata.organizationId,
           stripeSubId,
@@ -192,10 +202,14 @@ export async function POST(req: NextRequest) {
           const stripeSub = await stripeGetSubscription(subId);
           const stripeStatus = String(stripeSub.status ?? "canceled");
           if (stripeStatus === "active" || stripeStatus === "trialing") {
+            const resolvedPlanId = await planIdFromStripeSubscription(
+              stripeSub as Record<string, unknown>,
+            );
             await syncSubscriptionFromStripe({
               stripeSubId: subId,
               status: mapStripeSubscriptionStatus(stripeStatus),
               currentPeriodEnd: stripePeriodEnd(stripeSub as Record<string, unknown>),
+              planId: resolvedPlanId,
             });
           }
         }

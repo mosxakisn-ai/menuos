@@ -52,7 +52,9 @@ export function useVenueOperationsConfig(venueId: string) {
     const generation = ++loadGenerationRef.current;
     setLoading(true);
     try {
-      const res = await fetch(`/api/venues/${venueId}/operations-config`);
+      const res = await fetch(`/api/venues/${venueId}/operations-config`, {
+        credentials: "include",
+      });
       const data = (await res.json()) as { config?: VenueOperationsConfig };
       if (generation !== loadGenerationRef.current) return;
       if (res.ok && data.config) setConfig(data.config);

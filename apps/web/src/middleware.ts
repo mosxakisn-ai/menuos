@@ -6,6 +6,7 @@ import { verifySessionToken } from "@/lib/auth";
 import { loginUrlWithCallback } from "@/lib/safe-callback-url";
 import { SUPERVISOR_COOKIE } from "@/lib/supervisor-auth-constants";
 import { verifySupervisorTokenEdge } from "@/lib/supervisor-auth-edge";
+import { isStaffRestrictedDashboardPath } from "@/lib/dashboard-roles";
 
 const TRIAL_EXEMPT_PREFIXES = ["/dashboard/billing"];
 
@@ -99,6 +100,12 @@ export async function middleware(request: NextRequest) {
     if (!trialExempt) {
       requestHeaders.set("x-menuos-check-subscription", "1");
     }
+
+    if (session.role === "STAFF" && isStaffRestrictedDashboardPath(pathname)) {
+      response = NextResponse.redirect(new URL("/dashboard/waiter", request.url));
+      return applyLocale(request, response);
+    }
+
     response = NextResponse.next({ request: { headers: requestHeaders } });
   } else {
     response = NextResponse.next({ request: { headers: requestHeaders } });

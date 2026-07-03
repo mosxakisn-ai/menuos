@@ -22,6 +22,36 @@ export function photoStorageKeyFromPath(pathname: string): string | null {
   }
 }
 
+/** Extract storage key from signed serve URL or legacy R2 public URL. */
+export function photoKeyFromPublicUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url, APP_URL);
+    const fromServe = photoStorageKeyFromPath(parsed.pathname);
+    if (fromServe) return fromServe;
+
+    const r2Base = process.env.R2_PUBLIC_URL?.trim().replace(/\/$/, "");
+    if (r2Base) {
+      const normalized = url.startsWith("http://") || url.startsWith("https://") ? url : `${APP_URL}${url}`;
+      if (normalized.startsWith(`${r2Base}/`)) {
+        const key = normalized.slice(r2Base.length + 1);
+        if (key.startsWith("photos/") && !key.includes("..")) return key;
+      }
+    }
+
+    const bare = url.replace(/^\/+/, "");
+    if (bare.startsWith("photos/") && !bare.includes("..")) return bare;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function ensureSignedPhotoServeUrl(url: string): string {
+  const key = photoKeyFromPublicUrl(url);
+  if (!key) return url;
+  return signedPhotoServeUrl(key);
+}
+
 export function organizationIdFromPhotoKey(key: string): string | null {
   const normalized = key.replace(/\\/g, "/").replace(/^\/+/, "");
   const parts = normalized.split("/");
@@ -53,6 +83,10 @@ export function signedPhotoServeUrl(relativeKey: string): string {
 export function appendPhotoSignature(url: string | null | undefined): string | null {
   if (!url?.trim()) return null;
   const trimmed = url.trim();
+  const legacyKey = photoKeyFromPublicUrl(trimmed);
+  if (legacyKey && !trimmed.includes("/api/photos/serve/")) {
+    return signedPhotoServeUrl(legacyKey);
+  }
   try {
     const parsed = new URL(trimmed, APP_URL);
     const key = photoStorageKeyFromPath(parsed.pathname);

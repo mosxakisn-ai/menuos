@@ -5,6 +5,8 @@ import {
 } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
+import { resolveStaffAuthByKey, resolveStaffKey } from "@/lib/staff-auth";
+import { getOrganizationPlanContext } from "@/lib/billing";
 import {
   getVenueOperationsConfig,
   saveVenueOperationsConfig,
@@ -13,18 +15,34 @@ import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
 type Params = { params: Promise<{ venueId: string }> };
 
-export async function GET(_request: Request, { params }: Params) {
+async function readVenueOperationsConfig(request: Request, venueId: string) {
   const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER", "STAFF"] });
-  if (auth.response) return auth.response;
-
-  const { venueId } = await params;
-  const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
-  if (!venue) {
-    return NextResponse.json({ error: "Το κατάστημα δεν βρέθηκε." }, { status: 404 });
+  if (!auth.response) {
+    const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
+    if (venue) {
+      const config = await getVenueOperationsConfig(venueId);
+      return NextResponse.json({ config });
+    }
   }
 
-  const config = await getVenueOperationsConfig(venueId);
-  return NextResponse.json({ config });
+  const staffKey = await resolveStaffKey(request, venueId);
+  if (staffKey) {
+    const staffAuth = await resolveStaffAuthByKey(venueId, staffKey);
+    if (staffAuth) {
+      const plan = await getOrganizationPlanContext(staffAuth.venue.organizationId);
+      if (plan?.active) {
+        const config = await getVenueOperationsConfig(venueId);
+        return NextResponse.json({ config });
+      }
+    }
+  }
+
+  return NextResponse.json({ error: "Μη εξουσιοδοτημένη πρόσβαση." }, { status: 401 });
+}
+
+export async function GET(request: Request, { params }: Params) {
+  const { venueId } = await params;
+  return readVenueOperationsConfig(request, venueId);
 }
 
 export async function PATCH(request: Request, { params }: Params) {

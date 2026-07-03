@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { prisma } from "@menuos/db";
 import { PassSignalHistoryPanel } from "@/components/dashboard/pass-signal-history-panel";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
@@ -12,6 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HistoryPage() {
   const session = await getSession();
+  if (session!.role === "STAFF") redirect("/dashboard/waiter");
   const venues = await prisma.venue.findMany({
     where: { organizationId: session!.organizationId },
     select: { id: true, name: true },

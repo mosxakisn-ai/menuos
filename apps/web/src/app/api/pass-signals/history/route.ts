@@ -13,7 +13,7 @@ const DEFAULT_LIMIT = 100;
 const STATION_INPUTS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
 
 export async function GET(request: Request) {
-  const auth = await requireActiveSubscription();
+  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const { searchParams } = new URL(request.url);

@@ -8,7 +8,7 @@ import { getVenueForOrganization } from "@/lib/venue-access";
 const MAX_LOCATION_LEN = 20;
 
 export async function GET(request: Request) {
-  const auth = await requireActiveSubscription();
+  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const sp = new URL(request.url).searchParams;

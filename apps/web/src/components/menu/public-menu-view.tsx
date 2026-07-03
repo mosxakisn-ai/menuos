@@ -921,6 +921,12 @@ export function PublicMenuView({
                               description={tr?.description}
                               price={item.price.toString()}
                               photoUrl={item.photoUrl!}
+                              photoDisplayWidth={isEmbedded ? 240 : 280}
+                              photoSizes={
+                                isEmbedded
+                                  ? "240px"
+                                  : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
+                              }
                               label={item.label}
                               lang={lang}
                               onClick={() => setSelectedItem(item)}

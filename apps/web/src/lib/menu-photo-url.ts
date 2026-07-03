@@ -1,5 +1,3 @@
-const UNSPLASH_HOST = "images.unsplash.com";
-
 function withSearchParams(url: string, mutate: (parsed: URL) => void): string {
   try {
     const parsed = new URL(url, "https://menuos.gr");
@@ -13,16 +11,18 @@ function withSearchParams(url: string, mutate: (parsed: URL) => void): string {
   }
 }
 
-/** Menu card thumbnails (~235px display) — avoid loading 900px Unsplash assets. */
-export function optimizeMenuCardPhotoUrl(url: string, displayWidth = 280): string {
-  const w = Math.min(640, Math.ceil(displayWidth * 2));
+const UNSPLASH_HOST = "images.unsplash.com";
+
+/** Menu card thumbnails (~235px in hero embed, ~280px full menu) — 2× for retina. */
+export function optimizeMenuCardPhotoUrl(url: string, displayWidth = 240): string {
+  const w = Math.min(512, Math.ceil(displayWidth * 2));
   return withSearchParams(url, (parsed) => {
     if (parsed.hostname === UNSPLASH_HOST) {
       parsed.searchParams.set("auto", "format");
       parsed.searchParams.set("fit", "crop");
       parsed.searchParams.set("w", String(w));
       parsed.searchParams.set("h", String(Math.ceil(w * 0.75)));
-      parsed.searchParams.set("q", "75");
+      parsed.searchParams.set("q", "65");
       return;
     }
     if (parsed.pathname.includes("/api/photos/serve/")) {

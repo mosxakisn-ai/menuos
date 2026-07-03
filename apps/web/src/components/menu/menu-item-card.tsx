@@ -8,7 +8,7 @@ import {
   type QrMenuLanguage,
 } from "@menuos/shared";
 import { ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
 import { optimizeMenuCardPhotoUrl } from "@/lib/menu-photo-url";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,22 @@ type MenuItemBaseProps = {
   onClick?: () => void;
   className?: string;
 };
+
+function interactiveCardProps(name: string, price: string, onClick?: () => void) {
+  if (!onClick) return {};
+  return {
+    role: "button" as const,
+    tabIndex: 0,
+    onClick,
+    onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        onClick();
+      }
+    },
+    "aria-label": `${name}, €${price}`,
+  };
+}
 
 /** Καθαρή γραμμή menu — για πιάτα χωρίς φωτογραφία (ποτά, συνοδευτικά κ.λπ.). */
 export function MenuItemRow({
@@ -92,15 +108,26 @@ export function MenuItemCard({
   description,
   price,
   photoUrl,
+  photoDisplayWidth = 240,
+  photoSizes = "(max-width: 640px) 100vw, 280px",
   label,
   lang,
   onClick,
   className,
-}: MenuItemBaseProps & { photoUrl: string }) {
+}: MenuItemBaseProps & {
+  photoUrl: string;
+  /** CSS display width — drives Unsplash w= (2× retina). */
+  photoDisplayWidth?: number;
+  photoSizes?: string;
+}) {
   const badge = isItemLabel(label) ? label : null;
-  const Comp = onClick ? "button" : "div";
   const [imgFailed, setImgFailed] = useState(false);
-  const cardPhotoSrc = optimizeMenuCardPhotoUrl(photoUrl);
+  const cardPhotoSrc = optimizeMenuCardPhotoUrl(photoUrl, photoDisplayWidth);
+  const cardClassName = cn(
+    "w-full overflow-hidden rounded-card bg-white text-left shadow-soft transition hover:shadow-card",
+    onClick && "cursor-pointer touch-manipulation active:scale-[0.99]",
+    className,
+  );
 
   useEffect(() => {
     setImgFailed(false);
@@ -108,16 +135,7 @@ export function MenuItemCard({
 
   if (imgFailed) {
     return (
-      <Comp
-        type={onClick ? "button" : undefined}
-        onClick={onClick}
-        aria-label={onClick ? `${name}, €${price}` : undefined}
-        className={cn(
-          "w-full overflow-hidden rounded-card bg-white text-left shadow-soft transition hover:shadow-card",
-          onClick && "cursor-pointer touch-manipulation active:scale-[0.99]",
-          className,
-        )}
-      >
+      <div className={cardClassName} {...interactiveCardProps(name, price, onClick)}>
         <MenuItemPhotoPlaceholder size="lg" />
         <div className="flex items-start justify-between gap-3 p-3">
           <div className="min-w-0 flex-1">
@@ -128,21 +146,12 @@ export function MenuItemCard({
           </div>
           <p className="shrink-0 font-semibold text-primary">€{price}</p>
         </div>
-      </Comp>
+      </div>
     );
   }
 
   return (
-    <Comp
-      type={onClick ? "button" : undefined}
-      onClick={onClick}
-      aria-label={onClick ? `${name}, €${price}` : undefined}
-      className={cn(
-        "w-full overflow-hidden rounded-card bg-white text-left shadow-soft transition hover:shadow-card",
-        onClick && "cursor-pointer touch-manipulation active:scale-[0.99]",
-        className,
-      )}
-    >
+    <div className={cardClassName} {...interactiveCardProps(name, price, onClick)}>
       <div className="relative aspect-[4/3] w-full bg-slate-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -151,7 +160,7 @@ export function MenuItemCard({
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
           decoding="async"
-          sizes="(max-width: 640px) 50vw, 280px"
+          sizes={photoSizes}
           onError={() => setImgFailed(true)}
         />
         {badge ? (
@@ -169,6 +178,6 @@ export function MenuItemCard({
         </div>
         <p className="shrink-0 font-semibold text-primary">€{price}</p>
       </div>
-    </Comp>
+    </div>
   );
 }

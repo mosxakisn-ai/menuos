@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { prisma } from "@menuos/db";
 import { MenuEditor } from "@/components/dashboard/menu-editor";
@@ -16,6 +17,7 @@ type Props = { searchParams: Promise<{ venue?: string; menu?: string; welcome?: 
 
 export default async function MenusPage({ searchParams }: Props) {
   const session = await getSession();
+  if (session!.role === "STAFF") redirect("/dashboard/waiter");
   const sp = await searchParams;
   const planCtx = await getOrganizationPlanContext(session!.organizationId);
   const canImportPdf = planCtx ? organizationCanUsePdfImport(planCtx.planId) : false;

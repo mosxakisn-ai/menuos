@@ -49,12 +49,13 @@ export function HeroShowcase() {
   const { m, locale } = useI18n();
   const hs = m.marketing.home.heroShowcase;
   const [scanning, setScanning] = useState(true);
-  const [origin, setOrigin] = useState(() =>
-    typeof window !== "undefined" ? window.location.origin : APP_URL,
-  );
+  const [qrOrigin, setQrOrigin] = useState(APP_URL);
 
   useEffect(() => {
-    setOrigin(window.location.origin);
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      setQrOrigin(window.location.origin);
+    }
   }, []);
 
   useEffect(() => {
@@ -73,8 +74,8 @@ export function HeroShowcase() {
   );
 
   const demoMenuQrUrl = useMemo(
-    () => `${origin}${demoMenuUrl({ table: "12", siteLocale: locale })}`,
-    [origin, locale],
+    () => `${qrOrigin}${demoMenuUrl({ table: "12", siteLocale: locale })}`,
+    [qrOrigin, locale],
   );
 
   return (

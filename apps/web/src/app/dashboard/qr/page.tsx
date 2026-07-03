@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { prisma } from "@menuos/db";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
 import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
@@ -15,6 +16,7 @@ type Props = { searchParams: Promise<{ venue?: string }> };
 
 export default async function QrPage({ searchParams }: Props) {
   const session = await getSession();
+  if (session!.role === "STAFF") redirect("/dashboard/waiter");
   const sp = await searchParams;
   const venues = await prisma.venue.findMany({
     where: { organizationId: session!.organizationId },
