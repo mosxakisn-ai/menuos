@@ -122,6 +122,48 @@ export function buildWebPageSchema(input: {
   };
 }
 
+export function buildArticleSchema(input: {
+  headline: string;
+  description: string;
+  path: string;
+  datePublished: string;
+  locale?: MarketingLocale;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.headline,
+    description: input.description,
+    datePublished: input.datePublished,
+    inLanguage: schemaLanguage(input.locale ?? "el"),
+    author: { "@type": "Organization", name: APP_NAME },
+    publisher: { "@id": `${APP_URL}/#organization` },
+    url: absoluteUrl(input.path),
+    mainEntityOfPage: absoluteUrl(input.path),
+    isPartOf: { "@id": `${APP_URL}/#website` },
+  };
+}
+
+export function buildItemListSchema(input: {
+  name: string;
+  path: string;
+  items: readonly { name: string; path: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: input.name,
+    url: absoluteUrl(input.path),
+    numberOfItems: input.items.length,
+    itemListElement: input.items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      url: absoluteUrl(item.path),
+    })),
+  };
+}
+
 export function buildPricingOffersSchema(
   offers: readonly { name: string; price: number; description: string }[],
   locale: MarketingLocale = "el",

@@ -33,6 +33,9 @@ Rank on Google for:
 | IndexNow post-deploy | ✅ | ✅ | Recursive sitemap fetch |
 | Homepage filtered/UTM URLs → `noindex` | ✅ | ✅ | `lib/homepage-seo.ts` |
 | GSC HTML verification | ✅ | ✅ | `googlef328fb99f5f1f5b1.html` |
+| GSC meta verification | ✅ | ✅ | `GOOGLE_SITE_VERIFICATION` + code fallback |
+| JSON-LD Article (blog posts) | ✅ | ✅ | `buildArticleSchema` |
+| JSON-LD ItemList (blog index) | — | ✅ | Blog listing |
 | Lighthouse SEO target | **100** | **100** (target) | Run PageSpeed after deploy |
 | Lighthouse Performance | 85 desktop | TBD | Fonts `display:swap`, fix CLS |
 
@@ -166,7 +169,8 @@ Run after deploy: [PageSpeed Insights](https://pagespeed.web.dev/) on `https://m
 4. **Phase 2b:** ✅ Live 360° SEO pass
 5. **Phase 3:** ✅ Sitemap tiers, RSS, image sitemap, Service schema (~140 URLs)
 6. **Phase 4:** ✅ MatchWork Lighthouse parity (hreflang fix, viewport, icons, homepage noindex)
-7. **Ongoing:** GSC monitoring, PageSpeed CLS, new landings/posts from Search Console data
+7. **Phase 5:** ✅ GSC meta verification + blog Article/ItemList JSON-LD + hero CLS reserve
+8. **Ongoing:** GSC monitoring, PageSpeed CLS tuning, new landings/posts from Search Console data
 
 ## Do not
 

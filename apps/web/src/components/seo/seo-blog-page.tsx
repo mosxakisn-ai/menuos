@@ -5,7 +5,7 @@ import { buttonClass } from "@/components/ui/button";
 import type { SeoBlogPost } from "@/content/seo-blog";
 import { SEO_SITE_EN } from "@/content/seo-en";
 import type { Locale } from "@/i18n/types";
-import { buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/seo-structured-data";
+import { buildBreadcrumbSchema, buildArticleSchema, buildWebPageSchema } from "@/lib/seo-structured-data";
 
 export function SeoBlogArticlePage({ post, locale }: { post: SeoBlogPost; locale: Locale }) {
   const homeLabel = locale === "en" ? SEO_SITE_EN.breadcrumbHome : "Αρχική";
@@ -24,10 +24,11 @@ export function SeoBlogArticlePage({ post, locale }: { post: SeoBlogPost; locale
 
   const jsonLd = [
     buildBreadcrumbSchema(breadcrumbs),
-    buildWebPageSchema({
-      name: post.title,
-      path: `/blog/${post.slug}`,
+    buildArticleSchema({
+      headline: post.title,
       description: post.description,
+      path: `/blog/${post.slug}`,
+      datePublished: post.publishedAt,
       locale,
     }),
   ];

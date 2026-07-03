@@ -98,8 +98,8 @@ export function MarketingHome() {
               </Link>
             </div>
 
-            {/* Visual */}
-            <div className="animate-fade-up-delay-2 opacity-0 lg:justify-self-end">
+            {/* Visual — min-height reserves space before iframe/photos load (CLS) */}
+            <div className="animate-fade-up-delay-2 min-h-[620px] opacity-0 sm:min-h-[660px] lg:min-h-[700px] lg:justify-self-end">
               <HeroShowcase />
             </div>
           </div>

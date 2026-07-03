@@ -6,7 +6,7 @@ import { SEO_SITE_EN } from "@/content/seo-en";
 import { getServerLocale } from "@/i18n/server";
 import { getSeoBlogIndexMeta, getSeoBlogPostsSortedResolved } from "@/lib/seo-blog";
 import { buildPageMetadata } from "@/lib/seo";
-import { buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/seo-structured-data";
+import { buildBreadcrumbSchema, buildItemListSchema, buildWebPageSchema } from "@/lib/seo-structured-data";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getServerLocale();
@@ -45,6 +45,14 @@ export default async function BlogIndexPage() {
             path: meta.path,
             description: meta.description,
             locale,
+          }),
+          buildItemListSchema({
+            name: meta.title,
+            path: meta.path,
+            items: posts.map((post) => ({
+              name: post.title,
+              path: `/blog/${post.slug}`,
+            })),
           }),
         ]}
       />
