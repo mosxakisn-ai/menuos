@@ -24,7 +24,7 @@ export const MARKETING_EN = {
 
   home: {
     hero: {
-      badge: "Premium QR menus — restaurant, hotel & bars",
+      badge: "QR menu & Live 360° — restaurant, hotel & bars",
       title: "Your menu,",
       titleAccent: "on your guest's phone",
       subtitle:
@@ -247,6 +247,7 @@ export const MARKETING_EN = {
     },
     links: {
       qrMenu: "QR menu",
+      live360: "Live 360°",
       demo: "Live demo",
       services: "Services",
       howItWorks: "How it works",
@@ -260,7 +261,7 @@ export const MARKETING_EN = {
       facebook: "Facebook",
     },
     rights: "All rights reserved.",
-    taglineSuffix: "Premium QR menus for restaurants, hotels & bars in Greece",
+    taglineSuffix: "Scan. Browse. Order. 360°. — QR menu & live coordination for Greek hospitality",
   },
 
   stats: [

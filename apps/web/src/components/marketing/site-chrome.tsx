@@ -195,6 +195,11 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/live-360" className={footerLinkClass}>
+                  {f.links.live360}
+                </Link>
+              </li>
+              <li>
                 <Link href={demoHref} className={footerLinkClass}>
                   {f.links.demo}
                 </Link>

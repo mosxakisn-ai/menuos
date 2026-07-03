@@ -24,7 +24,7 @@ export const MARKETING = {
 
   home: {
     hero: {
-      badge: "Premium QR menus — εστιατόριο, ξενοδοχείο & bars",
+      badge: "QR menu & Live 360° — εστιατόριο, ξενοδοχείο & bars",
       title: "Το menu σας,",
       titleAccent: "στο κινητό του πελάτη",
       subtitle:
@@ -247,6 +247,7 @@ export const MARKETING = {
     },
     links: {
       qrMenu: "QR menu",
+      live360: "Live 360°",
       demo: "Δες live demo",
       services: "Υπηρεσίες",
       howItWorks: "Πώς λειτουργεί",
@@ -260,7 +261,7 @@ export const MARKETING = {
       facebook: "Facebook",
     },
     rights: "Με επιφύλαξη παντός δικαιώματος.",
-    taglineSuffix: "Premium QR menus για εστιατόρια, ξενοδοχεία & bars στην Ελλάδα",
+    taglineSuffix: "Scan. Browse. Order. 360°. — QR menu & live συντονισμός για ελληνική φιλοξενία",
   },
 
   stats: [

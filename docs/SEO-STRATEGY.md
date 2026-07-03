@@ -139,8 +139,9 @@ Public route listing all indexable pages, blog posts, landings, sitemap URL — 
 2. **Phase 1b:** ✅ 20 programmatic landings + footer hub (`lib/seo-landing.ts`, `[...slug]/page.tsx`)
 3. **Phase 2:** ✅ Launch blog (14 articles) + additional city combos (ongoing via GSC data)
 4. **Phase 2b:** ✅ Live 360° SEO pass — meta, landings template, `/live-360`, blog, llms.txt
-5. **Ongoing:** GSC monitoring, new city/vertical pages based on Search Console data
-6. **Future:** Marketing hreflang DE/FR when UI translations ship (guest QR menus already support DE/FR)
+5. **Phase 3:** ✅ Marketing/footer alignment, visible `/live-360` link, pricing copy consistency, feature dedup
+6. **Ongoing:** GSC monitoring, new city/vertical pages based on Search Console data (77→150+ only with demand)
+7. **Future:** Marketing hreflang DE/FR when UI translations ship (guest QR menus already support DE/FR)
 
 ## Do Not
 

@@ -161,6 +161,12 @@ function featureSignature(feature: string): string {
     .replace(/\p{M}/gu, "")
     .replace(/πιάτα/g, "ειδη")
     .replace(/dishes/g, "items")
+    .replace(/pdf import/g, "pdf gemini")
+    .replace(/εισαγωγή pdf/g, "pdf gemini")
+    .replace(/priority support/g, "priority")
+    .replace(/προτεραιότητα υποστήριξης/g, "priority")
+    .replace(/προτεραιότητα/g, "priority")
+    .replace(/live 360°/g, "live360")
     .replace(/\s+/g, " ")
     .trim();
 }
