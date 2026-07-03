@@ -13,16 +13,17 @@ function withSearchParams(url: string, mutate: (parsed: URL) => void): string {
 
 const UNSPLASH_HOST = "images.unsplash.com";
 
-/** Menu card thumbnails (~235px in hero embed, ~280px full menu) — 2× for retina. */
+/** Menu card thumbnails — 2× display width for retina; cap avoids oversized Unsplash fetches. */
 export function optimizeMenuCardPhotoUrl(url: string, displayWidth = 240): string {
-  const w = Math.min(512, Math.ceil(displayWidth * 2));
+  const w = Math.min(480, Math.ceil(displayWidth * 2));
+  const quality = displayWidth <= 180 ? "60" : "65";
   return withSearchParams(url, (parsed) => {
     if (parsed.hostname === UNSPLASH_HOST) {
       parsed.searchParams.set("auto", "format");
       parsed.searchParams.set("fit", "crop");
       parsed.searchParams.set("w", String(w));
       parsed.searchParams.set("h", String(Math.ceil(w * 0.75)));
-      parsed.searchParams.set("q", "65");
+      parsed.searchParams.set("q", quality);
       return;
     }
     if (parsed.pathname.includes("/api/photos/serve/")) {

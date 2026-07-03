@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Sparkles, Wifi } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { demoMenuUrl } from "@menuos/shared";
 import { DemoTavernaLogo } from "@/components/marketing/demo-taverna-logo";
 import { HeroQrCode } from "@/components/marketing/hero-qr-code";
@@ -50,6 +50,45 @@ export function HeroShowcase() {
   const hs = m.marketing.home.heroShowcase;
   const [scanning, setScanning] = useState(true);
   const [qrOrigin, setQrOrigin] = useState(APP_URL);
+  const [demoIframeSrc, setDemoIframeSrc] = useState<string | null>(null);
+  const demoIframeHostRef = useRef<HTMLDivElement>(null);
+
+  const demoMenuIframePath = useMemo(
+    () => demoMenuUrl({ table: "12", siteLocale: locale, embed: true }),
+    [locale],
+  );
+
+  useEffect(() => {
+    const host = demoIframeHostRef.current;
+    if (!host) return;
+
+    const loadIframe = () => setDemoIframeSrc(demoMenuIframePath);
+
+    const scheduleLoad = () => {
+      if (typeof requestIdleCallback !== "undefined") {
+        requestIdleCallback(loadIframe, { timeout: 2500 });
+      } else {
+        window.setTimeout(loadIframe, 600);
+      }
+    };
+
+    if (typeof IntersectionObserver === "undefined") {
+      scheduleLoad();
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          scheduleLoad();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "120px" },
+    );
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [demoMenuIframePath]);
 
   useEffect(() => {
     const host = window.location.hostname;
@@ -67,11 +106,6 @@ export function HeroShowcase() {
     const scanTimer = setInterval(() => setScanning((s) => !s), 2800);
     return () => clearInterval(scanTimer);
   }, []);
-
-  const demoMenuIframePath = useMemo(
-    () => demoMenuUrl({ table: "12", siteLocale: locale, embed: true }),
-    [locale],
-  );
 
   const demoMenuQrUrl = useMemo(
     () => `${qrOrigin}${demoMenuUrl({ table: "12", siteLocale: locale })}`,
@@ -123,14 +157,25 @@ export function HeroShowcase() {
 
               <div className="relative isolate aspect-[9/19.5] overflow-hidden rounded-[2.2rem] bg-white">
                 <PhoneStatusBar />
-                <div className="absolute inset-x-0 bottom-3 top-10 overflow-hidden bg-white">
-                  <iframe
-                    src={demoMenuIframePath}
-                    title={`${hs.venueName} — ${hs.venueSubtitle}`}
-                    className="block h-full w-full max-w-full touch-pan-y border-0 bg-white"
-                    loading="eager"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                  />
+                <div
+                  ref={demoIframeHostRef}
+                  className="absolute inset-x-0 bottom-3 top-10 overflow-hidden bg-white"
+                >
+                  {demoIframeSrc ? (
+                    <iframe
+                      src={demoIframeSrc}
+                      title={`${hs.venueName} — ${hs.venueSubtitle}`}
+                      className="block h-full w-full max-w-full touch-pan-y border-0 bg-white"
+                      loading="lazy"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  ) : (
+                    <div className="flex h-full flex-col gap-3 p-3" aria-hidden>
+                      <div className="h-8 w-2/3 animate-pulse rounded-lg bg-slate-100" />
+                      <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
+                      <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
+                    </div>
+                  )}
                 </div>
                 <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex justify-center">
                   <div className="h-1 w-[5.5rem] rounded-full bg-slate-900/80" />

@@ -3,7 +3,7 @@ import { DEMO_ORG_SLUG, DEMO_VENUE_SLUG } from "./demo-venue";
 export { DEMO_ORG_SLUG, DEMO_VENUE_SLUG };
 
 const unsplash = (id: string) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=480&h=360&q=75`;
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=360&h=270&q=65`;
 
 /** Sample dish photos (same curated set as demo-taverna). */
 export const ONBOARDING_ITEM_PHOTOS: Record<string, string> = {

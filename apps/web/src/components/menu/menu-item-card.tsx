@@ -109,7 +109,7 @@ export function MenuItemCard({
   price,
   photoUrl,
   photoDisplayWidth = 240,
-  photoSizes = "(max-width: 640px) 100vw, 280px",
+  photoSizes = "(max-width: 640px) 100vw, 260px",
   label,
   lang,
   onClick,
