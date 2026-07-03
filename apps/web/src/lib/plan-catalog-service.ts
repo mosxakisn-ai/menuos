@@ -43,7 +43,7 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
     priceDisplay: "€0",
     periodLabel: " / 7 ημέρες",
     description: "Για να δοκιμάσεις την πλατφόρμα πριν επιλέξεις πλάνο.",
-    features: ["1 κατάστημα", "1 κατάλογος", "50 είδη", "QR codes", "Live 360°", "Πολλαπλές γλώσσες", "Χωρίς κάρτα"],
+    features: ["1 κατάστημα", "1 κατάλογος", "50 πιάτα", "QR codes", "Live 360°", "Πολλαπλές γλώσσες", "Χωρίς κάρτα"],
     maxVenues: 1,
     maxMenusPerVenue: 1,
     maxItems: 50,
@@ -61,7 +61,7 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
     priceDisplay: "€9.99",
     periodLabel: "/μήνα",
     description: "Ιδανικό για εστιατόριο, cafe ή μοναδικό κατάστημα.",
-    features: ["1 κατάστημα", "3 κατάλογοι", "Απεριόριστα είδη", "QR codes", "Κλήση σερβιτόρου", "Live 360°", "Πολλαπλές γλώσσες"],
+    features: ["1 κατάστημα", "3 κατάλογοι", "Απεριόριστα πιάτα", "QR codes", "Κλήση σερβιτόρου", "Live 360°", "Πολλαπλές γλώσσες"],
     maxVenues: 1,
     maxMenusPerVenue: 3,
     maxItems: null,
@@ -79,7 +79,15 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
     priceDisplay: "€19.99",
     periodLabel: "/μήνα",
     description: "Για ξενοδοχεία και επιχειρήσεις με πολλαπλούς χώρους.",
-    features: ["3 καταστήματα", "Απεριόριστοι κατάλογοι", "Live 360°", "Κλήση σερβιτόρου", "Πολλαπλές γλώσσες", "Προτεραιότητα", "PDF import"],
+    features: [
+      "3 καταστήματα",
+      "Απεριόριστοι κατάλογοι",
+      "Live 360°",
+      "Κλήση σερβιτόρου",
+      "Πολλαπλές γλώσσες",
+      "Εισαγωγή PDF · Gemini AI",
+      "Προτεραιότητα",
+    ],
     maxVenues: 3,
     maxMenusPerVenue: null,
     maxItems: null,
@@ -146,8 +154,23 @@ export function invalidatePlanCatalogCache() {
   cache = null;
 }
 
+function featureSignature(feature: string): string {
+  return feature
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/πιάτα/g, "ειδη")
+    .replace(/dishes/g, "items")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function mergeFeaturesWithSeed(current: string[], seed: string[]): string[] {
-  const extras = current.filter((feature) => !seed.includes(feature));
+  const seedSignatures = new Set(seed.map(featureSignature));
+  const extras = current.filter((feature) => {
+    if (seed.includes(feature)) return false;
+    return !seedSignatures.has(featureSignature(feature));
+  });
   return [...seed, ...extras];
 }
 

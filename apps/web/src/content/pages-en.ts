@@ -238,7 +238,7 @@ export const PAGES_EN = {
         price: "€19.99",
         period: "/month",
         description: "For hotels and businesses with multiple areas.",
-        features: ["3 venues", "Unlimited menus", "Live 360°", "Call waiter", "Multiple languages", "Priority support", "PDF import"],
+        features: ["3 venues", "Unlimited menus", "Live 360°", "Call waiter", "Multiple languages", "PDF import · Gemini AI", "Priority support"],
         cta: "Start Pro",
       },
     ],
