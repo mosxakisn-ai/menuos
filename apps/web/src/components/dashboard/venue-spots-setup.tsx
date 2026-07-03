@@ -46,9 +46,11 @@ function newSpaceRow(): SpaceBulkRow {
 export function VenueSpotsSetup({
   venues,
   initialVenueId,
+  intro,
 }: {
   venues: Venue[];
   initialVenueId?: string;
+  intro?: { title: string; description: string };
 }) {
   const { d, lang } = useDashboardCopy();
   const Q = d.pages.qr;
@@ -234,14 +236,23 @@ export function VenueSpotsSetup({
 
       <div className={dashboardCardClass}>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <DashboardSectionTitle title={S.tables.title} description={S.tables.description} />
-          <a href="/dashboard/qr" className="text-sm font-semibold text-brand-blue hover:underline">
+          {intro ? (
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-brand-navy">{intro.title}</h2>
+              <p className="mt-2 text-sm text-slate-600">{intro.description}</p>
+            </div>
+          ) : (
+            <DashboardSectionTitle title={S.tables.title} description={S.tables.description} />
+          )}
+          <a href="/dashboard/qr" className="shrink-0 text-sm font-semibold text-brand-blue hover:underline">
             {S.tables.qrLink}
           </a>
         </div>
-        <p className="mt-4 rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2.5 text-sm leading-relaxed text-slate-600">
-          {S.tables.zoneHint}
-        </p>
+        {!intro ? (
+          <p className="mt-4 rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2.5 text-sm leading-relaxed text-slate-600">
+            {S.tables.zoneHint}
+          </p>
+        ) : null}
 
         <DashboardToolbar className="mt-6">
           <label className="block min-w-[12rem] flex-1 sm:max-w-md">

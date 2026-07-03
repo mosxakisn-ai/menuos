@@ -161,6 +161,7 @@ export function SettingsVenuePanel({ venues }: { venues: SettingsVenue[] }) {
 export function SettingsMessagesPanel({ venues }: { venues: VenueSpotVenue[] }) {
   const { d } = useDashboardCopy();
   const T = d.pages.settings.messagesTab;
+  const { venueId, setVenueId } = useVenuePicker(venues);
 
   return (
     <div className="space-y-5">
@@ -168,11 +169,15 @@ export function SettingsMessagesPanel({ venues }: { venues: VenueSpotVenue[] }) 
         title={T.title}
         description={T.description}
         venues={venues}
-        venueId=""
-        onVenueChange={() => {}}
-        hideVenuePicker
+        venueId={venueId}
+        onVenueChange={setVenueId}
       />
-      <VenueOperationsConfigPanel venues={venues} sections={["chips", "map"]} showHeader={false} />
+      <VenueOperationsConfigPanel
+        venues={venues}
+        initialVenueId={venueId}
+        sections={["chips", "map"]}
+        showHeader={false}
+      />
     </div>
   );
 }
@@ -181,19 +186,7 @@ export function SettingsTablesPanel({ venues }: { venues: VenueSpotVenue[] }) {
   const { d } = useDashboardCopy();
   const T = d.pages.settings.tablesTab;
 
-  return (
-    <div className="space-y-5">
-      <TabIntro
-        title={T.title}
-        description={T.description}
-        venues={venues}
-        venueId=""
-        onVenueChange={() => {}}
-        hideVenuePicker
-      />
-      <VenueSpotsSetup venues={venues} />
-    </div>
-  );
+  return <VenueSpotsSetup venues={venues} intro={{ title: T.title, description: T.description }} />;
 }
 
 export function SettingsSpacesPanel({ venues }: { venues: VenueSpotVenue[] }) {

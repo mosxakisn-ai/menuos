@@ -17,6 +17,7 @@ import {
   PASS_STATION_INPUTS,
   syncLegacyFromPosts,
   TABLE_TILE_STATES,
+  tableLegendStates,
   zoneSourceHint,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -513,7 +514,10 @@ export function VenueOperationsConfigPanel({
                 ))}
               </div>
               <div className="mt-4">
-                <TableGridLegend stateLabels={previewLabels} />
+                <TableGridLegend
+                  stateLabels={previewLabels}
+                  states={draft ? tableLegendStates(draft) : undefined}
+                />
               </div>
             </section>
             ) : null}
