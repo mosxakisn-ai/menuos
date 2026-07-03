@@ -53,7 +53,7 @@ if [ "$RUN_DB_PUSH" = "1" ]; then
     export DATABASE_URL
   fi
   if docker compose -f docker-compose.prod.yml run --rm --no-deps \
-    --env-file "$ROOT/.env" \
+    -e DATABASE_URL \
     -v "$ROOT/packages/db/prisma:/prisma:ro" \
     node:20-alpine sh -c \
     'npm install -g prisma@6.19.3 --silent && prisma db push --schema=/prisma/schema.prisma --skip-generate'; then
