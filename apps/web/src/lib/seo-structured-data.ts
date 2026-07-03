@@ -45,7 +45,7 @@ export function buildWebSiteSchema() {
     name: APP_NAME,
     url: APP_URL,
     description: SITE_DESCRIPTION,
-    inLanguage: "el-GR",
+    inLanguage: ["el-GR", "en-US"],
     publisher: { "@id": `${APP_URL}/#organization` },
   };
 }

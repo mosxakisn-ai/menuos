@@ -11,15 +11,15 @@ import { APP_URL } from "@/lib/config";
 import { useI18n } from "@/i18n/context";
 
 const PHOTOS = {
-  /** Mediterranean terrace dining — Unsplash (free) */
+  /** Mediterranean terrace dining — hero card ~460px wide */
   taverna:
-    "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1400&q=85",
-  /** Guest scanning phone at table */
+    "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=920&h=690&q=80",
+  /** Guest scanning phone at table — overlay ~128px */
   guest:
-    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=85",
-  /** Greek/Mediterranean dish close-up */
+    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=256&h=320&q=75",
+  /** Greek/Mediterranean dish close-up — overlay ~96px */
   food:
-    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=500&q=85",
+    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=192&h=192&q=75",
 } as const;
 
 function PhoneStatusBar() {

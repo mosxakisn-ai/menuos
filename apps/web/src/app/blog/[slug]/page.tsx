@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { SeoBlogArticlePage } from "@/components/seo/seo-blog-page";
 import { getServerLocale } from "@/i18n/server";
 import { getAllSeoBlogSlugs, getSeoBlogPostResolved } from "@/lib/seo-blog";
-import { buildPageMetadata } from "@/lib/seo";
+import { buildPageMetadata, SEO_BLOG_LOCALES } from "@/lib/seo";
 
 export const dynamicParams = false;
 
@@ -24,7 +24,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: post.description,
     path: `/blog/${post.slug}`,
     keywords: ["QR menu", "ψηφιακό menu", post.slug],
-    locale,
+    locale: "el",
+    hreflangLocales: SEO_BLOG_LOCALES,
   });
 }
 

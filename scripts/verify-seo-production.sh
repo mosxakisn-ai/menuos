@@ -50,6 +50,20 @@ else
   echo "  WARN GOOGLE_SITE_VERIFICATION empty — add token from Search Console to .env"
 fi
 
+if curl -sS "$BASE/llms.txt" | grep -qE '\[[^]]+\]\(https://'; then
+  echo "  OK llms.txt markdown links"
+else
+  echo "  FAIL llms.txt missing markdown links"
+  failed=1
+fi
+
+sitemap_count="$(curl -sS "$BASE/sitemap.xml" | grep -c '<loc>' || true)"
+if [ "${sitemap_count:-0}" -ge 140 ]; then
+  echo "  OK sitemap.xml (${sitemap_count} URLs)"
+else
+  echo "  WARN sitemap.xml count ${sitemap_count:-0} (expected ~144+)"
+fi
+
 if [ "$failed" -eq 0 ]; then
   echo "==> SEO checks passed."
 else

@@ -1,7 +1,19 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/seo";
 
-const DISALLOW = ["/api/", "/dashboard/", "/login", "/register", "/m/"];
+const DISALLOW = [
+  "/api/",
+  "/dashboard/",
+  "/login",
+  "/register",
+  "/m/",
+  "/s/",
+  "/supervisor/",
+  "/bds/",
+  "/kds/",
+  "/cold/",
+  "/dessert/",
+];
 
 export default function robots(): MetadataRoute.Robots {
   return {

@@ -28,16 +28,20 @@ Rank on Google for:
 | JSON-LD Service | — | ✅ | Geo/vertical landings |
 | JSON-LD Product/Offer | — | ✅ | Pricing |
 | Programmatic landings (footer hub only) | ✅ ~260 | ✅ ~103 | Quality > volume |
-| Blog topical clusters | ✅ 6+ | ✅ 26 | Ongoing, not bulk 100 |
-| `llms.txt` | ✅ | ✅ | AI/crawler discovery |
+| Blog topical clusters | ✅ 6+ | ✅ 30 | Greek-only hreflang |
+| `llms.txt` | ✅ | ✅ | Markdown links + `text/markdown` |
 | IndexNow post-deploy | ✅ | ✅ | Recursive sitemap fetch |
 | Homepage filtered/UTM URLs → `noindex` | ✅ | ✅ | `lib/homepage-seo.ts` |
 | GSC HTML verification | ✅ | ✅ | `googlef328fb99f5f1f5b1.html` |
 | GSC meta verification | ✅ | ✅ | `GOOGLE_SITE_VERIFICATION` + code fallback |
 | JSON-LD Article (blog posts) | ✅ | ✅ | `buildArticleSchema` |
 | JSON-LD ItemList (blog index) | — | ✅ | Blog listing |
+| Blog hreflang el-only | — | ✅ | `SEO_BLOG_LOCALES` until EN articles |
+| Robots disallow staff/supervisor | — | ✅ | `/s/`, `/supervisor/`, station screens |
+| WebSite bilingual inLanguage | — | ✅ | `el-GR` + `en-US` |
+| Hero image delivery optimized | — | ✅ | Unsplash w=920/256/192 + menu resize |
 | Lighthouse SEO target | **100** | **100** (target) | Run PageSpeed after deploy |
-| Lighthouse Performance | 85 desktop | TBD | Fonts `display:swap`, fix CLS |
+| Lighthouse Performance | 85 desktop | Improved | Hero + QR menu photo resize |
 
 ## Architecture
 
@@ -115,7 +119,7 @@ Each landing: unique H1/meta, FAQ + JSON-LD, footer hub links only (not main nav
 
 ## Blog (topical authority)
 
-26 articles live — GDPR, HACCP, POS, allergens, seasonal menus, café/bakery, Live 360°, etc.  
+26 articles live — GDPR, HACCP, POS, allergens, seasonal menus, café/bakery, Live 360°, hotels, social media, etc.  
 Target: **2–4 new posts/month**, not 100 thin posts at once.
 
 ## hreflang
@@ -123,7 +127,7 @@ Target: **2–4 new posts/month**, not 100 thin posts at once.
 | Content | Locales |
 |---------|---------|
 | Marketing + landings | `el` + `en` via `?lang=`; default **EN** = clean URL |
-| Blog | GR primary (EN UI via cookie/`?lang=en` on shell) |
+| Blog | GR primary — `SEO_BLOG_LOCALES: ["el"]` only; EN shell without translated body |
 | QR menus (`/m/*`) | Per-venue item translations (product feature, not hreflang) |
 
 **Do not** add DE/FR hreflang until full marketing UI translations ship (guest QR already has DE/FR).
@@ -136,6 +140,7 @@ Target: **2–4 new posts/month**, not 100 thin posts at once.
 | `/login`, `/register` | Auth |
 | `/api/*` | API |
 | `/m/*` | Tenant QR menus |
+| `/s/*`, `/supervisor/*`, station screens | Staff / ops panels |
 | `/?utm_*`, `/?ref=` etc. | Canonical `/` only (`homepage-seo.ts`) |
 | Filtered listing URLs | N/A (no public job filters) |
 
@@ -170,7 +175,15 @@ Run after deploy: [PageSpeed Insights](https://pagespeed.web.dev/) on `https://m
 5. **Phase 3:** ✅ Sitemap tiers, RSS, image sitemap, Service schema (~140 URLs)
 6. **Phase 4:** ✅ MatchWork Lighthouse parity (hreflang fix, viewport, icons, homepage noindex)
 7. **Phase 5:** ✅ GSC meta verification + blog Article/ItemList JSON-LD + hero CLS reserve
-8. **Ongoing:** GSC monitoring, PageSpeed CLS tuning, new landings/posts from Search Console data
+8. **Phase 6:** ✅ PageSpeed images, llms.txt markdown, blog el-hreflang, robots staff routes, +4 blog posts
+9. **Complete (technical SEO):** All MatchWork-parity items shipped — monitor GSC + add content monthly
+
+## Post-launch (manual, not code)
+
+- GSC: submit only `https://menuos.gr/sitemap.xml`
+- PageSpeed Insights quarterly on `/` and `/qr-menu`
+- 2–4 blog posts/month from Search Console queries
+- DE/FR marketing hreflang when full UI translations ship
 
 ## Do not
 

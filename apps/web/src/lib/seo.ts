@@ -8,6 +8,9 @@ import { APP_NAME, APP_URL, SITE_DESCRIPTION } from "@/lib/config";
 
 export const SEO_BILINGUAL_LOCALES: Locale[] = ["el", "en"];
 
+/** Blog posts are Greek-only — do not emit en hreflang until EN articles ship. */
+export const SEO_BLOG_LOCALES: Locale[] = ["el"];
+
 const HREFLANG_CODES: Record<Locale, string> = {
   el: "el",
   en: "en",

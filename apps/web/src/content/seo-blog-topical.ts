@@ -261,4 +261,85 @@ export const SEO_BLOG_TOPICAL_POSTS: SeoBlogPost[] = [
       },
     ],
   },
+  {
+    slug: "kalokairiano-menu-anoixis",
+    title: "Καλοκαιρινό menu — πώς το ενημερώνετε γρήγορα",
+    description:
+      "Seasonal πιάτα, ποτά και τιμές υψηλής σεζόν. QR menu αντί για επανεκτύπωση κάθε εβδομάδα.",
+    publishedAt: "2026-07-02",
+    readingMinutes: 4,
+    relatedPaths: ["/beach-bar/qr-menu", "/pool-bar/digital-menu", "/blog/digital-menu-vs-printed"],
+    sections: [
+      {
+        paragraphs: [
+          "Το καλοκαίρι αλλάζουν συχνά τα πιάτα (ψάρια, σαλάτες, cocktails). Με printed menu κάθε αλλαγή κοστίζει χρόνο και χρήμα.",
+          "Από το panel MenuOS ενημερώνετε τιμές και διαθεσιμότητα live — οι επισκέπτες βλέπουν αμέσως τι ισχύει σήμερα.",
+        ],
+      },
+      {
+        heading: "Tips για beach bar & pool",
+        paragraphs: [
+          "Ξεχωριστός κατάλογος pool bar / main restaurant — QR ανά ζώνη.",
+          "Sunbed QR με ?sunbed= — κλήση σερβιτόρου χωρίς app.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "qr-menu-xenodocheio-wifi",
+    title: "QR menu σε ξενοδοχείο — Wi‑Fi, δωμάτια και lobby",
+    description:
+      "Room service, πρωινό, pool bar: ένα panel, πολλαπλοί κατάλογοι και γλώσσες για τουρίστες.",
+    publishedAt: "2026-07-03",
+    readingMinutes: 5,
+    relatedPaths: ["/xenodocheio/digital-menu", "/room-service/qr-menu", "/blog/qr-menu-xenodocheio"],
+    sections: [
+      {
+        paragraphs: [
+          "Στα ξενοδοχεία το QR menu λειτουργεί σε δωμάτια (?room=), lobby και εστιατόριο. Ο επισκέπτης δεν χρειάζεται app — μόνο browser.",
+          "Συνδυάστε με Wi‑Fi captive portal ή QR στο welcome card — το menu ανοίγει αμέσως.",
+        ],
+      },
+      {
+        heading: "Live 360° για reception",
+        paragraphs: [
+          "Κλήσεις room service και σερβιτόρου εμφανίζονται live στο panel — λιγότερα τηλέφωνα στην reception.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "qr-menu-social-media",
+    title: "QR menu και social media — Instagram, Google Maps",
+    description:
+      "Link στο bio, Google Business και τραπέζια — μία πηγή αλήθειας για τιμές και πιάτα.",
+    publishedAt: "2026-07-04",
+    readingMinutes: 4,
+    relatedPaths: ["/qr-menu", "/pos-leitourgei", "/blog/pws-ftiaxno-qr-menu"],
+    sections: [
+      {
+        paragraphs: [
+          "Αντί για PDF menu στο Instagram, δώστε link στο ψηφιακό κατάλογο σας. Όταν αλλάζετε τιμή, δεν χρειάζεται νέο post.",
+          "Στο Google Business Profile βάλτε link menuos.gr/m/{slug} — οι επισκέπτες βλέπουν live περιεχόμενο.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "allergens-eu-2023",
+    title: "Allergens στο menu — τι ισχύει στην ΕΕ για εστίαση",
+    description:
+      "14 allergens, ενημέρωση πελάτη και ψηφιακός κατάλογος. Σύντομος οδηγός για εστιατόρια στην Ελλάδα.",
+    publishedAt: "2026-07-04",
+    readingMinutes: 5,
+    relatedPaths: ["/blog/allergens-sto-qr-menu", "/estiatorio/qr-menu", "/privacy"],
+    sections: [
+      {
+        paragraphs: [
+          "Η ευρωπαϊκή νομοθεσία απαιτεί σαφή ενημέρωση για allergens. Το QR menu διευκολύνει ετικέτες ανά πιάτο (γλουτένη, γαλακτοκομικά, ξηροί καρποί κ.λπ.).",
+          "Όταν αλλάζετε συνταγή, ενημερώνετε μία φορά στο panel — όχι σε κάθε printed menu.",
+        ],
+      },
+    ],
+  },
 ];

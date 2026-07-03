@@ -5,7 +5,7 @@ import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { SEO_SITE_EN } from "@/content/seo-en";
 import { getServerLocale } from "@/i18n/server";
 import { getSeoBlogIndexMeta, getSeoBlogPostsSortedResolved } from "@/lib/seo-blog";
-import { buildPageMetadata } from "@/lib/seo";
+import { buildPageMetadata, SEO_BLOG_LOCALES } from "@/lib/seo";
 import { buildBreadcrumbSchema, buildItemListSchema, buildWebPageSchema } from "@/lib/seo-structured-data";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,7 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
     description: meta.description,
     path: meta.path,
     keywords: ["QR menu blog", "ψηφιακό menu οδηγός", "MenuOS blog"],
-    locale,
+    locale: "el",
+    hreflangLocales: SEO_BLOG_LOCALES,
   });
 }
 
