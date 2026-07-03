@@ -7,6 +7,7 @@ import {
   passSignalVisibleToStaffMember,
   passStationDbToInput,
   passStationInputToDb,
+  listVenuePosts,
   stationDisplayLabel,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
@@ -63,8 +64,12 @@ export async function PATCH(request: Request, { params }: Props) {
   if (auth.response) return auth.response;
 
   const member = auth.access.staffMember;
-  if (member && !passSignalVisibleToStaffMember(existing.station, member.stations)) {
-    return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 403 });
+  if (member) {
+    const opsConfig = await getVenueOperationsConfig(existing.venueId);
+    const posts = listVenuePosts(opsConfig);
+    if (!passSignalVisibleToStaffMember(existing.station, member.stations, posts)) {
+      return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 403 });
+    }
   }
 
   const next = parsed.data.status;

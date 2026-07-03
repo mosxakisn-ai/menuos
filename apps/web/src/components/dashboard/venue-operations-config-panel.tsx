@@ -1,16 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { PassStationInput, TableTileState, VenueOperationsConfig } from "@menuos/shared";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { PassStationInput, TableTileState, VenueOperationsConfig, VenuePost } from "@menuos/shared";
 import {
   DEFAULT_PASS_QUICK_CHIPS,
   DEFAULT_STATION_LABELS_EL,
   DEFAULT_STATION_LABELS_EN,
   DEFAULT_TABLE_STATE_LABELS_EL,
+  enabledVenuePosts,
   groupVenueSpotsByZone,
+  listVenuePosts,
+  MAX_VENUE_POSTS,
   mergeTableStateLabels,
+  newVenuePostId,
   PASS_STATION_INPUTS,
-  stationDisplayLabel,
+  syncLegacyFromPosts,
   TABLE_TILE_STATES,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -24,6 +28,7 @@ import {
 import { TableGridLegend } from "@/components/dashboard/table-grid-preview";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
+import { Plus, Trash2 } from "lucide-react";
 
 type Venue = { id: string; name: string };
 
@@ -31,39 +36,34 @@ export type OpsConfigSection = "departments" | "chips" | "map" | "zones";
 
 const ALL_OPS_SECTIONS: OpsConfigSection[] = ["departments", "chips", "map", "zones"];
 
-const STATION_LABEL_KEYS: Record<PassStationInput, "kitchen" | "bar" | "cold" | "dessert"> = {
-  kitchen: "kitchen",
-  bar: "bar",
-  cold: "cold",
-  dessert: "dessert",
-};
-
-function defaultStationLabel(station: PassStationInput, lang: "GR" | "EN"): string {
-  return lang === "EN" ? DEFAULT_STATION_LABELS_EN[station] : DEFAULT_STATION_LABELS_EL[station];
-}
-
 export function useVenueOperationsConfig(venueId: string) {
   const [config, setConfig] = useState<VenueOperationsConfig | null>(null);
   const [loading, setLoading] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const reload = useCallback(async () => {
     if (!venueId) {
       setConfig(null);
       return;
     }
+    const generation = ++loadGenerationRef.current;
     setLoading(true);
     try {
       const res = await fetch(`/api/venues/${venueId}/operations-config`);
       const data = (await res.json()) as { config?: VenueOperationsConfig };
+      if (generation !== loadGenerationRef.current) return;
       if (res.ok && data.config) setConfig(data.config);
+      else setConfig(null);
     } finally {
-      setLoading(false);
+      if (generation === loadGenerationRef.current) setLoading(false);
     }
   }, [venueId]);
 
   useEffect(() => {
+    loadGenerationRef.current += 1;
+    setConfig(null);
     void reload();
-  }, [reload]);
+  }, [venueId, reload]);
 
   return { config, loading, reload, setConfig };
 }
@@ -160,6 +160,7 @@ export function VenueOperationsConfigPanel({
 
   useEffect(() => {
     if (config) setDraft(config);
+    else setDraft(null);
   }, [config]);
 
   if (venues.length === 0) return null;
@@ -169,12 +170,15 @@ export function VenueOperationsConfigPanel({
 
   async function save() {
     if (!venueId || !draft) return;
+    const langCode = lang === "EN" ? "EN" : "GR";
+    const posts = listVenuePosts(draft, langCode);
+    const payload = { ...draft, ...syncLegacyFromPosts(posts), posts };
     setSaving(true);
     try {
       const res = await fetch(`/api/venues/${venueId}/operations-config`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       showFromResponse(data, res.ok, res.status);
@@ -187,14 +191,52 @@ export function VenueOperationsConfigPanel({
     }
   }
 
-  function toggleStation(station: PassStationInput) {
+  function updatePosts(nextPosts: VenuePost[]) {
     if (!draft) return;
-    const enabled = draft.enabledStations.includes(station);
-    let next = enabled
-      ? draft.enabledStations.filter((s) => s !== station)
-      : [...draft.enabledStations, station];
-    if (next.length === 0) next = [station];
-    setDraft({ ...draft, enabledStations: next });
+    const legacy = syncLegacyFromPosts(nextPosts);
+    setDraft({ ...draft, ...legacy, posts: nextPosts });
+  }
+
+  function togglePost(postId: string) {
+    if (!draft) return;
+    const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
+    const target = posts.find((post) => post.id === postId);
+    if (!target) return;
+    const enabledCount = posts.filter((post) => post.enabled).length;
+    if (target.enabled && enabledCount <= 1) return;
+    updatePosts(
+      posts.map((post) => (post.id === postId ? { ...post, enabled: !post.enabled } : post)),
+    );
+  }
+
+  function setPostLabel(postId: string, value: string) {
+    if (!draft) return;
+    const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
+    updatePosts(posts.map((post) => (post.id === postId ? { ...post, label: value } : post)));
+  }
+
+  function setPostStation(postId: string, station: PassStationInput) {
+    if (!draft) return;
+    const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
+    updatePosts(posts.map((post) => (post.id === postId ? { ...post, station } : post)));
+  }
+
+  function removePost(postId: string) {
+    if (!draft) return;
+    const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
+    if (posts.length <= 1) return;
+    updatePosts(posts.filter((post) => post.id !== postId));
+  }
+
+  function addPost() {
+    if (!draft) return;
+    const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
+    if (posts.length >= MAX_VENUE_POSTS) return;
+    const fallback = lang === "EN" ? "New post" : "Νέο πόστο";
+    updatePosts([
+      ...posts,
+      { id: newVenuePostId(), label: fallback, enabled: true, station: "kitchen" },
+    ]);
   }
 
   function setQuickChips(station: PassStationInput, chips: string[]) {
@@ -210,22 +252,6 @@ export function VenueOperationsConfigPanel({
     const next = { ...(draft.quickChips ?? {}) };
     delete next[station];
     setDraft({ ...draft, quickChips: Object.keys(next).length ? next : undefined });
-  }
-
-  function setStationLabel(station: PassStationInput, value: string) {
-    if (!draft) return;
-    const trimmed = value.trim();
-    const next = { ...(draft.stationLabels ?? {}) };
-    const fallback = defaultStationLabel(station, lang === "EN" ? "EN" : "GR");
-    if (!trimmed || trimmed === fallback) {
-      delete next[station];
-    } else {
-      next[station] = trimmed;
-    }
-    setDraft({
-      ...draft,
-      stationLabels: Object.keys(next).length ? next : undefined,
-    });
   }
 
   function setTableStateLabel(state: TableTileState, value: string) {
@@ -263,6 +289,10 @@ export function VenueOperationsConfigPanel({
     ? mergeTableStateLabels(draft, lang === "EN" ? "EN" : "GR")
     : stateLabelDefaults;
 
+  const langCode = lang === "EN" ? "EN" : "GR";
+  const draftPosts = draft ? listVenuePosts(draft, langCode) : [];
+  const enabledPosts = draft ? enabledVenuePosts(draft, langCode) : [];
+
   return (
     <div className="space-y-5">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
@@ -297,43 +327,92 @@ export function VenueOperationsConfigPanel({
             <section>
               <h3 className="text-sm font-semibold text-brand-navy">{O.departmentsTitle}</h3>
               <p className="mt-1 text-sm text-slate-600">{O.departmentsHint}</p>
-              <ul className="mt-3 space-y-2">
-                {PASS_STATION_INPUTS.map((station) => {
-                  const active = draft.enabledStations.includes(station);
-                  const displayName = stationDisplayLabel(
-                    draft,
-                    station,
-                    lang === "EN" ? "EN" : "GR",
-                  );
-                  return (
-                    <li
-                      key={station}
-                      className={`flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
-                        active
-                          ? "border-brand-blue/30 bg-brand-blue/5"
-                          : "border-slate-100 bg-white opacity-80"
-                      }`}
-                    >
-                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={active}
-                          onChange={() => toggleStation(station)}
-                          className="accent-brand-blue"
-                        />
-                        <span className="sr-only">{P[STATION_LABEL_KEYS[station]]}</span>
-                      </label>
-                      <input
-                        value={displayName}
-                        onChange={(e) => setStationLabel(station, e.target.value)}
-                        maxLength={40}
-                        placeholder={P[STATION_LABEL_KEYS[station]]}
-                        className={`${dashboardFieldClass} min-w-[10rem] flex-1 text-sm`}
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="mt-3 overflow-x-auto rounded-xl border border-slate-100">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <th className="px-3 py-2.5">{O.postActiveLabel}</th>
+                      <th className="px-3 py-2.5">{O.postNameLabel}</th>
+                      <th className="px-3 py-2.5">{O.postTypeLabel}</th>
+                      <th className="px-3 py-2.5 text-right">{O.postActionsLabel}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {draftPosts.map((post) => {
+                      const typeLabels =
+                        lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+                      return (
+                        <tr
+                          key={post.id}
+                          className={`border-b border-slate-50 last:border-0 ${
+                            post.enabled ? "bg-brand-blue/[0.03]" : "opacity-75"
+                          }`}
+                        >
+                          <td className="px-3 py-2.5 align-middle">
+                            <input
+                              type="checkbox"
+                              checked={post.enabled}
+                              onChange={() => togglePost(post.id)}
+                              className="accent-brand-blue"
+                              aria-label={O.postActiveLabel}
+                            />
+                          </td>
+                          <td className="px-3 py-2.5 align-middle">
+                            <input
+                              value={post.label}
+                              onChange={(e) => setPostLabel(post.id, e.target.value)}
+                              maxLength={40}
+                              placeholder={P.kitchen}
+                              className={`${dashboardFieldClass} min-w-[10rem] w-full text-sm`}
+                            />
+                          </td>
+                          <td className="px-3 py-2.5 align-middle">
+                            <select
+                              value={post.station}
+                              onChange={(e) =>
+                                setPostStation(post.id, e.target.value as PassStationInput)
+                              }
+                              className={`${dashboardFieldClass} min-w-[8rem] text-sm`}
+                            >
+                              {PASS_STATION_INPUTS.map((station) => (
+                                <option key={station} value={station}>
+                                  {typeLabels[station]}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-3 py-2.5 align-middle text-right">
+                            <button
+                              type="button"
+                              onClick={() => removePost(post.id)}
+                              disabled={draftPosts.length <= 1}
+                              className="inline-flex items-center justify-center rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
+                              aria-label={O.removePost}
+                              title={O.removePost}
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={addPost}
+                  disabled={draftPosts.length >= MAX_VENUE_POSTS}
+                  className={buttonClass("secondary", "sm")}
+                >
+                  <Plus className="mr-1.5 inline h-4 w-4" aria-hidden />
+                  {O.addPost}
+                </button>
+                {draftPosts.length >= MAX_VENUE_POSTS ? (
+                  <p className="text-xs text-slate-500">{O.postsMaxReached}</p>
+                ) : null}
+              </div>
             </section>
             ) : null}
 
@@ -342,40 +421,34 @@ export function VenueOperationsConfigPanel({
               <h3 className="text-sm font-semibold text-brand-navy">{O.quickChipsTitle}</h3>
               <p className="mt-1 text-sm text-slate-600">{O.quickChipsHint}</p>
               <div className="mt-4 space-y-5">
-                {PASS_STATION_INPUTS.filter((s) => draft.enabledStations.includes(s)).map(
-                  (station) => {
-                    const chips = draft.quickChips?.[station] ?? DEFAULT_PASS_QUICK_CHIPS[station];
-                    const deptName = stationDisplayLabel(
-                      draft,
-                      station,
-                      lang === "EN" ? "EN" : "GR",
-                    );
-                    return (
-                      <div
-                        key={station}
-                        className="rounded-xl border border-slate-100 bg-slate-50/60 p-4"
-                      >
-                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">
-                            {deptName}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => resetQuickChips(station)}
-                            className="text-xs font-medium text-slate-500 hover:text-brand-blue"
-                          >
-                            {O.resetDefaults}
-                          </button>
-                        </div>
-                        <ChipEditor
-                          chips={chips}
-                          onChange={(next) => setQuickChips(station, next)}
-                          placeholder={O.chipPlaceholder}
-                        />
+                {enabledPosts.map((post) => {
+                  const chips =
+                    draft.quickChips?.[post.station] ?? DEFAULT_PASS_QUICK_CHIPS[post.station];
+                  return (
+                    <div
+                      key={post.id}
+                      className="rounded-xl border border-slate-100 bg-slate-50/60 p-4"
+                    >
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">
+                          {post.label.trim()}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => resetQuickChips(post.station)}
+                          className="text-xs font-medium text-slate-500 hover:text-brand-blue"
+                        >
+                          {O.resetDefaults}
+                        </button>
                       </div>
-                    );
-                  },
-                )}
+                      <ChipEditor
+                        chips={chips}
+                        onChange={(next) => setQuickChips(post.station, next)}
+                        placeholder={O.chipPlaceholder}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </section>
             ) : null}

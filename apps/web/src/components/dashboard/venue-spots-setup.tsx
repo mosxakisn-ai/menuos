@@ -2,7 +2,6 @@
 
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import { VenueOperationsConfigPanel } from "@/components/dashboard/venue-operations-config-panel";
 import {
   formatVenueSpotLabelForLang,
   isValidVenueSpotLabel,
@@ -394,13 +393,6 @@ export function VenueSpotsSetup({
           </div>
         ) : null}
       </div>
-
-      <VenueOperationsConfigPanel
-        venues={venues}
-        initialVenueId={venueId}
-        sections={["zones"]}
-        showHeader={false}
-      />
     </div>
   );
 }

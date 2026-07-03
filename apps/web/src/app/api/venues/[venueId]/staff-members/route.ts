@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
-import { venueStaffMemberCreateSchema, zodFirstErrorMessage } from "@menuos/shared";
+import { venueStaffMemberCreateSchema, listVenuePosts, validateStaffAssignments, zodFirstErrorMessage } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { canManageVenueSecrets } from "@/lib/dashboard-roles";
+import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ venueId: string }> };
@@ -61,6 +62,15 @@ export async function POST(request: Request, { params }: Params) {
   const parsed = venueStaffMemberCreateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: zodFirstErrorMessage(parsed.error) }, { status: 400 });
+  }
+
+  const opsConfig = await getVenueOperationsConfig(venueId);
+  const posts = listVenuePosts(opsConfig);
+  if (!validateStaffAssignments(parsed.data.stations, posts)) {
+    return NextResponse.json(
+      { error: "Επίλεξε έγκυρα πόστα από Ρυθμίσεις → Πόστα." },
+      { status: 400 },
+    );
   }
 
   const count = await prisma.venueStaffMember.count({ where: { venueId } });

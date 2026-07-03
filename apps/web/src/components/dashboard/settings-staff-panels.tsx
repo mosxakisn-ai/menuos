@@ -1,16 +1,18 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  DEFAULT_ENABLED_STATIONS,
-  type PassStationInput,
+  applyZoneLabelOverrides,
+  enabledVenuePosts,
+  groupVenueSpotsByZone,
 } from "@menuos/shared";
 import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
 import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
+import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
 import {
   useVenueOperationsConfig,
   VenueOperationsConfigPanel,
@@ -109,13 +111,13 @@ export function SettingsPostsPanel({ venues }: { venues: VenueSpotVenue[] }) {
 }
 
 export function SettingsLinksPanel({ venues }: { venues: VenueSpotVenue[] }) {
-  const { d } = useDashboardCopy();
+  const { d, lang } = useDashboardCopy();
   const L = d.pages.settings.linksTab;
   const { venueId, setVenueId } = useVenuePicker(venues);
   const { config: opsConfig, loading } = useVenueOperationsConfig(venueId);
 
-  const enabledStations: PassStationInput[] =
-    opsConfig?.enabledStations?.length ? opsConfig.enabledStations : [...DEFAULT_ENABLED_STATIONS];
+  const langCode = lang === "EN" ? "EN" : "GR";
+  const enabledPosts = enabledVenuePosts(opsConfig ?? undefined, langCode);
 
   return (
     <div className="space-y-5">
@@ -127,18 +129,19 @@ export function SettingsLinksPanel({ venues }: { venues: VenueSpotVenue[] }) {
         venueId={venueId}
         onVenueChange={setVenueId}
       />
-      {loading ? (
+      {loading || !opsConfig ? (
         <p className="text-sm text-slate-500">{L.loading}</p>
-      ) : enabledStations.length === 0 ? (
+      ) : enabledPosts.length === 0 ? (
         <div className={dashboardCardClass}>
           <p className="text-sm text-slate-600">{L.empty}</p>
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2">
-          {enabledStations.map((station) => (
+          {enabledPosts.map((post) => (
             <StationScreensPanel
-              key={station}
-              station={station}
+              key={post.id}
+              station={post.station}
+              titleOverride={post.label.trim()}
               venues={venues}
               venueId={venueId}
               embedded
@@ -207,7 +210,69 @@ export function SettingsTablesPanel({ venues }: { venues: VenueSpotVenue[] }) {
   );
 }
 
-const SETUP_LINK_TABS: SettingsTabId[] = ["tables", "staff", "posts", "links"];
+export function SettingsSpacesPanel({ venues }: { venues: VenueSpotVenue[] }) {
+  const { d } = useDashboardCopy();
+  const Z = d.pages.settings.spacesTab;
+  const { venueId, setVenueId } = useVenuePicker(venues);
+  const { spots, loading: spotsLoading } = useVenueSpots(venueId);
+  const { config: opsConfig } = useVenueOperationsConfig(venueId);
+
+  const zoneGroups = useMemo(() => {
+    const raw = groupVenueSpotsByZone(spots.map((s) => ({ type: s.type, label: s.label })));
+    return applyZoneLabelOverrides(raw, opsConfig?.zoneLabels);
+  }, [spots, opsConfig?.zoneLabels]);
+
+  return (
+    <div className="space-y-5">
+      <TabIntro
+        title={Z.title}
+        description={Z.description}
+        hint={Z.hint}
+        venues={venues}
+        venueId={venueId}
+        onVenueChange={setVenueId}
+      />
+
+      {spotsLoading ? (
+        <p className="text-sm text-slate-500">{d.pages.settings.operations.loading}</p>
+      ) : zoneGroups.length === 0 ? (
+        <div className={dashboardCardClass}>
+          <p className="text-sm text-slate-600">{Z.empty}</p>
+        </div>
+      ) : (
+        <div className={dashboardCardClass}>
+          <h3 className="text-sm font-semibold text-brand-navy">{Z.previewTitle}</h3>
+          <p className="mt-1 text-sm text-slate-600">{Z.previewHint}</p>
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {zoneGroups.map((zone) => (
+              <div
+                key={zone.id}
+                className="flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 border-slate-200 bg-white px-3 py-3 text-center"
+              >
+                <span className="text-base font-bold leading-tight text-brand-navy sm:text-lg">
+                  {zone.label}
+                </span>
+                <span className="text-2xl font-extrabold tabular-nums leading-none text-amber-700 sm:text-3xl">
+                  {zone.spots.length}
+                </span>
+                <span className="text-xs text-slate-400">{Z.spotCount(zone.spots.length)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <VenueOperationsConfigPanel
+        venues={venues}
+        initialVenueId={venueId}
+        sections={["zones"]}
+        showHeader={false}
+      />
+    </div>
+  );
+}
+
+const SETUP_LINK_TABS: SettingsTabId[] = ["spaces", "posts", "links", "messages", "tables", "staff"];
 
 export function SettingsSetupLinks({ className }: { className?: string }) {
   const { d } = useDashboardCopy();

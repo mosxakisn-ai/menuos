@@ -1,8 +1,9 @@
 import type { PassStation } from "@menuos/db";
 import { prisma } from "@menuos/db";
 import webpush from "web-push";
-import { passSignalVisibleToStaffMember, waiterCallsVisibleToStaffMember } from "@menuos/shared";
+import { passSignalVisibleToStaffMember, listVenuePosts, waiterCallsVisibleToStaffMember } from "@menuos/shared";
 import { configureWebPush, isPushEnabled } from "@/lib/push-config";
+import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import { buildStaffWaiterUrl } from "@/lib/staff-auth";
 import {
   logPushDispatchDiagnostic,
@@ -49,13 +50,14 @@ function filterSubsForPassSignal(
   station: PassStation,
   venueSlug: string,
   venueStaffToken: string,
+  posts: ReturnType<typeof listVenuePosts>,
 ): Array<PushSubRow & { url: string }> {
   return subs
     .filter((sub) => {
       if (sub.staffMemberId) {
         const member = membersById.get(sub.staffMemberId);
         if (!member || member.venueId !== venueId) return false;
-        return passSignalVisibleToStaffMember(station, member.stations);
+        return passSignalVisibleToStaffMember(station, member.stations, posts);
       }
       return sub.venueId === null || sub.venueId === venueId;
     })
@@ -217,6 +219,8 @@ export async function pushPassSignalToStaff(input: {
     .map((s) => s.staffMemberId)
     .filter((id): id is string => Boolean(id));
   const membersById = await loadMembersById([...new Set(memberIds)]);
+  const opsConfig = await getVenueOperationsConfig(input.venueId);
+  const posts = listVenuePosts(opsConfig);
 
   await dispatchPushWithDiagnostics(
     {
@@ -237,6 +241,7 @@ export async function pushPassSignalToStaff(input: {
         input.station,
         input.venue.slug,
         input.venue.staffToken,
+        posts,
       ),
     subscriptions.length,
   );

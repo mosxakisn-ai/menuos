@@ -1,13 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { Check, Copy, ExternalLink, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  formatStaffStationsForLang,
-  PASS_STATION_INPUTS,
-  STAFF_STATION_OPTIONS,
-  stationDisplayLabel,
-  type StaffStationOption,
+  enabledVenuePosts,
+  listVenuePosts,
+  STAFF_SPECIAL_OPTIONS,
+  staffAssignmentLabelForLang,
+  staffStationLabelForLang,
+  type PassStationInput,
+  type VenuePost,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
@@ -40,63 +43,73 @@ function memberWaiterUrl(venueSlug: string, memberToken: string): string {
   return buildStaffShareUrl(venueSlug, memberToken);
 }
 
-function toggleStation(
-  current: StaffStationOption[],
-  station: StaffStationOption,
-): StaffStationOption[] {
-  if (station === "all") {
+function toggleAssignment(current: string[], assignment: string): string[] {
+  if (assignment === "all") {
     return current.includes("all") ? ["services"] : ["all"];
   }
   const withoutAll = current.filter((s) => s !== "all");
-  if (withoutAll.includes(station)) {
-    const next = withoutAll.filter((s) => s !== station);
+  if (withoutAll.includes(assignment)) {
+    const next = withoutAll.filter((s) => s !== assignment);
     return next.length > 0 ? next : ["services"];
   }
-  return [...withoutAll, station];
+  return [...withoutAll, assignment];
 }
 
-const STAFF_STATION_BADGE_STYLES: Record<StaffStationOption, string> = {
-  services: "border-blue-200 bg-blue-50 text-blue-900",
+const POST_STATION_BADGE_STYLES: Record<PassStationInput, string> = {
   kitchen: "border-orange-200 bg-orange-50 text-orange-900",
   bar: "border-emerald-200 bg-emerald-50 text-emerald-900",
   cold: "border-sky-200 bg-sky-50 text-sky-900",
   dessert: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+};
+
+const SPECIAL_BADGE_STYLES: Record<(typeof STAFF_SPECIAL_OPTIONS)[number], string> = {
+  services: "border-blue-200 bg-blue-50 text-blue-900",
   all: "border-violet-200 bg-violet-50 text-violet-900",
 };
 
-function stationBadgeStyle(station: string): string {
-  return (
-    STAFF_STATION_BADGE_STYLES[station as StaffStationOption] ??
-    "border-slate-200 bg-slate-100 text-slate-700"
-  );
+function assignmentBadgeStyle(assignment: string, posts: VenuePost[]): string {
+  if (assignment === "services" || assignment === "all") {
+    return SPECIAL_BADGE_STYLES[assignment];
+  }
+  const post = posts.find((row) => row.id === assignment);
+  if (post) return POST_STATION_BADGE_STYLES[post.station];
+  return "border-slate-200 bg-slate-100 text-slate-700";
 }
 
-function StationPicker({
+function PostPicker({
   value,
   onChange,
-  labels,
+  posts,
+  lang,
 }: {
-  value: StaffStationOption[];
-  onChange: (next: StaffStationOption[]) => void;
-  labels: Record<StaffStationOption, string>;
+  value: string[];
+  onChange: (next: string[]) => void;
+  posts: VenuePost[];
+  lang: "GR" | "EN";
 }) {
+  const options: Array<{ id: string; label: string }> = [
+    { id: "services", label: staffStationLabelForLang("services", lang) },
+    ...posts.map((post) => ({ id: post.id, label: post.label.trim() })),
+    { id: "all", label: staffStationLabelForLang("all", lang) },
+  ];
+
   return (
     <div className="flex flex-wrap gap-2">
-      {STAFF_STATION_OPTIONS.map((station) => {
-        const selected = value.includes(station);
+      {options.map((option) => {
+        const selected = value.includes(option.id);
         return (
           <button
-            key={station}
+            key={option.id}
             type="button"
-            onClick={() => onChange(toggleStation(value, station))}
+            onClick={() => onChange(toggleAssignment(value, option.id))}
             className={cn(
               "rounded-full border px-3 py-1.5 text-xs font-medium transition",
               selected
-                ? stationBadgeStyle(station)
+                ? assignmentBadgeStyle(option.id, posts)
                 : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
             )}
           >
-            {labels[station]}
+            {option.label}
           </button>
         );
       })}
@@ -104,27 +117,26 @@ function StationPicker({
   );
 }
 
-function StationBadges({
-  stations,
-  labels,
+function PostBadges({
+  assignments,
+  posts,
   lang,
 }: {
-  stations: string[];
-  labels: Record<StaffStationOption, string>;
+  assignments: string[];
+  posts: VenuePost[];
   lang: "GR" | "EN";
 }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      {stations.map((station) => (
+      {assignments.map((assignment) => (
         <span
-          key={station}
+          key={assignment}
           className={cn(
             "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
-            stationBadgeStyle(station),
+            assignmentBadgeStyle(assignment, posts),
           )}
         >
-          {labels[station as StaffStationOption] ??
-            formatStaffStationsForLang([station], lang)}
+          {staffAssignmentLabelForLang(assignment, lang, posts)}
         </span>
       ))}
     </div>
@@ -236,26 +248,26 @@ function StaffMemberLinkActions({
 export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const { d, lang } = useDashboardCopy();
   const S = d.pages.settings.personnel;
+  const langCode = lang === "EN" ? "EN" : "GR";
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
-  const { config: opsConfig } = useVenueOperationsConfig(venueId);
-  const stationLabels = useMemo(() => {
-    const base = { ...S.stationLabels } as Record<StaffStationOption, string>;
-    if (!opsConfig) return base;
-    const langCode = lang === "EN" ? "EN" : "GR";
-    for (const station of PASS_STATION_INPUTS) {
-      base[station] = stationDisplayLabel(opsConfig, station, langCode);
-    }
-    return base;
-  }, [S.stationLabels, opsConfig, lang]);
+  const { config: opsConfig, loading: opsLoading } = useVenueOperationsConfig(venueId);
+  const venuePosts = useMemo(
+    () => listVenuePosts(opsConfig ?? undefined, langCode),
+    [opsConfig, langCode],
+  );
+  const enabledPosts = useMemo(
+    () => enabledVenuePosts(opsConfig ?? undefined, langCode),
+    [opsConfig, langCode],
+  );
   const [members, setMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [roleLabel, setRoleLabel] = useState("");
-  const [stations, setStations] = useState<StaffStationOption[]>(["services"]);
+  const [stations, setStations] = useState<string[]>(["services"]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editRole, setEditRole] = useState("");
-  const [editStations, setEditStations] = useState<StaffStationOption[]>([]);
+  const [editStations, setEditStations] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const loadGenerationRef = useRef(0);
@@ -325,7 +337,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     setEditingId(member.id);
     setEditName(member.name);
     setEditRole(member.roleLabel);
-    setEditStations(member.stations as StaffStationOption[]);
+    setEditStations(member.stations);
   }
 
   async function saveEdit(memberId: string) {
@@ -442,9 +454,32 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           <div className="mt-4">
             <span className={dashboardLabelClass}>{S.colStations}</span>
             <p className="mt-1 text-xs text-slate-500">{S.stationsHint}</p>
-            <div className="mt-2">
-              <StationPicker value={stations} onChange={setStations} labels={stationLabels} />
-            </div>
+            {opsLoading || !opsConfig ? (
+              <p className="mt-2 text-sm text-slate-500">{S.loading}</p>
+            ) : enabledPosts.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-600">
+                {S.noPosts}{" "}
+                <Link href="/dashboard/settings?tab=posts" className="font-medium text-brand-blue hover:underline">
+                  {S.managePostsLink}
+                </Link>
+              </p>
+            ) : (
+              <>
+                <div className="mt-2">
+                  <PostPicker
+                    value={stations}
+                    onChange={setStations}
+                    posts={enabledPosts}
+                    lang={langCode}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  <Link href="/dashboard/settings?tab=posts" className="font-medium text-brand-blue hover:underline">
+                    {S.managePostsLink}
+                  </Link>
+                </p>
+              </>
+            )}
           </div>
           <div className="mt-4 flex justify-end">
             <button
@@ -505,10 +540,11 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                     <div className="mt-4">
                       <span className={dashboardLabelClass}>{S.colStations}</span>
                       <div className="mt-2">
-                        <StationPicker
+                        <PostPicker
                           value={editStations}
                           onChange={setEditStations}
-                          labels={stationLabels}
+                          posts={enabledPosts}
+                          lang={langCode}
                         />
                       </div>
                     </div>
@@ -568,7 +604,11 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                     <div>
                       <p className="text-xs font-medium text-slate-500">{S.colStations}</p>
                       <div className="mt-2">
-                        <StationBadges stations={member.stations} labels={stationLabels} lang={lang} />
+                        <PostBadges
+                          assignments={member.stations}
+                          posts={venuePosts}
+                          lang={langCode}
+                        />
                       </div>
                     </div>
                     {venue?.slug ? (

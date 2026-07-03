@@ -7,7 +7,8 @@ import {
   filterEnabledPassStationFilters,
   filterSpotsByZone,
   filterWaiterLocationsByZone,
-  formatStaffStationsForLang,
+  formatStaffAssignmentsForLang,
+  listVenuePosts,
   groupVenueSpotsByZone,
   mergeTableStateLabels,
   passStationInputToDb,
@@ -447,7 +448,14 @@ export function WaiterPanel({
         </div>
       ) : staffMember ? (
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
-          {W.staffViewBadge(staffMember.name, formatStaffStationsForLang(staffMember.stations, lang))}
+          {W.staffViewBadge(
+            staffMember.name,
+            formatStaffAssignmentsForLang(
+              staffMember.stations,
+              lang === "EN" ? "EN" : "GR",
+              listVenuePosts(opsConfig ?? undefined, lang === "EN" ? "EN" : "GR"),
+            ),
+          )}
         </p>
       ) : null}
 

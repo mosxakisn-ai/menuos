@@ -42,11 +42,13 @@ export function StationScreensPanel({
   venues,
   venueId: controlledVenueId,
   embedded = false,
+  titleOverride,
 }: {
   station: PassStationInput;
   venues: Venue[];
   venueId?: string;
   embedded?: boolean;
+  titleOverride?: string;
 }) {
   const { d } = useDashboardCopy();
   const S = d.pages.settings;
@@ -241,7 +243,9 @@ export function StationScreensPanel({
           <Monitor className="h-4 w-4" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-semibold text-brand-navy">{copy.title}</h3>
+          <h3 className="text-base font-semibold text-brand-navy">
+            {titleOverride?.trim() || copy.title}
+          </h3>
           <p className="mt-1 text-sm text-slate-600">{copy.description}</p>
         </div>
       </div>

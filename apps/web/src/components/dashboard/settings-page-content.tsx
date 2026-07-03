@@ -10,6 +10,7 @@ import {
   SettingsMessagesPanel,
   SettingsPersonnelPanel,
   SettingsPostsPanel,
+  SettingsSpacesPanel,
   SettingsTablesPanel,
   SettingsVenuePanel,
 } from "@/components/dashboard/settings-staff-panels";
@@ -121,6 +122,8 @@ function SettingsPageBody({
         return <SettingsMessagesPanel venues={spotVenues} />;
       case "tables":
         return <SettingsTablesPanel venues={spotVenues} />;
+      case "spaces":
+        return <SettingsSpacesPanel venues={spotVenues} />;
       default:
         return null;
     }

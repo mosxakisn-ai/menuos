@@ -8,6 +8,7 @@ import {
   passDbStationsForStaffMember,
   passSignalVisibleToStaffMember,
   passStationInputToDb,
+  listVenuePosts,
   stationDisplayLabel,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
@@ -30,7 +31,8 @@ export async function GET(request: Request) {
     const member = auth.access.staffMember;
     const opsConfig = await getVenueOperationsConfig(venueId);
     const venueEnabledStations = opsConfig.enabledStations.map(passStationInputToDb);
-    const allowedStations = member ? passDbStationsForStaffMember(member.stations) : null;
+    const posts = listVenuePosts(opsConfig);
+    const allowedStations = member ? passDbStationsForStaffMember(member.stations, posts) : null;
 
     const stationFilter = allowedStations?.length
       ? allowedStations.filter((s) => venueEnabledStations.includes(s as (typeof venueEnabledStations)[number]))
@@ -66,7 +68,9 @@ export async function GET(request: Request) {
     });
 
     const signals = member
-      ? signalsRaw.filter((signal) => passSignalVisibleToStaffMember(signal.station, member.stations))
+      ? signalsRaw.filter((signal) =>
+          passSignalVisibleToStaffMember(signal.station, member.stations, posts),
+        )
       : signalsRaw;
 
     return NextResponse.json({

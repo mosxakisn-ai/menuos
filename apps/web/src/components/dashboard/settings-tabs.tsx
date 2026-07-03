@@ -6,11 +6,12 @@ import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provid
 import { cn } from "@/lib/utils";
 
 export const SETTINGS_TAB_IDS = [
+  "venue",
   "general",
   "staff",
+  "spaces",
   "posts",
   "links",
-  "venue",
   "messages",
   "tables",
 ] as const;
@@ -27,6 +28,7 @@ const LEGACY_TAB_REDIRECTS: Record<string, SettingsTabId> = {
   dessert: "links",
   spots: "tables",
   seats: "tables",
+  zones: "spaces",
 };
 
 function resolveSettingsTab(value: string | null, allowedTabs: readonly SettingsTabId[]): SettingsTabId {
@@ -35,7 +37,7 @@ function resolveSettingsTab(value: string | null, allowedTabs: readonly Settings
     if (legacy && allowedTabs.includes(legacy)) return legacy;
     if (allowedTabs.includes(value as SettingsTabId)) return value as SettingsTabId;
   }
-  return "general";
+  return allowedTabs[0] ?? "general";
 }
 
 export function SettingsTabs({
@@ -55,12 +57,13 @@ export function SettingsTabs({
   const selectTab = useCallback(
     (id: SettingsTabId) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (id === "general") params.delete("tab");
+      const defaultTab = allowedTabs[0] ?? "general";
+      if (id === defaultTab) params.delete("tab");
       else params.set("tab", id);
       const qs = params.toString();
       router.replace(qs ? `/dashboard/settings?${qs}` : "/dashboard/settings", { scroll: false });
     },
-    [router, searchParams],
+    [router, searchParams, allowedTabs],
   );
 
   return (

@@ -56,7 +56,19 @@ const quickChipSchema = z.string().trim().min(1).max(60);
 const zoneLabelSchema = z.string().trim().min(1).max(40);
 const stationLabelSchema = z.string().trim().min(1).max(40);
 
+export const MAX_VENUE_POSTS = 12;
+
+export const venuePostSchema = z.object({
+  id: z.string().trim().min(1).max(40),
+  label: stationLabelSchema,
+  enabled: z.boolean(),
+  station: passStationInputSchema,
+});
+
+export type VenuePost = z.infer<typeof venuePostSchema>;
+
 export const venueOperationsConfigSchema = z.object({
+  posts: z.array(venuePostSchema).min(1).max(MAX_VENUE_POSTS).optional(),
   enabledStations: z.array(passStationInputSchema).min(1).max(4),
   stationLabels: z
     .object({
@@ -98,15 +110,90 @@ function uniqueStations(stations: PassStationInput[]): PassStationInput[] {
   return out;
 }
 
+export function defaultVenuePosts(lang: "GR" | "EN" = "GR"): VenuePost[] {
+  const labels = lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+  return PASS_STATION_INPUTS.map((station) => ({
+    id: station,
+    label: labels[station],
+    enabled: true,
+    station,
+  }));
+}
+
+export function postsFromLegacy(
+  config: Pick<VenueOperationsConfig, "enabledStations" | "stationLabels">,
+  lang: "GR" | "EN" = "GR",
+): VenuePost[] {
+  const labels = lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+  return PASS_STATION_INPUTS.map((station) => ({
+    id: station,
+    label: config.stationLabels?.[station]?.trim() || labels[station],
+    enabled: config.enabledStations.includes(station),
+    station,
+  }));
+}
+
+export function listVenuePosts(
+  config: VenueOperationsConfig | undefined,
+  lang: "GR" | "EN" = "GR",
+): VenuePost[] {
+  if (config?.posts?.length) return config.posts;
+  if (!config) return defaultVenuePosts(lang);
+  return postsFromLegacy(config, lang);
+}
+
+export function enabledVenuePosts(
+  config: VenueOperationsConfig | undefined,
+  lang: "GR" | "EN" = "GR",
+): VenuePost[] {
+  return listVenuePosts(config, lang).filter((post) => post.enabled);
+}
+
+export function syncLegacyFromPosts(
+  posts: VenuePost[],
+): Pick<VenueOperationsConfig, "enabledStations" | "stationLabels"> {
+  const enabled = posts.filter((post) => post.enabled);
+  const enabledStations = uniqueStations(enabled.map((post) => post.station));
+  const stationLabels: NonNullable<VenueOperationsConfig["stationLabels"]> = {};
+  for (const post of enabled) {
+    const fallback = DEFAULT_STATION_LABELS_EL[post.station];
+    const trimmed = post.label.trim();
+    if (trimmed && trimmed !== fallback) {
+      stationLabels[post.station] = trimmed;
+    }
+  }
+  return {
+    enabledStations: enabledStations.length > 0 ? enabledStations : ["kitchen"],
+    stationLabels: Object.keys(stationLabels).length > 0 ? stationLabels : undefined,
+  };
+}
+
+export function newVenuePostId(): string {
+  return `post-${Date.now().toString(36)}`;
+}
+
+function finalizeVenueOperationsConfig(
+  data: Omit<VenueOperationsConfig, "posts"> & { posts?: VenuePost[] },
+): VenueOperationsConfig {
+  let posts = data.posts?.length ? data.posts : postsFromLegacy(data);
+  if (!posts.some((post) => post.enabled)) {
+    posts = posts.map((post, index) => ({ ...post, enabled: index === 0 }));
+  }
+  const legacy = syncLegacyFromPosts(posts);
+  return {
+    ...data,
+    ...legacy,
+    enabledStations: uniqueStations(legacy.enabledStations),
+    posts,
+  };
+}
+
 export function normalizeVenueOperationsConfig(raw: unknown): VenueOperationsConfig {
   const parsed = venueOperationsConfigSchema.safeParse(raw);
   if (parsed.success) {
-    return {
-      ...parsed.data,
-      enabledStations: uniqueStations(parsed.data.enabledStations),
-    };
+    return finalizeVenueOperationsConfig(parsed.data);
   }
-  return { enabledStations: [...DEFAULT_ENABLED_STATIONS] };
+  return finalizeVenueOperationsConfig({ enabledStations: [...DEFAULT_ENABLED_STATIONS] });
 }
 
 export function mergeVenueOperationsConfig(
@@ -114,6 +201,7 @@ export function mergeVenueOperationsConfig(
   patch: VenueOperationsConfigPatch,
 ): VenueOperationsConfig {
   const merged: VenueOperationsConfig = {
+    posts: patch.posts !== undefined ? patch.posts : current.posts,
     enabledStations: patch.enabledStations
       ? uniqueStations(patch.enabledStations)
       : current.enabledStations,

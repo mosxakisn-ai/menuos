@@ -15,6 +15,12 @@ describe("passDbStationsForStaffMember", () => {
 });
 
 describe("passSignalVisibleToStaffMember", () => {
+  const posts = [
+    { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+    { id: "grill", label: "Grill", enabled: true, station: "kitchen" as const },
+    { id: "bar", label: "Μπαρ", enabled: true, station: "bar" as const },
+  ];
+
   it("shows all stations for services or all", () => {
     expect(passSignalVisibleToStaffMember("KITCHEN", ["services"])).toBe(true);
     expect(passSignalVisibleToStaffMember("BAR", ["all"])).toBe(true);
@@ -24,6 +30,11 @@ describe("passSignalVisibleToStaffMember", () => {
     expect(passSignalVisibleToStaffMember("KITCHEN", ["kitchen"])).toBe(true);
     expect(passSignalVisibleToStaffMember("BAR", ["kitchen"])).toBe(false);
     expect(passSignalVisibleToStaffMember("BAR", ["bar", "kitchen"])).toBe(true);
+  });
+
+  it("filters by custom post id", () => {
+    expect(passSignalVisibleToStaffMember("KITCHEN", ["grill"], posts)).toBe(true);
+    expect(passSignalVisibleToStaffMember("BAR", ["grill"], posts)).toBe(false);
   });
 });
 
