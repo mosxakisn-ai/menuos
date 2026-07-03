@@ -70,6 +70,13 @@ export const SEO_PAGES_EN = {
     path: "/privacy",
     breadcrumbLabel: "Privacy policy",
   },
+  blog: {
+    title: "Blog — QR menu guides & hospitality tips",
+    description:
+      "Articles on QR menus, Live 360°, digital catalogs, tourism and hospitality. From the MenuOS team.",
+    path: "/blog",
+    breadcrumbLabel: "Blog",
+  },
 } as const;
 
 export const SEO_HOME_FAQ_EN = [

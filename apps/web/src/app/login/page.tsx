@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { getServerLocale } from "@/i18n/server";
 import { getMessages } from "@/i18n/get-messages";
-import { buildPrivatePageMetadata } from "@/lib/seo";import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
+import { buildPrivatePageMetadata } from "@/lib/seo";
+import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { trialDaysForAuth } from "@/lib/trial-marketing";
 import { safeDashboardCallbackUrl } from "@/lib/safe-callback-url";
 import LoginPageClient from "./login-client";

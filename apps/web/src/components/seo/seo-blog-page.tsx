@@ -3,14 +3,24 @@ import { MarketingLayout, MarketingPageHero, MarketingSection } from "@/componen
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { buttonClass } from "@/components/ui/button";
 import type { SeoBlogPost } from "@/content/seo-blog";
+import { SEO_SITE_EN } from "@/content/seo-en";
+import type { Locale } from "@/i18n/types";
 import { buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/seo-structured-data";
 
-export function SeoBlogArticlePage({ post }: { post: SeoBlogPost }) {
+export function SeoBlogArticlePage({ post, locale }: { post: SeoBlogPost; locale: Locale }) {
+  const homeLabel = locale === "en" ? SEO_SITE_EN.breadcrumbHome : "Αρχική";
   const breadcrumbs = [
-    { name: "Αρχική", path: "/" },
+    { name: homeLabel, path: "/" },
     { name: "Blog", path: "/blog" },
     { name: post.title, path: `/blog/${post.slug}` },
   ];
+  const readingMeta =
+    locale === "en"
+      ? `${post.readingMinutes} min read`
+      : `${post.readingMinutes} λεπτά ανάγνωσης`;
+  const relatedLabel = locale === "en" ? "Related pages" : "Σχετικές σελίδες";
+  const trialLabel = locale === "en" ? "Start free trial" : "Ξεκίνα δωρεάν δοκιμή";
+  const allArticlesLabel = locale === "en" ? "← All articles" : "← Όλα τα άρθρα";
 
   const jsonLd = [
     buildBreadcrumbSchema(breadcrumbs),
@@ -18,7 +28,7 @@ export function SeoBlogArticlePage({ post }: { post: SeoBlogPost }) {
       name: post.title,
       path: `/blog/${post.slug}`,
       description: post.description,
-      locale: "el",
+      locale,
     }),
   ];
 
@@ -31,7 +41,7 @@ export function SeoBlogArticlePage({ post }: { post: SeoBlogPost }) {
           <ol className="flex flex-wrap items-center gap-2">
             <li>
               <Link href="/" className="hover:text-brand-blue">
-                Αρχική
+                {homeLabel}
               </Link>
             </li>
             <li aria-hidden>/</li>
@@ -45,7 +55,7 @@ export function SeoBlogArticlePage({ post }: { post: SeoBlogPost }) {
           </ol>
         </nav>
         <p className="text-sm text-slate-500">
-          {post.publishedAt} · {post.readingMinutes} λεπτά ανάγνωσης
+          {post.publishedAt} · {readingMeta}
         </p>
         <article className="prose prose-slate mt-8 max-w-none">
           {post.sections.map((section) => (
@@ -63,7 +73,7 @@ export function SeoBlogArticlePage({ post }: { post: SeoBlogPost }) {
         </article>
         {post.relatedPaths.length > 0 ? (
           <div className="mt-10 rounded-card border border-slate-200/80 bg-surface p-6">
-            <p className="text-sm font-semibold text-brand-navy">Σχετικές σελίδες</p>
+            <p className="text-sm font-semibold text-brand-navy">{relatedLabel}</p>
             <ul className="mt-3 space-y-2 text-sm">
               {post.relatedPaths.map((path) => (
                 <li key={path}>
@@ -77,10 +87,10 @@ export function SeoBlogArticlePage({ post }: { post: SeoBlogPost }) {
         ) : null}
         <div className="mt-10 flex flex-wrap gap-3">
           <Link href="/register" className={buttonClass("primary")}>
-            Ξεκίνα δωρεάν δοκιμή
+            {trialLabel}
           </Link>
           <Link href="/blog" className={buttonClass("secondary")}>
-            ← Όλα τα άρθρα
+            {allArticlesLabel}
           </Link>
         </div>
       </MarketingSection>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getServerLocale } from "@/i18n/server";
-import { getMessages } from "@/i18n/get-messages";import { buildPrivatePageMetadata } from "@/lib/seo";
+import { getMessages } from "@/i18n/get-messages";
+import { buildPrivatePageMetadata } from "@/lib/seo";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { parseRegisterPlanIntent } from "@/lib/register-plan-intent";
 import { trialDaysForAuth } from "@/lib/trial-marketing";
