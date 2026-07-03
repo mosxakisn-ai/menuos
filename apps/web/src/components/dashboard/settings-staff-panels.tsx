@@ -16,8 +16,6 @@ import {
 } from "@/components/dashboard/venue-operations-config-panel";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
-import type { SettingsTabId } from "@/components/dashboard/settings-tabs";
-import { cn } from "@/lib/utils";
 
 type VenueSpotVenue = { id: string; name: string; slug: string };
 
@@ -100,10 +98,12 @@ export function SettingsPostsPanel({ venues }: { venues: VenueSpotVenue[] }) {
   const T = d.pages.settings.postsTab;
 
   return (
-    <div className="space-y-5">
-      <TabIntro title={T.title} description={T.description} hint={T.hint} venues={venues} venueId="" onVenueChange={() => {}} hideVenuePicker />
-      <VenueOperationsConfigPanel venues={venues} sections={["departments"]} showHeader={false} />
-    </div>
+    <VenueOperationsConfigPanel
+      venues={venues}
+      sections={["departments"]}
+      showHeader={false}
+      intro={{ title: T.title, description: T.description, hint: T.hint }}
+    />
   );
 }
 
@@ -222,31 +222,6 @@ export function SettingsSpacesPanel({ venues }: { venues: VenueSpotVenue[] }) {
   );
 }
 
-const SETUP_LINK_TABS: SettingsTabId[] = ["spaces", "posts", "links", "messages", "tables", "staff"];
-
-export function SettingsSetupLinks({ className }: { className?: string }) {
-  const { d } = useDashboardCopy();
-  const S = d.pages.settings;
-
-  return (
-    <nav
-      className={cn("flex flex-wrap items-center gap-x-2 gap-y-1.5", className)}
-      aria-label={S.setupLinksTitle}
-    >
-      <span className="text-xs font-medium text-slate-500 sm:text-sm">{S.setupLinksTitle}</span>
-      {SETUP_LINK_TABS.map((tab) => (
-        <a
-          key={tab}
-          href={`/dashboard/settings?tab=${tab}`}
-          className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-brand-blue transition hover:border-brand-blue/30 hover:bg-blue-50 sm:px-3 sm:py-1.5 sm:text-sm"
-        >
-          {S.tabs[tab]}
-        </a>
-      ))}
-    </nav>
-  );
-}
-
 export function SettingsGeneralExtrasPanel() {
   const { d } = useDashboardCopy();
   const S = d.pages.settings;
@@ -283,9 +258,6 @@ export function SettingsGeneralExtrasPanel() {
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </p>
-        <div className="mt-4 border-t border-slate-100 pt-4">
-          <SettingsSetupLinks />
-        </div>
       </div>
     </div>
   );

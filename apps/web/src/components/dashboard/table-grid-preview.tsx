@@ -43,16 +43,18 @@ const LEGEND_STATES: TableTileState[] = [
 
 export function TableGridLegend({
   stateLabels,
+  states = LEGEND_STATES,
   className,
   compact = false,
 }: {
   stateLabels: Record<TableTileState, string>;
+  states?: readonly TableTileState[];
   className?: string;
   compact?: boolean;
 }) {
   return (
     <ul className={cn("flex flex-wrap gap-1.5 sm:gap-2", className)}>
-      {LEGEND_STATES.map((state) => (
+      {states.map((state) => (
         <li key={state}>
           <span
             className={cn(

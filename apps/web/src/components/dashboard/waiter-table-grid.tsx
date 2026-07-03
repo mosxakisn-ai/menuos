@@ -315,6 +315,7 @@ export function WaiterTableGrid({
   onUpdatePass,
   legendEnd,
   stateLabels: stateLabelsProp,
+  legendStates,
   passReadyLabels: passReadyLabelsProp,
 }: {
   spots: TableGridSpot[];
@@ -328,6 +329,7 @@ export function WaiterTableGrid({
   onUpdatePass: (signalId: string, status: "PICKED_UP" | "DELIVERED") => void;
   legendEnd?: ReactNode;
   stateLabels?: Record<TableTileState, string>;
+  legendStates?: readonly TableTileState[];
   passReadyLabels?: Record<string, string>;
 }) {
   const { d, lang } = useDashboardCopy();
@@ -362,7 +364,12 @@ export function WaiterTableGrid({
       <h2 className="text-sm font-semibold text-brand-navy">{W.tableGridTitle}</h2>
       {hasConfiguredSpots ? (
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <TableGridLegend stateLabels={stateLabels} compact className="min-w-0 flex-1" />
+          <TableGridLegend
+            stateLabels={stateLabels}
+            states={legendStates}
+            compact
+            className="min-w-0 flex-1"
+          />
           {legendEnd ? (
             <div className="ml-auto flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-x-2 gap-y-1 text-right">
               {legendEnd}

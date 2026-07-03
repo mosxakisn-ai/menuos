@@ -13,6 +13,7 @@ import {
   mergeTableStateLabels,
   passStationInputToDb,
   stationDisplayLabel,
+  tableLegendStates,
   zoneIdForWaiterLocation,
   type OrderPayload,
   type VenueSpotType,
@@ -28,8 +29,6 @@ import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
 import { cn } from "@/lib/utils";
-import { SettingsSetupLinks } from "@/components/dashboard/settings-staff-panels";
-
 type Venue = { id: string; name: string; slug?: string };
 type VenueSpot = { id: string; type: VenueSpotType; label: string };
 type PassSignal = {
@@ -316,6 +315,11 @@ export function WaiterPanel({
     [opsConfig, lang],
   );
 
+  const tableLegendStatesList = useMemo(
+    () => tableLegendStates(opsConfig ?? undefined),
+    [opsConfig],
+  );
+
   const passReadyLabels = useMemo(() => {
     const langCode = lang === "EN" ? "EN" : "GR";
     const prefix = langCode === "EN" ? "Ready — " : "Έτοιμο — ";
@@ -442,10 +446,9 @@ export function WaiterPanel({
       ) : null}
 
       {isManagerView ? (
-        <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-          <p className="text-xs text-slate-600 sm:text-sm">{W.managerViewBadge}</p>
-          <SettingsSetupLinks />
-        </div>
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
+          {W.managerViewBadge}
+        </p>
       ) : staffMember ? (
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
           {W.staffViewBadge(
@@ -532,6 +535,7 @@ export function WaiterPanel({
           updatingPassId={updatingPassId}
           legendEnd={venueStatusEnd}
           stateLabels={tableStateLabels}
+          legendStates={tableLegendStatesList}
           passReadyLabels={passReadyLabels}
           onUpdateCall={(callId, status) => void updateStatus(callId, status)}
           onUpdatePass={(signalId, status) => void updatePassStatus(signalId, status)}

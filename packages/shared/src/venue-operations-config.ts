@@ -227,9 +227,18 @@ export function stationDisplayLabel(
   station: PassStationInput,
   lang: "GR" | "EN" = "GR",
 ): string {
+  const fallback =
+    lang === "EN" ? DEFAULT_STATION_LABELS_EN[station] : DEFAULT_STATION_LABELS_EL[station];
+  const fromPosts = listVenuePosts(config, lang)
+    .filter((post) => post.enabled && post.station === station)
+    .map((post) => post.label.trim())
+    .filter(Boolean);
+  const uniquePostNames = [...new Set(fromPosts)];
+  if (uniquePostNames.length === 1) return uniquePostNames[0]!;
+  if (uniquePostNames.length > 1) return uniquePostNames.join(" · ");
   const custom = config?.stationLabels?.[station]?.trim();
   if (custom) return custom;
-  return lang === "EN" ? DEFAULT_STATION_LABELS_EN[station] : DEFAULT_STATION_LABELS_EL[station];
+  return fallback;
 }
 
 export function passPushTitle(
@@ -266,7 +275,45 @@ export function mergeTableStateLabels(
   lang: "GR" | "EN" = "GR",
 ): Record<TableTileState, string> {
   const defaults = lang === "EN" ? DEFAULT_TABLE_STATE_LABELS_EN : DEFAULT_TABLE_STATE_LABELS_EL;
-  return { ...defaults, ...(config?.tableStateLabels ?? {}) };
+  const prefix = lang === "EN" ? "Ready — " : "Έτοιμο — ";
+  const readyFromPosts = (stations: PassStationInput[]) => {
+    const names = [
+      ...new Set(
+        listVenuePosts(config, lang)
+          .filter((post) => post.enabled && stations.includes(post.station))
+          .map((post) => post.label.trim())
+          .filter(Boolean),
+      ),
+    ];
+    if (names.length > 0) return prefix + names.join(" · ");
+    const station = stations[0]!;
+    return (
+      prefix +
+      (lang === "EN" ? DEFAULT_STATION_LABELS_EN[station] : DEFAULT_STATION_LABELS_EL[station])
+    );
+  };
+  const fromPosts: Partial<Record<TableTileState, string>> = {
+    kitchen_ready: readyFromPosts(["kitchen"]),
+    cold_ready: readyFromPosts(["cold"]),
+    bar_ready: readyFromPosts(["bar", "dessert"]),
+  };
+  return { ...defaults, ...fromPosts, ...(config?.tableStateLabels ?? {}) };
+}
+
+export function tableLegendStates(
+  config: VenueOperationsConfig | undefined,
+): TableTileState[] {
+  const states: TableTileState[] = ["idle", "guest_call"];
+  if (!config) {
+    return ["idle", "guest_call", "kitchen_ready", "cold_ready", "bar_ready", "both"];
+  }
+  if (isPassStationEnabled(config, "kitchen")) states.push("kitchen_ready");
+  if (isPassStationEnabled(config, "cold")) states.push("cold_ready");
+  if (isPassStationEnabled(config, "bar") || isPassStationEnabled(config, "dessert")) {
+    states.push("bar_ready");
+  }
+  states.push("both");
+  return states;
 }
 
 export function applyZoneLabelOverrides(

@@ -615,7 +615,7 @@ export const DASHBOARD_EL = {
       addSpot: "Προσθήκη",
       yourSpots: (count: number) => (count > 0 ? `Οι θέσεις σου (${count})` : "Οι θέσεις σου"),
       loadingSpots: "Φόρτωση...",
-      emptySpots: "Δεν έχεις ακόμα θέσεις. Πρόσθεσε μία θέση ή κάνε μαζική προσθήκη (π.χ. 1–120).",
+      emptySpots: "Δεν έχεις ακόμα θέσεις. Πρόσθεσε ανά χώρο (π.χ. Bar 1–10, Σαλα 1–20).",
       saveSpot: "Αποθήκευση",
       cancelEdit: "Άκυρο",
       editSpot: "Επεξεργασία",
@@ -685,10 +685,10 @@ export const DASHBOARD_EL = {
         spaces: "Χώροι",
       },
       postsTab: {
-        title: "Πόστα / τμήματα",
+        title: "Πόστα",
         description:
-          "Ποιες ζώνες δουλεύεις — κουζίνα, μπαρ, κήπος, παραλία, όροφος κ.λπ. Βάλε δικό σου όνομα σε κάθε πόστο.",
-        hint: "Πάτα «Νέο πόστο» για επιπλέον ζώνες (π.χ. Grill, Κήπος).\nΤο όνομα εμφανίζεται στον σερβιτόρο, push και οθόνες tablet.",
+          "Κουζίνα, μπαρ, grill, κήπος — ό,τι χρειάζεται το μαγαζί σου. Το όνομα εμφανίζεται στον σερβιτόρο, push και tablet.",
+        hint: "Μέχρι 12 πόστα. Πάτα «Νέο πόστο» για επιπλέον (π.χ. Grill, Κήπος).",
       },
       linksTab: {
         title: "Links οθονών",
@@ -709,7 +709,7 @@ export const DASHBOARD_EL = {
       tablesTab: {
         title: "Τραπέζια & θέσεις",
         description:
-          "Πρόσθεσε τραπέζια, χαπλώστρες και δωμάτια. Για χώρο χρησιμοποίησε prefix (π.χ. Αυλή-1, Αυλή-2).",
+          "Πρόσθεσε τραπέζια ανά χώρο — π.χ. Bar 1–10, Σαλα 1–20. Κάθε χώρος εμφανίζεται ξεχωριστά στον σερβιτόρο.",
       },
       spacesTab: {
         title: "Χώροι",
@@ -721,7 +721,6 @@ export const DASHBOARD_EL = {
         empty: "Δεν έχεις θέσεις ακόμα. Πρόσθεσε τραπέζια ή χαπλώστρες στο tab «Τραπέζια».",
         spotCount: (n: number) => `${n} θέσεις`,
       },
-      setupLinksTitle: "Ρύθμιση:",
       demoBadge: "Δείγμα — για δοκιμές UI",
       personnel: {
         title: "Προσωπικό",
@@ -865,7 +864,16 @@ export const DASHBOARD_EL = {
         description:
           "Πρόσθεσε τραπέζια, δωμάτια και ξαπλώστρες. Εμφανίζονται στον χάρτη σερβιτόρου και στα QR.",
         zoneHint:
-          "Οι χώροι δημιουργούνται αυτόματα από το όνομα: «Αυλή-1», «Αυλή-2» → χώρος «Αυλή». Χωρίς παύλα = ένας χώρος.",
+          "Κάθε χώρος έχει δικό του εύρος αριθμών. Π.χ. Bar 1–10 δημιουργεί Bar-1 … Bar-10 — ξεχωριστός χώρος στο panel σερβιτόρου.",
+        spacesBulkTitle: "Προσθήκη ανά χώρο",
+        spacesBulkDesc:
+          "Μία γραμμή για κάθε χώρο. Βάλε όνομα και εύρος (από–έως) — όχι όλα μαζί σε ένα batch.",
+        spaceNameLabel: "Χώρος",
+        spaceNameRequired: "Βάλε όνομα χώρου (π.χ. Bar, Σαλα).",
+        spacePreview: (space: string, from: number, to: number, count: number) =>
+          `Θα δημιουργηθούν ${count} θέσεις: «${space}-${from}» … «${space}-${to}»`,
+        addSpaceRow: "Άλλος χώρος",
+        addSpaceTables: "Προσθήκη",
         gridPreview: "Τι σημαίνουν τα χρώματα",
         gridHint: "Τα χρώματα ενημερώνονται live στον χάρτη σερβιτόρου — δεν τα ρυθμίζεις εδώ.",
         legendAutoNote:
@@ -884,6 +892,7 @@ export const DASHBOARD_EL = {
         postActiveLabel: "Ενεργό",
         postNameLabel: "Όνομα πόστου",
         postTypeLabel: "Τύπος",
+        postTypeHint: "Ο τύπος καθορίζει σε ποια οθόνη tablet πηγαίνουν τα πάσο.",
         postActionsLabel: "",
         addPost: "Νέο πόστο",
         removePost: "Αφαίρεση πόστου",

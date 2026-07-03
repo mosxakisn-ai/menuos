@@ -606,7 +606,7 @@ export const DASHBOARD_EN = {
       addSpot: "Add",
       yourSpots: (count: number) => (count > 0 ? `Your spots (${count})` : "Your spots"),
       loadingSpots: "Loading...",
-      emptySpots: "No spots yet. Add one or use bulk add (e.g. 1–120).",
+      emptySpots: "No spots yet. Add per space (e.g. Bar 1–10, Hall 1–20).",
       saveSpot: "Save",
       cancelEdit: "Cancel",
       editSpot: "Edit",
@@ -675,10 +675,10 @@ export const DASHBOARD_EN = {
         spaces: "Spaces",
       },
       postsTab: {
-        title: "Posts / departments",
+        title: "Posts",
         description:
-          "Which zones you run — kitchen, bar, garden, beach, roof, etc. Set a custom name for each post.",
-        hint: "Tap «New post» for extra zones (e.g. Grill, Garden).\nThe name appears on waiter panel, push and tablet screens.",
+          "Kitchen, bar, grill, garden — whatever your venue needs. The name appears on waiter panel, push and tablets.",
+        hint: "Up to 12 posts. Tap «New post» for extras (e.g. Grill, Garden).",
       },
       linksTab: {
         title: "Screen links",
@@ -699,7 +699,7 @@ export const DASHBOARD_EN = {
       tablesTab: {
         title: "Tables & spots",
         description:
-          "Add tables, sunbeds and rooms. For a space use a prefix (e.g. Patio-1, Patio-2).",
+          "Add tables per space — e.g. Bar 1–10, Hall 1–20. Each space appears separately on the waiter panel.",
       },
       spacesTab: {
         title: "Spaces",
@@ -711,7 +711,6 @@ export const DASHBOARD_EN = {
         empty: "No spots yet. Add tables or sunbeds in the «Tables» tab.",
         spotCount: (n: number) => `${n} spots`,
       },
-      setupLinksTitle: "Setup:",
       demoBadge: "Sample — UI preview",
       personnel: {
         title: "Staff",
@@ -852,7 +851,16 @@ export const DASHBOARD_EN = {
         description:
           "Add tables, rooms and sunbeds. They appear on the waiter map and in QR codes.",
         zoneHint:
-          "Spaces are created automatically from the name: «Beach-1», «Beach-2» → space «Beach». No dash = one space.",
+          "Each space has its own number range. E.g. Bar 1–10 creates Bar-1 … Bar-10 — a separate space on the waiter panel.",
+        spacesBulkTitle: "Add per space",
+        spacesBulkDesc:
+          "One row per space. Enter a name and range (from–to) — not one big batch for the whole venue.",
+        spaceNameLabel: "Space",
+        spaceNameRequired: "Enter a space name (e.g. Bar, Hall).",
+        spacePreview: (space: string, from: number, to: number, count: number) =>
+          `Will create ${count} spots: «${space}-${from}» … «${space}-${to}»`,
+        addSpaceRow: "Another space",
+        addSpaceTables: "Add",
         gridPreview: "What the colors mean",
         gridHint: "Colors update live on the waiter map — you do not configure them here.",
         legendAutoNote:
@@ -871,6 +879,7 @@ export const DASHBOARD_EN = {
         postActiveLabel: "Active",
         postNameLabel: "Post name",
         postTypeLabel: "Type",
+        postTypeHint: "Type decides which tablet screen receives pass signals.",
         postActionsLabel: "",
         addPost: "New post",
         removePost: "Remove post",

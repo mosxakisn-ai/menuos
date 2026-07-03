@@ -130,16 +130,24 @@ function ChipEditor({
   );
 }
 
+type PanelIntro = {
+  title: string;
+  description: string;
+  hint?: string;
+};
+
 export function VenueOperationsConfigPanel({
   venues,
   initialVenueId,
   sections = ALL_OPS_SECTIONS,
   showHeader = true,
+  intro,
 }: {
   venues: Venue[];
   initialVenueId?: string;
   sections?: OpsConfigSection[];
   showHeader?: boolean;
+  intro?: PanelIntro;
 }) {
   const { d, lang } = useDashboardCopy();
   const O = d.pages.settings.operations;
@@ -306,12 +314,36 @@ export function VenueOperationsConfigPanel({
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       <div className={dashboardCardClass}>
-        {showHeader ? (
+        {intro ? (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-brand-navy">{intro.title}</h2>
+              <p className="mt-2 text-sm text-slate-600">{intro.description}</p>
+              {intro.hint ? (
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">{intro.hint}</p>
+              ) : null}
+            </div>
+            <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
+              <button
+                type="button"
+                onClick={addPost}
+                disabled={!draft || draftPosts.length >= MAX_VENUE_POSTS}
+                className={buttonClass("secondary", "sm")}
+              >
+                <Plus className="mr-1.5 inline h-4 w-4" aria-hidden />
+                {O.addPost}
+              </button>
+              {draft && draftPosts.length >= MAX_VENUE_POSTS ? (
+                <p className="text-xs text-slate-500">{O.postsMaxReached}</p>
+              ) : null}
+            </div>
+          </div>
+        ) : showHeader ? (
           <DashboardSectionTitle title={O.title} description={O.description} />
         ) : null}
 
         {venues.length > 1 ? (
-          <label className={showHeader ? "mt-4 block max-w-md" : "block max-w-md"}>
+          <label className={intro || showHeader ? "mt-4 block max-w-md" : "block max-w-md"}>
             <span className={dashboardLabelClass}>{d.venue}</span>
             <select
               value={venueId}
@@ -330,97 +362,97 @@ export function VenueOperationsConfigPanel({
         {loading || !draft ? (
           <p className="mt-4 text-sm text-slate-500">{O.loading}</p>
         ) : (
-          <div className={showHeader ? "mt-6 space-y-8" : "mt-4 space-y-8"}>
+          <div className={intro || showHeader ? "mt-6 space-y-8" : "mt-4 space-y-8"}>
             {show("departments") ? (
             <section>
-              <h3 className="text-sm font-semibold text-brand-navy">{O.departmentsTitle}</h3>
-              <p className="mt-1 text-sm text-slate-600">{O.departmentsHint}</p>
-              <div className="mt-3 overflow-x-auto rounded-xl border border-slate-100">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      <th className="px-3 py-2.5">{O.postActiveLabel}</th>
-                      <th className="px-3 py-2.5">{O.postNameLabel}</th>
-                      <th className="px-3 py-2.5">{O.postTypeLabel}</th>
-                      <th className="px-3 py-2.5 text-right">{O.postActionsLabel}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {draftPosts.map((post) => {
-                      const typeLabels =
-                        lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
-                      return (
-                        <tr
-                          key={post.id}
-                          className={`border-b border-slate-50 last:border-0 ${
-                            post.enabled ? "bg-brand-blue/[0.03]" : "opacity-75"
-                          }`}
+              {!intro ? (
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-brand-navy">{O.departmentsTitle}</h3>
+                    <p className="mt-1 max-w-xl text-sm text-slate-600">{O.departmentsHint}</p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
+                    <button
+                      type="button"
+                      onClick={addPost}
+                      disabled={draftPosts.length >= MAX_VENUE_POSTS}
+                      className={buttonClass("secondary", "sm")}
+                    >
+                      <Plus className="mr-1.5 inline h-4 w-4" aria-hidden />
+                      {O.addPost}
+                    </button>
+                    {draftPosts.length >= MAX_VENUE_POSTS ? (
+                      <p className="text-xs text-slate-500">{O.postsMaxReached}</p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+              <div
+                className={`${intro ? "mt-5" : "mt-4"} max-w-xl overflow-hidden rounded-xl border border-slate-200`}
+              >
+                <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem] items-center gap-x-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <span className="text-center">{O.postActiveLabel}</span>
+                  <span>{O.postNameLabel}</span>
+                  <span>{O.postTypeLabel}</span>
+                  <span className="sr-only">{O.removePost}</span>
+                </div>
+                {draftPosts.map((post) => {
+                  const typeLabels =
+                    lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+                  return (
+                    <div
+                      key={post.id}
+                      className={`grid grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem] items-center gap-x-2 border-b border-slate-50 px-3 py-2 last:border-0 ${
+                        post.enabled ? "bg-brand-blue/[0.03]" : "bg-slate-50/40 opacity-80"
+                      }`}
+                    >
+                      <div className="flex justify-center">
+                        <input
+                          type="checkbox"
+                          checked={post.enabled}
+                          onChange={() => togglePost(post.id)}
+                          className="accent-brand-blue"
+                          aria-label={O.postActiveLabel}
+                        />
+                      </div>
+                      <input
+                        value={post.label}
+                        onChange={(e) => setPostLabel(post.id, e.target.value)}
+                        maxLength={40}
+                        placeholder={P.kitchen}
+                        className={`${dashboardFieldClass} w-full min-w-0 text-sm`}
+                      />
+                      <select
+                        value={post.station}
+                        onChange={(e) =>
+                          setPostStation(post.id, e.target.value as PassStationInput)
+                        }
+                        className={`${dashboardFieldClass} w-full min-w-0 text-sm`}
+                        title={O.postTypeHint}
+                      >
+                        {PASS_STATION_INPUTS.map((station) => (
+                          <option key={station} value={station}>
+                            {typeLabels[station]}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => removePost(post.id)}
+                          disabled={draftPosts.length <= 1}
+                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
+                          aria-label={O.removePost}
+                          title={O.removePost}
                         >
-                          <td className="px-3 py-2.5 align-middle">
-                            <input
-                              type="checkbox"
-                              checked={post.enabled}
-                              onChange={() => togglePost(post.id)}
-                              className="accent-brand-blue"
-                              aria-label={O.postActiveLabel}
-                            />
-                          </td>
-                          <td className="px-3 py-2.5 align-middle">
-                            <input
-                              value={post.label}
-                              onChange={(e) => setPostLabel(post.id, e.target.value)}
-                              maxLength={40}
-                              placeholder={P.kitchen}
-                              className={`${dashboardFieldClass} min-w-[10rem] w-full text-sm`}
-                            />
-                          </td>
-                          <td className="px-3 py-2.5 align-middle">
-                            <select
-                              value={post.station}
-                              onChange={(e) =>
-                                setPostStation(post.id, e.target.value as PassStationInput)
-                              }
-                              className={`${dashboardFieldClass} min-w-[8rem] text-sm`}
-                            >
-                              {PASS_STATION_INPUTS.map((station) => (
-                                <option key={station} value={station}>
-                                  {typeLabels[station]}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-3 py-2.5 align-middle text-right">
-                            <button
-                              type="button"
-                              onClick={() => removePost(post.id)}
-                              disabled={draftPosts.length <= 1}
-                              className="inline-flex items-center justify-center rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
-                              aria-label={O.removePost}
-                              title={O.removePost}
-                            >
-                              <Trash2 className="h-4 w-4" aria-hidden />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          <Trash2 className="h-4 w-4" aria-hidden />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={addPost}
-                  disabled={draftPosts.length >= MAX_VENUE_POSTS}
-                  className={buttonClass("secondary", "sm")}
-                >
-                  <Plus className="mr-1.5 inline h-4 w-4" aria-hidden />
-                  {O.addPost}
-                </button>
-                {draftPosts.length >= MAX_VENUE_POSTS ? (
-                  <p className="text-xs text-slate-500">{O.postsMaxReached}</p>
-                ) : null}
-              </div>
+              <p className="mt-2 max-w-xl text-xs text-slate-500">{O.postTypeHint}</p>
             </section>
             ) : null}
 

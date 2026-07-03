@@ -1,9 +1,10 @@
 "use client";
 
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   formatVenueSpotLabelForLang,
+  groupVenueSpotsByZone,
   isValidVenueSpotLabel,
   spotToQueryParams,
   type VenueSpotType,
@@ -29,6 +30,19 @@ import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 type Venue = { id: string; name: string; slug: string };
 
+type SpaceBulkRow = {
+  id: string;
+  spaceName: string;
+  from: string;
+  to: string;
+};
+
+let spaceRowCounter = 0;
+function newSpaceRow(): SpaceBulkRow {
+  spaceRowCounter += 1;
+  return { id: `space-${spaceRowCounter}`, spaceName: "", from: "1", to: "" };
+}
+
 export function VenueSpotsSetup({
   venues,
   initialVenueId,
@@ -44,15 +58,23 @@ export function VenueSpotsSetup({
   const { spots, loading, reload } = useVenueSpots(venueId);
   const [spotType, setSpotType] = useState<VenueSpotType>("TABLE");
   const [label, setLabel] = useState("");
-  const [bulkFrom, setBulkFrom] = useState("1");
-  const [bulkTo, setBulkTo] = useState("");
-  const [bulkPrefix, setBulkPrefix] = useState("");
+  const [spaceRows, setSpaceRows] = useState<SpaceBulkRow[]>(() => [newSpaceRow(), newSpaceRow()]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   const venue = venues.find((v) => v.id === venueId);
+
+  const zoneGroups = useMemo(() => groupVenueSpotsByZone(spots), [spots]);
+
+  const spotByKey = useMemo(() => {
+    const map = new Map<string, (typeof spots)[number]>();
+    for (const spot of spots) {
+      map.set(`${spot.type}:${spot.label}`, spot);
+    }
+    return map;
+  }, [spots]);
 
   async function addSpot(e: React.FormEvent) {
     e.preventDefault();
@@ -79,10 +101,24 @@ export function VenueSpotsSetup({
     }
   }
 
-  async function bulkAdd() {
+  async function bulkAddSpaceRow(rowId: string) {
     if (!venueId) return;
-    const from = Number(bulkFrom);
-    const to = Number(bulkTo);
+    const row = spaceRows.find((r) => r.id === rowId);
+    if (!row) return;
+
+    const space = row.spaceName.trim();
+    if (!space) {
+      setFlash({ type: "error", text: S.tables.spaceNameRequired });
+      return;
+    }
+
+    if (!row.to.trim()) {
+      setFlash({ type: "error", text: Q.invalidRange });
+      return;
+    }
+
+    const from = Number(row.from);
+    const to = Number(row.to);
     if (!Number.isFinite(from) || !Number.isFinite(to) || to < from || from < 1 || to > 999) {
       setFlash({ type: "error", text: Q.invalidRange });
       return;
@@ -91,12 +127,14 @@ export function VenueSpotsSetup({
       setFlash({ type: "error", text: Q.bulkLimit });
       return;
     }
-    const prefix = bulkPrefix.trim();
-    if (prefix && !isValidVenueSpotLabel(`${prefix}1`)) {
+
+    const prefix = `${space}-`;
+    if (!isValidVenueSpotLabel(`${prefix}${from}`)) {
       setFlash({ type: "error", text: Q.invalidPrefix(Q.labelHint) });
       return;
     }
-    setBusy("bulk");
+
+    setBusy(rowId);
     try {
       const res = await fetch(`/api/venues/${venueId}/spots`, {
         method: "POST",
@@ -105,7 +143,7 @@ export function VenueSpotsSetup({
           type: spotType,
           from,
           to,
-          prefix: bulkPrefix.trim() || undefined,
+          prefix,
         }),
       });
       const data = await res.json();
@@ -114,6 +152,18 @@ export function VenueSpotsSetup({
     } finally {
       setBusy(null);
     }
+  }
+
+  function updateSpaceRow(rowId: string, patch: Partial<Omit<SpaceBulkRow, "id">>) {
+    setSpaceRows((rows) => rows.map((row) => (row.id === rowId ? { ...row, ...patch } : row)));
+  }
+
+  function addSpaceRow() {
+    setSpaceRows((rows) => [...rows, newSpaceRow()]);
+  }
+
+  function removeSpaceRow(rowId: string) {
+    setSpaceRows((rows) => (rows.length <= 1 ? rows : rows.filter((row) => row.id !== rowId)));
   }
 
   async function removeSpot(spotId: string, name: string) {
@@ -227,53 +277,106 @@ export function VenueSpotsSetup({
           </label>
         </DashboardToolbar>
 
-        <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-5">
-          <p className="text-sm font-semibold text-brand-navy">{Q.bulkTitle}</p>
-          <p className="mt-1 text-sm leading-relaxed text-slate-600">{Q.bulkDesc}</p>
-          <div className="mt-4 flex flex-wrap items-end gap-4">
-            <label className="block">
-              <span className={dashboardLabelClass}>{Q.prefixLabel}</span>
-              <input
-                type="text"
-                value={bulkPrefix}
-                onChange={(e) => setBulkPrefix(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.spotPrefix}
-                maxLength={15}
-                className={`${dashboardFieldClass} w-32`}
-              />
-            </label>
-            <label className="block">
-              <span className={dashboardLabelClass}>{Q.fromLabel}</span>
-              <input
-                type="number"
-                min={1}
-                max={999}
-                value={bulkFrom}
-                onChange={(e) => setBulkFrom(e.target.value)}
-                className={`${dashboardFieldClass} w-24`}
-              />
-            </label>
-            <label className="block">
-              <span className={dashboardLabelClass}>{Q.toLabel}</span>
-              <input
-                type="number"
-                min={1}
-                max={999}
-                value={bulkTo}
-                onChange={(e) => setBulkTo(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.spotBulkTo}
-                className={`${dashboardFieldClass} w-24`}
-              />
-            </label>
-            <button
-              type="button"
-              disabled={busy !== null || !bulkTo.trim()}
-              onClick={() => void bulkAdd()}
-              className={`h-10 ${buttonClass("secondary", "md")}`}
-            >
-              {busy === "bulk" ? Q.bulkAdding : Q.bulkAddAll}
-            </button>
+        <div className="mt-6 space-y-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-5">
+          <div>
+            <p className="text-sm font-semibold text-brand-navy">{S.tables.spacesBulkTitle}</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600">{S.tables.spacesBulkDesc}</p>
           </div>
+
+          <div className="space-y-3">
+            {spaceRows.map((row, index) => {
+              const from = Number(row.from);
+              const to = Number(row.to);
+              const space = row.spaceName.trim();
+              const count =
+                space && Number.isFinite(from) && Number.isFinite(to) && to >= from
+                  ? to - from + 1
+                  : 0;
+              const preview =
+                count > 0 && count <= 200 ? S.tables.spacePreview(space, from, to, count) : null;
+
+              return (
+                <div
+                  key={row.id}
+                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
+                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr)_5rem_5rem_auto_auto] sm:items-end">
+                    <label className="block min-w-0">
+                      <span className={dashboardLabelClass}>{S.tables.spaceNameLabel}</span>
+                      <input
+                        type="text"
+                        value={row.spaceName}
+                        onChange={(e) => updateSpaceRow(row.id, { spaceName: e.target.value })}
+                        placeholder={FORM_PLACEHOLDERS.spotSpaceName}
+                        maxLength={15}
+                        className={dashboardFieldClass}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className={dashboardLabelClass}>{Q.fromLabel}</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={999}
+                        value={row.from}
+                        onChange={(e) => updateSpaceRow(row.id, { from: e.target.value })}
+                        className={dashboardFieldClass}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className={dashboardLabelClass}>{Q.toLabel}</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={999}
+                        value={row.to}
+                        onChange={(e) => updateSpaceRow(row.id, { to: e.target.value })}
+                        placeholder={FORM_PLACEHOLDERS.spotBulkTo}
+                        className={dashboardFieldClass}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={busy !== null || !row.to.trim() || !space}
+                      onClick={() => void bulkAddSpaceRow(row.id)}
+                      className={`h-10 whitespace-nowrap ${buttonClass("primary", "md")}`}
+                    >
+                      {busy === row.id ? Q.bulkAdding : S.tables.addSpaceTables}
+                    </button>
+                    {spaceRows.length > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => removeSpaceRow(row.id)}
+                        className={`inline-flex h-10 items-center justify-center ${buttonClass("secondary", "md")}`}
+                        aria-label={Q.deleteSpotLabel}
+                        title={Q.deleteSpotLabel}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <span className="hidden sm:block" aria-hidden />
+                    )}
+                  </div>
+                  {preview ? (
+                    <p className="mt-2 text-xs text-slate-500">{preview}</p>
+                  ) : index === 0 && spaceRows.length === 1 ? (
+                    <p className="mt-2 text-xs text-slate-500">
+                      {lang === "EN" ? "Example: Bar 1–10, then add Hall 1–20." : "Παράδειγμα: Bar 1–10, μετά Σαλα 1–20."}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={addSpaceRow}
+            className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
+          >
+            <Plus className="h-4 w-4" />
+            {S.tables.addSpaceRow}
+          </button>
         </div>
 
         <form
@@ -315,65 +418,85 @@ export function VenueSpotsSetup({
         {spots.length === 0 && !loading ? (
           <p className="mt-6 text-center text-sm text-slate-500">{Q.emptySpots}</p>
         ) : (
-          <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {spots.map((spot) => (
-              <li
-                key={spot.id}
-                className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2.5"
-              >
-                {editingId === spot.id ? (
-                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                    <input
-                      value={editLabel}
-                      onChange={(e) => setEditLabel(e.target.value)}
-                      maxLength={20}
-                      className={`${dashboardFieldClass} min-w-0 flex-1`}
-                      autoFocus
-                    />
-                    <button
-                      type="button"
-                      onClick={() => void saveSpotLabel(spot.id)}
-                      className={buttonClass("primary", "sm")}
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                    </button>
-                    <button type="button" onClick={() => setEditingId(null)} className={buttonClass("secondary", "sm")}>
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="truncate text-sm font-medium text-brand-navy">
-                      {formatVenueSpotLabelForLang(spot.type, spot.label, lang)}
-                    </span>
-                    <div className="flex shrink-0 gap-1">
-                      <DashboardIconButton
-                        onClick={() => {
-                          setEditingId(spot.id);
-                          setEditLabel(spot.label);
-                        }}
-                        label={Q.editSpot}
+          <div className="mt-4 space-y-5">
+            {zoneGroups.map((zone) => (
+              <section key={zone.id}>
+                <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {zone.label}{" "}
+                  <span className="font-semibold normal-case text-slate-400">
+                    ({zone.spots.length})
+                  </span>
+                </h3>
+                <ul className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {zone.spots.map((entry) => {
+                    const spot = spotByKey.get(`${entry.spot.type}:${entry.spot.label}`);
+                    if (!spot) return null;
+                    return (
+                      <li
+                        key={spot.id}
+                        className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2.5"
                       >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </DashboardIconButton>
-                      <DashboardIconButton
-                        variant="danger"
-                        onClick={() =>
-                          void removeSpot(
-                            spot.id,
-                            formatVenueSpotLabelForLang(spot.type, spot.label, lang),
-                          )
-                        }
-                        label={Q.deleteSpotLabel}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </DashboardIconButton>
-                    </div>
-                  </>
-                )}
-              </li>
+                        {editingId === spot.id ? (
+                          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                            <input
+                              value={editLabel}
+                              onChange={(e) => setEditLabel(e.target.value)}
+                              maxLength={20}
+                              className={`${dashboardFieldClass} min-w-0 flex-1`}
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void saveSpotLabel(spot.id)}
+                              className={buttonClass("primary", "sm")}
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingId(null)}
+                              className={buttonClass("secondary", "sm")}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="truncate text-sm font-medium text-brand-navy">
+                              {formatVenueSpotLabelForLang(spot.type, spot.label, lang)}
+                            </span>
+                            <div className="flex shrink-0 gap-1">
+                              <DashboardIconButton
+                                onClick={() => {
+                                  setEditingId(spot.id);
+                                  setEditLabel(spot.label);
+                                }}
+                                label={Q.editSpot}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </DashboardIconButton>
+                              <DashboardIconButton
+                                variant="danger"
+                                onClick={() =>
+                                  void removeSpot(
+                                    spot.id,
+                                    formatVenueSpotLabelForLang(spot.type, spot.label, lang),
+                                  )
+                                }
+                                label={Q.deleteSpotLabel}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </DashboardIconButton>
+                            </div>
+                          </>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
         )}
       </div>
 
