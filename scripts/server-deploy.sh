@@ -52,8 +52,11 @@ if [ "$RUN_DB_PUSH" = "1" ]; then
     DATABASE_URL="$(build_database_url)"
     export DATABASE_URL
   fi
-  if docker compose -f docker-compose.prod.yml run --rm --no-deps \
-    -e DATABASE_URL \
+  PRISMA_NETWORK="$(docker compose -f docker-compose.prod.yml ps -q postgres 2>/dev/null | head -1 | xargs -r docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || true)"
+  PRISMA_NETWORK="${PRISMA_NETWORK:-menuos_default}"
+  if docker run --rm \
+    --network "$PRISMA_NETWORK" \
+    -e DATABASE_URL="$DATABASE_URL" \
     -v "$ROOT/packages/db/prisma:/prisma:ro" \
     node:20-alpine sh -c \
     'npm install -g prisma@6.19.3 --silent && prisma db push --schema=/prisma/schema.prisma --skip-generate'; then
