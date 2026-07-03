@@ -52,6 +52,16 @@ if [ -z "${GEMINI_API_KEY:-}" ]; then
 else
   echo "  OK: GEMINI_API_KEY is set"
 fi
+if [ -z "${GOOGLE_SITE_VERIFICATION:-}" ]; then
+  echo "  WARN: GOOGLE_SITE_VERIFICATION empty — add Google Search Console HTML tag token to .env"
+else
+  echo "  OK: GOOGLE_SITE_VERIFICATION is set"
+fi
+if [ -z "${INDEXNOW_KEY:-}" ]; then
+  echo "  WARN: INDEXNOW_KEY empty — run scripts/ensure-indexnow-env.sh"
+else
+  echo "  OK: INDEXNOW_KEY is set"
+fi
 if [ "$missing" -eq 1 ]; then
   echo "Fix .env and re-run."
   exit 1
@@ -90,6 +100,9 @@ echo ""
 echo "==> Health (in container)"
 bash "$ROOT/scripts/health-check.sh" 2>/dev/null \
   || echo "  /api/health not ready — see: docker compose -f docker-compose.prod.yml logs menuos-web --tail 50"
+
+echo ""
+bash "$ROOT/scripts/verify-seo-production.sh" 2>/dev/null || echo "  SEO smoke checks skipped"
 
 echo ""
 echo "Done. Test: https://menuos.gr/api/health and https://menuos.gr/register"

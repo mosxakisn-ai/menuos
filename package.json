@@ -16,6 +16,7 @@
     "seed:master": "node scripts/seed-master-user.mjs",
     "seed:onboarding-backfill": "node scripts/backfill-onboarding-venues.mjs",
     "backfill:staff": "npx tsx scripts/backfill-staff-assignments.ts",
+    "backfill:staff:docker": "bash scripts/run-backfill-staff-docker.sh",
     "indexnow": "node scripts/submit-indexnow.mjs",
     "env:ensure": "bash scripts/ensure-env.sh",
     "sync:check": "npm run db:generate && npm test && npm run build",

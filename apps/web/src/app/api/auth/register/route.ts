@@ -11,7 +11,6 @@ import { slugifyOrFallback } from "@/lib/utils";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
-  try {
   let body: unknown;
   try {
     body = await request.json();
@@ -124,10 +123,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ code: "email_taken" }, { status: 409 });
     }
     console.error("[menuos] register create failed", err);
-    return NextResponse.json({ code: "server_error" }, { status: 503 });
-  }
-  } catch (err) {
-    console.error("[menuos] register failed", err);
     return NextResponse.json({ code: "server_error" }, { status: 503 });
   }
 }
