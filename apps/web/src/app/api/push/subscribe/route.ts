@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { pushSubscriptionSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
+import { getOrganizationPlanContext } from "@/lib/billing";
 import { isPushEnabled } from "@/lib/push-config";
 import { resolveStaffAuthByKey, resolveStaffKey } from "@/lib/staff-auth";
 
@@ -37,6 +38,13 @@ export async function POST(request: Request) {
     const auth = await resolveStaffAuthByKey(parsed.data.venueId, staffKey);
     if (!auth) {
       return NextResponse.json({ error: "Μη έγκυρο link σερβιτόρου." }, { status: 401 });
+    }
+    const plan = await getOrganizationPlanContext(auth.venue.organizationId);
+    if (!plan?.active) {
+      return NextResponse.json(
+        { error: "Η συνδρομή δεν είναι ενεργή.", code: "subscription_inactive" },
+        { status: 403 },
+      );
     }
     organizationId = auth.venue.organizationId;
     venueId = auth.venue.id;

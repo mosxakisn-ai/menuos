@@ -180,15 +180,40 @@ export async function syncSubscriptionFromStripe(input: {
 
   if (!organizationId) return null;
 
+  const data = {
+    status: input.status,
+    ...(input.stripeSubId ? { stripeSubId: input.stripeSubId } : {}),
+    ...(input.stripeCustomerId ? { stripeCustomerId: input.stripeCustomerId } : {}),
+    ...(input.currentPeriodEnd ? { currentPeriodEnd: input.currentPeriodEnd } : {}),
+    ...(input.planId ? { plan: input.planId as SubscriptionPlan } : {}),
+  };
+
+  const existing = await prisma.subscription.findUnique({ where: { organizationId } });
+  if (!existing) {
+    if (!input.planId) {
+      console.warn("[menuos-billing] syncSubscriptionFromStripe: no subscription row", {
+        organizationId,
+        status: input.status,
+        stripeSubId: input.stripeSubId,
+      });
+      return null;
+    }
+    await prisma.subscription.create({
+      data: {
+        organizationId,
+        plan: input.planId as SubscriptionPlan,
+        stripeSubId: input.stripeSubId ?? null,
+        stripeCustomerId: input.stripeCustomerId ?? null,
+        currentPeriodEnd: input.currentPeriodEnd ?? null,
+        ...data,
+      },
+    });
+    return organizationId;
+  }
+
   await prisma.subscription.update({
     where: { organizationId },
-    data: {
-      status: input.status,
-      ...(input.stripeSubId ? { stripeSubId: input.stripeSubId } : {}),
-      ...(input.stripeCustomerId ? { stripeCustomerId: input.stripeCustomerId } : {}),
-      ...(input.currentPeriodEnd ? { currentPeriodEnd: input.currentPeriodEnd } : {}),
-      ...(input.planId ? { plan: input.planId as SubscriptionPlan } : {}),
-    },
+    data,
   });
 
   return organizationId;

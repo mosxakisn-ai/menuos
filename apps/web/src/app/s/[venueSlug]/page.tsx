@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { StaffWaiterInvalidLink } from "@/components/dashboard/staff-waiter-invalid-link";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
+import { getOrganizationPlanContext } from "@/lib/billing";
 import { resolveStaffAuthByKey, resolveStaffAuthBySlug } from "@/lib/staff-auth";
 import { clearStaffSessionCookie, readStaffSessionFromCookies } from "@/lib/staff-session";
 
@@ -37,6 +38,12 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   if (!auth || auth.venue.slug !== venueSlug) {
     await clearStaffSessionCookie();
     return <StaffWaiterInvalidLink venueSlug={venueSlug} />;
+  }
+
+  const plan = await getOrganizationPlanContext(auth.venue.organizationId);
+  if (!plan?.active) {
+    await clearStaffSessionCookie();
+    return <StaffWaiterInvalidLink venueSlug={venueSlug} subscriptionInactive />;
   }
 
   const { venue, staffMember } = auth;
