@@ -58,18 +58,31 @@ function parseSitemapLocs(xml) {
 }
 
 async function fetchSitemapUrls() {
-  const res = await fetch(`${APP_URL}/sitemap.xml`, {
-    headers: { Accept: "application/xml,text/xml" },
-  });
-  if (!res.ok) {
+  const maxAttempts = 5;
+  let lastStatus = 0;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const res = await fetch(`${APP_URL}/sitemap.xml`, {
+      headers: { Accept: "application/xml,text/xml" },
+    });
+    lastStatus = res.status;
+    if (res.ok) {
+      const xml = await res.text();
+      const urls = parseSitemapLocs(xml);
+      if (!urls.length) {
+        throw new Error("sitemap.xml returned no URLs");
+      }
+      return urls;
+    }
+    if (attempt < maxAttempts && (res.status === 502 || res.status === 503 || res.status === 504)) {
+      console.log(`  sitemap ${res.status} — retry ${attempt}/${maxAttempts - 1} in 8s`);
+      await new Promise((resolve) => setTimeout(resolve, 8000));
+      continue;
+    }
     throw new Error(`Failed to fetch sitemap.xml: ${res.status}`);
   }
-  const xml = await res.text();
-  const urls = parseSitemapLocs(xml);
-  if (!urls.length) {
-    throw new Error("sitemap.xml returned no URLs");
-  }
-  return urls;
+
+  throw new Error(`Failed to fetch sitemap.xml: ${lastStatus}`);
 }
 
 async function main() {

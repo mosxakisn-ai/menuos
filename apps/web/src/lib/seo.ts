@@ -21,6 +21,11 @@ function mergeKeywords(pageKeywords?: string[]): string[] {
   return [...new Set([...pageKeywords, ...base])];
 }
 
+function googleSiteVerification(): Metadata["verification"] | undefined {
+  const token = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+  return token ? { google: token } : undefined;
+}
+
 /** Locale alternates — default site language is English (cookie overrides per visit). */
 export function buildHreflangAlternates(path = "/"): NonNullable<Metadata["alternates"]> {
   const canonical = absoluteUrl(path);
@@ -48,12 +53,14 @@ export function buildPageMetadata(options: {
   const path = options.path ?? "/";
   const url = absoluteUrl(path);
   const keywords = mergeKeywords(options.keywords);
+  const verification = !options.noIndex ? googleSiteVerification() : undefined;
 
   return {
     title: options.title,
     description,
     keywords,
     alternates: buildHreflangAlternates(path),
+    ...(verification ? { verification } : {}),
     openGraph: {
       title: options.title,
       description,
@@ -97,7 +104,6 @@ export function buildPageMetadata(options: {
 }
 
 export function buildRootMetadata(locale: Locale = DEFAULT_LOCALE): Metadata {
-  const googleVerification = process.env.GOOGLE_SITE_VERIFICATION;
   const isEn = locale === "en";
   const title = isEn ? SEO_SITE_EN.defaultTitle : SEO_SITE.defaultTitle;
   const description = isEn ? SEO_SITE_EN.description : SITE_DESCRIPTION;
@@ -130,7 +136,6 @@ export function buildRootMetadata(locale: Locale = DEFAULT_LOCALE): Metadata {
     creator: APP_NAME,
     publisher: APP_NAME,
     category: "technology",
-    ...(googleVerification ? { verification: { google: googleVerification } } : {}),
   };
 }
 

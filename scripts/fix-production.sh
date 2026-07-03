@@ -10,6 +10,7 @@ mkdir -p "$ROOT/data/uploads"
 chown -R 1001:1001 "$ROOT/data/uploads" 2>/dev/null || true
 
 bash "$ROOT/scripts/ensure-env.sh"
+bash "$ROOT/scripts/ensure-indexnow-env.sh"
 
 # shellcheck source=scripts/load-env.sh
 source "$ROOT/scripts/load-env.sh"
