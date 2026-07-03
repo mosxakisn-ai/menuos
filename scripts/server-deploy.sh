@@ -48,8 +48,12 @@ docker compose -f docker-compose.prod.yml build menuos-web
 
 if [ "$RUN_DB_PUSH" = "1" ]; then
   echo "==> DB schema sync..."
+  if [ -z "${DATABASE_URL:-}" ]; then
+    DATABASE_URL="$(build_database_url)"
+    export DATABASE_URL
+  fi
   if docker compose -f docker-compose.prod.yml run --rm --no-deps \
-    -e "DATABASE_URL=${DATABASE_URL}" \
+    --env-file "$ROOT/.env" \
     -v "$ROOT/packages/db/prisma:/prisma:ro" \
     node:20-alpine sh -c \
     'npm install -g prisma@6.19.3 --silent && prisma db push --schema=/prisma/schema.prisma --skip-generate'; then
