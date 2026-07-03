@@ -1,5 +1,11 @@
 import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/db";
-import { DEMO_VENUE_SLUG, isPaidPlan, organizationHasPaidPlan, type OrganizationActivity } from "@menuos/shared";
+import {
+  DEMO_VENUE_SLUG,
+  getPlan,
+  isPaidPlan,
+  organizationHasPaidPlan,
+  type OrganizationActivity,
+} from "@menuos/shared";
 import { getPlanPriceMap, getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { getGeminiUsageSummaries, getTotalGeminiMonthlyUsage } from "@/lib/gemini-usage-service";
 import type { SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
@@ -488,4 +494,58 @@ export async function updateOrganizationForSupervisor(
   const updated = await getOrganizationForSupervisor(id);
   if (!updated) throw new Error("not_found");
   return updated;
+}
+
+export type SupervisorGeminiRow = {
+  id: string;
+  name: string;
+  adminEmail: string;
+  plan: string;
+  status: string;
+  geminiTokensThisMonth: number;
+  /** Effective limit (override or plan default). null = unlimited. */
+  geminiTokenLimit: number | null;
+  geminiTokenLimitOverride: number | null;
+  /** Default limit from plan catalog, before per-customer override. */
+  planDefaultLimit: number | null;
+};
+
+export async function listGeminiRowsForSupervisor(): Promise<SupervisorGeminiRow[]> {
+  const demoIds = await demoOrganizationIds();
+  const orgs = await prisma.organization.findMany({
+    where: demoIds.size > 0 ? { id: { notIn: [...demoIds] } } : {},
+    select: {
+      id: true,
+      name: true,
+      geminiTokenLimitOverride: true,
+      users: {
+        where: { role: "ADMIN" },
+        take: 1,
+        orderBy: { createdAt: "asc" },
+        select: { email: true },
+      },
+      subscription: { select: { plan: true, status: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  const summaries = await getGeminiUsageSummaries(orgs.map((org) => org.id));
+
+  return orgs.map((org) => {
+    const plan = org.subscription?.plan ?? "TRIAL";
+    const summary = summaries.get(org.id);
+    const planDefaultLimit = getPlan(plan).maxGeminiTokensPerMonth;
+
+    return {
+      id: org.id,
+      name: org.name,
+      adminEmail: org.users[0]?.email ?? "—",
+      plan,
+      status: org.subscription?.status ?? "TRIALING",
+      geminiTokensThisMonth: summary?.usage ?? 0,
+      geminiTokenLimit: summary?.limit ?? planDefaultLimit,
+      geminiTokenLimitOverride: summary?.override ?? org.geminiTokenLimitOverride,
+      planDefaultLimit,
+    };
+  });
 }
