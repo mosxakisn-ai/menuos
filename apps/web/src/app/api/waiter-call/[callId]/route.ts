@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { waiterCallUpdateSchema, waiterCallsVisibleToStaffMember } from "@menuos/shared";
+import { formatWaiterCallLocation, waiterCallUpdateSchema, waiterCallsVisibleToStaffMember } from "@menuos/shared";
+import { logWaiterCallStatusChange } from "@/lib/push-diagnostics";
 import { requireWaiterCallAccess } from "@/lib/staff-auth";
 
 type Params = { params: Promise<{ callId: string }> };
@@ -56,6 +57,19 @@ export async function PATCH(request: Request, { params }: Params) {
     where: { id: callId },
     data: { status: parsed.data.status },
   });
+
+  if (parsed.data.status === "ACKNOWLEDGED" || parsed.data.status === "COMPLETED") {
+    logWaiterCallStatusChange({
+      organizationId: auth.access!.venue.organizationId,
+      venueId: existing.venueId,
+      callId: existing.id,
+      callType: existing.type,
+      location: formatWaiterCallLocation(existing),
+      status: parsed.data.status,
+      staffMemberName: member?.name ?? null,
+      createdAt: existing.createdAt,
+    });
+  }
 
   const messages: Record<string, string> = {
     ACKNOWLEDGED: "Η κλήση σημειώθηκε — πήγαινε στο τραπέζι.",

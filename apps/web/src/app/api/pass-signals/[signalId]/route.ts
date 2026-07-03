@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { passSignalStationCancelSchema, passSignalStatusUpdateSchema, passSignalVisibleToStaffMember, passStationInputToDb } from "@menuos/shared";
+import {
+  formatWaiterCallLocation,
+  passSignalStationCancelSchema,
+  passSignalStatusUpdateSchema,
+  passSignalVisibleToStaffMember,
+  passStationInputToDb,
+} from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
+import { logPassSignalStatusChange } from "@/lib/push-diagnostics";
 import { resolvePrimaryStationScreen } from "@/lib/station-screens";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
 
@@ -24,7 +31,17 @@ export async function PATCH(request: Request, { params }: Props) {
 
   const existing = await prisma.passSignal.findUnique({
     where: { id: signalId },
-    select: { id: true, venueId: true, station: true, status: true },
+    select: {
+      id: true,
+      venueId: true,
+      station: true,
+      status: true,
+      readyAt: true,
+      tableNumber: true,
+      roomNumber: true,
+      sunbedNumber: true,
+      venue: { select: { organizationId: true } },
+    },
   });
   if (!existing) {
     return NextResponse.json({ error: "Η ειδοποίηση δεν βρέθηκε." }, { status: 404 });
@@ -73,6 +90,19 @@ export async function PATCH(request: Request, { params }: Props) {
     },
   });
 
+  if (next === "PICKED_UP" || next === "DELIVERED") {
+    logPassSignalStatusChange({
+      organizationId: existing.venue.organizationId,
+      venueId: existing.venueId,
+      signalId: existing.id,
+      station: existing.station,
+      location: formatWaiterCallLocation(existing),
+      status: next,
+      staffMemberName: member?.name ?? null,
+      readyAt: existing.readyAt,
+    });
+  }
+
   return NextResponse.json({ signal });
 }
 
@@ -93,7 +123,18 @@ export async function DELETE(request: Request, { params }: Props) {
 
   const existing = await prisma.passSignal.findUnique({
     where: { id: signalId },
-    select: { id: true, venueId: true, station: true, status: true, stationScreenId: true },
+    select: {
+      id: true,
+      venueId: true,
+      station: true,
+      status: true,
+      readyAt: true,
+      stationScreenId: true,
+      tableNumber: true,
+      roomNumber: true,
+      sunbedNumber: true,
+      venue: { select: { organizationId: true } },
+    },
   });
   if (!existing) {
     return NextResponse.json({ error: "Η ειδοποίηση δεν βρέθηκε." }, { status: 404 });
@@ -132,5 +173,16 @@ export async function DELETE(request: Request, { params }: Props) {
   }
 
   await prisma.passSignal.delete({ where: { id: signalId } });
+
+  logPassSignalStatusChange({
+    organizationId: existing.venue.organizationId,
+    venueId: existing.venueId,
+    signalId: existing.id,
+    station: existing.station,
+    location: formatWaiterCallLocation(existing),
+    status: "CANCELED",
+    readyAt: existing.readyAt,
+  });
+
   return NextResponse.json({ message: "Η ειδοποίηση ακυρώθηκε." });
 }

@@ -34,6 +34,9 @@ const CATEGORY_LABELS: Record<string, string> = {
   billing: "Συνδρομή",
   qr: "QR",
   waiter: "Σερβιτόρος",
+  push: "Push ειδοποιήσεις",
+  pass_flow: "Ροή πάσου (κουζίνα/bar)",
+  waiter_flow: "Ροή κλήσεων",
   settings: "Ρυθμίσεις",
   dashboard: "Panel",
   auth: "Σύνδεση",
@@ -87,6 +90,70 @@ const ERROR_CODE_LABELS: Record<string, { title: string; hint: string }> = {
     title: "Κατάστημα δεν βρέθηκε",
     hint: "Το API καταλόγου δεν βρήκε το κατάστημα.",
   },
+  push_disabled: {
+    title: "Push απενεργοποιημένο",
+    hint: "Δεν υπάρχουν VAPID keys στο server — κανένα push δεν στάλθηκε.",
+  },
+  push_no_subscribers: {
+    title: "Χωρίς εγγραφές push",
+    hint: "Κανένας σερβιτόρος δεν έχει ενεργοποιήσει ειδοποιήσεις στο κινητό.",
+  },
+  push_no_targets: {
+    title: "Κανένας κατάλληλος σερβιτόρος",
+    hint: "Υπάρχουν εγγραφές push αλλά κανείς δεν καλύπτει αυτό το τμήμα/ζώνη.",
+  },
+  push_all_failed: {
+    title: "Αποτυχία push σε όλους",
+    hint: "Το μήνυμα δημιουργήθηκε αλλά κανένα push δεν παραδόθηκε — ρίσκο χαμένου μηνύματος.",
+  },
+  push_partial_failed: {
+    title: "Μερική αποτυχία push",
+    hint: "Μερικοί σερβιτόροι δεν έλαβαν push — έλεγξε ποιοι έχουν ενεργές ειδοποιήσεις.",
+  },
+  push_sent: {
+    title: "Push παραδόθηκε",
+    hint: "Επιτυχής αποστολή push — audit trail (κλειστό).",
+  },
+  push_dispatch_error: {
+    title: "Σφάλμα αποστολής push",
+    hint: "Το server απέτυχε πριν ολοκληρωθεί η αποστολή — έλεγξε logs.",
+  },
+  pass_created: {
+    title: "Νέο πάσο από κουζίνα/bar",
+    hint: "Η οθόνη τμήματος έστειλε ειδοποίηση σερβιτόρου — audit trail.",
+  },
+  pass_picked_up: {
+    title: "Σερβιτόρος πήρε πάσο",
+    hint: "Ο σερβιτόρος επιβεβαίωσε ότι πήγε — audit trail.",
+  },
+  pass_delivered: {
+    title: "Πάσο παραδόθηκε",
+    hint: "Ο σερβιτόρος σήμανε παράδοση στο τραπέζι — audit trail.",
+  },
+  pass_canceled: {
+    title: "Ακύρωση πάσου",
+    hint: "Η κουζίνα/bar ακύρωσε πριν το πάρει ο σερβιτόρος.",
+  },
+  pass_slow_pickup: {
+    title: "Αργή απάντηση σε πάσο",
+    hint: "Πέρασαν >2 λεπτά από το πάσο μέχρι να το πάρει ο σερβιτόρος.",
+  },
+  guest_call_created: {
+    title: "Νέα κλήση από πελάτη",
+    hint: "Ο επισκέπτης κάλεσε σερβιτόρο/λογαριασμό — audit trail.",
+  },
+  waiter_call_ack: {
+    title: "Σερβιτόρος απάντησε σε κλήση",
+    hint: "Ο σερβιτόρος σήμανε «πήγαινε εκεί» — audit trail.",
+  },
+  waiter_call_done: {
+    title: "Κλήση ολοκληρώθηκε",
+    hint: "Ο σερβιτόρος σήμανε ολοκλήρωση — audit trail.",
+  },
+  waiter_call_slow_ack: {
+    title: "Αργή απάντηση σε κλήση",
+    hint: "Πέρασαν >3 λεπτά από την κλήση μέχρι να απαντήσει ο σερβιτόρος.",
+  },
 };
 
 function formatWhen(iso: string) {
@@ -102,6 +169,12 @@ function severityClass(severity: string) {
   if (severity === "ERROR") return "bg-red-100 text-red-800 ring-red-200";
   if (severity === "WARN") return "bg-amber-100 text-amber-900 ring-amber-200";
   return "bg-slate-100 text-slate-700 ring-slate-200";
+}
+
+function severityIconClass(severity: string) {
+  if (severity === "ERROR") return "text-red-600";
+  if (severity === "INFO") return "text-brand-blue";
+  return "text-amber-600";
 }
 
 function statusClass(status: string) {
@@ -189,6 +262,25 @@ function ContextSummary({ context }: { context: Record<string, unknown> }) {
   if (typeof context.menuId === "string") rows.push({ label: "Menu ID", value: context.menuId });
   if (typeof context.replacesInWindow === "number") {
     rows.push({ label: "Αλλαγές URL (3 δευτ.)", value: String(context.replacesInWindow) });
+  }
+  if (typeof context.location === "string") rows.push({ label: "Θέση", value: context.location });
+  if (typeof context.staffMemberName === "string") {
+    rows.push({ label: "Σερβιτόρος", value: context.staffMemberName });
+  }
+  if (typeof context.waitSeconds === "number") {
+    rows.push({ label: "Χρόνος αναμονής", value: `${context.waitSeconds}s` });
+  }
+  if (typeof context.signalId === "string") rows.push({ label: "Pass signal ID", value: context.signalId });
+  if (typeof context.callId === "string") rows.push({ label: "Κλήση ID", value: context.callId });
+  if (typeof context.station === "string") rows.push({ label: "Τμήμα", value: context.station });
+  if (context.push && typeof context.push === "object" && !Array.isArray(context.push)) {
+    const push = context.push as Record<string, unknown>;
+    if (typeof push.sent === "number" && typeof push.targetCount === "number") {
+      rows.push({ label: "Push", value: `${push.sent}/${push.targetCount} OK` });
+    }
+    if (typeof push.staleRemoved === "number" && push.staleRemoved > 0) {
+      rows.push({ label: "Ληγμένες εγγραφές", value: String(push.staleRemoved) });
+    }
   }
 
   if (rows.length === 0) return null;
@@ -450,6 +542,11 @@ export function SupervisorHelpDeskClient() {
                     <span className="text-red-700">Ανοιχτό</span> →{" "}
                     <span className="text-amber-800">Σε εξέλιξη</span> (το κοιτάς) →{" "}
                     <span className="text-emerald-800">Κλείσιμο</span> (βγαίνει από τα ενεργά)
+                    <br />
+                    <span className="font-semibold text-brand-navy">Push / πάσος / κλήσεις:</span>{" "}
+                    Το ιστορικό (ποιος έστειλε, αν πήγε push, ποιος απάντησε) είναι στις{" "}
+                    <span className="font-medium">κλειστές</span> αναφορές — ενεργοποίησε «Εμφάνιση
+                    κλειστών» παρακάτω.
                   </p>
                   {status !== "RESOLVED" && status !== "ALL" ? (
                     <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs text-slate-600">
@@ -496,7 +593,7 @@ export function SupervisorHelpDeskClient() {
                             <AlertTriangle
                               className={cn(
                                 "mt-0.5 h-4 w-4 shrink-0",
-                                report.severity === "ERROR" ? "text-red-600" : "text-amber-600",
+                                severityIconClass(report.severity),
                               )}
                             />
                             <div className="min-w-0 flex-1">

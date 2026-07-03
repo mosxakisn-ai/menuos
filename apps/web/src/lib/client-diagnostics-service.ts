@@ -9,12 +9,16 @@ export type DiagnosticIngestInput = {
   userId?: string | null;
   userEmail?: string | null;
   severity?: DiagnosticSeverity;
+  /** Closed audit entries (e.g. push delivery OK) skip open ticket queue. */
+  initialStatus?: DiagnosticStatus;
   source: string;
   category: string;
   message: string;
   errorCode?: string | null;
   stack?: string | null;
   context?: Prisma.InputJsonValue | null;
+  /** Unique per event (signalId, callId) — avoids merging distinct staff/push events. */
+  dedupeKey?: string | null;
 };
 
 export type HelpDeskCustomerRow = {
@@ -58,11 +62,13 @@ function trimText(value: string | null | undefined, max: number): string {
 }
 
 export function buildDiagnosticFingerprint(input: DiagnosticIngestInput): string {
+  const uniquePart =
+    input.dedupeKey?.trim().toLowerCase() ?? input.message.trim().slice(0, 240).toLowerCase();
   const raw = [
     input.organizationId ?? "",
     input.category.trim().toLowerCase(),
     input.errorCode?.trim().toLowerCase() ?? "",
-    input.message.trim().slice(0, 240).toLowerCase(),
+    uniquePart,
   ].join("|");
   return createHash("sha256").update(raw).digest("hex").slice(0, 40);
 }
@@ -101,12 +107,14 @@ export async function recordClientDiagnostic(input: DiagnosticIngestInput): Prom
     return;
   }
 
+  const initialStatus = input.initialStatus ?? "OPEN";
   await prisma.clientDiagnosticReport.create({
     data: {
       organizationId: input.organizationId ?? null,
       userId: input.userId ?? null,
       userEmail: input.userEmail ?? null,
       severity: input.severity ?? "ERROR",
+      status: initialStatus,
       source: input.source.slice(0, 64),
       category: input.category.slice(0, 64),
       message,
@@ -114,6 +122,7 @@ export async function recordClientDiagnostic(input: DiagnosticIngestInput): Prom
       stack,
       context: (input.context ?? undefined) as Prisma.InputJsonValue | undefined,
       fingerprint,
+      ...(initialStatus === "RESOLVED" ? { resolvedAt: now } : {}),
     },
   });
 }

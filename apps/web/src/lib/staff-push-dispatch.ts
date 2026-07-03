@@ -4,6 +4,12 @@ import webpush from "web-push";
 import { passSignalVisibleToStaffMember, waiterCallsVisibleToStaffMember } from "@menuos/shared";
 import { configureWebPush, isPushEnabled } from "@/lib/push-config";
 import { buildStaffWaiterUrl } from "@/lib/staff-auth";
+import {
+  logPushDispatchDiagnostic,
+  logPushDispatchError,
+  type PushDispatchResult,
+  type PushFlowKind,
+} from "@/lib/push-diagnostics";
 
 export type PushSubRow = {
   endpoint: string;
@@ -94,9 +100,20 @@ export async function sendWebPushPayload(
   organizationId: string,
   payload: string,
   targets: Array<PushSubRow & { url: string }>,
-): Promise<void> {
-  if (targets.length === 0) return;
-  if (!isPushEnabled() || !configureWebPush()) return;
+): Promise<PushDispatchResult> {
+  const base: PushDispatchResult = {
+    totalSubscriptions: targets.length,
+    targetCount: targets.length,
+    sent: 0,
+    failed: 0,
+    staleRemoved: 0,
+  };
+  if (targets.length === 0) {
+    return { ...base, targetCount: 0, skippedReason: "no_targets" };
+  }
+  if (!isPushEnabled() || !configureWebPush()) {
+    return { ...base, skippedReason: "push_disabled" };
+  }
 
   const staleEndpoints: string[] = [];
 
@@ -109,7 +126,9 @@ export async function sendWebPushPayload(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
           personalized,
         );
+        base.sent += 1;
       } catch (err) {
+        base.failed += 1;
         const status = (err as { statusCode?: number }).statusCode;
         if (status === 404 || status === 410) staleEndpoints.push(sub.endpoint);
         else console.error("[menuos-push] send failed", sub.endpoint.slice(0, 48), err);
@@ -121,15 +140,70 @@ export async function sendWebPushPayload(
     await prisma.pushSubscription.deleteMany({
       where: { endpoint: { in: staleEndpoints }, organizationId },
     });
+    base.staleRemoved = staleEndpoints.length;
+  }
+
+  return base;
+}
+
+type PushDispatchMeta = {
+  organizationId: string;
+  venueId: string;
+  venueName?: string;
+  flow: PushFlowKind;
+  referenceId: string;
+  station?: PassStation;
+  location?: string;
+  callType?: import("@menuos/db").WaiterCallType;
+};
+
+async function dispatchPushWithDiagnostics(
+  meta: PushDispatchMeta,
+  payload: string,
+  loadTargets: () => Promise<Array<PushSubRow & { url: string }>>,
+  totalSubscriptions: number,
+): Promise<PushDispatchResult> {
+  try {
+    if (totalSubscriptions === 0) {
+      const result: PushDispatchResult = {
+        totalSubscriptions: 0,
+        targetCount: 0,
+        sent: 0,
+        failed: 0,
+        staleRemoved: 0,
+        skippedReason: "no_subscriptions",
+      };
+      logPushDispatchDiagnostic({ ...meta, result });
+      return result;
+    }
+
+    const targets = await loadTargets();
+    const result = await sendWebPushPayload(meta.organizationId, payload, targets);
+    logPushDispatchDiagnostic({
+      ...meta,
+      result: { ...result, totalSubscriptions },
+    });
+    return result;
+  } catch (err) {
+    logPushDispatchError({
+      organizationId: meta.organizationId,
+      venueId: meta.venueId,
+      flow: meta.flow,
+      referenceId: meta.referenceId,
+      error: err,
+    });
+    throw err;
   }
 }
 
 export async function pushPassSignalToStaff(input: {
   organizationId: string;
   venueId: string;
-  venue: { slug: string; staffToken: string };
+  venue: { slug: string; staffToken: string; name?: string };
   station: PassStation;
   payload: string;
+  signalId: string;
+  location?: string;
 }): Promise<void> {
   const subscriptions = await prisma.pushSubscription.findMany({
     where: {
@@ -138,29 +212,44 @@ export async function pushPassSignalToStaff(input: {
     },
     select: { endpoint: true, p256dh: true, auth: true, venueId: true, staffMemberId: true },
   });
-  if (subscriptions.length === 0) return;
 
   const memberIds = subscriptions
     .map((s) => s.staffMemberId)
     .filter((id): id is string => Boolean(id));
   const membersById = await loadMembersById([...new Set(memberIds)]);
 
-  const targets = filterSubsForPassSignal(
-    subscriptions,
-    membersById,
-    input.venueId,
-    input.station,
-    input.venue.slug,
-    input.venue.staffToken,
+  await dispatchPushWithDiagnostics(
+    {
+      organizationId: input.organizationId,
+      venueId: input.venueId,
+      venueName: input.venue.name,
+      flow: "pass_signal",
+      referenceId: input.signalId,
+      station: input.station,
+      location: input.location,
+    },
+    input.payload,
+    async () =>
+      filterSubsForPassSignal(
+        subscriptions,
+        membersById,
+        input.venueId,
+        input.station,
+        input.venue.slug,
+        input.venue.staffToken,
+      ),
+    subscriptions.length,
   );
-  await sendWebPushPayload(input.organizationId, input.payload, targets);
 }
 
 export async function pushWaiterCallToStaff(input: {
   organizationId: string;
   venueId: string;
-  venue: { slug: string; staffToken: string };
+  venue: { slug: string; staffToken: string; name?: string };
   payload: string;
+  callId: string;
+  callType: import("@menuos/db").WaiterCallType;
+  location?: string;
 }): Promise<void> {
   const subscriptions = await prisma.pushSubscription.findMany({
     where: {
@@ -169,19 +258,31 @@ export async function pushWaiterCallToStaff(input: {
     },
     select: { endpoint: true, p256dh: true, auth: true, venueId: true, staffMemberId: true },
   });
-  if (subscriptions.length === 0) return;
 
   const memberIds = subscriptions
     .map((s) => s.staffMemberId)
     .filter((id): id is string => Boolean(id));
   const membersById = await loadMembersById([...new Set(memberIds)]);
 
-  const targets = filterSubsForWaiterCall(
-    subscriptions,
-    membersById,
-    input.venueId,
-    input.venue.slug,
-    input.venue.staffToken,
+  await dispatchPushWithDiagnostics(
+    {
+      organizationId: input.organizationId,
+      venueId: input.venueId,
+      venueName: input.venue.name,
+      flow: "waiter_call",
+      referenceId: input.callId,
+      callType: input.callType,
+      location: input.location,
+    },
+    input.payload,
+    async () =>
+      filterSubsForWaiterCall(
+        subscriptions,
+        membersById,
+        input.venueId,
+        input.venue.slug,
+        input.venue.staffToken,
+      ),
+    subscriptions.length,
   );
-  await sendWebPushPayload(input.organizationId, input.payload, targets);
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import {
+  formatWaiterCallLocation,
   normalizeWaiterCallLocation,
   passLocationMatchesScreenSpotPrefix,
   passSignalCreateSchema,
@@ -11,6 +12,7 @@ import {
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import { pushStaffPassSignal } from "@/lib/pass-signal-push";
+import { logPassSignalCreated } from "@/lib/push-diagnostics";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
 
@@ -160,6 +162,16 @@ export async function POST(request: Request) {
       select: { id: true, name: true, slug: true, staffToken: true, organizationId: true },
     });
     if (venueFull) {
+      const locLabel = formatWaiterCallLocation(signal);
+      logPassSignalCreated({
+        organizationId: venueFull.organizationId,
+        venueId: venueFull.id,
+        signalId: signal.id,
+        station: signal.station,
+        location: locLabel,
+        message: signal.message,
+        stationScreenLabel: signal.stationScreen?.label ?? null,
+      });
       pushStaffPassSignal(venueFull, signal);
     }
 

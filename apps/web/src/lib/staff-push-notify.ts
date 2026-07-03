@@ -2,6 +2,7 @@ import type { WaiterCall, WaiterCallType } from "@menuos/db";
 import { formatWaiterCallLocation } from "@menuos/shared";
 import { pushWaiterCallToStaff } from "@/lib/staff-push-dispatch";
 import { buildStaffWaiterUrl } from "@/lib/staff-auth";
+import { logWaiterCallPush } from "@/lib/push-diagnostics";
 
 export type StaffWaiterNotifyReason = "new" | "reopened" | "order_updated";
 
@@ -40,10 +41,22 @@ export async function notifyStaffWaiterCall(input: {
     tag: `waiter-${input.call.id}`,
   });
 
+  logWaiterCallPush({
+    organizationId: input.organizationId,
+    venueId: input.venue.id,
+    callId: input.call.id,
+    callType: input.call.type,
+    location: loc,
+    reason: input.reason,
+  });
+
   await pushWaiterCallToStaff({
     organizationId: input.organizationId,
     venueId: input.venue.id,
-    venue: { slug: input.venue.slug, staffToken: input.venue.staffToken },
+    venue: { slug: input.venue.slug, staffToken: input.venue.staffToken, name: input.venue.name },
     payload,
+    callId: input.call.id,
+    callType: input.call.type,
+    location: loc,
   });
 }
