@@ -55,6 +55,7 @@ function landing(config: SeoLandingConfig): SeoLandingConfig {
 /** Curated landings — quality over bulk (Phase 1b). */
 const LANDINGS: SeoLandingConfig[] = [
   landing({ kind: "product", path: "/digital-menu", product: "digital-menu" }),
+  landing({ kind: "product", path: "/live-360", product: "digital-menu" }),
 
   landing({ kind: "vertical", path: "/estiatorio/qr-menu", product: "qr-menu", vertical: "estiatorio" }),
   landing({
@@ -494,6 +495,7 @@ export const SEO_FOOTER_HUB = {
     },
   ] as const,
   verticals: [
+    { href: "/live-360", labelEl: "Live 360° · συντονισμός", labelEn: "Live 360° · coordination" },
     { href: "/estiatorio/qr-menu", labelEl: "Εστιατόριο · QR menu", labelEn: "Restaurant · QR menu" },
     { href: "/xenodocheio/digital-menu", labelEl: "Ξενοδοχείο · digital menu", labelEn: "Hotel · digital menu" },
     { href: "/beach-bar/qr-menu", labelEl: "Beach bar · QR menu", labelEn: "Beach bar · QR menu" },

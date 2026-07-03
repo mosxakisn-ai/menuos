@@ -15,6 +15,46 @@ export type SeoBlogPost = {
 
 export const SEO_BLOG_POSTS: SeoBlogPost[] = [
   {
+    slug: "menuos-live-360",
+    title: "Τι είναι το MenuOS Live · 360°;",
+    description:
+      "Live συντονισμός κλήσεων και παραγγελιών από QR menu — panel σερβιτόρου, σταθμοί και pass signals χωρίς ξεχωριστό σύστημα.",
+    publishedAt: "2026-07-03",
+    readingMinutes: 4,
+    relatedPaths: ["/live-360", "/ypiresies", "/pricing", "/qr-menu"],
+    sections: [
+      {
+        paragraphs: [
+          "Το MenuOS Live · 360° συνδέει το QR menu με live λειτουργία: όταν ο πελάτης καλεί σερβιτόρο ή στέλνει παραγγελία, η ομάδα το βλέπει αμέσως στο panel — με τραπέζι, ξαπλώστρα ή δωμάτιο.",
+          "Δεν χρειάζεται δεύτερο σύστημα POS ή pager. Όλα τρέχουν στο browser — panel για manager/σερβιτόρους, PWA με push για κλήσεις.",
+        ],
+      },
+      {
+        heading: "Τι βλέπετε live",
+        paragraphs: [
+          "Κλήσεις σερβιτόρου σε αναμονή, σε εξέλιξη και ολοκληρωμένες.",
+          "Pass signals ανά σταθμό (κουζίνα, bar, κρύα, επιδόρπια) — ποιος πήρε τι και από ποιο τραπέζι.",
+          "Ζώνες και posts — ιδανικό για μεγάλα ξενοδοχεία ή beach bars με πολλές ξαπλώστρες.",
+        ],
+      },
+      {
+        heading: "Πού ταιριάζει",
+        paragraphs: [
+          "Εστιατόρια με κλήση σερβιτόρου από QR (?table=12).",
+          "Beach/pool bars με αριθμό ξαπλώστρας.",
+          "Ξενοδοχεία με room service (?room=101) και πολλούς χώρους εστίασης.",
+        ],
+      },
+      {
+        heading: "Τιμή & δοκιμή",
+        paragraphs: [
+          "Το Live 360° περιλαμβάνεται στη δωρεάν δοκιμή {trialDaysGen}, Basic και Pro — χωρίς επιπλέον χρέωση.",
+          "Ξεκινήστε με εγγραφή, φτιάξτε κατάλογο, βάλτε QR και δοκιμάστε live panel την ίδια μέρα.",
+        ],
+      },
+    ],
+  },
+  {
     slug: "pws-ftiaxno-qr-menu",
     title: "Πώς φτιάχνω QR menu για το εστιατόριό μου",
     description:
@@ -425,9 +465,9 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
 ];
 
 export const SEO_BLOG_INDEX = {
-  title: "Blog — Οδηγοί QR menu & ψηφιακού καταλόγου",
+  title: "Blog — QR menu, Live 360° & ψηφιακός κατάλογος",
   description:
-    "Άρθρα για QR menu, ψηφιακό κατάλογο, τουρίστες και hospitality. Από την ομάδα MenuOS.",
+    "Άρθρα για QR menu, Live 360°, ψηφιακό κατάλογο, τουρίστες και hospitality. Από την ομάδα MenuOS.",
   path: "/blog",
   breadcrumbLabel: "Blog",
 } as const;

@@ -137,8 +137,10 @@ Public route listing all indexable pages, blog posts, landings, sitemap URL — 
 
 1. **Phase 1:** ✅ `seo.ts`, robots, sitemap (static pages), root JSON-LD, OG image, hreflang el/en, IndexNow script
 2. **Phase 1b:** ✅ 20 programmatic landings + footer hub (`lib/seo-landing.ts`, `[...slug]/page.tsx`)
-3. **Phase 2:** ✅ Launch blog (3 articles) + additional city combos (ongoing via GSC data)
-4. **Ongoing:** GSC monitoring, new city/vertical pages based on Search Console data
+3. **Phase 2:** ✅ Launch blog (14 articles) + additional city combos (ongoing via GSC data)
+4. **Phase 2b:** ✅ Live 360° SEO pass — meta, landings template, `/live-360`, blog, llms.txt
+5. **Ongoing:** GSC monitoring, new city/vertical pages based on Search Console data
+6. **Future:** Marketing hreflang DE/FR when UI translations ship (guest QR menus already support DE/FR)
 
 ## Do Not
 

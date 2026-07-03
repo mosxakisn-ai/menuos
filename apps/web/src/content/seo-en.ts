@@ -2,7 +2,7 @@
 export const SEO_SITE_EN = {
   locale: "en_US",
   language: "en",
-  defaultTitle: "MenuOS — Digital QR menu for restaurants & hotels",
+  defaultTitle: "MenuOS — Digital QR menu & Live 360° for restaurants & hotels",
   description:
     "Digital QR menu and Live 360° coordination for restaurants, hotels and bars in Greece. Guests scan — you update online in minutes.",
   breadcrumbHome: "Home",
@@ -10,44 +10,44 @@ export const SEO_SITE_EN = {
 
 export const SEO_PAGES_EN = {
   home: {
-    title: "Digital QR menu — restaurants, hotels & bars",
+    title: "Digital QR menu & Live 360° — restaurants, hotels & bars",
     description:
-      "Build a digital QR menu in minutes. Multilingual, easy price updates, no app for guests. Free 7-day trial for hospitality businesses.",
+      "QR menu and Live 360° coordination in one platform. Multilingual menu, call waiter, online price updates — no app for guests. Free 7-day trial.",
     path: "/",
     breadcrumbLabel: "Home",
   },
   qrMenu: {
-    title: "QR menu for restaurants & hotels",
+    title: "QR menu & Live 360° for restaurants & hotels",
     description:
-      "Create a QR menu for your restaurant or hotel. Guests scan from their phone, see photos and prices — you update online.",
+      "QR menu with Live 360° coordination: guests scan, see photos and prices — you update online and track calls live in your panel.",
     path: "/qr-menu",
     breadcrumbLabel: "QR Menu",
   },
   services: {
-    title: "Services — Digital menu & QR codes",
+    title: "Services — Digital menu, Live 360° & QR codes",
     description:
       "MenuOS services: digital menu, QR codes, Live 360°, multiple languages, call waiter — for restaurants and hotels.",
     path: "/ypiresies",
     breadcrumbLabel: "Services",
   },
   howItWorks: {
-    title: "How it works — signup to live menu",
+    title: "How it works — QR menu & Live 360°",
     description:
-      "How to get started with MenuOS: sign up, create your menu, print QR codes for tables. Simple steps for restaurants and hotels.",
+      "How to get started with MenuOS: sign up, build your menu, QR on tables, Live 360° for calls and orders. Simple steps for restaurants and hotels.",
     path: "/pos-leitourgei",
     breadcrumbLabel: "How it works",
   },
   pricing: {
-    title: "Pricing — Plans from €9.99/month",
+    title: "Pricing — QR menu & Live 360° from €9.99/month",
     description:
-      "MenuOS pricing: free 7-day trial, Basic €9.99/month, Pro €19.99/month. No hidden fees. Contact us for Enterprise.",
+      "MenuOS pricing: free 7-day trial with Live 360°, Basic €9.99/month, Pro €19.99/month. QR menu, call waiter, live panel — no hidden fees.",
     path: "/pricing",
     breadcrumbLabel: "Pricing",
   },
   about: {
-    title: "About — MenuOS for the Greek market",
+    title: "About — MenuOS & Live 360° for the Greek market",
     description:
-      "MenuOS was built for restaurants and hotels in Greece that want a modern digital menu without complexity.",
+      "MenuOS was built for restaurants and hotels in Greece: QR menu, Live 360° coordination and simple management without complexity.",
     path: "/sxetika",
     breadcrumbLabel: "About",
   },
@@ -87,7 +87,11 @@ export const SEO_HOME_FAQ_EN = [
   },
   {
     q: "How many languages are supported?",
-    a: "Greek, English, German and French.",
+    a: "Greek, English, German and French on the guest QR menu.",
+  },
+  {
+    q: "What is MenuOS Live · 360°?",
+    a: "Live coordination of calls and orders from the QR menu — see what happens in your venue in real time, without a separate system.",
   },
 ] as const;
 
@@ -108,6 +112,10 @@ export const SEO_QR_MENU_FAQ_EN = [
     q: "Can I change prices quickly?",
     a: "Yes. Update from your online panel and guests see the change immediately.",
   },
+  {
+    q: "What is Live 360°?",
+    a: "Live panel for waiter calls and orders from QR — track waiting, stations and completions in real time.",
+  },
 ] as const;
 
 export const SEO_PRICING_FAQ_EN = [
@@ -127,10 +135,14 @@ export const SEO_PRICING_FAQ_EN = [
     q: "Is there a long-term commitment?",
     a: "No. Monthly subscription, cancel anytime.",
   },
+  {
+    q: "Is Live 360° included?",
+    a: "Yes — on trial, Basic and Pro. Live call panel and coordination with no extra charge.",
+  },
 ] as const;
 
 export const SEO_PRICING_OFFERS_EN = [
-  { name: "7-day trial", price: 0, description: "1 location, 1 menu, 50 items" },
-  { name: "Basic", price: 9.99, description: "1 location, 3 menus, unlimited items" },
-  { name: "Pro", price: 19.99, description: "3 locations, unlimited menus" },
+  { name: "7-day trial", price: 0, description: "1 location, QR menu, Live 360°, 50 items" },
+  { name: "Basic", price: 9.99, description: "1 location, 3 menus, Live 360°, unlimited items" },
+  { name: "Pro", price: 19.99, description: "3 locations, Live 360°, unlimited menus" },
 ] as const;

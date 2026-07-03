@@ -157,6 +157,103 @@ const PRODUCT_LABELS: Record<SeoProductSlug, { el: string; en: string }> = {
   "digital-menu": { el: "ψηφιακό menu", en: "digital menu" },
 };
 
+const LIVE_360_BULLET = {
+  el: "MenuOS Live · 360° — live συντονισμός κλήσεων",
+  en: "MenuOS Live · 360° — live call coordination",
+} as const;
+
+const LIVE_360_FAQ = {
+  el: {
+    q: "Τι είναι το Live 360°;",
+    a: "Live panel για κλήσεις σερβιτόρου και παραγγελίες από QR — βλέπετε αναμονές και ολοκληρώσεις σε πραγματικό χρόνο.",
+  },
+  en: {
+    q: "What is Live 360°?",
+    a: "Live panel for waiter calls and orders from QR — track waiting and completions in real time.",
+  },
+} as const;
+
+function getLive360LandingCopy(locale: SeoLandingLocale, trialDays = TRIAL_DAYS): SeoLandingCopy {
+  const isEl = locale === "el";
+  const trial = trialDayLabels(trialDays, locale);
+
+  return {
+    metaTitle: isEl
+      ? "MenuOS Live · 360° — live συντονισμός για εστιατόρια & ξενοδοχεία"
+      : "MenuOS Live · 360° — live coordination for restaurants & hotels",
+    metaDescription: isEl
+      ? `Live συντονισμός κλήσεων και παραγγελιών από QR menu. Panel σερβιτόρου, σταθμοί, pass signals — δωρεάν δοκιμή ${trial.trialDaysGen}.`
+      : `Live coordination of calls and orders from your QR menu. Waiter panel, stations, pass signals — free ${trial.trialDaysAdj} trial.`,
+    breadcrumbLabel: isEl ? "Live 360°" : "Live 360°",
+    h1: isEl
+      ? "MenuOS Live · 360° — βλέπεις ό,τι συμβαίνει live"
+      : "MenuOS Live · 360° — see everything happening live",
+    eyebrow: isEl ? "MenuOS · Live 360°" : "MenuOS · Live 360°",
+    paragraphs: isEl
+      ? [
+          "Το MenuOS Live · 360° συνδέει το QR menu με live συντονισμό: κλήσεις σερβιτόρου, παραγγελίες, σταθμοί κουζίνας/bar — όλα σε ένα panel, χωρίς ξεχωριστό σύστημα.",
+          "Ιδανικό για εστιατόρια, beach bars και ξενοδοχεία που θέλουν ταχύτητα στην εξυπηρέτηση. Οι πελάτες σκανάρουν QR — εσείς βλέπετε live τι χρειάζεται κάθε τραπέζι, ξαπλώστρα ή δωμάτιο.",
+          `Ξεκινήστε με δωρεάν δοκιμή ${trial.trialDaysGen} — Live 360° included σε δοκιμή, Basic και Pro.`,
+        ]
+      : [
+          "MenuOS Live · 360° connects your QR menu with live coordination: waiter calls, orders, kitchen/bar stations — all in one panel, no separate system.",
+          "Built for restaurants, beach bars and hotels that need faster service. Guests scan QR — you see live what each table, sunbed or room needs.",
+          `Start with a free ${trial.trialDaysAdj} trial — Live 360° included on trial, Basic and Pro.`,
+        ],
+    bullets: isEl
+      ? [
+          LIVE_360_BULLET.el,
+          "Κλήση σερβιτόρου από QR (τραπέζι/δωμάτιο/ξαπλώστρα)",
+          "Panel σερβιτόρου & pass signals",
+          "Πολλαπλές γλώσσες QR",
+        ]
+      : [
+          LIVE_360_BULLET.en,
+          "Call waiter from QR (table/room/sunbed)",
+          "Waiter panel & pass signals",
+          "Multiple QR languages",
+        ],
+    faq: isEl
+      ? [
+          { q: LIVE_360_FAQ.el.q, a: LIVE_360_FAQ.el.a },
+          {
+            q: "Χρειάζεται ξεχωριστή εφαρμογή;",
+            a: "Όχι. Το panel τρέχει στο browser — PWA με push ειδοποιήσεις για κλήσεις.",
+          },
+          {
+            q: "Περιλαμβάνεται στα πλάνα;",
+            a: "Ναι — δοκιμή, Basic και Pro. Χωρίς επιπλέον χρέωση.",
+          },
+          {
+            q: "Ταιριάζει σε ξενοδοχεία;",
+            a: "Ναι — room service, pool bar, εστιατόριο. QR ανά χώρο με live tracking.",
+          },
+        ]
+      : [
+          { q: LIVE_360_FAQ.en.q, a: LIVE_360_FAQ.en.a },
+          {
+            q: "Do I need a separate app?",
+            a: "No. The panel runs in the browser — PWA with push notifications for calls.",
+          },
+          {
+            q: "Is it included in plans?",
+            a: "Yes — trial, Basic and Pro. No extra charge.",
+          },
+          {
+            q: "Does it work for hotels?",
+            a: "Yes — room service, pool bar, restaurant. QR per area with live tracking.",
+          },
+        ],
+    ctaTitle: isEl ? "Δοκίμασε Live 360° δωρεάν" : "Try Live 360° free",
+    ctaDescription: isEl
+      ? `${trial.trialDays} δοκιμή. QR menu + live panel — χωρίς κάρτα.`
+      : `${trial.trialDaysAdj} trial. QR menu + live panel — no credit card.`,
+    keywords: isEl
+      ? ["Live 360", "live συντονισμός εστιατορίου", "panel σερβιτόρου", "QR menu"]
+      : ["Live 360", "restaurant live coordination", "waiter panel", "QR menu"],
+  };
+}
+
 export type SeoLandingCopy = {
   metaTitle: string;
   metaDescription: string;
@@ -215,6 +312,10 @@ export function getSeoLandingCopy(
   locale: SeoLandingLocale,
   trialDays = TRIAL_DAYS,
 ): SeoLandingCopy {
+  if (config.path === "/live-360") {
+    return getLive360LandingCopy(locale, trialDays);
+  }
+
   const product = productLabel(config.product, locale);
   const subject = buildSubject(config, locale);
   const context = buildContextPhrase(config, locale);
@@ -231,8 +332,8 @@ export function getSeoLandingCopy(
         : `${subject} | MenuOS`;
 
   const metaDescription = isEl
-    ? `Φτιάξτε ${product} για ${context}. Πολυγλωσσικό menu, ενημέρωση τιμών online, QR codes — δωρεάν δοκιμή ${trial.trialDaysGen}.`
-    : `Create a ${product} for ${context}. Multilingual menu, online price updates, QR codes — free ${trial.trialDaysAdj} trial.`;
+    ? `Φτιάξτε ${product} με Live 360° για ${context}. Πολυγλωσσικό menu, live κλήσεις, QR codes — δωρεάν δοκιμή ${trial.trialDaysGen}.`
+    : `Create a ${product} with Live 360° for ${context}. Multilingual menu, live calls, QR codes — free ${trial.trialDaysAdj} trial.`;
 
   const h1 =
     config.kind === "product"
@@ -248,8 +349,8 @@ export function getSeoLandingCopy(
   const paragraphs = isEl
     ? [
         verticalSeo
-          ? `${verticalSeo.sceneEl}. Το MenuOS αντικαθιστά το έντυπο menu με σύγχρονο ${product} — φωτογραφίες, τιμές και πολλαπλές γλώσσες. Εσείς ενημερώνετε από τη διαχείριση σε λεπτά.`
-          : `Το MenuOS σας βοηθά να αντικαταστήσετε το έντυπο menu με ένα σύγχρονο ${product}. Οι πελάτες σκανάρουν QR, βλέπουν φωτογραφίες και τιμές — εσείς ενημερώνετε από τη διαχείριση σε λεπτά.`,
+          ? `${verticalSeo.sceneEl}. Το MenuOS συνδυάζει ${product} με Live 360° — φωτογραφίες, τιμές, live κλήσεις και πολλαπλές γλώσσες. Εσείς ενημερώνετε από τη διαχείριση σε λεπτά.`
+          : `Το MenuOS συνδυάζει ${product} με Live 360°: οι πελάτες σκανάρουν QR, βλέπουν φωτογραφίες και τιμές — εσείς ενημερώνετε και βλέπετε κλήσεις live.`,
         config.city
           ? `Ιδανικό για επιχειρήσεις ${context}: τουρίστες, εποχικότητα, γρήγορες αλλαγές τιμών χωρίς επανεκτύπωση.`
           : verticalSeo
@@ -259,8 +360,8 @@ export function getSeoLandingCopy(
       ]
     : [
         verticalSeo
-          ? `${verticalSeo.sceneEn}. MenuOS replaces printed menus with a modern ${product} — photos, prices and multiple languages. You update from your panel in minutes.`
-          : `MenuOS helps you replace printed menus with a modern ${product}. Guests scan a QR code, browse photos and prices — you update everything from your panel in minutes.`,
+          ? `${verticalSeo.sceneEn}. MenuOS combines ${product} with Live 360° — photos, prices, live calls and multiple languages. You update from your panel in minutes.`
+          : `MenuOS combines ${product} with Live 360°: guests scan QR, browse photos and prices — you update and track calls live.`,
         config.city
           ? `Built for businesses ${context}: tourists, seasonal menus, and instant price updates without reprinting.`
           : verticalSeo
@@ -272,6 +373,7 @@ export function getSeoLandingCopy(
   const bullets = isEl
     ? [
         "Πολλαπλές γλώσσες QR",
+        LIVE_360_BULLET.el,
         verticalSeo?.serviceEl ?? "Κλήση σερβιτόρου από το menu",
         verticalSeo?.qrPlacementEl ??
           (config.city
@@ -281,6 +383,7 @@ export function getSeoLandingCopy(
       ]
     : [
         "Multiple QR languages",
+        LIVE_360_BULLET.en,
         verticalSeo?.serviceEn ?? "Call waiter from the menu",
         verticalSeo?.qrPlacementEn ??
           (config.city
@@ -312,6 +415,10 @@ export function getSeoLandingCopy(
           a: "Ναι — πολλαπλές γλώσσες QR με ένα πάτημα στο κινητό.",
         },
         {
+          q: LIVE_360_FAQ.el.q,
+          a: LIVE_360_FAQ.el.a,
+        },
+        {
           q: "Υπάρχει δοκιμή;",
           a: `Ναι, ${trial.trialDays} δωρεάν χωρίς κάρτα.`,
         },
@@ -338,6 +445,10 @@ export function getSeoLandingCopy(
           a: "Yes — multiple QR languages with one tap on mobile.",
         },
         {
+          q: LIVE_360_FAQ.en.q,
+          a: LIVE_360_FAQ.en.a,
+        },
+        {
           q: "Is there a trial?",
           a: "Yes — 7 days free, no credit card.",
         },
@@ -346,6 +457,7 @@ export function getSeoLandingCopy(
   const keywords: string[] = [];
   if (config.product === "qr-menu") keywords.push("QR menu", "menu QR code");
   else keywords.push("ψηφιακό menu", "digital menu");
+  keywords.push("Live 360");
   if (config.city) keywords.push(`${product} ${CITY_LABELS[config.city][locale]}`);
   if (config.vertical) keywords.push(`${product} ${VERTICAL_LABELS[config.vertical][locale]}`);
 

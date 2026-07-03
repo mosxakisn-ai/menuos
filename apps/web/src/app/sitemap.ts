@@ -8,6 +8,7 @@ const PRIORITY: Record<string, { priority: number; changeFrequency: MetadataRout
   "/": { priority: 1, changeFrequency: "daily" },
   "/qr-menu": { priority: 0.9, changeFrequency: "weekly" },
   "/digital-menu": { priority: 0.88, changeFrequency: "weekly" },
+  "/live-360": { priority: 0.9, changeFrequency: "weekly" },
   "/ypiresies": { priority: 0.9, changeFrequency: "monthly" },
   "/pos-leitourgei": { priority: 0.85, changeFrequency: "monthly" },
   "/pricing": { priority: 0.9, changeFrequency: "monthly" },

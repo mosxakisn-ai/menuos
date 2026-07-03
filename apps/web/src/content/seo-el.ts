@@ -10,7 +10,7 @@ export const SEO_SITE = {
   contactFacebook: "https://www.facebook.com/MenuOs.Greece/",
   url: "https://menuos.gr",
 
-  defaultTitle: "MenuOS — Ψηφιακό menu με QR για εστιατόρια & ξενοδοχεία",
+  defaultTitle: "MenuOS — Ψηφιακό menu & Live 360° για εστιατόρια & ξενοδοχεία",
   titleTemplate: "%s | MenuOS",
   description:
     "Ψηφιακό menu με QR και live συντονισμό 360° για εστιατόρια, ξενοδοχεία και bars. Ο πελάτης σκανάρει — εσείς ενημερώνετε online σε λεπτά.",
@@ -28,6 +28,10 @@ export const SEO_SITE = {
     "beach bar menu QR",
     "room service menu",
     "πολυγλωσσικό menu",
+    "Live 360",
+    "live συντονισμός εστιατορίου",
+    "συντονισμός σερβιτόρου",
+    "ops εστιατορίου",
   ],
 } as const;
 
@@ -41,54 +45,62 @@ export type SeoPageDef = {
 
 export const SEO_PAGES = {
   home: {
-    title: "Ψηφιακό menu με QR — εστιατόρια, ξενοδοχεία & bars",
+    title: "Ψηφιακό menu & Live 360° — εστιατόρια, ξενοδοχεία & bars",
     description:
-      "Φτιάξτε ψηφιακό menu με QR σε λεπτά. Πολυγλωσσικό, εύκολη ενημέρωση τιμών, χωρίς app για τον πελάτη. Δωρεάν δοκιμή {trialDaysGen} για επιχειρήσεις φιλοξενίας.",
+      "QR menu και live συντονισμός 360° σε μία πλατφόρμα. Πολυγλωσσικό menu, κλήση σερβιτόρου, ενημέρωση τιμών online — χωρίς app για τον πελάτη. Δωρεάν δοκιμή {trialDaysGen}.",
     path: "/",
     breadcrumbLabel: "Αρχική",
     keywords: [
       "ψηφιακό menu εστιατόριο",
       "QR menu ξενοδοχείο",
+      "Live 360 εστιατόριο",
+      "live συντονισμός σερβιτόρου",
       "menu QR code Ελλάδα",
       "digital menu hospitality",
     ],
   },
   qrMenu: {
-    title: "QR Menu για εστιατόρια & ξενοδοχεία",
+    title: "QR Menu & Live 360° για εστιατόρια & ξενοδοχεία",
     description:
-      "Δημιουργήστε QR menu για εστιατόριο ή ξενοδοχείο. Οι πελάτες σκανάρουν από το κινητό, βλέπουν φωτογραφίες και τιμές — εσείς ενημερώνετε το menu online.",
+      "QR menu με live συντονισμό 360°: οι πελάτες σκανάρουν, βλέπουν φωτογραφίες και τιμές — εσείς ενημερώνετε online και βλέπετε κλήσεις live στο panel.",
     path: "/qr-menu",
     breadcrumbLabel: "QR Menu",
-    keywords: ["QR menu", "QR menu εστιατόριο", "QR menu ξενοδοχείο", "ψηφιακό menu QR"],
+    keywords: [
+      "QR menu",
+      "QR menu εστιατόριο",
+      "QR menu ξενοδοχείο",
+      "Live 360",
+      "ψηφιακό menu QR",
+    ],
   },
   services: {
-    title: "Υπηρεσίες — Ψηφιακό menu & QR codes",
+    title: "Υπηρεσίες — Ψηφιακό menu, Live 360° & QR codes",
     description:
       "Υπηρεσίες MenuOS: ψηφιακό menu, QR codes, Live 360°, πολλαπλές γλώσσες, κλήση σερβιτόρου — για εστιατόρια και ξενοδοχεία.",
     path: "/ypiresies",
     breadcrumbLabel: "Υπηρεσίες",
-    keywords: ["υπηρεσίες QR menu", "ψηφιακό menu SaaS", "menu platform εστιατόριο"],
+    keywords: ["υπηρεσίες QR menu", "Live 360", "ψηφιακό menu SaaS", "menu platform εστιατόριο"],
   },
   howItWorks: {
-    title: "Πώς λειτουργεί — από εγγραφή σε έτοιμο menu",
+    title: "Πώς λειτουργεί — QR menu & Live 360°",
     description:
-      "Πώς ξεκινάτε με MenuOS: εγγραφή, φτιάξιμο menu, QR στα τραπέζια. Απλά βήματα για εστιατόρια και ξενοδοχεία.",
+      "Πώς ξεκινάτε με MenuOS: εγγραφή, κατάλογος, QR στα τραπέζια, live συντονισμός 360° για κλήσεις και παραγγελίες. Απλά βήματα για εστιατόρια και ξενοδοχεία.",
     path: "/pos-leitourgei",
     breadcrumbLabel: "Πώς λειτουργεί",
-    keywords: ["πώς φτιάχνω QR menu", "QR menu βήματα", "ψηφιακό menu οδηγός"],
+    keywords: ["πώς φτιάχνω QR menu", "Live 360", "QR menu βήματα", "ψηφιακό menu οδηγός"],
   },
   pricing: {
-    title: "Τιμές — Πλάνα από €9.99/μήνα",
+    title: "Τιμές — QR menu & Live 360° από €9.99/μήνα",
     description:
-      "Τιμές MenuOS: δωρεάν δοκιμή {trialDaysGen}, Basic €9.99/μήνα, Pro €19.99/μήνα. Χωρίς κρυφές χρεώσεις. Για Enterprise επικοινωνήστε μαζί μας.",
+      "Τιμές MenuOS: δωρεάν δοκιμή {trialDaysGen} με Live 360°, Basic €9.99/μήνα, Pro €19.99/μήνα. QR menu, κλήση σερβιτόρου, live panel — χωρίς κρυφές χρεώσεις.",
     path: "/pricing",
     breadcrumbLabel: "Τιμές",
-    keywords: ["τιμές QR menu", "κόστος ψηφιακού menu", "MenuOS pricing"],
+    keywords: ["τιμές QR menu", "Live 360 τιμή", "κόστος ψηφιακού menu", "MenuOS pricing"],
   },
   about: {
-    title: "Σχετικά — MenuOS για την ελληνική αγορά",
+    title: "Σχετικά — MenuOS & Live 360° για την ελληνική αγορά",
     description:
-      "Το MenuOS φτιάχτηκε για εστιατόρια και ξενοδοχεία στην Ελλάδα που θέλουν σύγχρονο ψηφιακό menu χωρίς πολυπλοκότητα.",
+      "Το MenuOS φτιάχτηκε για εστιατόρια και ξενοδοχεία στην Ελλάδα: QR menu, live συντονισμός 360° και απλή διαχείριση χωρίς πολυπλοκότητα.",
     path: "/sxetika",
     breadcrumbLabel: "Σχετικά",
     keywords: ["MenuOS", "ψηφιακό menu Ελλάδα"],
@@ -133,6 +145,10 @@ export const SEO_HOME_FAQ = [
     q: "Πόσες γλώσσες υποστηρίζονται;",
     a: "Ελληνικά, Αγγλικά, Γερμανικά και Γαλλικά.",
   },
+  {
+    q: "Τι είναι το MenuOS Live · 360°;",
+    a: "Live συντονισμός κλήσεων και παραγγελιών από QR menu — βλέπετε τι συμβαίνει στο κατάστημα σε πραγματικό χρόνο, χωρίς ξεχωριστό σύστημα.",
+  },
 ] as const;
 
 export const SEO_QR_MENU_FAQ = [
@@ -152,12 +168,16 @@ export const SEO_QR_MENU_FAQ = [
     q: "Μπορώ να αλλάξω τιμές γρήγορα;",
     a: "Ναι. Αλλάζετε από τη διαχείριση και η αλλαγή φαίνεται αμέσως στους πελάτες.",
   },
+  {
+    q: "Τι είναι το Live 360°;",
+    a: "Live panel για κλήσεις σερβιτόρου και παραγγελίες από QR — βλέπετε αναμονές, σταθμούς και ολοκληρώσεις σε πραγματικό χρόνο.",
+  },
 ] as const;
 
 export const SEO_PRICING_OFFERS = [
-  { name: "Δοκιμή {trialDaysGen}", price: 0, description: "1 κατάστημα, 1 κατάλογος, 50 πιάτα" },
-  { name: "Basic", price: 9.99, description: "1 κατάστημα, 3 κατάλογοι, απεριόριστα πιάτα" },
-  { name: "Pro", price: 19.99, description: "3 καταστήματα, απεριόριστοι κατάλογοι" },
+  { name: "Δοκιμή {trialDaysGen}", price: 0, description: "1 κατάστημα, QR menu, Live 360°, 50 πιάτα" },
+  { name: "Basic", price: 9.99, description: "1 κατάστημα, 3 κατάλογοι, Live 360°, απεριόριστα πιάτα" },
+  { name: "Pro", price: 19.99, description: "3 καταστήματα, Live 360°, απεριόριστοι κατάλογοι" },
 ] as const;
 
 export const SEO_PRICING_FAQ = [
@@ -177,24 +197,31 @@ export const SEO_PRICING_FAQ = [
     q: "Υπάρχει δέσμευση;",
     a: "Όχι. Μηνιαία συνδρομή, ακύρωση όποτε θέλετε.",
   },
+  {
+    q: "Περιλαμβάνεται το Live 360°;",
+    a: "Ναι — στη δοκιμή, Basic και Pro. Live panel κλήσεων και συντονισμός χωρίς επιπλέον χρέωση.",
+  },
 ] as const;
 
 export const SEO_SITEMAP_ROUTES = Object.values(SEO_PAGES).map((page) => page.path);
 
 export const SEO_LLMS = `# MenuOS (menuos.gr)
 
-> Ψηφιακό menu με QR για εστιατόρια, ξενοδοχεία και bars στην Ελλάδα.
+> Ψηφιακό menu με QR και Live 360° συντονισμό για εστιατόρια, ξενοδοχεία και bars στην Ελλάδα.
 
 ## Τι κάνουμε
 - Online πλατφόρμα για ψηφιακό menu με QR codes
+- MenuOS Live · 360° — live συντονισμός κλήσεων και παραγγελιών από QR
 - Πολυγλωσσικό QR menu (Ελληνικά, English, Deutsch, Français)
 - Online διαχείριση για ενημέρωση τιμών και πιάτων
+- Κλήση σερβιτόρου / room service από το menu
 - Δωρεάν δοκιμή {trialDaysGen}
-- Τιμές: Basic €9.99/μήνα, Pro €19.99/μήνα
+- Τιμές: Basic €9.99/μήνα, Pro €19.99/μήνα (Live 360° included)
 
 ## Κύριες σελίδες
 - ${SEO_SITE.url}/
 - ${SEO_SITE.url}/qr-menu
+- ${SEO_SITE.url}/live-360
 - ${SEO_SITE.url}/digital-menu
 - ${SEO_SITE.url}/estiatorio/qr-menu
 - ${SEO_SITE.url}/xenodocheio/digital-menu
@@ -207,12 +234,14 @@ export const SEO_LLMS = `# MenuOS (menuos.gr)
 - ${SEO_SITE.url}/sxetika
 - ${SEO_SITE.url}/epikoinonia
 - ${SEO_SITE.url}/blog
+- ${SEO_SITE.url}/blog/menuos-live-360
 - ${SEO_SITE.url}/blog/pws-ftiaxno-qr-menu
 - ${SEO_SITE.url}/privacy
 
 ## SEO
 - Sitemap: ${SEO_SITE.url}/sitemap.xml
 - English UI: append ?lang=en to any marketing URL
+- Guest QR menus: 4 languages (EL, EN, DE, FR)
 
 ## Επικοινωνία
 - Τηλέφωνο: ${SEO_SITE.contactPhone}
