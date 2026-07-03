@@ -17,7 +17,7 @@ export type SeoPricingOffer = { name: string; price: number; description: string
 
 /** Schema.org pricing offers — prices from DB catalog, copy from SEO content files. */
 export async function getSeoPricingOffers(locale: Locale): Promise<SeoPricingOffer[]> {
-  const entries = await listPlanCatalogEntriesSafe();
+  const entries = await listPlanCatalogEntriesSafe({ fresh: true });
   const staticOffers = locale === "en" ? SEO_PRICING_OFFERS_EN : SEO_PRICING_OFFERS;
   const trialDays = entries.find((e) => e.id === "TRIAL")?.trialDays ?? TRIAL_DAYS;
 
@@ -39,7 +39,7 @@ export async function getSeoPricingOffers(locale: Locale): Promise<SeoPricingOff
 
 /** Public pricing cards — DB prices/features with locale-specific marketing copy. */
 export async function getMarketingPricingPlanCards(locale: Locale): Promise<PricingPlanCard[]> {
-  const entries = await listPlanCatalogEntriesSafe();
+  const entries = await listPlanCatalogEntriesSafe({ fresh: true });
   const visible = entries.filter((e) => e.visibleOnPricing && e.id !== "ENTERPRISE");
 
   if (locale === "el") {
@@ -95,7 +95,7 @@ export async function getCatalogOfferBounds(): Promise<{
   highPrice: number;
   offerCount: number;
 }> {
-  const entries = await listPlanCatalogEntriesSafe();
+  const entries = await listPlanCatalogEntriesSafe({ fresh: true });
   const priced = entries.filter((e) => e.visibleOnPricing && e.id !== "ENTERPRISE");
   const prices = priced.map((e) => e.priceMonthly);
   const paid = prices.filter((p) => p > 0);
@@ -112,7 +112,7 @@ export type CatalogPriceLabels = {
 };
 
 export async function getCatalogPriceLabels(): Promise<CatalogPriceLabels> {
-  const entries = await listPlanCatalogEntriesSafe();
+  const entries = await listPlanCatalogEntriesSafe({ fresh: true });
   const basic = entries.find((e) => e.id === "BASIC");
   const pro = entries.find((e) => e.id === "PRO");
   return {

@@ -242,14 +242,16 @@ export async function ensurePlanCatalogSeeded(): Promise<void> {
   if (featuresSynced) invalidatePlanCatalogCache();
 }
 
-export async function listPlanCatalogEntries(): Promise<PlanCatalogEntry[]> {
-  if (cache && Date.now() - cache.at < CACHE_MS) return cache.entries;
+export async function listPlanCatalogEntries(options?: { fresh?: boolean }): Promise<PlanCatalogEntry[]> {
+  if (!options?.fresh && cache && Date.now() - cache.at < CACHE_MS) return cache.entries;
 
   await ensurePlanCatalogSeeded();
 
   const rows = await prisma.planCatalog.findMany({ orderBy: { sortOrder: "asc" } });
   const entries = rows.map(rowToEntry);
-  cache = { at: Date.now(), entries };
+  if (!options?.fresh) {
+    cache = { at: Date.now(), entries };
+  }
   return entries;
 }
 
@@ -380,9 +382,11 @@ function defaultCatalogEntries(): PlanCatalogEntry[] {
 }
 
 /** Same as listPlanCatalogEntries but falls back to defaults if DB/table unavailable. */
-export async function listPlanCatalogEntriesSafe(): Promise<PlanCatalogEntry[]> {
+export async function listPlanCatalogEntriesSafe(options?: {
+  fresh?: boolean;
+}): Promise<PlanCatalogEntry[]> {
   try {
-    return await listPlanCatalogEntries();
+    return await listPlanCatalogEntries(options);
   } catch (err) {
     console.error("[menuos-plan-catalog] DB unavailable, using defaults", err);
     return defaultCatalogEntries();

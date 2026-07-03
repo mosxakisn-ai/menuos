@@ -8,7 +8,7 @@ import { trialDayLabels } from "@/lib/trial-marketing";
 export async function GET() {
   const trialDays = await getTrialDaysFromCatalog();
   const { trialDaysGen } = trialDayLabels(trialDays);
-  const catalog = await listPlanCatalogEntriesSafe();
+  const catalog = await listPlanCatalogEntriesSafe({ fresh: true });
   const basic = catalog.find((e) => e.id === "BASIC");
   const pro = catalog.find((e) => e.id === "PRO");
   const basicPrice = basic ? formatPlanPriceDisplay(basic.priceMonthly, basic.priceDisplay) : "€9.99";

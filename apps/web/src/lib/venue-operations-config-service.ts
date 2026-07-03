@@ -41,6 +41,52 @@ export async function saveVenueOperationsConfig(
   return normalized;
 }
 
+/** Re-run staff assignment sanitize for every venue (e.g. after logic fix). */
+export async function resanitizeAllVenueStaffAssignments(options?: {
+  dryRun?: boolean;
+}): Promise<{
+  venues: number;
+  updated: number;
+  changes: { venueId: string; memberId: string; from: string[]; to: string[] }[];
+}> {
+  const rows = await prisma.venueSetting.findMany({
+    select: { venueId: true, operationsConfig: true },
+  });
+  let updated = 0;
+  const changes: { venueId: string; memberId: string; from: string[]; to: string[] }[] = [];
+  for (const row of rows) {
+    const config = normalizeVenueOperationsConfig(row.operationsConfig ?? null);
+    const posts = listVenuePosts(config);
+    const members = await prisma.venueStaffMember.findMany({
+      where: { venueId: row.venueId },
+      select: { id: true, stations: true },
+    });
+    for (const member of members) {
+      const sanitized = sanitizeStaffAssignments(member.stations, posts);
+      if (
+        sanitized.length === member.stations.length &&
+        sanitized.every((station, index) => station === member.stations[index])
+      ) {
+        continue;
+      }
+      changes.push({
+        venueId: row.venueId,
+        memberId: member.id,
+        from: [...member.stations],
+        to: sanitized,
+      });
+      if (!options?.dryRun) {
+        await prisma.venueStaffMember.update({
+          where: { id: member.id },
+          data: { stations: sanitized },
+        });
+      }
+      updated += 1;
+    }
+  }
+  return { venues: rows.length, updated, changes };
+}
+
 async function sanitizeVenueStaffAssignments(
   venueId: string,
   config: VenueOperationsConfig,
