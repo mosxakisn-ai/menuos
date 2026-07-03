@@ -13,7 +13,8 @@ import { MarketingPageJsonLd, PricingOffersJsonLd } from "@/components/seo/marke
 import { buttonClass } from "@/components/ui/button";
 import { getMessages } from "@/i18n/get-messages";
 import { getServerLocale } from "@/i18n/server";
-import { getEnterprisePlanEntry, getPricingPlanCards } from "@/lib/plan-catalog-service";
+import { getEnterprisePlanEntrySafe } from "@/lib/plan-catalog-service";
+import { getMarketingPricingPlanCards } from "@/lib/plan-pricing-marketing";
 import { generateMarketingMetadata } from "@/lib/seo";
 
 export async function generateMetadata() {
@@ -25,20 +26,14 @@ export default async function PricingPage() {
   const { marketing, pages } = await getMessages(locale);
   const p = marketing.pages.pricing;
   const ui = pages.pricing;
-  const catalogPlans =
-    locale === "el"
-      ? await getPricingPlanCards().catch((err) => {
-          console.error("[menuos-pricing] plan catalog unavailable", err);
-          return null;
-        })
-      : null;
-  const enterprisePlan =
-    locale === "el"
-      ? await getEnterprisePlanEntry().catch((err) => {
-          console.error("[menuos-pricing] enterprise plan unavailable", err);
-          return null;
-        })
-      : null;
+  const catalogPlans = await getMarketingPricingPlanCards(locale).catch((err) => {
+    console.error("[menuos-pricing] plan catalog unavailable", err);
+    return null;
+  });
+  const enterprisePlan = await getEnterprisePlanEntrySafe().catch((err) => {
+    console.error("[menuos-pricing] enterprise plan unavailable", err);
+    return null;
+  });
   const displayPlans =
     catalogPlans ??
     ui.plans.map((plan) => ({

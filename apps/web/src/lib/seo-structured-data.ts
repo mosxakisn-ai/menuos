@@ -50,7 +50,15 @@ export function buildWebSiteSchema() {
   };
 }
 
-export function buildSoftwareApplicationSchema() {
+export function buildSoftwareApplicationSchema(input?: {
+  lowPrice?: number;
+  highPrice?: number;
+  offerCount?: number;
+}) {
+  const lowPrice = input?.lowPrice ?? 0;
+  const highPrice = input?.highPrice ?? 19.99;
+  const offerCount = input?.offerCount ?? 3;
+
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -62,10 +70,10 @@ export function buildSoftwareApplicationSchema() {
     description: SITE_DESCRIPTION,
     offers: {
       "@type": "AggregateOffer",
-      lowPrice: "0",
-      highPrice: "19.99",
+      lowPrice: String(lowPrice),
+      highPrice: String(highPrice),
       priceCurrency: "EUR",
-      offerCount: "3",
+      offerCount: String(offerCount),
     },
     provider: { "@id": `${APP_URL}/#organization` },
   };

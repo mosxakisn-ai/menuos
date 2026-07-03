@@ -4,11 +4,17 @@ import {
   buildSoftwareApplicationSchema,
   buildWebSiteSchema,
 } from "@/lib/seo-structured-data";
+import { getCatalogOfferBounds } from "@/lib/plan-pricing-marketing";
 
-export function RootJsonLd() {
+export async function RootJsonLd() {
+  const bounds = await getCatalogOfferBounds();
   return (
     <JsonLdScript
-      data={[buildOrganizationSchema(), buildWebSiteSchema(), buildSoftwareApplicationSchema()]}
+      data={[
+        buildOrganizationSchema(),
+        buildWebSiteSchema(),
+        buildSoftwareApplicationSchema(bounds),
+      ]}
     />
   );
 }

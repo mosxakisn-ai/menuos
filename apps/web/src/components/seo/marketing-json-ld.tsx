@@ -3,17 +3,16 @@ import {
   SEO_HOME_FAQ,
   SEO_PAGES,
   SEO_PRICING_FAQ,
-  SEO_PRICING_OFFERS,
   SEO_QR_MENU_FAQ,
 } from "@/content/seo-el";
 import {
   SEO_HOME_FAQ_EN,
   SEO_PAGES_EN,
   SEO_PRICING_FAQ_EN,
-  SEO_PRICING_OFFERS_EN,
   SEO_QR_MENU_FAQ_EN,
 } from "@/content/seo-en";
 import { getServerLocale } from "@/i18n/server";
+import { getSeoPricingOffers } from "@/lib/plan-pricing-marketing";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { buildPricingOffersSchema, marketingPageSchema } from "@/lib/seo-structured-data";
 import { applyTrialDayPlaceholdersDeep } from "@/lib/trial-marketing";
@@ -60,8 +59,6 @@ export async function MarketingPageJsonLd(props: {
 
 export async function PricingOffersJsonLd() {
   const locale = await getServerLocale();
-  const trialDays = await getTrialDaysFromCatalog();
-  const source = locale === "en" ? SEO_PRICING_OFFERS_EN : SEO_PRICING_OFFERS;
-  const offers = applyTrialDayPlaceholdersDeep(source, trialDays, locale);
+  const offers = await getSeoPricingOffers(locale);
   return <JsonLdScript data={buildPricingOffersSchema(offers, locale)} />;
 }
