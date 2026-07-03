@@ -1,10 +1,19 @@
+import type { Metadata } from "next";
 import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome";
 import { MarketingHome } from "@/components/marketing/marketing-home";
 import { HomeJsonLd } from "@/components/seo/marketing-json-ld";
+import { homepageHasNonCanonicalParams, type HomepageSearchParams } from "@/lib/homepage-seo";
 import { generateMarketingMetadata } from "@/lib/seo";
 
-export async function generateMetadata() {
-  return generateMarketingMetadata("home");
+type HomePageProps = {
+  searchParams: Promise<HomepageSearchParams>;
+};
+
+export async function generateMetadata({ searchParams }: HomePageProps) {
+  const params = await searchParams;
+  return generateMarketingMetadata("home", {
+    noIndex: homepageHasNonCanonicalParams(params),
+  });
 }
 
 export default function HomePage() {

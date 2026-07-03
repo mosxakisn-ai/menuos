@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: copy.metaDescription,
     path: config.path,
     keywords: copy.keywords,
+    locale,
   });
 }
 

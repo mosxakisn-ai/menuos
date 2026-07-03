@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, Playfair_Display } from "next/font/google";
 import { RootJsonLd } from "@/components/seo/json-ld";
 import { I18nProvider } from "@/i18n/context";
@@ -11,18 +11,26 @@ const manrope = Manrope({
   subsets: ["latin", "greek"],
   variable: "--font-manrope",
   weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 const playfair = Playfair_Display({
   subsets: ["latin", "latin-ext"],
   variable: "--font-playfair",
   weight: ["600", "700", "800"],
+  display: "swap",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getServerLocale();
   return buildRootMetadata(locale);
 }
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getServerLocale();

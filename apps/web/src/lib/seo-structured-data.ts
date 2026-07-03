@@ -179,10 +179,14 @@ export function marketingPageSchema(input: {
 }) {
   const locale = input.locale ?? "el";
   const homeLabel = locale === "en" ? SEO_SITE_EN.breadcrumbHome : "Αρχική";
-  const breadcrumbs = buildBreadcrumbSchema([
-    { name: homeLabel, path: "/" },
-    { name: input.page.breadcrumbLabel, path: input.page.path },
-  ]);
+  const breadcrumbItems =
+    input.page.path === "/"
+      ? [{ name: homeLabel, path: "/" }]
+      : [
+          { name: homeLabel, path: "/" },
+          { name: input.page.breadcrumbLabel, path: input.page.path },
+        ];
+  const breadcrumbs = buildBreadcrumbSchema(breadcrumbItems);
   const webPage = buildWebPageSchema({
     name: input.page.title,
     path: input.page.path,

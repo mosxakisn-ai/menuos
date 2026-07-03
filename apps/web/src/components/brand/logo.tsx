@@ -31,7 +31,7 @@ export function Logo({ className, showTagline = false, dark = false, href = "/",
 
   if (href === false) return content;
   return (
-    <Link href={href} className="inline-flex">
+    <Link href={href} className="inline-flex" aria-label="MenuOS">
       {content}
     </Link>
   );

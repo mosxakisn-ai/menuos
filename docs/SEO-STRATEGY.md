@@ -1,151 +1,177 @@
 # MenuOS — SEO Strategy
 
-> Modeled after MatchWork production SEO stack. See MatchWork `docs/SEO-ANALYSIS.md` for reference.
+> Modeled after [MatchWork](https://matchwork.gr/) production SEO stack (`docs/SEO-ANALYSIS.md` on MatchWork repo).  
+> **Goal:** Lighthouse SEO **100**, GSC coverage, programmatic landings with quality copy — not bulk spam.
 
 ## Goals
 
 Rank on Google for:
-- Generic: "QR menu", "digital menu", "ψηφιακό menu εστιατορίου"
-- Vertical: restaurant, hotel, beach bar, room service, spa menu
-- Geo: "QR menu Ρόδος", "digital menu Σαντορίνη", city × vertical combos
-- Intent: "πώς φτιάχνω QR menu", "digital menu vs printed"
 
-## Architecture (copy MatchWork pattern)
+- Generic: "QR menu", "digital menu", "ψηφιακό menu εστιατορίου"
+- Vertical: restaurant, hotel, beach bar, room service, spa, café, pizzeria, taverna…
+- Geo: "QR menu Ρόδος", "digital menu Σαντορίνη", city × vertical combos
+- Intent: "πώς φτιάχνω QR menu", "GDPR QR menu", "digital menu vs printed"
+
+## MatchWork parity checklist
+
+| Layer | MatchWork | MenuOS | Notes |
+|-------|-----------|--------|-------|
+| Central `lib/seo.ts` | ✅ | ✅ | `buildPageMetadata`, hreflang, OG, Twitter |
+| Root metadata **without** duplicate alternates | ✅ | ✅ | Alternates per page only (fixes hreflang merge bug) |
+| hreflang `el` + `en` + `x-default` via `?lang=` | ✅ | ✅ | Default locale: **EN** (clean URL) |
+| `viewport` export in root layout | ✅ | ✅ | Lighthouse SEO audit |
+| `icons` + `apple-icon` + `formatDetection` | ✅ | ✅ | Root metadata |
+| `robots.ts` + sitemap | ✅ | ✅ | `/sitemap.xml` (~140 URLs) |
+| Image sitemap + RSS | — | ✅ | `/sitemap-images.xml`, `/feed.xml` |
+| JSON-LD Organization / WebSite | ✅ | ✅ | Root layout |
+| JSON-LD FAQ + Breadcrumb + WebPage | ✅ | ✅ | Marketing + landings |
+| JSON-LD Service | — | ✅ | Geo/vertical landings |
+| JSON-LD Product/Offer | — | ✅ | Pricing |
+| Programmatic landings (footer hub only) | ✅ ~260 | ✅ ~103 | Quality > volume |
+| Blog topical clusters | ✅ 6+ | ✅ 26 | Ongoing, not bulk 100 |
+| `llms.txt` | ✅ | ✅ | AI/crawler discovery |
+| IndexNow post-deploy | ✅ | ✅ | Recursive sitemap fetch |
+| Homepage filtered/UTM URLs → `noindex` | ✅ | ✅ | `lib/homepage-seo.ts` |
+| GSC HTML verification | ✅ | ✅ | `googlef328fb99f5f1f5b1.html` |
+| Lighthouse SEO target | **100** | **100** (target) | Run PageSpeed after deploy |
+| Lighthouse Performance | 85 desktop | TBD | Fonts `display:swap`, fix CLS |
+
+## Architecture
 
 ### Central library — `lib/seo.ts`
-- `buildPageMetadata()` — title, description, keywords, canonical
-- `buildRootMetadata()` — site-wide + Google verification
-- `buildPrivatePageMetadata()` — noindex for dashboard/auth
-- `buildHreflangAlternates()` — GR default clean URL; EN/DE/FR via `?lang=`
-- `absoluteUrl()`, `openGraphImageUrl()`
-- Open Graph + Twitter cards
+
+- `buildPageMetadata()` — title, description, keywords, canonical, hreflang, robots
+- `buildRootMetadata()` — site-wide defaults; **strips alternates** (MatchWork pattern)
+- `buildPrivatePageMetadata()` — `noindex` for dashboard/auth/QR menus
+- `buildHreflangAlternates()` — `URL` API; non-default locale → `?lang=el|en`
+- `SEO_BILINGUAL_LOCALES` — `["el", "en"]` for marketing + landings
+- `absoluteUrl()`, `openGraphImageUrl(locale)`
+- Open Graph + Twitter cards, `google-site-verification` from env
 
 ### Technical files
+
 | File | Purpose |
 |------|---------|
-| `app/robots.ts` | Allow `/`, disallow `/api/`, `/dashboard/`, `/login`, `/m/` |
-| `app/sitemap.ts` | Dynamic: static + landings + blog |
-| `app/opengraph-image.tsx` | Dynamic OG 1200×630 per locale |
-| `app/manifest.ts` | PWA manifest |
+| `app/robots.ts` | Allow `/`, disallow `/api/`, `/dashboard/`, `/login`, `/m/`; sitemap + image sitemap |
+| `lib/seo-sitemap.ts` | Priority/changefreq tiers by page kind |
+| `app/sitemap.ts` | Single combined sitemap (~140 URLs) |
+| `app/sitemap-images.xml/route.ts` | OG image sitemap |
+| `app/feed.xml/route.ts` | Blog RSS |
+| `app/opengraph-image.tsx` | Dynamic OG 1200×630 |
+| `app/manifest.ts` | PWA manifest (`start_url: /`, locale-aware) |
+| `app/icon.tsx` + `app/apple-icon.tsx` | Favicons |
 | `app/llms.txt/route.ts` | AI/crawler discoverability |
+| `lib/homepage-seo.ts` | `noindex` for `/?utm_*` etc.; `?lang=` allowed |
 
 ### JSON-LD (`lib/seo-structured-data.ts`)
+
 | Schema | Where |
 |--------|-------|
 | Organization | Root layout |
 | WebSite | Root layout |
-| SoftwareApplication | Homepage / pricing |
-| FAQPage | SEO landings |
-| BreadcrumbList | Landings, blog |
-| Product/Offer | Pricing page (plans) |
+| SoftwareApplication | Root layout (pricing bounds) |
+| FAQPage | Marketing pages, landings |
+| BreadcrumbList | Marketing, landings, blog (home = single crumb) |
+| WebPage | Marketing, landings |
+| Service | City/vertical landings |
+| Product/Offer | Pricing page |
 
 Public QR menus (`/m/*`) and dashboard → **noindex** + robots disallow.
 
-## Programmatic Landing Pages
+## Programmatic landing pages
 
-Config-driven slugs (like MatchWork `seo-landing.ts`):
+Config: `lib/seo-landing.ts` + copy `lib/seo-landing-content.ts`
 
-### Categories (vertical)
-```
-/qr-menu                    → generic QR menu
-/digital-menu               → generic digital menu
-/estiatorio/qr-menu         → restaurants
-/ksenoδοχειo/digital-menu   → hotels (latin slug: /xenodocheio/digital-menu)
-/beach-bar/qr-menu          → beach bars
-/pool-bar/digital-menu      → pool bars
-/room-service/qr-menu       → room service
-/spa-menu                   → spa menus
-```
+### Verticals (16)
 
-### Cities (geo hubs — priority Greek destinations)
-```
-/rodos/qr-menu
-/santorini/digital-menu
-/athens/qr-menu
-/thessaloniki/qr-menu
-/corfu/digital-menu
-/crete/qr-menu
-... (~20–25 hub cities, same logic as MatchWork Phase H)
-```
+`/estiatorio/qr-menu`, `/xenodocheio/digital-menu`, `/beach-bar/qr-menu`, `/pool-bar/digital-menu`, `/room-service/qr-menu`, `/spa-menu`, `/cafeteria/qr-menu`, `/bar/qr-menu`, `/cocktail-bar/digital-menu`, `/winery/digital-menu`, `/cafe/qr-menu`, `/bakery/qr-menu`, `/food-truck/qr-menu`, `/pizzeria/qr-menu`, `/taverna/qr-menu`, `/canteen/qr-menu`, `/digital-menu`, `/live-360`
+
+### Cities (37 hubs)
+
+Rodos, Santorini, Athina, Thessaloniki, Korfu, Kriti, Mykonos, Paros, Naxos, Zakynthos, Chania, Kos, Lefkada, Halkidiki, Ios, Skiathos, Kalamata, Patra, Ioannina, Kavala, Milos, Rethymno, Iraklio, Sifnos, Larisa, Volos, Kefalonia, Syros, Tinos, Kastoria, Alexandroupoli, Preveza, Nafplio, Pylos, Loutraki, Arachova, Katerini
 
 ### Combos (city × vertical)
-```
-/rodos/estiatorio/qr-menu
-/santorini/xenodocheio/digital-menu
-/athens/beach-bar/qr-menu
-```
 
-Target: **~150–200 landing URLs** (quality over spam — no bulk 164-city grid).
+Curated only — e.g. `/rodos/estiatorio/qr-menu`, `/nafplio/taverna/qr-menu`. **No** 164-city bulk grid.
 
-### Landing page content (each page)
-- Unique H1 + meta title/description
-- 2–3 paragraphs unique copy (GR + EN hreflang)
-- FAQ section (3–5 questions) → FAQPage JSON-LD
-- Breadcrumbs → BreadcrumbList JSON-LD
-- CTA: "Δοκίμασε δωρεάν" → signup
-- Internal links via footer hub only (not header — anti-spam)
+Each landing: unique H1/meta, FAQ + JSON-LD, footer hub links only (not main nav).
+
+## Sitemap tiers (`lib/seo-sitemap.ts`)
+
+| Tier | priority | changefreq | Examples |
+|------|----------|------------|----------|
+| Homepage | 1.0 | daily | `/` |
+| Main services | 0.95 | weekly | `/qr-menu`, `/ypiresies`, `/live-360` |
+| Pricing | 0.90 | monthly | `/pricing` |
+| Vertical landings | 0.84 | monthly | `/estiatorio/qr-menu` |
+| City landings | 0.80 | monthly | `/rodos/qr-menu` |
+| City×vertical | 0.75 | monthly | `/rodos/beach-bar/qr-menu` |
+| Blog index | 0.70 | weekly | `/blog` |
+| Blog posts | 0.60 | monthly | `/blog/*` |
+| Legal | 0.20 | yearly | `/terms`, `/privacy` |
 
 ## Blog (topical authority)
 
-```
-/blog/pws-ftiaxno-qr-menu
-/blog/digital-menu-vs-printed
-/blog/qr-menu-eksοdoχειo
-/blog/qr-menu-estiatorio
-/blog/poliglosso-menu-touristes
-...
-```
-
-Target: 10–15 launch articles, monthly additions.
+26 articles live — GDPR, HACCP, POS, allergens, seasonal menus, café/bakery, Live 360°, etc.  
+Target: **2–4 new posts/month**, not 100 thin posts at once.
 
 ## hreflang
 
 | Content | Locales |
 |---------|---------|
-| Marketing pages | GR (default), EN, DE, FR |
-| SEO landings | GR + EN minimum |
-| Blog | GR primary, EN where translated |
-| QR menus | Per-venue item translations (product feature, not hreflang) |
+| Marketing + landings | `el` + `en` via `?lang=`; default **EN** = clean URL |
+| Blog | GR primary (EN UI via cookie/`?lang=en` on shell) |
+| QR menus (`/m/*`) | Per-venue item translations (product feature, not hreflang) |
 
-## noindex Rules
+**Do not** add DE/FR hreflang until full marketing UI translations ship (guest QR already has DE/FR).
+
+## noindex rules
 
 | URL pattern | Reason |
 |-------------|--------|
 | `/dashboard/*` | Private admin |
 | `/login`, `/register` | Auth |
 | `/api/*` | API |
-| `/m/*` | Per-business menus (tenant content) |
-| Filtered homepage URLs | Canonical to `/` only |
+| `/m/*` | Tenant QR menus |
+| `/?utm_*`, `/?ref=` etc. | Canonical `/` only (`homepage-seo.ts`) |
+| Filtered listing URLs | N/A (no public job filters) |
 
 ## IndexNow + GSC
 
-- `scripts/submit-indexnow.mjs` — ping Bing/Yandex after deploy
-- Google Search Console — submit sitemap, HTML verification file
-- Deploy flag: `RUN_INDEXNOW=1`
+- Submit only `https://menuos.gr/sitemap.xml` — **not** `/qr-menu` or other HTML pages
+- `scripts/submit-indexnow.mjs` — recursive sitemap index → page URLs
+- `RUN_INDEXNOW=1` on deploy
+- HTML verification: `public/googlef328fb99f5f1f5b1.html`
+- Optional: `GOOGLE_SITE_VERIFICATION` in `.env`
 
-## llms.txt
+## Performance (Lighthouse-related)
 
-Public route listing all indexable pages, blog posts, landings, sitemap URL — for AI crawlers and IndexNow URL discovery.
+MatchWork desktop reference (Jul 2026): Performance 85, SEO **100**, Best Practices 100, Accessibility 91.
 
-## Performance (SEO-related)
+MenuOS actions:
 
+- Fonts: `display: "swap"` (Manrope, Playfair)
+- Explicit `viewport` export
+- Reserve space for hero images (reduce CLS — target CLS < 0.1)
 - SSR/SSG for all marketing and landing pages
-- Core Web Vitals target: LCP < 2.5s, SEO score 100
-- Lazy images on QR menu (product UI, not marketing)
+- Lazy images on QR menu (product UI)
 
-## Implementation Order
+Run after deploy: [PageSpeed Insights](https://pagespeed.web.dev/) on `https://menuos.gr/`
 
-1. **Phase 1:** ✅ `seo.ts`, robots, sitemap (static pages), root JSON-LD, OG image, hreflang el/en, IndexNow script
-2. **Phase 1b:** ✅ 20 programmatic landings + footer hub (`lib/seo-landing.ts`, `[...slug]/page.tsx`)
-3. **Phase 2:** ✅ Launch blog (14 articles) + additional city combos (ongoing via GSC data)
-4. **Phase 2b:** ✅ Live 360° SEO pass — meta, landings template, `/live-360`, blog, llms.txt
-5. **Phase 3:** ✅ Marketing/footer alignment, visible `/live-360` link, pricing copy consistency, feature dedup
-6. **Ongoing:** GSC monitoring, new city/vertical pages based on Search Console data (77→150+ only with demand)
-7. **Future:** Marketing hreflang DE/FR when UI translations ship (guest QR menus already support DE/FR)
+## Implementation status
 
-## Do Not
+1. **Phase 1:** ✅ Core SEO stack
+2. **Phase 1b:** ✅ Programmatic landings + footer hub
+3. **Phase 2:** ✅ Blog (26) + city/vertical expansion
+4. **Phase 2b:** ✅ Live 360° SEO pass
+5. **Phase 3:** ✅ Sitemap tiers, RSS, image sitemap, Service schema (~140 URLs)
+6. **Phase 4:** ✅ MatchWork Lighthouse parity (hreflang fix, viewport, icons, homepage noindex)
+7. **Ongoing:** GSC monitoring, PageSpeed CLS, new landings/posts from Search Console data
+
+## Do not
 
 - Index tenant QR menus or dashboard pages
 - Create thin duplicate city pages (MatchWork anti-spam rule)
 - Use AI-generated bulk content for landings
-- Modify MatchWork SEO or servers
+- Submit HTML pages as sitemaps in GSC
+- Modify MatchWork servers or SEO files
