@@ -9,6 +9,7 @@ import {
 } from "@menuos/shared";
 import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
 import { cn } from "@/lib/utils";
 
 export function ItemLabelBadge({
@@ -105,15 +106,27 @@ export function MenuItemCard({
 
   if (imgFailed) {
     return (
-      <MenuItemRow
-        name={name}
-        description={description}
-        price={price}
-        label={label}
-        lang={lang}
+      <Comp
+        type={onClick ? "button" : undefined}
         onClick={onClick}
-        className={cn("rounded-card border border-slate-100 bg-white shadow-soft", className)}
-      />
+        aria-label={onClick ? `${name}, €${price}` : undefined}
+        className={cn(
+          "w-full overflow-hidden rounded-card bg-white text-left shadow-soft transition hover:shadow-card",
+          onClick && "cursor-pointer touch-manipulation active:scale-[0.99]",
+          className,
+        )}
+      >
+        <MenuItemPhotoPlaceholder size="lg" />
+        <div className="flex items-start justify-between gap-3 p-3">
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-primary">{name}</p>
+            {description ? (
+              <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{description}</p>
+            ) : null}
+          </div>
+          <p className="shrink-0 font-semibold text-primary">€{price}</p>
+        </div>
+      </Comp>
     );
   }
 

@@ -32,6 +32,7 @@ import {
 import { LogoMark } from "@/components/brand/logo-mark";
 import { cn } from "@/lib/utils";
 import { ItemLabelBadge, MenuItemCard, MenuItemRow } from "@/components/menu/menu-item-card";
+import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
 import { isItemLabel } from "@menuos/shared";
 
 type Translation = {
@@ -1215,11 +1216,16 @@ export function PublicMenuView({
                         </div>
                       ) : null}
                     </div>
-                  ) : isItemLabel(selectedItem.label) ? (
-                    <div className="mb-3">
-                      <ItemLabelBadge label={selectedItem.label} lang={lang} />
+                  ) : (
+                    <div className="relative -mx-6 mb-4 overflow-hidden">
+                      <MenuItemPhotoPlaceholder size="lg" />
+                      {isItemLabel(selectedItem.label) ? (
+                        <div className="absolute left-3 top-3">
+                          <ItemLabelBadge label={selectedItem.label} lang={lang} />
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
+                  )}
                   <h3 id="menu-item-dialog-title" className="font-serif text-2xl font-bold text-primary">
                     {tr?.name}
                   </h3>

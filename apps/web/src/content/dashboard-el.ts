@@ -87,6 +87,9 @@ export const DASHBOARD_EL = {
     },
     analyzeButton: "Ανάλυση & προεπισκόπηση",
     processingTitle: "Ανάλυση PDF καταλόγου",
+    processingTargetCatalog: (name: string) => `Στόχος: κατάλογος «${name}»`,
+    processingTargetFull: (venue: string, catalog: string) =>
+      `Στόχος: ${venue} · κατάλογος «${catalog}»`,
     pipeline: {
       scan: "Σάρωση PDF",
       extract: "Ανάλυση σελίδων",
@@ -99,6 +102,7 @@ export const DASHBOARD_EL = {
     loadingScanFile: (file: string, page: number, total: number) =>
       `${file} — σελίδα ${page}/${total}`,
     loadingImport: "Εισαγωγή στον κατάλογο...",
+    loadingImportInto: (name: string) => `Εισαγωγή στον κατάλογο «${name}»…`,
     advancedTitle: "Προχωρημένα — επιλογή σελίδων",
     advancedHint:
       "Cover/logo παραλείπονται αυτόματα. Άλλαξε ποιες σελίδες μπαίνουν στην ανάλυση αν κάτι λείπει.",

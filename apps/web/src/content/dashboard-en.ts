@@ -87,6 +87,9 @@ export const DASHBOARD_EN = {
     },
     analyzeButton: "Analyze & preview",
     processingTitle: "Analyzing catalog PDF",
+    processingTargetCatalog: (name: string) => `Import target: «${name}»`,
+    processingTargetFull: (venue: string, catalog: string) =>
+      `Import target: ${venue} · «${catalog}»`,
     pipeline: {
       scan: "Scanning PDF",
       extract: "Analyzing pages",
@@ -99,6 +102,7 @@ export const DASHBOARD_EN = {
     loadingScanFile: (file: string, page: number, total: number) =>
       `${file} — page ${page}/${total}`,
     loadingImport: "Importing to catalog...",
+    loadingImportInto: (name: string) => `Importing into «${name}»…`,
     advancedTitle: "Advanced — page selection",
     advancedHint:
       "Covers/logos are skipped automatically. Change which pages are analyzed if something is missing.",

@@ -22,30 +22,30 @@ CREATE TABLE IF NOT EXISTS "PlanCatalog" (
 INSERT INTO "PlanCatalog" (
   "plan", "sortOrder", "name", "priceMonthly", "priceDisplay", "periodLabel", "description",
   "features", "maxVenues", "maxMenusPerVenue", "maxItems", "ctaLabel", "badge",
-  "highlighted", "visibleOnPricing", "trialDays"
+  "highlighted", "visibleOnPricing", "trialDays", "updatedAt"
 ) VALUES
 (
   'TRIAL', 0, 'Δοκιμή', 0, '€0', ' / 7 ημέρες',
   'Για να δοκιμάσεις την πλατφόρμα πριν επιλέξεις πλάνο.',
   '["1 κατάστημα","1 κατάλογος","50 πιάτα","QR codes","Πολλαπλές γλώσσες","Χωρίς κάρτα"]'::jsonb,
-  1, 1, 50, 'Εγγραφή', NULL, false, true, 7
+  1, 1, 50, 'Εγγραφή', NULL, false, true, 7, CURRENT_TIMESTAMP
 ),
 (
   'BASIC', 1, 'Basic', 9.99, '€9.99', '/μήνα',
   'Ιδανικό για εστιατόριο, cafe ή μοναδικό κατάστημα.',
   '["1 κατάστημα","3 κατάλογοι","Απεριόριστα πιάτα","QR codes","Κλήση σερβιτόρου","Πολλαπλές γλώσσες"]'::jsonb,
-  1, 3, NULL, 'Ξεκίνα Basic', 'Δημοφιλές', true, true, NULL
+  1, 3, NULL, 'Ξεκίνα Basic', 'Δημοφιλές', true, true, NULL, CURRENT_TIMESTAMP
 ),
 (
   'PRO', 2, 'Pro', 19.99, '€19.99', '/μήνα',
   'Για ξενοδοχεία και επιχειρήσεις με πολλαπλούς χώρους.',
   '["3 καταστήματα","Απεριόριστοι κατάλογοι","Κλήση σερβιτόρου","Πολλαπλές γλώσσες","Προτεραιότητα","PDF import"]'::jsonb,
-  3, NULL, NULL, 'Ξεκίνα Pro', NULL, false, true, NULL
+  3, NULL, NULL, 'Ξεκίνα Pro', NULL, false, true, NULL, CURRENT_TIMESTAMP
 ),
 (
   'ENTERPRISE', 3, 'Enterprise', 0, NULL, '/μήνα',
   'White-label, custom domain, πολλαπλά καταστήματα, προτεραιότητα υποστήριξης.',
   '["Δικό σας domain","White-label","Προτεραιότητα υποστήριξης"]'::jsonb,
-  999, NULL, NULL, 'Ζήτησε προσφορά', NULL, false, false, NULL
+  999, NULL, NULL, 'Ζήτησε προσφορά', NULL, false, false, NULL, CURRENT_TIMESTAMP
 )
 ON CONFLICT ("plan") DO NOTHING;

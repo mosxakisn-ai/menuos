@@ -81,6 +81,7 @@ export function ImportPipelineProgress({
   timerHint,
   longWaitHint,
   longWaitAfterSec = 90,
+  targetLabel,
 }: {
   steps: PipelineStep[];
   progress?: number;
@@ -93,6 +94,8 @@ export function ImportPipelineProgress({
   timerHint?: string;
   longWaitHint?: string;
   longWaitAfterSec?: number;
+  /** Which catalog receives the import (e.g. «cavo»). */
+  targetLabel?: string;
 }) {
   const activeStep = steps.find((s) => s.status === "active");
   const activities = useMemo(() => {
@@ -144,6 +147,11 @@ export function ImportPipelineProgress({
           </div>
         ) : null}
         <p className="font-serif text-lg font-bold text-brand-navy sm:text-xl">{title}</p>
+        {targetLabel ? (
+          <p className="mx-auto mt-2 inline-flex max-w-md items-center justify-center rounded-full bg-brand-blue/[0.08] px-4 py-1.5 text-sm font-semibold text-brand-navy ring-1 ring-brand-blue/15">
+            {targetLabel}
+          </p>
+        ) : null}
         {subtitle ? <p className="mt-1.5 text-sm text-slate-600">{subtitle}</p> : null}
 
         {liveActivity ? (

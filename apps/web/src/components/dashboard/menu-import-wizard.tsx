@@ -213,6 +213,13 @@ export function MenuImportWizard({
 
   const pageStats = useMemo(() => pageSelectionStats(pages), [pages]);
   const activeMenu = venue?.menus.find((m) => m.id === menuId);
+  const importTargetLabel = useMemo(() => {
+    if (!activeMenu) return undefined;
+    if (venues.length > 1 && venue?.name) {
+      return W.processingTargetFull(venue.name, activeMenu.name);
+    }
+    return W.processingTargetCatalog(activeMenu.name);
+  }, [activeMenu, venue?.name, venues.length, W]);
 
   const resetAll = useCallback(() => {
     setDraft(null);
@@ -722,6 +729,11 @@ export function MenuImportWizard({
           <p className="mt-1.5 text-sm text-slate-600">
             {geminiConfigured ? W.hintWithGemini : W.hint}
           </p>
+          {(phase === "processing" || phase === "review") && importTargetLabel ? (
+            <p className="mt-3 inline-flex items-center rounded-full bg-brand-blue/[0.08] px-3 py-1.5 text-sm font-semibold text-brand-navy ring-1 ring-brand-blue/15">
+              {importTargetLabel}
+            </p>
+          ) : null}
         </div>
         {phase === "upload" ? (
           <div className="px-4 py-4 sm:px-5">
@@ -737,6 +749,7 @@ export function MenuImportWizard({
             progress={progress}
             title={geminiConfigured ? W.processingTitleGemini : W.processingTitle}
             subtitle={geminiConfigured ? W.geminiPoweredSubtitle : undefined}
+            targetLabel={importTargetLabel}
             poweredByGemini={geminiConfigured}
             startedAt={processingStartedAt ?? undefined}
             activityMap={processingActivityMap}
@@ -1048,7 +1061,13 @@ export function MenuImportWizard({
           <Card className="sticky bottom-4 z-20 overflow-hidden border-emerald-200 bg-white/95 shadow-lg backdrop-blur-sm">
             {importing ? (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-                <LoadingState variant="import" size="md" title={W.loadingImport} />
+                <LoadingState
+                  variant="import"
+                  size="md"
+                  title={
+                    activeMenu ? W.loadingImportInto(activeMenu.name) : W.loadingImport
+                  }
+                />
               </div>
             ) : null}
             <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
@@ -1080,7 +1099,9 @@ export function MenuImportWizard({
               >
                 <Pencil className="h-4 w-4" />
                 {importing
-                  ? W.loadingImport
+                  ? activeMenu
+                    ? W.loadingImportInto(activeMenu.name)
+                    : W.loadingImport
                   : W.importButton(d.catalogEntry.count(selectedCounts.items))}
               </button>
             </div>

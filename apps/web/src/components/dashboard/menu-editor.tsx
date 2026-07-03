@@ -15,6 +15,7 @@ import {
   DashboardToolbar,
 } from "@/components/dashboard/dashboard-page";
 import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
+import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
 import { DashboardScrollRow } from "@/components/dashboard/dashboard-ui";
 import { dashboardIconButtonClass } from "@/components/dashboard/dashboard-action-button";
 import { buttonClass } from "@/components/ui/button";
@@ -751,12 +752,7 @@ export function MenuEditor({
                               className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 object-cover sm:h-14 sm:w-14"
                             />
                           ) : !isEditing ? (
-                            <div
-                              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:h-14 sm:w-14"
-                              aria-hidden
-                            >
-                              —
-                            </div>
+                            <MenuItemPhotoPlaceholder size="sm" />
                           ) : null}
 
                           <div className="min-w-0 flex-1">
