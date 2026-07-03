@@ -35,7 +35,7 @@ function mergeKeywords(pageKeywords?: string[]): string[] {
 }
 
 function googleSiteVerification(): Metadata["verification"] | undefined {
-  const token = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+  const token = (process.env.GOOGLE_SITE_VERIFICATION ?? "f328fb99f5f1f5b1").trim();
   return token ? { google: token } : undefined;
 }
 
