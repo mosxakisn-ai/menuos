@@ -83,8 +83,8 @@ export async function PATCH(request: Request, { params }: Props) {
   }
 
   const now = new Date();
-  const signal = await prisma.passSignal.update({
-    where: { id: signalId },
+  const updated = await prisma.passSignal.updateMany({
+    where: { id: signalId, status: existing.status },
     data: {
       status: next,
       ...(next === "PICKED_UP" ? { pickedUpAt: now } : {}),
@@ -97,6 +97,14 @@ export async function PATCH(request: Request, { params }: Props) {
         : {}),
     },
   });
+  if (updated.count === 0) {
+    return NextResponse.json(
+      { error: "Η κατάσταση άλλαξε από άλλον χρήστη.", code: "conflict" },
+      { status: 409 },
+    );
+  }
+
+  const signal = await prisma.passSignal.findUniqueOrThrow({ where: { id: signalId } });
 
   if (next === "PICKED_UP" || next === "DELIVERED") {
     const opsConfig = await getVenueOperationsConfig(existing.venueId);

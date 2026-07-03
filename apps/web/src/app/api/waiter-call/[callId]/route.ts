@@ -53,10 +53,18 @@ export async function PATCH(request: Request, { params }: Params) {
     );
   }
 
-  const call = await prisma.waiterCall.update({
-    where: { id: callId },
-    data: { status: parsed.data.status },
+  const updated = await prisma.waiterCall.updateMany({
+    where: { id: callId, status: existing.status },
+    data: { status: next },
   });
+  if (updated.count === 0) {
+    return NextResponse.json(
+      { error: "Η κατάσταση άλλαξε από άλλον χρήστη.", code: "conflict" },
+      { status: 409 },
+    );
+  }
+
+  const call = await prisma.waiterCall.findUniqueOrThrow({ where: { id: callId } });
 
   if (parsed.data.status === "ACKNOWLEDGED" || parsed.data.status === "COMPLETED") {
     logWaiterCallStatusChange({

@@ -180,7 +180,7 @@ function enabledVenuePostIds(posts: VenuePost[]): Set<string> {
   return new Set(posts.filter((post) => post.enabled).map((post) => post.id));
 }
 
-/** Drop disabled or removed post ids; keep services/all and dedupe order. Falls back to services when empty. */
+/** Drop disabled or removed post ids; keep services/all and dedupe order. Empty = no access until reassigned. */
 export function sanitizeStaffAssignments(
   assignments: string[],
   posts: VenuePost[],
@@ -194,7 +194,6 @@ export function sanitizeStaffAssignments(
     seen.add(assignment);
     out.push(assignment);
   }
-  if (out.length === 0) return ["services"];
   return out;
 }
 
@@ -226,7 +225,7 @@ export function passSignalVisibleToStaffMember(
 ): boolean {
   if (memberStations.includes("all") || memberStations.includes("services")) return true;
   const mapped = PASS_DB_STATION_TO_STAFF[passDbStation];
-  if (!mapped) return true;
+  if (!mapped) return false;
   return memberStations.some((assignment) => {
     const resolved = resolveStaffAssignmentToPassInput(assignment, posts);
     return resolved === mapped;

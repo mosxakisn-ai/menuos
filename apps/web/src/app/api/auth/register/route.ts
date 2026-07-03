@@ -121,7 +121,7 @@ export async function POST(request: Request) {
   } catch (err) {
     const code = typeof err === "object" && err && "code" in err ? (err as { code: string }).code : null;
     if (code === "P2002") {
-      return NextResponse.json({ code: "duplicate" }, { status: 409 });
+      return NextResponse.json({ code: "email_taken" }, { status: 409 });
     }
     console.error("[menuos] register create failed", err);
     return NextResponse.json({ code: "server_error" }, { status: 503 });

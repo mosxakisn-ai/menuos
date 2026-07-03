@@ -38,9 +38,8 @@ describe("passSignalVisibleToStaffMember", () => {
     expect(passSignalVisibleToStaffMember("BAR", ["bar", "kitchen"])).toBe(true);
   });
 
-  it("filters by custom post id", () => {
-    expect(passSignalVisibleToStaffMember("KITCHEN", ["grill"], posts)).toBe(true);
-    expect(passSignalVisibleToStaffMember("BAR", ["grill"], posts)).toBe(false);
+  it("hides unknown stations for restricted staff", () => {
+    expect(passSignalVisibleToStaffMember("UNKNOWN", ["kitchen"])).toBe(false);
   });
 });
 
@@ -85,7 +84,9 @@ describe("sanitizeStaffAssignments", () => {
     ]);
   });
 
-  it("falls back to services when nothing valid remains", () => {
-    expect(sanitizeStaffAssignments(["grill", "missing"], posts)).toEqual(["services"]);
+  it("returns empty when nothing valid remains (no privilege escalation)", () => {
+    expect(sanitizeStaffAssignments(["grill", "missing"], posts)).toEqual([]);
+    expect(passSignalsVisibleToStaffMember([])).toBe(false);
+    expect(waiterCallsVisibleToStaffMember([])).toBe(false);
   });
 });
