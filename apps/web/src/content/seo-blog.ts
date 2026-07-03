@@ -209,7 +209,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
       {
         heading: "Μετά τη δοκιμή",
         paragraphs: [
-          "Επιλέγετε Basic (€9.99/μήνα) ή Pro (€19.99/μήνα) — ή επικοινωνείτε για Enterprise.",
+          "Επιλέγετε Basic ({basicPrice}/μήνα) ή Pro ({proPrice}/μήνα) — ή επικοινωνείτε για Enterprise.",
           "Τα δεδομένα σας μένουν — συνεχίζετε από εκεί που σταματήσατε.",
         ],
       },

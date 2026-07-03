@@ -1,6 +1,5 @@
 import { SEO_BLOG_POSTS, type SeoBlogPost } from "@/content/seo-blog";
-import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
-import { applyTrialDayPlaceholdersDeep } from "@/lib/trial-marketing";
+import { applyCatalogMarketingPlaceholdersDeep } from "@/lib/plan-pricing-marketing";
 
 export function getAllSeoBlogSlugs(): string[] {
   return SEO_BLOG_POSTS.map((post) => post.slug);
@@ -13,8 +12,7 @@ export function getSeoBlogPost(slug: string): SeoBlogPost | null {
 export async function getSeoBlogPostResolved(slug: string): Promise<SeoBlogPost | null> {
   const post = getSeoBlogPost(slug);
   if (!post) return null;
-  const trialDays = await getTrialDaysFromCatalog();
-  return applyTrialDayPlaceholdersDeep(post, trialDays);
+  return applyCatalogMarketingPlaceholdersDeep(post, "el");
 }
 
 export function getSeoBlogPostsSorted(): SeoBlogPost[] {
@@ -22,6 +20,5 @@ export function getSeoBlogPostsSorted(): SeoBlogPost[] {
 }
 
 export async function getSeoBlogPostsSortedResolved(): Promise<SeoBlogPost[]> {
-  const trialDays = await getTrialDaysFromCatalog();
-  return applyTrialDayPlaceholdersDeep(getSeoBlogPostsSorted(), trialDays);
+  return applyCatalogMarketingPlaceholdersDeep(getSeoBlogPostsSorted(), "el");
 }

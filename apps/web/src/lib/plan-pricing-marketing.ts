@@ -5,6 +5,7 @@ import { SEO_PRICING_OFFERS_EN } from "@/content/seo-en";
 import type { Locale } from "@/i18n/types";
 import {
   formatPlanPriceDisplay,
+  getTrialDaysFromCatalog,
   listPlanCatalogEntriesSafe,
   type PricingPlanCard,
 } from "@/lib/plan-catalog-service";
@@ -103,4 +104,53 @@ export async function getCatalogOfferBounds(): Promise<{
     highPrice: paid.length ? Math.max(...paid) : 0,
     offerCount: priced.length || 3,
   };
+}
+
+export type CatalogPriceLabels = {
+  basicPrice: string;
+  proPrice: string;
+};
+
+export async function getCatalogPriceLabels(): Promise<CatalogPriceLabels> {
+  const entries = await listPlanCatalogEntriesSafe();
+  const basic = entries.find((e) => e.id === "BASIC");
+  const pro = entries.find((e) => e.id === "PRO");
+  return {
+    basicPrice: basic ? formatPlanPriceDisplay(basic.priceMonthly, basic.priceDisplay) : "€9.99",
+    proPrice: pro ? formatPlanPriceDisplay(pro.priceMonthly, pro.priceDisplay) : "€19.99",
+  };
+}
+
+function applyCatalogPricePlaceholders(text: string, labels: CatalogPriceLabels): string {
+  return text.replaceAll("{basicPrice}", labels.basicPrice).replaceAll("{proPrice}", labels.proPrice);
+}
+
+function applyCatalogPricePlaceholdersDeep<T>(value: T, labels: CatalogPriceLabels): T {
+  if (typeof value === "string") {
+    return applyCatalogPricePlaceholders(value, labels) as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => applyCatalogPricePlaceholdersDeep(item, labels)) as T;
+  }
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, nested] of Object.entries(value)) {
+      out[key] = applyCatalogPricePlaceholdersDeep(nested, labels);
+    }
+    return out as T;
+  }
+  return value;
+}
+
+/** Trial + catalog price placeholders for SEO/marketing copy. */
+export async function applyCatalogMarketingPlaceholdersDeep<T>(
+  value: T,
+  locale: Locale = "el",
+): Promise<T> {
+  const [trialDays, priceLabels] = await Promise.all([
+    getTrialDaysFromCatalog(),
+    getCatalogPriceLabels(),
+  ]);
+  const withPrices = applyCatalogPricePlaceholdersDeep(value, priceLabels);
+  return applyTrialDayPlaceholdersDeep(withPrices, trialDays, locale);
 }

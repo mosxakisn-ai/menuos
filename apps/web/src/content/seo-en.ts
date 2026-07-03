@@ -38,9 +38,9 @@ export const SEO_PAGES_EN = {
     breadcrumbLabel: "How it works",
   },
   pricing: {
-    title: "Pricing — QR menu & Live 360° from €9.99/month",
+    title: "Pricing — QR menu & Live 360° from {basicPrice}/month",
     description:
-      "MenuOS pricing: free {trialDaysAdj} trial with Live 360°, Basic €9.99/month, Pro €19.99/month. QR menu, call waiter, live panel — no hidden fees.",
+      "MenuOS pricing: free {trialDaysAdj} trial with Live 360°, Basic {basicPrice}/month, Pro {proPrice}/month. QR menu, call waiter, live panel — no hidden fees.",
     path: "/pricing",
     breadcrumbLabel: "Pricing",
   },

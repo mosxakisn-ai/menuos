@@ -12,10 +12,11 @@ import {
   SEO_QR_MENU_FAQ_EN,
 } from "@/content/seo-en";
 import { getServerLocale } from "@/i18n/server";
-import { getSeoPricingOffers } from "@/lib/plan-pricing-marketing";
-import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
+import {
+  applyCatalogMarketingPlaceholdersDeep,
+  getSeoPricingOffers,
+} from "@/lib/plan-pricing-marketing";
 import { buildPricingOffersSchema, marketingPageSchema } from "@/lib/seo-structured-data";
-import { applyTrialDayPlaceholdersDeep } from "@/lib/trial-marketing";
 
 export type MarketingJsonLdPageKey = keyof typeof SEO_PAGES;
 export type MarketingJsonLdFaqKey = "home" | "qrMenu" | "pricing";
@@ -27,17 +28,13 @@ const FAQ_BY_KEY = {
 } as const;
 
 async function resolveMarketingPage(key: MarketingJsonLdPageKey, locale: "el" | "en") {
-  const trialDays = await getTrialDaysFromCatalog();
-  if (locale === "en") {
-    return applyTrialDayPlaceholdersDeep(SEO_PAGES_EN[key], trialDays, "en");
-  }
-  return applyTrialDayPlaceholdersDeep(SEO_PAGES[key], trialDays, "el");
+  const source = locale === "en" ? SEO_PAGES_EN[key] : SEO_PAGES[key];
+  return applyCatalogMarketingPlaceholdersDeep(source, locale);
 }
 
 async function resolveFaq(faqKey: MarketingJsonLdFaqKey, locale: "el" | "en") {
-  const trialDays = await getTrialDaysFromCatalog();
   const faq = FAQ_BY_KEY[faqKey][locale];
-  return applyTrialDayPlaceholdersDeep(faq, trialDays, locale);
+  return applyCatalogMarketingPlaceholdersDeep(faq, locale);
 }
 
 export async function HomeJsonLd() {

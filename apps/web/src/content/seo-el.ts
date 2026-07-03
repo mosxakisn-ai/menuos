@@ -90,9 +90,9 @@ export const SEO_PAGES = {
     keywords: ["πώς φτιάχνω QR menu", "Live 360", "QR menu βήματα", "ψηφιακό menu οδηγός"],
   },
   pricing: {
-    title: "Τιμές — QR menu & Live 360° από €9.99/μήνα",
+    title: "Τιμές — QR menu & Live 360° από {basicPrice}/μήνα",
     description:
-      "Τιμές MenuOS: δωρεάν δοκιμή {trialDaysGen} με Live 360°, Basic €9.99/μήνα, Pro €19.99/μήνα. QR menu, κλήση σερβιτόρου, live panel — χωρίς κρυφές χρεώσεις.",
+      "Τιμές MenuOS: δωρεάν δοκιμή {trialDaysGen} με Live 360°, Basic {basicPrice}/μήνα, Pro {proPrice}/μήνα. QR menu, κλήση σερβιτόρου, live panel — χωρίς κρυφές χρεώσεις.",
     path: "/pricing",
     breadcrumbLabel: "Τιμές",
     keywords: ["τιμές QR menu", "Live 360 τιμή", "κόστος ψηφιακού menu", "MenuOS pricing"],
@@ -204,47 +204,3 @@ export const SEO_PRICING_FAQ = [
 ] as const;
 
 export const SEO_SITEMAP_ROUTES = Object.values(SEO_PAGES).map((page) => page.path);
-
-export const SEO_LLMS = `# MenuOS (menuos.gr)
-
-> Ψηφιακό menu με QR και Live 360° συντονισμό για εστιατόρια, ξενοδοχεία και bars στην Ελλάδα.
-
-## Τι κάνουμε
-- Online πλατφόρμα για ψηφιακό menu με QR codes
-- MenuOS Live · 360° — live συντονισμός κλήσεων και παραγγελιών από QR
-- Πολυγλωσσικό QR menu (Ελληνικά, English, Deutsch, Français)
-- Online διαχείριση για ενημέρωση τιμών και πιάτων
-- Κλήση σερβιτόρου / room service από το menu
-- Δωρεάν δοκιμή {trialDaysGen}
-- Τιμές: Basic €9.99/μήνα, Pro €19.99/μήνα (Live 360° included)
-
-## Κύριες σελίδες
-- ${SEO_SITE.url}/
-- ${SEO_SITE.url}/qr-menu
-- ${SEO_SITE.url}/live-360
-- ${SEO_SITE.url}/digital-menu
-- ${SEO_SITE.url}/estiatorio/qr-menu
-- ${SEO_SITE.url}/xenodocheio/digital-menu
-- ${SEO_SITE.url}/rodos/qr-menu
-- ${SEO_SITE.url}/santorini/digital-menu
-- ${SEO_SITE.url}/athina/qr-menu
-- ${SEO_SITE.url}/ypiresies
-- ${SEO_SITE.url}/pos-leitourgei
-- ${SEO_SITE.url}/pricing
-- ${SEO_SITE.url}/sxetika
-- ${SEO_SITE.url}/epikoinonia
-- ${SEO_SITE.url}/blog
-- ${SEO_SITE.url}/blog/menuos-live-360
-- ${SEO_SITE.url}/blog/pws-ftiaxno-qr-menu
-- ${SEO_SITE.url}/privacy
-
-## SEO
-- Sitemap: ${SEO_SITE.url}/sitemap.xml
-- English UI: append ?lang=en to any marketing URL
-- Guest QR menus: 4 languages (EL, EN, DE, FR)
-
-## Επικοινωνία
-- Τηλέφωνο: ${SEO_SITE.contactPhone}
-- Email: ${SEO_SITE.contactEmail}
-- Facebook: ${SEO_SITE.contactFacebook}
-`;
