@@ -1,6 +1,6 @@
 import type { MenuImportSection } from "@menuos/shared";
 
-import { geminiGenerateContent } from "@/lib/gemini-fetch";
+import { geminiGenerateContentForOrg } from "@/lib/gemini-request";
 
 const MENU_VISION_PROMPT = `You analyze a restaurant/hotel menu page image.
 
@@ -120,36 +120,40 @@ function extractJsonFromGeminiText(text: string): unknown {
   }
 }
 
-export async function parseMenuPageImageWithGemini(jpeg: Buffer): Promise<MenuImportSection[]> {
+export async function parseMenuPageImageWithGemini(
+  jpeg: Buffer,
+  organizationId: string,
+): Promise<MenuImportSection[]> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) throw new PdfVisionError("GEMINI_API_KEY is not configured.");
 
   const model = geminiModel();
 
-  const res = await geminiGenerateContent(model, apiKey, {
-    contents: [
-      {
-        parts: [
-          { text: MENU_VISION_PROMPT },
-          {
-            inline_data: {
-              mime_type: "image/jpeg",
-              data: jpeg.toString("base64"),
+  const { response: res, data } = await geminiGenerateContentForOrg(
+    organizationId,
+    "vision",
+    model,
+    apiKey,
+    {
+      contents: [
+        {
+          parts: [
+            { text: MENU_VISION_PROMPT },
+            {
+              inline_data: {
+                mime_type: "image/jpeg",
+                data: jpeg.toString("base64"),
+              },
             },
-          },
-        ],
+          ],
+        },
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.1,
       },
-    ],
-    generationConfig: {
-      responseMimeType: "application/json",
-      temperature: 0.1,
     },
-  });
-
-  const data = (await res.json()) as {
-    error?: { message?: string };
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
+  );
 
   if (!res.ok) {
     throw new PdfVisionError(data.error?.message ?? `Gemini HTTP ${res.status}`);

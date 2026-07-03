@@ -10,6 +10,7 @@ import {
 } from "@/lib/pdf-extract";
 import { dashboardCopyFromRequest, dashboardLangFromRequest } from "@/lib/dashboard-request-locale";
 import { logServerDiagnostic } from "@/lib/client-diagnostics-service";
+import { GeminiQuotaExceededError } from "@/lib/gemini-usage-service";
 import { getMenuForOrganization } from "@/lib/venue-access";
 import { isPdfVisionConfigured } from "@/lib/pdf-vision-gemini";
 
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
     const result = await parseUploadedPdfFiles(files, pageSelections, lang, {
       forceVision,
       forceTranslate,
+      organizationId: auth.session!.organizationId,
     });
     return NextResponse.json({
       ...result,
@@ -61,6 +63,15 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("menu-import parse", err);
+    if (err instanceof GeminiQuotaExceededError) {
+      return NextResponse.json(
+        {
+          error: I.geminiQuotaExceeded(err.usage, err.limit),
+          code: "gemini_quota",
+        },
+        { status: 429 },
+      );
+    }
     if (err instanceof PdfTextExtractionError || err instanceof OcrSpaceError) {
       logServerDiagnostic({
         organizationId: auth.session!.organizationId,

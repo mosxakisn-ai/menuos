@@ -1,6 +1,7 @@
 import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/db";
 import { DEMO_VENUE_SLUG, isPaidPlan, organizationHasPaidPlan, type OrganizationActivity } from "@menuos/shared";
 import { getPlanPriceMap, getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
+import { getGeminiUsageSummaries, getTotalGeminiMonthlyUsage } from "@/lib/gemini-usage-service";
 import type { SupervisorOrganizationUpdateInput } from "@/lib/supervisor-schemas";
 
 export type SupervisorOrganizationUser = {
@@ -38,6 +39,9 @@ export type SupervisorOrganizationRow = {
   venueCount: number;
   menuCount: number;
   itemCount: number;
+  geminiTokensThisMonth: number;
+  geminiTokenLimit: number | null;
+  geminiTokenLimitOverride: number | null;
   venues: SupervisorOrganizationVenue[];
   users: SupervisorOrganizationUser[];
 };
@@ -55,6 +59,7 @@ export type SupervisorOverview = {
   estimatedMrr: number;
   totalVenues: number;
   totalItems: number;
+  geminiTokensThisMonth: number;
   byPlan: Record<string, number>;
 };
 
@@ -115,6 +120,7 @@ function mapOrganizationRow(
     activity: OrganizationActivity | null;
     city: string | null;
     notes: string | null;
+    geminiTokenLimitOverride: number | null;
     createdAt: Date;
     users: { email: string; name: string; role: string; createdAt: Date }[];
     subscription: {
@@ -133,6 +139,7 @@ function mapOrganizationRow(
     }[];
   },
   isDemo: boolean,
+  gemini?: { usage: number; limit: number | null; override: number | null },
 ): SupervisorOrganizationRow {
   const admin = pickPrimaryOrgUser(org.users);
   const { menuCount, itemCount } = countMenusAndItems(org.venues);
@@ -147,6 +154,9 @@ function mapOrganizationRow(
     activity: org.activity,
     city: org.city,
     notes: org.notes,
+    geminiTokensThisMonth: gemini?.usage ?? 0,
+    geminiTokenLimit: gemini?.limit ?? null,
+    geminiTokenLimitOverride: gemini?.override ?? org.geminiTokenLimitOverride,
     createdAt: org.createdAt.toISOString(),
     isDemo,
     adminEmail: admin?.email ?? "—",
@@ -194,7 +204,7 @@ export async function getSupervisorOverview(): Promise<SupervisorOverview> {
   const demoIds = await demoOrganizationIds();
   const excludeDemo = excludeDemoOrganizations(demoIds);
 
-  const [orgs, subs, venuesCount, itemsCount] = await Promise.all([
+  const [orgs, subs, venuesCount, itemsCount, geminiTokensThisMonth] = await Promise.all([
     prisma.organization.findMany({
       select: { id: true, createdAt: true },
     }),
@@ -205,6 +215,7 @@ export async function getSupervisorOverview(): Promise<SupervisorOverview> {
     prisma.item.count({
       where: { category: { menu: { venue: excludeDemo } } },
     }),
+    getTotalGeminiMonthlyUsage(),
   ]);
 
   const realOrgs = orgs.filter((o) => !demoIds.has(o.id));
@@ -262,8 +273,23 @@ export async function getSupervisorOverview(): Promise<SupervisorOverview> {
     estimatedMrr: Math.round(estimatedMrr * 100) / 100,
     totalVenues: venuesCount,
     totalItems: itemsCount,
+    geminiTokensThisMonth,
     byPlan,
   };
+}
+
+async function attachGeminiSummaries(rows: SupervisorOrganizationRow[]): Promise<SupervisorOrganizationRow[]> {
+  const summaries = await getGeminiUsageSummaries(rows.map((row) => row.id));
+  return rows.map((row) => {
+    const summary = summaries.get(row.id);
+    if (!summary) return row;
+    return {
+      ...row,
+      geminiTokensThisMonth: summary.usage,
+      geminiTokenLimit: summary.limit,
+      geminiTokenLimitOverride: summary.override,
+    };
+  });
 }
 
 export async function listOrganizationsForSupervisor(input?: {
@@ -305,7 +331,7 @@ export async function listOrganizationsForSupervisor(input?: {
     rows = rows.filter((row) => row.status.toUpperCase() === input.status!.toUpperCase());
   }
 
-  return rows;
+  return attachGeminiSummaries(rows);
 }
 
 export async function getOrganizationForSupervisor(
@@ -317,7 +343,9 @@ export async function getOrganizationForSupervisor(
     include: orgInclude,
   });
   if (!org) return null;
-  return mapOrganizationRow(org, demoIds.has(org.id));
+  const row = mapOrganizationRow(org, demoIds.has(org.id));
+  const [enriched] = await attachGeminiSummaries([row]);
+  return enriched ?? row;
 }
 
 export async function updateOrganizationForSupervisor(
@@ -335,6 +363,7 @@ export async function updateOrganizationForSupervisor(
     activity?: OrganizationActivity | null;
     city?: string | null;
     notes?: string | null;
+    geminiTokenLimitOverride?: number | null;
   } = {};
   if (input.name !== undefined) profileData.name = input.name;
   if (input.phone !== undefined) profileData.phone = input.phone;
@@ -343,6 +372,9 @@ export async function updateOrganizationForSupervisor(
   if (input.activity !== undefined) profileData.activity = input.activity;
   if (input.city !== undefined) profileData.city = input.city;
   if (input.notes !== undefined) profileData.notes = input.notes;
+  if (input.geminiTokenLimitOverride !== undefined) {
+    profileData.geminiTokenLimitOverride = input.geminiTokenLimitOverride;
+  }
 
   if (Object.keys(profileData).length > 0) {
     await prisma.organization.update({ where: { id }, data: profileData });

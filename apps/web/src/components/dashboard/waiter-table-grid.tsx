@@ -365,8 +365,8 @@ export function WaiterTableGrid({
           ) : null}
         </div>
       ) : null}
-      <p className={cn("text-xs text-slate-500 sm:hidden", !hasConfiguredSpots && "hidden")}>
-        {W.tableGridLegendHint}
+      <p className={cn("text-xs leading-relaxed text-slate-500", !hasConfiguredSpots && "hidden")}>
+        {W.tableGridLegendHint} {W.tableGridLegendAutoNote}
       </p>
       {tiles.length === 0 && emptyMessage ? (
         <p className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">

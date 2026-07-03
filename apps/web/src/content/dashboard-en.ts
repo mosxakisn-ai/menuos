@@ -42,6 +42,41 @@ export const DASHBOARD_EN = {
     geminiStepDone: "Complete",
     analyzeButtonAi: "Analyze with Gemini AI",
     processingTitleGemini: "Analyzing with Gemini AI",
+    processingTimerSeconds: (n: number) => `${n}s`,
+    processingTimerMinutes: (m: number, s: number) => `${m}:${String(s).padStart(2, "0")}`,
+    processingTimerHint: "Usually 30–90 sec — depends on your PDF",
+    processingActivity: {
+      scan: [
+        "Opening PDF…",
+        "Scanning pages…",
+        "Skipping covers & logos…",
+        "Finding menu pages…",
+      ],
+      extract: [
+        "Reading text…",
+        "Detecting columns & prices…",
+        "OCR on scanned pages…",
+        "Checking catalog layout…",
+      ],
+      extractGemini: [
+        "Gemini AI: reading layout…",
+        "OCR & digital text…",
+        "Finding dishes & prices…",
+        "Checking page structure…",
+      ],
+      ai: [
+        "Translating names to Greek…",
+        "Checking Latin-only names…",
+        "Gemini AI: categories & descriptions…",
+        "Final translation pass…",
+      ],
+      parse: [
+        "Grouping categories…",
+        "Checking prices & currency…",
+        "Checking duplicates…",
+        "Building import draft…",
+      ],
+    } as Record<string, string[]>,
     processFlow: {
       scan: "Scan",
       analyze: "Analyze",
@@ -450,6 +485,7 @@ export const DASHBOARD_EN = {
     },
     tableGridTitle: "Spot map",
     tableGridLegendHint: "Status is shown on each card.",
+    tableGridLegendAutoNote: "Labels update automatically — no setup needed.",
     tableStateLabels: {
       idle: "Quiet",
       guest_call: "Guest call",
@@ -524,9 +560,9 @@ export const DASHBOARD_EN = {
     qr: {
       title: "QR Codes",
       description:
-        "Download or preview QR for each spot. Configure tables in Settings → Tables.",
+        "Download or preview QR for each spot. Configure spots in Settings → Spots.",
       configureSpotsLink: "Configure tables →",
-      configureSpotsEmpty: "No spots yet. Set them up in Settings → Tables.",
+      configureSpotsEmpty: "No spots yet. Set them up in Settings → Spots.",
       needVenueTitle: "You need a venue first",
       needVenueDesc: "Create a venue and add items before generating QR codes.",
       emptyCatalogTitle: "Catalog is empty",
@@ -621,14 +657,15 @@ export const DASHBOARD_EN = {
     },
     settings: {
       title: "Settings",
-      description: "Account, staff, departments and table board.",
+      description: "Account, spots, staff and department screens.",
       tabs: {
         general: "General",
         services: "Staff",
         kitchen: "Kitchen",
         bar: "Bar",
-        tables: "Tables",
+        tables: "Spots",
       },
+      setupLinksTitle: "Setup:",
       demoBadge: "Sample — UI preview",
       personnel: {
         title: "Staff",
@@ -763,10 +800,15 @@ export const DASHBOARD_EN = {
       renameScreenFailed: "Could not rename screen.",
       screenNameTaken: "A screen with this name already exists.",
       tables: {
-        title: "Tables",
-        description: "Configure tables, rooms and sunbeds. Download QR codes from the QR codes page.",
-        gridPreview: "Spot map colors",
-        gridHint: "Each color on the waiter board shows what is happening at that table.",
+        title: "Spots",
+        description:
+          "Add tables, rooms and sunbeds. They appear on the waiter map and in QR codes.",
+        zoneHint:
+          "Zones are created automatically from the name: «Beach-1», «Beach-2» → zone «Beach». No dash = one zone.",
+        gridPreview: "What the colors mean",
+        gridHint: "Colors update live on the waiter map — you do not configure them here.",
+        legendAutoNote:
+          "Labels (Quiet, Guest call, Ready…) appear automatically — no setup needed.",
         qrLink: "Download QR codes →",
         yourVenueSpots: (name: string, count: number) => `${name} — ${count} spots`,
       },
@@ -989,6 +1031,8 @@ export const DASHBOARD_EN = {
       translateSuccess: (n: number) =>
         n === 1 ? "Translated 1 name to Greek." : `Translated ${n} names to Greek.`,
       translateFailed: "AI translation failed. Try again or fill in Greek manually.",
+      geminiQuotaExceeded: (used: number, limit: number) =>
+        `You reached the monthly Gemini AI limit (${Math.round(used / 1000)}k / ${Math.round(limit / 1000)}k tokens). Try again next month or contact us.`,
       applySuccess: (items: string, categories: number) =>
         `Imported ${items} into ${categories} categories. Edit photos and prices in the catalog.`,
     },

@@ -12,6 +12,7 @@ import {
   shouldRunPdfVision,
 } from "@/lib/pdf-vision-gemini";
 import type { PdfImportPipelineResult } from "@/lib/pdf-import-pipeline";
+import { GeminiQuotaExceededError } from "@/lib/gemini-usage-service";
 
 export type PdfImportFileContext = {
   name: string;
@@ -22,7 +23,7 @@ export type PdfImportFileContext = {
 export async function enhancePdfImportWithVision(
   result: PdfImportPipelineResult,
   fileContexts: PdfImportFileContext[],
-  options?: { forceVision?: boolean },
+  options?: { forceVision?: boolean; organizationId?: string },
 ): Promise<PdfImportPipelineResult> {
   if (
     !shouldRunPdfVision({
@@ -34,6 +35,11 @@ export async function enhancePdfImportWithVision(
     return result;
   }
 
+  if (!options?.organizationId) {
+    console.warn("pdf-import vision skipped — missing organizationId");
+    return result;
+  }
+
   const allSections: MenuImportSection[] = [];
   let visionPages = 0;
 
@@ -41,10 +47,11 @@ export async function enhancePdfImportWithVision(
     for (const pageNum of file.ocrPageNumbers) {
       try {
         const jpeg = await renderPdfPageToJpeg(file.buffer, pageNum);
-        const sections = await parseMenuPageImageWithGemini(jpeg);
+        const sections = await parseMenuPageImageWithGemini(jpeg, options!.organizationId!);
         allSections.push(...sections);
         visionPages += 1;
       } catch (err) {
+        if (err instanceof GeminiQuotaExceededError) throw err;
         console.warn("pdf-import vision page skipped", file.name, pageNum, err);
       }
     }

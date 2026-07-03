@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
 import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
-import type { SettingsVenue } from "@/components/dashboard/settings-form";
+import type { SettingsTabId } from "@/components/dashboard/settings-tabs";
+import { cn } from "@/lib/utils";
 
 type VenueSpotVenue = { id: string; name: string; slug: string };
 
@@ -132,11 +133,32 @@ export function SettingsTablesPanel({ venues }: { venues: VenueSpotVenue[] }) {
   return <VenueSpotsSetup venues={venues} />;
 }
 
-export function SettingsServicesPanel({
-  venues,
-}: {
-  venues: (Pick<SettingsVenue, "id" | "name" | "slug"> & { staffToken?: string })[];
-}) {
+const SETUP_LINK_TABS: SettingsTabId[] = ["tables", "services", "kitchen", "bar"];
+
+export function SettingsSetupLinks({ className }: { className?: string }) {
+  const { d } = useDashboardCopy();
+  const S = d.pages.settings;
+
+  return (
+    <nav
+      className={cn("flex flex-wrap items-center gap-x-2 gap-y-1.5", className)}
+      aria-label={S.setupLinksTitle}
+    >
+      <span className="text-xs font-medium text-slate-500 sm:text-sm">{S.setupLinksTitle}</span>
+      {SETUP_LINK_TABS.map((tab) => (
+        <a
+          key={tab}
+          href={`/dashboard/settings?tab=${tab}`}
+          className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-brand-blue transition hover:border-brand-blue/30 hover:bg-blue-50 sm:px-3 sm:py-1.5 sm:text-sm"
+        >
+          {S.tabs[tab]}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
+export function SettingsGeneralExtrasPanel() {
   const { d } = useDashboardCopy();
   const S = d.pages.settings;
 
@@ -172,6 +194,9 @@ export function SettingsServicesPanel({
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </p>
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <SettingsSetupLinks />
+        </div>
       </div>
     </div>
   );

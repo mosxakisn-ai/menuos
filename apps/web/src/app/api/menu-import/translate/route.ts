@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requirePdfImportPlan } from "@/lib/api-auth";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 import { logServerDiagnostic } from "@/lib/client-diagnostics-service";
+import { GeminiQuotaExceededError } from "@/lib/gemini-usage-service";
 import {
   draftHasLatinOnlyNames,
   normalizeImportDraft,
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
   try {
     const { draft: translated, translatedCount } = await translateImportDraftToGreek(draft, {
       force: true,
+      organizationId: auth.session!.organizationId,
     });
     return NextResponse.json({
       draft: normalizeImportDraft(translated),
@@ -55,6 +57,15 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("menu-import translate", err);
+    if (err instanceof GeminiQuotaExceededError) {
+      return NextResponse.json(
+        {
+          error: I.geminiQuotaExceeded(err.usage, err.limit),
+          code: "gemini_quota",
+        },
+        { status: 429 },
+      );
+    }
     logServerDiagnostic({
       organizationId: auth.session!.organizationId,
       userId: auth.session!.userId,

@@ -15,6 +15,8 @@ export type PlanDefinition = {
   maxVenues: number;
   maxMenusPerVenue: number | null;
   maxItems: number | null;
+  /** Monthly Gemini token budget for PDF AI import. null = unlimited. */
+  maxGeminiTokensPerMonth: number | null;
   features: string[];
 };
 
@@ -26,6 +28,7 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlanId, PlanDefinition> = {
     maxVenues: 1,
     maxMenusPerVenue: 1,
     maxItems: 50,
+    maxGeminiTokensPerMonth: 0,
     features: ["1 κατάστημα", "1 κατάλογος", "50 πιάτα", "QR codes", "Πολλαπλές γλώσσες"],
   },
   BASIC: {
@@ -35,6 +38,7 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlanId, PlanDefinition> = {
     maxVenues: 1,
     maxMenusPerVenue: 3,
     maxItems: null,
+    maxGeminiTokensPerMonth: 0,
     features: ["1 κατάστημα", "3 κατάλογοι", "Απεριόριστα πιάτα", "QR codes", "Πολλαπλές γλώσσες", "Κλήση σερβιτόρου"],
   },
   PRO: {
@@ -44,6 +48,7 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlanId, PlanDefinition> = {
     maxVenues: 3,
     maxMenusPerVenue: null,
     maxItems: null,
+    maxGeminiTokensPerMonth: 500_000,
     features: ["3 καταστήματα", "Απεριόριστοι κατάλογοι", "Εισαγωγή PDF", "Πολλαπλές γλώσσες", "Προτεραιότητα", "Κλήση σερβιτόρου"],
   },
   ENTERPRISE: {
@@ -53,6 +58,7 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlanId, PlanDefinition> = {
     maxVenues: 999,
     maxMenusPerVenue: null,
     maxItems: null,
+    maxGeminiTokensPerMonth: null,
     features: ["Δικό σας domain", "White-label", "Προτεραιότητα υποστήριξης"],
   },
 };

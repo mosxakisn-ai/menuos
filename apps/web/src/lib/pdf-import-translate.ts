@@ -1,3 +1,4 @@
+import { GeminiQuotaExceededError } from "@/lib/gemini-usage-service";
 import { draftHasLatinOnlyNames, importDraftNeedsGreekTranslation } from "@/lib/menu-import-review";
 import {
   PdfTranslateError,
@@ -8,7 +9,7 @@ import type { PdfImportPipelineResult } from "@/lib/pdf-import-pipeline";
 
 export async function enhancePdfImportWithTranslation(
   result: PdfImportPipelineResult,
-  options?: { forceTranslate?: boolean },
+  options?: { forceTranslate?: boolean; organizationId?: string },
 ): Promise<
   PdfImportPipelineResult & {
     translationApplied?: boolean;
@@ -19,10 +20,15 @@ export async function enhancePdfImportWithTranslation(
   if (!options?.forceTranslate && !importDraftNeedsGreekTranslation(result)) {
     return result;
   }
+  if (!options?.organizationId) {
+    console.warn("pdf-import translate skipped — missing organizationId");
+    return result;
+  }
 
   try {
     const { draft: translated, translatedCount } = await translateImportDraftToGreek(result, {
       force: options?.forceTranslate,
+      organizationId: options?.organizationId,
     });
     if (translatedCount === 0) {
       const needsTranslation =
@@ -51,6 +57,7 @@ export async function enhancePdfImportWithTranslation(
       translatedCount,
     };
   } catch (err) {
+    if (err instanceof GeminiQuotaExceededError) throw err;
     console.warn("pdf-import translate skipped", err);
     if (options?.forceTranslate) throw err;
     if (importDraftNeedsGreekTranslation(result)) {

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import type { SupervisorOrganizationRow } from "@/lib/supervisor-service";
+import { formatGeminiTokenCount } from "@/lib/gemini-usage-service";
 import {
   stripeCustomerDashboardUrl,
   stripeSubscriptionDashboardUrl,
@@ -70,6 +71,9 @@ export function SupervisorOrganizationEditor({
   const [periodEnd, setPeriodEnd] = useState(
     initial.currentPeriodEnd ? initial.currentPeriodEnd.slice(0, 10) : "",
   );
+  const [geminiLimitOverride, setGeminiLimitOverride] = useState(
+    initial.geminiTokenLimitOverride != null ? String(initial.geminiTokenLimitOverride) : "",
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +98,11 @@ export function SupervisorOrganizationEditor({
       setPlan(data.organization.plan);
       setPeriodEnd(
         data.organization.currentPeriodEnd ? data.organization.currentPeriodEnd.slice(0, 10) : "",
+      );
+      setGeminiLimitOverride(
+        data.organization.geminiTokenLimitOverride != null
+          ? String(data.organization.geminiTokenLimitOverride)
+          : "",
       );
     } catch {
       setError("Αποτυχία φόρτωσης στοιχείων.");
@@ -135,6 +144,11 @@ export function SupervisorOrganizationEditor({
         setPlan(data.organization.plan);
         setPeriodEnd(
           data.organization.currentPeriodEnd ? data.organization.currentPeriodEnd.slice(0, 10) : "",
+        );
+        setGeminiLimitOverride(
+          data.organization.geminiTokenLimitOverride != null
+            ? String(data.organization.geminiTokenLimitOverride)
+            : "",
         );
         onSaved(data.organization);
       } else {
@@ -364,6 +378,12 @@ export function SupervisorOrganizationEditor({
               <DetailRow label="Venues / Μενού / Πιάτα">
                 {organization.venueCount} / {organization.menuCount} / {organization.itemCount}
               </DetailRow>
+              <DetailRow label="Gemini (μήνας)">
+                {formatGeminiTokenCount(organization.geminiTokensThisMonth)}
+                {organization.geminiTokenLimit === null
+                  ? " / ∞"
+                  : ` / ${formatGeminiTokenCount(organization.geminiTokenLimit)}`}
+              </DetailRow>
               <DetailRow label="Stripe">
                 <div className="flex flex-wrap gap-3">
                   {organization.stripeCustomerId ? (
@@ -417,6 +437,39 @@ export function SupervisorOrganizationEditor({
                 </p>
               </label>
             ) : null}
+            <div className="rounded-xl border border-slate-200 bg-brand-surface/40 p-4">
+              <p className="text-sm font-semibold text-brand-navy">Όριο Gemini tokens</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Override ανά πελάτη — κενό = όριο από το πακέτο (Pro: 500k/μήνα).
+              </p>
+              <label className="mt-3 block text-sm">
+                <span className={dashboardLabelClass}>Custom όριο tokens/μήνα</span>
+                <input
+                  className={dashboardFieldClass}
+                  type="number"
+                  min={0}
+                  value={geminiLimitOverride}
+                  onChange={(e) => setGeminiLimitOverride(e.target.value)}
+                  placeholder="κενό = από πακέτο"
+                />
+              </label>
+              <button
+                type="button"
+                disabled={saving}
+                className={`mt-3 ${buttonClass("secondary", "sm")}`}
+                onClick={() => {
+                  const trimmed = geminiLimitOverride.trim();
+                  const parsed = trimmed === "" ? null : Number.parseInt(trimmed, 10);
+                  if (parsed !== null && (!Number.isFinite(parsed) || parsed < 0)) {
+                    setError("Μη έγκυρο όριο tokens.");
+                    return;
+                  }
+                  void save({ geminiTokenLimitOverride: parsed }, "Αποθήκευση ορίου Gemini.");
+                }}
+              >
+                {saving ? "Αποθήκευση…" : "Αποθήκευση ορίου"}
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"

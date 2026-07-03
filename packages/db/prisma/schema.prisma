@@ -113,6 +113,7 @@ model Organization {
   activity  OrganizationActivity?
   city      String?
   notes     String?
+  geminiTokenLimitOverride Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -121,6 +122,7 @@ model Organization {
   subscription Subscription?
   pushSubscriptions PushSubscription[]
   diagnosticReports ClientDiagnosticReport[]
+  geminiUsageEvents GeminiUsageEvent[]
 }
 
 model User {
@@ -444,12 +446,30 @@ model PlanCatalog {
   maxVenues          Int
   maxMenusPerVenue   Int?
   maxItems           Int?
+  maxGeminiTokensPerMonth Int?
   ctaLabel           String?
   badge              String?
   highlighted        Boolean          @default(false)
   visibleOnPricing   Boolean          @default(true)
   trialDays          Int?
   updatedAt          DateTime         @updatedAt
+}
+
+model GeminiUsageEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  operation      String
+  model          String
+  inputTokens    Int      @default(0)
+  outputTokens   Int      @default(0)
+  totalTokens    Int      @default(0)
+  success        Boolean
+  httpStatus     Int?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
 }
 
 model StripeWebhookEvent {

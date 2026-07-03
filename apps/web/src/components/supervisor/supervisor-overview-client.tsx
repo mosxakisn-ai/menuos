@@ -8,6 +8,7 @@ import {
   Building2,
   CreditCard,
   RefreshCw,
+  Sparkles,
   UserPlus,
   Users,
   UtensilsCrossed,
@@ -16,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
 import type { SupervisorOrganizationRow, SupervisorOverview } from "@/lib/supervisor-service";
+import { formatGeminiTokenCount } from "@/lib/gemini-usage-service";
 import { cn } from "@/lib/utils";
 
 const PLAN_COLORS: Record<string, string> = {
@@ -153,6 +155,7 @@ export function SupervisorOverviewClient() {
 
   const quickLinks = [
     { href: "/supervisor/organizations", label: "Πελάτες", desc: "CRM & συνδρομές", icon: Building2 },
+    { href: "/supervisor/gemini", label: "Gemini AI", desc: "Tokens ανά πελάτη", icon: Sparkles },
     { href: "/supervisor/subscriptions", label: "Πακέτα", desc: "Τιμές & features", icon: CreditCard },
     { href: "/supervisor/users", label: "Ομάδα Ops", desc: "Πρόσβαση supervisor", icon: Users },
   ];
@@ -211,7 +214,7 @@ export function SupervisorOverviewClient() {
         </div>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <KpiCard
           label="Πελάτες"
           value={data?.organizationsReal ?? 0}
@@ -242,6 +245,14 @@ export function SupervisorOverviewClient() {
           sub="Σε όλη την πλατφόρμα"
           icon={UtensilsCrossed}
           accent="bg-gradient-to-br from-indigo-500 to-violet-600"
+          loading={loading}
+        />
+        <KpiCard
+          label="Gemini tokens (μήνας)"
+          value={loading ? "…" : formatGeminiTokenCount(data?.geminiTokensThisMonth ?? 0)}
+          sub="PDF import AI — όλοι οι πελάτες"
+          icon={Sparkles}
+          accent="bg-gradient-to-br from-violet-500 to-brand-blue"
           loading={loading}
         />
       </div>

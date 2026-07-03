@@ -1,5 +1,5 @@
 import { isLatinOnlyMenuText, type MenuPdfParseResult } from "@menuos/shared";
-import { geminiGenerateContent } from "@/lib/gemini-fetch";
+import { geminiGenerateContentForOrg } from "@/lib/gemini-request";
 import { draftHasLatinOnlyNames, importDraftNeedsGreekTranslation } from "@/lib/menu-import-review";
 
 const TRANSLATE_PROMPT = `You translate restaurant/hotel menu names from English to Greek for a Greek QR menu app.
@@ -66,7 +66,10 @@ function extractJsonFromGeminiText(text: string): unknown {
   }
 }
 
-async function translateBatch(entries: TranslateEntry[]): Promise<Map<string, string>> {
+async function translateBatch(
+  entries: TranslateEntry[],
+  organizationId: string,
+): Promise<Map<string, string>> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) throw new PdfTranslateError("GEMINI_API_KEY is not configured.");
 
@@ -74,18 +77,19 @@ async function translateBatch(entries: TranslateEntry[]): Promise<Map<string, st
   const payload = entries.map((e) => ({ id: e.id, nameEn: e.nameEn }));
   const userText = `${TRANSLATE_PROMPT}\n\nTranslate these menu entries:\n${JSON.stringify(payload)}`;
 
-  const res = await geminiGenerateContent(model, apiKey, {
-    contents: [{ parts: [{ text: userText }] }],
-    generationConfig: {
-      responseMimeType: "application/json",
-      temperature: 0.15,
+  const { response: res, data } = await geminiGenerateContentForOrg(
+    organizationId,
+    "translate",
+    model,
+    apiKey,
+    {
+      contents: [{ parts: [{ text: userText }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.15,
+      },
     },
-  });
-
-  const data = (await res.json()) as {
-    error?: { message?: string };
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
+  );
 
   if (!res.ok) {
     throw new PdfTranslateError(data.error?.message ?? `Gemini HTTP ${res.status}`);
@@ -116,7 +120,7 @@ const BATCH_SIZE = 60;
 
 export async function translateImportDraftToGreek(
   draft: MenuPdfParseResult,
-  options?: { force?: boolean },
+  options?: { force?: boolean; organizationId?: string },
 ): Promise<{ draft: MenuPdfParseResult; translatedCount: number; untranslatedCount: number }> {
   const shouldRun =
     options?.force === true
@@ -132,10 +136,15 @@ export async function translateImportDraftToGreek(
     return { draft, translatedCount: 0, untranslatedCount: 0 };
   }
 
+  const organizationId = options?.organizationId;
+  if (!organizationId) {
+    throw new PdfTranslateError("organizationId is required for Gemini translation.");
+  }
+
   const translations = new Map<string, string>();
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
     const batch = entries.slice(i, i + BATCH_SIZE);
-    const batchResult = await translateBatch(batch);
+    const batchResult = await translateBatch(batch, organizationId);
     for (const [id, nameGr] of batchResult) {
       translations.set(id, nameGr);
     }

@@ -9,7 +9,14 @@ import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard
 import { SupervisorOrganizationEditor } from "@/components/supervisor/supervisor-organization-editor";
 import { stripeCustomerDashboardUrl } from "@/lib/stripe-dashboard-urls";
 import type { SupervisorOrganizationRow } from "@/lib/supervisor-service";
+import { formatGeminiTokenCount } from "@/lib/gemini-usage-service";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
+
+function formatGeminiUsageCell(row: SupervisorOrganizationRow): string {
+  const used = formatGeminiTokenCount(row.geminiTokensThisMonth);
+  if (row.geminiTokenLimit === null) return `${used} / ∞`;
+  return `${used} / ${formatGeminiTokenCount(row.geminiTokenLimit)}`;
+}
 
 function formatDate(iso: string | null) {
   if (!iso) return "—";
@@ -119,6 +126,7 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
                     <>
                       <th className="px-4 py-3">Venues</th>
                       <th className="px-4 py-3">Πιάτα</th>
+                      <th className="px-4 py-3">Gemini</th>
                     </>
                   )}
                   <th className="px-4 py-3 text-right">Ενέργειες</th>
@@ -170,6 +178,7 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
                       <>
                         <td className="px-4 py-3 text-slate-600">{row.venueCount}</td>
                         <td className="px-4 py-3 text-slate-600">{row.itemCount}</td>
+                        <td className="px-4 py-3 tabular-nums text-slate-600">{formatGeminiUsageCell(row)}</td>
                       </>
                     )}
                     <td className="px-4 py-3 text-right">

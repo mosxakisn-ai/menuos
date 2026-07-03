@@ -45,6 +45,9 @@ function PlanEditor({
   const [maxVenues, setMaxVenues] = useState(String(plan.maxVenues));
   const [maxMenus, setMaxMenus] = useState(plan.maxMenusPerVenue === null ? "" : String(plan.maxMenusPerVenue));
   const [maxItems, setMaxItems] = useState(plan.maxItems === null ? "" : String(plan.maxItems));
+  const [maxGeminiTokens, setMaxGeminiTokens] = useState(
+    plan.maxGeminiTokensPerMonth === null ? "" : String(plan.maxGeminiTokensPerMonth),
+  );
   const [ctaLabel, setCtaLabel] = useState(plan.ctaLabel ?? "");
   const [badge, setBadge] = useState(plan.badge ?? "");
   const [highlighted, setHighlighted] = useState(plan.highlighted);
@@ -97,6 +100,12 @@ function PlanEditor({
       setSaving(false);
       return;
     }
+    const parsedGeminiTokens = parseOptionalLimit(maxGeminiTokens);
+    if (parsedGeminiTokens === "invalid") {
+      setError("Μη έγκυρο όριο Gemini tokens.");
+      setSaving(false);
+      return;
+    }
     let parsedTrialDays: number | null = null;
     if (trialDays.trim()) {
       parsedTrialDays = Number.parseInt(trialDays, 10);
@@ -121,6 +130,7 @@ function PlanEditor({
           maxVenues: parsedVenues,
           maxMenusPerVenue: parsedMenus,
           maxItems: parsedItems,
+          maxGeminiTokensPerMonth: parsedGeminiTokens,
           ctaLabel: ctaLabel.trim() || null,
           badge: badge.trim() || null,
           highlighted,
@@ -255,13 +265,14 @@ function PlanEditor({
                 />
               </label>
               <label className="block text-sm">
-                <span className="text-xs text-slate-500">Πιάτα (κενό = απεριόριστο)</span>
+                <span className="text-xs text-slate-500">Gemini tokens/μήνα (κενό = απεριόριστο)</span>
                 <input
                   className={dashboardFieldClass}
                   type="number"
-                  min={1}
-                  value={maxItems}
-                  onChange={(e) => setMaxItems(e.target.value)}
+                  min={0}
+                  value={maxGeminiTokens}
+                  onChange={(e) => setMaxGeminiTokens(e.target.value)}
+                  placeholder="π.χ. 500000"
                 />
               </label>
             </div>
@@ -403,6 +414,12 @@ export function SupervisorPlansClient() {
                       <p>{plan.maxVenues} κατ.</p>
                       <p>{formatLimit(plan.maxMenusPerVenue)} cat.</p>
                       <p>{formatLimit(plan.maxItems)} πιάτα</p>
+                      <p>
+                        Gemini:{" "}
+                        {plan.maxGeminiTokensPerMonth === null
+                          ? "∞"
+                          : `${Math.round(plan.maxGeminiTokensPerMonth / 1000)}k tokens/μήνα`}
+                      </p>
                     </td>
                     <td className="px-4 py-3 text-slate-600">{plan.features.length}</td>
                     <td className="px-4 py-3 text-xs text-slate-600">

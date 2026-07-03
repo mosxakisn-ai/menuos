@@ -19,6 +19,9 @@ function resolveSettingsTab(value: string | null, allowedTabs: readonly Settings
   if (value === "waiters" || value === "personnel") {
     return allowedTabs.includes("services") ? "services" : "general";
   }
+  if (value === "spots" || value === "seats") {
+    return allowedTabs.includes("tables") ? "tables" : "general";
+  }
   if (value && allowedTabs.includes(value as SettingsTabId)) {
     return value as SettingsTabId;
   }

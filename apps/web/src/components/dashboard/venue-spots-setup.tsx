@@ -189,6 +189,9 @@ export function VenueSpotsSetup({
             {S.tables.qrLink}
           </a>
         </div>
+        <p className="mt-4 rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2.5 text-sm leading-relaxed text-slate-600">
+          {S.tables.zoneHint}
+        </p>
 
         <DashboardToolbar className="mt-6">
           <label className="block min-w-[12rem] flex-1 sm:max-w-md">
@@ -377,6 +380,7 @@ export function VenueSpotsSetup({
       <div className={dashboardCardClass}>
         <h2 className="font-semibold text-brand-navy">{S.tables.gridPreview}</h2>
         <p className="mt-2 text-sm text-slate-600">{S.tables.gridHint}</p>
+        <p className="mt-2 text-xs leading-relaxed text-slate-500">{S.tables.legendAutoNote}</p>
         <div className="mt-4">
           <TableGridLegend stateLabels={demo.tableStateLabels} />
         </div>

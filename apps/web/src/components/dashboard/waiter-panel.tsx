@@ -22,6 +22,7 @@ import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
 import { cn } from "@/lib/utils";
+import { SettingsSetupLinks } from "@/components/dashboard/settings-staff-panels";
 
 type Venue = { id: string; name: string; slug?: string };
 type VenueSpot = { id: string; type: VenueSpotType; label: string };
@@ -403,9 +404,10 @@ export function WaiterPanel({
       ) : null}
 
       {isManagerView ? (
-        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
-          {W.managerViewBadge}
-        </p>
+        <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+          <p className="text-xs text-slate-600 sm:text-sm">{W.managerViewBadge}</p>
+          <SettingsSetupLinks />
+        </div>
       ) : staffMember ? (
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
           {W.staffViewBadge(staffMember.name, formatStaffStationsForLang(staffMember.stations, lang))}

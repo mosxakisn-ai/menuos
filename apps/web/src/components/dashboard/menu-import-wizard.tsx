@@ -149,6 +149,12 @@ export function MenuImportWizard({
   const [pages, setPages] = useState<PdfPagePreview[]>([]);
   const [pipeline, setPipeline] = useState<PipelineStep[]>(initialPipeline);
   const [progress, setProgress] = useState(0);
+  const [processingStartedAt, setProcessingStartedAt] = useState<number | null>(null);
+
+  const processingActivityMap = useMemo(
+    () => W.processingActivity,
+    [W.processingActivity],
+  );
 
   useEffect(() => {
     if (phase === "upload") {
@@ -214,6 +220,7 @@ export function MenuImportWizard({
     setPhase("upload");
     setPipeline(initialPipeline);
     setProgress(0);
+    setProcessingStartedAt(null);
     setAdvancedOpen(false);
     setHideEmptyCategories(true);
     setShowIssuesOnly(false);
@@ -330,6 +337,7 @@ export function MenuImportWizard({
     } else {
       setPhase("processing");
       setFlash(null);
+      setProcessingStartedAt(Date.now());
       setPipeline(initialPipeline.map((s) => ({ ...s, status: s.id === "scan" ? "active" : "pending" })));
       setProgress(5);
     }
@@ -365,6 +373,7 @@ export function MenuImportWizard({
           })),
         );
         setPhase("upload");
+        setProcessingStartedAt(null);
         setAdvancedOpen(true);
         setFlash({
           type: "error",
@@ -380,11 +389,7 @@ export function MenuImportWizard({
             return {
               ...s,
               status: "active",
-              detail: forceVision
-                ? W.visionRetrying
-                : geminiConfigured
-                  ? W.geminiProcessingDetail
-                  : W.extractDetail,
+              detail: forceVision ? W.visionRetrying : undefined,
             };
           }
           return s;
@@ -407,9 +412,7 @@ export function MenuImportWizard({
             setPipeline((p) =>
               p.map((s) => {
                 if (s.id === "extract") return { ...s, status: "done", detail: undefined };
-                if (s.id === "ai") {
-                  return { ...s, status: "active", detail: W.geminiProcessingDetail };
-                }
+                if (s.id === "ai") return { ...s, status: "active" };
                 return s;
               }),
             );
@@ -440,6 +443,7 @@ export function MenuImportWizard({
           })),
         );
         setPhase("upload");
+        setProcessingStartedAt(null);
         setAdvancedOpen(true);
         showFromResponse(data, false, res.status);
         return;
@@ -497,8 +501,17 @@ export function MenuImportWizard({
             }
             return { ...s, status: "done" };
           }
-          if (s.id === "parse") return { ...s, status: "done" };
-          if (s.id === "done") return { ...s, status: "done" };
+          if (s.id === "parse") return { ...s, status: "active" };
+          return s;
+        }),
+      );
+      setProgress(88);
+
+      await new Promise((r) => setTimeout(r, 900));
+
+      setPipeline((p) =>
+        p.map((s) => {
+          if (s.id === "parse" || s.id === "done") return { ...s, status: "done" };
           return s;
         }),
       );
@@ -542,6 +555,7 @@ export function MenuImportWizard({
       }
       setPipeline((p) => p.map((s) => (s.status === "active" ? { ...s, status: "error" } : s)));
       setPhase("upload");
+      setProcessingStartedAt(null);
       const detail = err instanceof Error && err.message.trim() ? err.message : W.parseFailed;
       setFlash({ type: "error", text: detail });
     } finally {
@@ -714,6 +728,13 @@ export function MenuImportWizard({
             title={geminiConfigured ? W.processingTitleGemini : W.processingTitle}
             subtitle={geminiConfigured ? W.geminiPoweredSubtitle : undefined}
             poweredByGemini={geminiConfigured}
+            startedAt={processingStartedAt ?? undefined}
+            activityMap={processingActivityMap}
+            timerLabels={{
+              seconds: W.processingTimerSeconds,
+              minutes: W.processingTimerMinutes,
+            }}
+            timerHint={W.processingTimerHint}
           />
         </Card>
       ) : null}

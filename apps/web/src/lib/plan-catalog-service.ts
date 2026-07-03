@@ -27,6 +27,7 @@ type PlanCatalogSeed = {
   maxVenues: number;
   maxMenusPerVenue: number | null;
   maxItems: number | null;
+  maxGeminiTokensPerMonth: number | null;
   ctaLabel: string;
   badge: string | null;
   highlighted: boolean;
@@ -46,6 +47,7 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
     maxVenues: 1,
     maxMenusPerVenue: 1,
     maxItems: 50,
+    maxGeminiTokensPerMonth: 0,
     ctaLabel: "Εγγραφή",
     badge: null,
     highlighted: false,
@@ -63,6 +65,7 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
     maxVenues: 1,
     maxMenusPerVenue: 3,
     maxItems: null,
+    maxGeminiTokensPerMonth: 0,
     ctaLabel: "Ξεκίνα Basic",
     badge: "Δημοφιλές",
     highlighted: true,
@@ -80,6 +83,7 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
     maxVenues: 3,
     maxMenusPerVenue: null,
     maxItems: null,
+    maxGeminiTokensPerMonth: 500_000,
     ctaLabel: "Ξεκίνα Pro",
     badge: null,
     highlighted: false,
@@ -97,6 +101,7 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
     maxVenues: 999,
     maxMenusPerVenue: null,
     maxItems: null,
+    maxGeminiTokensPerMonth: null,
     ctaLabel: "Ζήτησε προσφορά",
     badge: null,
     highlighted: false,
@@ -122,6 +127,7 @@ function rowToEntry(row: PlanCatalog): PlanCatalogEntry {
     maxVenues: row.maxVenues,
     maxMenusPerVenue: row.maxMenusPerVenue,
     maxItems: row.maxItems,
+    maxGeminiTokensPerMonth: row.maxGeminiTokensPerMonth,
     features: parseFeatures(row.features),
     sortOrder: row.sortOrder,
     description: row.description,
@@ -157,6 +163,7 @@ export async function ensurePlanCatalogSeeded(): Promise<void> {
         maxVenues: seed.maxVenues,
         maxMenusPerVenue: seed.maxMenusPerVenue,
         maxItems: seed.maxItems,
+        maxGeminiTokensPerMonth: seed.maxGeminiTokensPerMonth,
         ctaLabel: seed.ctaLabel,
         badge: seed.badge,
         highlighted: seed.highlighted,
@@ -166,6 +173,11 @@ export async function ensurePlanCatalogSeeded(): Promise<void> {
       update: {},
     });
   }
+
+  await prisma.planCatalog.updateMany({
+    where: { plan: "PRO", maxGeminiTokensPerMonth: null },
+    data: { maxGeminiTokensPerMonth: 500_000 },
+  });
 }
 
 export async function listPlanCatalogEntries(): Promise<PlanCatalogEntry[]> {
@@ -182,8 +194,8 @@ export async function getPlanFromCatalog(planId: string): Promise<PlanDefinition
   const entries = await listPlanCatalogEntries();
   const found = entries.find((e) => e.id === planId);
   if (found) {
-    const { id, name, priceMonthly, maxVenues, maxMenusPerVenue, maxItems, features } = found;
-    return { id, name, priceMonthly, maxVenues, maxMenusPerVenue, maxItems, features };
+    const { id, name, priceMonthly, maxVenues, maxMenusPerVenue, maxItems, maxGeminiTokensPerMonth, features } = found;
+    return { id, name, priceMonthly, maxVenues, maxMenusPerVenue, maxItems, maxGeminiTokensPerMonth, features };
   }
   return getPlan(planId);
 }
@@ -227,6 +239,7 @@ export type PlanCatalogUpdateInput = {
   maxVenues?: number;
   maxMenusPerVenue?: number | null;
   maxItems?: number | null;
+  maxGeminiTokensPerMonth?: number | null;
   ctaLabel?: string | null;
   badge?: string | null;
   highlighted?: boolean;
@@ -256,6 +269,9 @@ export async function updatePlanCatalog(
       ...(input.maxVenues !== undefined ? { maxVenues: input.maxVenues } : {}),
       ...(input.maxMenusPerVenue !== undefined ? { maxMenusPerVenue: input.maxMenusPerVenue } : {}),
       ...(input.maxItems !== undefined ? { maxItems: input.maxItems } : {}),
+      ...(input.maxGeminiTokensPerMonth !== undefined
+        ? { maxGeminiTokensPerMonth: input.maxGeminiTokensPerMonth }
+        : {}),
       ...(input.ctaLabel !== undefined ? { ctaLabel: input.ctaLabel } : {}),
       ...(input.badge !== undefined ? { badge: input.badge } : {}),
       ...(input.highlighted !== undefined ? { highlighted: input.highlighted } : {}),
@@ -284,6 +300,7 @@ function defaultCatalogEntries(): PlanCatalogEntry[] {
       maxVenues: seed.maxVenues,
       maxMenusPerVenue: seed.maxMenusPerVenue,
       maxItems: seed.maxItems,
+      maxGeminiTokensPerMonth: seed.maxGeminiTokensPerMonth,
       features: [...seed.features],
       sortOrder: seed.sortOrder,
       description: seed.description,

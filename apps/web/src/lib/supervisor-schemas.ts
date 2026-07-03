@@ -27,6 +27,9 @@ export const supervisorOrganizationUpdateSchema = z
       .optional(),
     city: nullableTrimmedString(120),
     notes: nullableTrimmedString(2000),
+    geminiTokenLimitOverride: z
+      .union([z.number().int().min(0).max(50_000_000), z.null()])
+      .optional(),
     plan: z.enum(["TRIAL", "BASIC", "PRO", "ENTERPRISE"]).optional(),
     status: z.enum(["ACTIVE", "TRIALING", "PAST_DUE", "CANCELED"]).optional(),
     extendTrialDays: z.number().int().min(1).max(90).optional(),
@@ -47,6 +50,7 @@ export const supervisorOrganizationUpdateSchema = z
       data.activity !== undefined ||
       data.city !== undefined ||
       data.notes !== undefined ||
+      data.geminiTokenLimitOverride !== undefined ||
       data.plan !== undefined ||
       data.status !== undefined ||
       data.extendTrialDays !== undefined ||
@@ -131,6 +135,9 @@ export const supervisorPlanUpdateSchema = z
     maxItems: z
       .union([z.number().int().min(1).max(999999), z.null()])
       .optional(),
+    maxGeminiTokensPerMonth: z
+      .union([z.number().int().min(0).max(50_000_000), z.null()])
+      .optional(),
     ctaLabel: z
       .union([z.string().max(80), z.null()])
       .optional()
@@ -167,6 +174,7 @@ export const supervisorPlanUpdateSchema = z
       data.maxVenues !== undefined ||
       data.maxMenusPerVenue !== undefined ||
       data.maxItems !== undefined ||
+      data.maxGeminiTokensPerMonth !== undefined ||
       data.ctaLabel !== undefined ||
       data.badge !== undefined ||
       data.highlighted !== undefined ||

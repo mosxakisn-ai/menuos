@@ -42,6 +42,41 @@ export const DASHBOARD_EL = {
     geminiStepDone: "Ολοκληρώθηκε",
     analyzeButtonAi: "Ανάλυση με Gemini AI",
     processingTitleGemini: "Ανάλυση με Gemini AI",
+    processingTimerSeconds: (n: number) => `${n} δευτ.`,
+    processingTimerMinutes: (m: number, s: number) => `${m}:${String(s).padStart(2, "0")}`,
+    processingTimerHint: "Συνήθως 30–90 δευτ. — εξαρτάται από το PDF",
+    processingActivity: {
+      scan: [
+        "Άνοιγμα PDF…",
+        "Σάρωση σελίδων…",
+        "Παράλειψη cover & logo…",
+        "Εντοπισμός σελίδων μενού…",
+      ],
+      extract: [
+        "Ανάγνωση κειμένου…",
+        "Αναγνώριση στηλών & τιμών…",
+        "OCR σε σαρωμένες σελίδες…",
+        "Έλεγχος layout καταλόγου…",
+      ],
+      extractGemini: [
+        "Gemini AI: ανάγνωση layout…",
+        "OCR & ψηφιακό κείμενο…",
+        "Εντοπισμός πιάτων & τιμών…",
+        "Έλεγχος δομής σελίδας…",
+      ],
+      ai: [
+        "Μετάφραση ονομάτων στα ελληνικά…",
+        "Έλεγχος λatin-only ονομάτων…",
+        "Gemini AI: κατηγορίες & περιγραφές…",
+        "Τελικός έλεγχος μετάφρασης…",
+      ],
+      parse: [
+        "Ομαδοποίηση κατηγοριών…",
+        "Έλεγχος τιμών & νομισμάτων…",
+        "Έλεγχος διπλότυπων…",
+        "Σύνταξη προσχεδίου εισαγωγής…",
+      ],
+    } as Record<string, string[]>,
     processFlow: {
       scan: "Σάρωση",
       analyze: "Ανάλυση",
@@ -458,6 +493,7 @@ export const DASHBOARD_EL = {
     },
     tableGridTitle: "Χάρτης θέσεων",
     tableGridLegendHint: "Η κατάσταση εμφανίζεται πάνω σε κάθε κάρτα.",
+    tableGridLegendAutoNote: "Τα μηνύματα ενημερώνονται αυτόματα — δεν χρειάζεται ρύθμιση.",
     tableStateLabels: {
       idle: "Ήσυχο",
       guest_call: "Κλήση πελάτη",
@@ -533,9 +569,9 @@ export const DASHBOARD_EL = {
     qr: {
       title: "QR Codes",
       description:
-        "Κατέβασε ή δες QR για κάθε θέση. Τα τραπέζια ρυθμίζονται από Ρυθμίσεις → Ταμπλό.",
+        "Κατέβασε ή δες QR για κάθε θέση. Τα τραπέζια ρυθμίζονται από Ρυθμίσεις → Θέσεις.",
       configureSpotsLink: "Ρύθμιση τραπεζιών →",
-      configureSpotsEmpty: "Δεν έχεις ακόμα θέσεις. Ρύθμισέ τες από Ρυθμίσεις → Ταμπλό.",
+      configureSpotsEmpty: "Δεν έχεις ακόμα θέσεις. Ρύθμισέ τες από Ρυθμίσεις → Θέσεις.",
       needVenueTitle: "Χρειάζεσαι πρώτα κατάστημα",
       needVenueDesc: "Φτιάξε κατάστημα και πρόσθεσε είδη πριν βγάλεις QR.",
       emptyCatalogTitle: "Ο κατάλογος είναι άδειος",
@@ -631,14 +667,15 @@ export const DASHBOARD_EL = {
     },
     settings: {
       title: "Ρυθμίσεις",
-      description: "Λογαριασμός, προσωπικό, τμήματα και ταμπλό.",
+      description: "Λογαριασμός, θέσεις, προσωπικό και οθόνες τμημάτων.",
       tabs: {
         general: "Γενικά",
         services: "Προσωπικό",
         kitchen: "Κουζίνα",
         bar: "Μπαρ",
-        tables: "Ταμπλό",
+        tables: "Θέσεις",
       },
+      setupLinksTitle: "Ρύθμιση:",
       demoBadge: "Δείγμα — για δοκιμές UI",
       personnel: {
         title: "Προσωπικό",
@@ -775,10 +812,15 @@ export const DASHBOARD_EL = {
       renameScreenFailed: "Αποτυχία μετονομασίας.",
       screenNameTaken: "Υπάρχει ήδη οθόνη με αυτό το όνομα.",
       tables: {
-        title: "Ταμπλό",
-        description: "Ρύθμισε τραπέζια, δωμάτια και ξαπλώστρες. Τα QR κατεβαίνουν από τη σελίδα QR codes.",
-        gridPreview: "Χρώματα χάρτη θέσεων",
-        gridHint: "Κάθε χρώμα στο ταμπλό σερβιτόρου δείχνει τι συμβαίνει στο τραπέζι.",
+        title: "Θέσεις",
+        description:
+          "Πρόσθεσε τραπέζια, δωμάτια και ξαπλώστρες. Εμφανίζονται στον χάρτη σερβιτόρου και στα QR.",
+        zoneHint:
+          "Ζώνες δημιουργούνται αυτόματα από το όνομα: «Αυλή-1», «Αυλή-2» → ζώνη «Αυλή». Χωρίς παύλα = μία ζώνη.",
+        gridPreview: "Τι σημαίνουν τα χρώματα",
+        gridHint: "Τα χρώματα ενημερώνονται live στον χάρτη σερβιτόρου — δεν τα ρυθμίζεις εδώ.",
+        legendAutoNote:
+          "Τα μηνύματα (Ήσυχο, Κλήση πελάτη, Έτοιμο…) εμφανίζονται αυτόματα — δεν χρειάζεται ρύθμιση.",
         qrLink: "Λήψη QR codes →",
         yourVenueSpots: (name: string, count: number) => `${name} — ${count} θέσεις`,
       },
@@ -1002,6 +1044,8 @@ export const DASHBOARD_EL = {
       translateSuccess: (n: number) =>
         n === 1 ? "Μεταφράστηκε 1 όνομα στα ελληνικά." : `Μεταφράστηκαν ${n} ονόματα στα ελληνικά.`,
       translateFailed: "Η μετάφραση AI απέτυχε. Δοκίμασε ξανά ή συμπλήρωσε τα ελληνικά χειροκίνητα.",
+      geminiQuotaExceeded: (used: number, limit: number) =>
+        `Έφτασες το μηνιαίο όριο Gemini AI (${Math.round(used / 1000)}k / ${Math.round(limit / 1000)}k tokens). Δοκίμασε τον επόμενο μήνα ή επικοινώνησε μαζί μας.`,
       applySuccess: (items: string, categories: number) =>
         `Εισήχθησαν ${items} σε ${categories} κατηγορίες. Μπορείς να τα επεξεργαστείς (φωτο, τιμές) από τον κατάλογο.`,
     },
