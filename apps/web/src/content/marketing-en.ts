@@ -1,5 +1,5 @@
 export const MARKETING_EN = {
-  tagline: "Scan. Browse. Enjoy.",
+  tagline: "Scan. Browse. Order. 360°.",
   contactEmail: "info@qrmenus.info",
   contactPhone: "210 700 0925",
   contactPhoneTel: "+302107000925",
@@ -59,8 +59,19 @@ export const MARKETING_EN = {
         "MenuOS is an online platform for restaurants, hotels, beach bars and any hospitality venue. Instead of printed menus, you give guests a modern digital menu that opens instantly on mobile — no app install.",
       body2:
         "You sign in to the dashboard, add categories and items, and download QR codes for tables or rooms. When you change a price or item, guests see it immediately.",
-      body3:
-        "When a guest calls the waiter, asks for the bill or orders from the menu, staff get a push notification on their phone — with table or room number. Send the staff link to their mobile, tap Enable once — no login required.",
+    },
+    live360: {
+      eyebrow: "MenuOS Live · 360°",
+      title: "Everything around one QR",
+      subtitle:
+        "Live alerts for waiters, kitchen and bar — connected to the same QR menu. No guest app, no POS.",
+      tagline: "Scan. Browse. Order. 360°.",
+      segments: [
+        { label: "Guest", hint: "Scans & orders" },
+        { label: "Waiter", hint: "Push · table" },
+        { label: "Kitchen", hint: "Dish ready" },
+        { label: "Bar", hint: "Drink ready" },
+      ],
     },
     audiences: {
       title: "Who is it for?",
@@ -196,11 +207,11 @@ export const MARKETING_EN = {
 
   footer: {
     about:
-      "Digital QR menus for restaurants, hotels, beach bars and room service. Guests scan on their phone — you update items and prices from the dashboard, no reprints.",
+      "Digital QR menus for hospitality — with live alerts for waiters and kitchen. No app, no reprints.",
     highlights: [
       {
-        title: "Call waiter & table orders",
-        text: "Push alerts on staff phones — with table or room number.",
+        title: "Live 360° coordination",
+        text: "Calls, ready dishes and tables — all connected around one QR.",
       },
       {
         title: "Multilingual QR menu",

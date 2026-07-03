@@ -11,6 +11,6 @@ export const APP_URL = (
 export const SITE_DESCRIPTION = SEO_SITE.description;
 export const SITE_DESCRIPTION_EL = SEO_SITE.description;
 
-export const APP_TAGLINE = "Scan. Browse. Enjoy.";
+export const APP_TAGLINE = "Scan. Browse. Order. 360°.";
 
 export const SESSION_COOKIE = "menuos_session";

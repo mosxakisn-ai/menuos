@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useDemoMenuUrl } from "@/lib/demo-menu-url";
 import { HeroShowcase } from "@/components/marketing/hero-showcase";
+import { HomeLive360 } from "@/components/marketing/home-live-360";
 import { MarketingTestimonials } from "@/components/marketing/marketing-testimonials";
 import {
   FaqBlock,
@@ -105,6 +106,8 @@ export function MarketingHome() {
         </div>
       </section>
 
+      <HomeLive360 copy={h.live360} />
+
       {/* ── Stats ── */}
       <section className="relative border-b border-slate-100 bg-white py-10 sm:py-12">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -120,7 +123,6 @@ export function MarketingHome() {
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
           <SectionHeader title={h.whatWeDo.title} description={h.whatWeDo.body} />
           <p className="mt-6 text-lg leading-relaxed text-slate-600">{h.whatWeDo.body2}</p>
-          <p className="mt-4 text-lg leading-relaxed text-slate-600">{h.whatWeDo.body3}</p>
           <Link href="/ypiresies" className="mt-8 inline-flex text-sm font-semibold text-brand-blue hover:underline">
             {pages.common.servicesLink}
           </Link>

@@ -52,8 +52,21 @@ const config: Config = {
         float: "float 6s ease-in-out infinite",
         "scan-line": "scanLine 2.8s ease-in-out infinite",
         shimmer: "shimmer 3s ease-in-out infinite",
+        "live360-segment": "live360Segment 12s ease-in-out infinite",
       },
       keyframes: {
+        live360Segment: {
+          "0%, 22%, 100%": {
+            opacity: "0.55",
+            transform: "scale(1)",
+            boxShadow: "0 1px 3px rgba(15,23,42,0.06)",
+          },
+          "5%, 18%": {
+            opacity: "1",
+            transform: "scale(1.08)",
+            boxShadow: "0 0 24px rgba(6,182,212,0.35)",
+          },
+        },
         fadeUp: {
           "0%": { opacity: "0", transform: "translateY(16px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },

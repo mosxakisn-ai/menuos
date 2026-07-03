@@ -21,7 +21,7 @@ export default function OpenGraphImage() {
           fontFamily: "system-ui, sans-serif",
         }}
       >
-        <p style={{ fontSize: 28, fontWeight: 600, opacity: 0.95 }}>Scan. Browse. Enjoy.</p>
+        <p style={{ fontSize: 28, fontWeight: 600, opacity: 0.95 }}>Scan. Browse. Order. 360°.</p>
         <p style={{ fontSize: 80, fontWeight: 800, marginTop: 16, lineHeight: 1.05 }}>
           Menu<span style={{ opacity: 0.95 }}>Os</span>
         </p>

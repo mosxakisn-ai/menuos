@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { demoMenuUrl } from "@menuos/shared";
 import {
-  Bell,
   Clock,
   Facebook,
   Globe,
   Mail,
   Menu,
+  Orbit,
   Phone,
   X,
 } from "lucide-react";
@@ -31,7 +31,7 @@ const NAV_LINKS = [
   { href: "/epikoinonia", key: "contact" as const },
 ] as const;
 
-const HIGHLIGHT_ICONS = [Bell, Globe, Clock] as const;
+const HIGHLIGHT_ICONS = [Orbit, Globe, Clock] as const;
 
 const footerLinkClass =
   "text-sm text-slate-300 transition hover:text-brand-cyan";
@@ -164,7 +164,7 @@ export function SiteFooter() {
           {highlights.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-3 lg:col-span-7">
               {highlights.map((item, i) => {
-                const Icon = HIGHLIGHT_ICONS[i] ?? Bell;
+                const Icon = HIGHLIGHT_ICONS[i] ?? Orbit;
                 return (
                   <div
                     key={item.title}
