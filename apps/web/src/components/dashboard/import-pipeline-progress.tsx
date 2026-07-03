@@ -79,6 +79,8 @@ export function ImportPipelineProgress({
   activityMap,
   timerLabels,
   timerHint,
+  longWaitHint,
+  longWaitAfterSec = 90,
 }: {
   steps: PipelineStep[];
   progress?: number;
@@ -89,6 +91,8 @@ export function ImportPipelineProgress({
   activityMap?: Record<string, readonly string[]>;
   timerLabels?: { seconds: (n: number) => string; minutes: (m: number, s: number) => string };
   timerHint?: string;
+  longWaitHint?: string;
+  longWaitAfterSec?: number;
 }) {
   const activeStep = steps.find((s) => s.status === "active");
   const activities = useMemo(() => {
@@ -164,6 +168,11 @@ export function ImportPipelineProgress({
             </span>
             {timerHint ? <span className="text-slate-400">· {timerHint}</span> : null}
           </div>
+        ) : null}
+        {longWaitHint && elapsedSec >= longWaitAfterSec ? (
+          <p className="mx-auto mt-3 max-w-md rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-800 ring-1 ring-amber-200/80">
+            {longWaitHint}
+          </p>
         ) : null}
       </div>
 

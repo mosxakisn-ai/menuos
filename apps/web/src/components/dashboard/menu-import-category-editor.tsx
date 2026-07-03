@@ -10,6 +10,17 @@ import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+const CATEGORY_TINTS = [
+  { header: "from-sky-50/95 via-white to-sky-50/40", ring: "ring-sky-200/70", accent: "border-l-sky-400" },
+  { header: "from-violet-50/95 via-white to-violet-50/40", ring: "ring-violet-200/70", accent: "border-l-violet-400" },
+  { header: "from-emerald-50/95 via-white to-emerald-50/40", ring: "ring-emerald-200/70", accent: "border-l-emerald-400" },
+  { header: "from-rose-50/95 via-white to-rose-50/40", ring: "ring-rose-200/70", accent: "border-l-rose-400" },
+  { header: "from-amber-50/95 via-white to-amber-50/40", ring: "ring-amber-200/70", accent: "border-l-amber-400" },
+  { header: "from-teal-50/95 via-white to-teal-50/40", ring: "ring-teal-200/70", accent: "border-l-teal-400" },
+  { header: "from-indigo-50/95 via-white to-indigo-50/40", ring: "ring-indigo-200/70", accent: "border-l-indigo-400" },
+  { header: "from-orange-50/95 via-white to-orange-50/40", ring: "ring-orange-200/70", accent: "border-l-orange-400" },
+] as const;
+
 function hasDistinctEnglish(nameGr: string, nameEn?: string): boolean {
   return Boolean(nameEn?.trim() && nameEn.trim().toLowerCase() !== nameGr.trim().toLowerCase());
 }
@@ -53,8 +64,10 @@ export function MenuImportCategoryEditor({
   const [showEnFor, setShowEnFor] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (expandAllToken > 0) setExpanded({});
-  }, [expandAllToken]);
+    if (expandAllToken > 0) {
+      setExpanded(Object.fromEntries(categories.map((c) => [c.id, true])));
+    }
+  }, [expandAllToken, categories]);
 
   useEffect(() => {
     if (collapseAllToken > 0) {
@@ -62,8 +75,10 @@ export function MenuImportCategoryEditor({
     }
   }, [collapseAllToken, categories]);
 
+  const searchLower = searchQuery.trim().toLowerCase();
+
   const visibleCategories = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = searchLower;
     return categories.filter((cat) => {
       if (hideEmpty && cat.items.length === 0) return false;
       if (showIssuesOnly && !categoryHasIssues(cat)) return false;
@@ -75,10 +90,20 @@ export function MenuImportCategoryEditor({
           (i.nameEn?.toLowerCase().includes(q) ?? false),
       );
     });
-  }, [categories, hideEmpty, showIssuesOnly, searchQuery]);
+  }, [categories, hideEmpty, showIssuesOnly, searchLower]);
 
   function isExpanded(catId: string) {
-    return expanded[catId] !== false;
+    return expanded[catId] === true;
+  }
+
+  function categoryMatchesSearch(cat: ParsedMenuCategoryDraft) {
+    if (!searchLower) return false;
+    if (cat.nameGr.toLowerCase().includes(searchLower)) return true;
+    return cat.items.some(
+      (i) =>
+        i.nameGr.toLowerCase().includes(searchLower) ||
+        (i.nameEn?.toLowerCase().includes(searchLower) ?? false),
+    );
   }
 
   if (visibleCategories.length === 0) {
@@ -90,9 +115,10 @@ export function MenuImportCategoryEditor({
   }
 
   return (
-    <div className="space-y-5">
-      {visibleCategories.map((cat) => {
-        const open = isExpanded(cat.id);
+    <div className="space-y-3">
+      {visibleCategories.map((cat, index) => {
+        const open = isExpanded(cat.id) || categoryMatchesSearch(cat);
+        const tint = CATEGORY_TINTS[index % CATEGORY_TINTS.length];
         const selectedInCat = cat.items.filter((i) => i.selected).length;
         const hasIssues = categoryHasIssues(cat);
         const isUncategorized = cat.nameGr === PDF_IMPORT_UNCATEGORIZED_CATEGORY;
@@ -103,7 +129,7 @@ export function MenuImportCategoryEditor({
 
         const visibleItems = cat.items.filter((item) => {
           if (showIssuesOnly && !itemHasIssues(item) && !categoryHasIssues(cat)) return false;
-          const q = searchQuery.trim().toLowerCase();
+          const q = searchLower;
           if (!q) return true;
           return (
             item.nameGr.toLowerCase().includes(q) ||
@@ -116,14 +142,15 @@ export function MenuImportCategoryEditor({
           <Card
             key={cat.id}
             className={cn(
-              "overflow-hidden border-0 p-0 shadow-card ring-1 ring-slate-200/80",
+              "overflow-hidden border-0 border-l-4 p-0 shadow-card ring-1",
+              hasIssues ? "border-l-amber-400 ring-amber-200/70" : cn(tint.accent, tint.ring),
               !cat.selected && "opacity-55",
             )}
           >
             <div
               className={cn(
-                "border-b border-white/60 bg-gradient-to-r from-brand-blue/[0.08] via-white to-cyan-50/80 px-5 py-4",
-                hasIssues && "from-amber-50/90 via-white to-amber-50/40",
+                "border-b border-white/60 bg-gradient-to-r px-5 py-4",
+                hasIssues ? "from-amber-50/90 via-white to-amber-50/40" : tint.header,
               )}
             >
               <div className="flex flex-wrap items-start gap-3">
@@ -205,7 +232,7 @@ export function MenuImportCategoryEditor({
             </div>
 
             {open && cat.items.length > 0 ? (
-              <div className="divide-y divide-slate-100 bg-white">
+              <div className={cn("divide-y divide-slate-100/80", hasIssues ? "bg-amber-50/20" : "bg-white/70")}>
                 {visibleItems.map((item) => {
                   const showItemEn =
                     hasDistinctEnglish(item.nameGr, item.nameEn) ||

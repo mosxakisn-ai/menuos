@@ -9,6 +9,7 @@ import {
   passStationInputToDb,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
+import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import { pushStaffPassSignal } from "@/lib/pass-signal-push";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
@@ -24,7 +25,21 @@ export async function GET(request: Request) {
 
   try {
     const member = auth.access.staffMember;
+    const opsConfig = await getVenueOperationsConfig(venueId);
+    const venueEnabledStations = opsConfig.enabledStations.map(passStationInputToDb);
     const allowedStations = member ? passDbStationsForStaffMember(member.stations) : null;
+
+    const stationFilter = allowedStations?.length
+      ? allowedStations.filter((s) => venueEnabledStations.includes(s as (typeof venueEnabledStations)[number]))
+      : venueEnabledStations;
+
+    if (stationFilter.length === 0) {
+      return NextResponse.json({
+        signals: [],
+        activeCount: 0,
+        staffMember: member ? { id: member.id, name: member.name } : null,
+      });
+    }
 
     if (member && allowedStations?.length === 0) {
       return NextResponse.json({
@@ -38,9 +53,7 @@ export async function GET(request: Request) {
       where: {
         venueId,
         status: { in: ["READY", "PICKED_UP"] },
-        ...(allowedStations && allowedStations.length > 0
-          ? { station: { in: allowedStations as ("KITCHEN" | "BAR" | "COLD" | "DESSERT")[] } }
-          : {}),
+        station: { in: stationFilter as ("KITCHEN" | "BAR" | "COLD" | "DESSERT")[] },
       },
       orderBy: { readyAt: "desc" },
       take: 80,
@@ -103,6 +116,14 @@ export async function POST(request: Request) {
     stationKey: parsed.data.stationKey,
   });
   if (auth.response) return auth.response;
+
+  const opsConfig = await getVenueOperationsConfig(auth.venue.id);
+  if (!opsConfig.enabledStations.includes(parsed.data.station)) {
+    return NextResponse.json(
+      { error: "Το τμήμα δεν είναι ενεργό για αυτό το κατάστημα.", code: "station_disabled" },
+      { status: 403 },
+    );
+  }
 
   const location = normalizeWaiterCallLocation(parsed.data);
   const message = parsed.data.message?.trim() || null;

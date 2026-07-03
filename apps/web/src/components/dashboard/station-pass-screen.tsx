@@ -34,6 +34,7 @@ type ScreenContext = {
   station: PassStationInput;
   screenLabel?: string | null;
   spotPrefix?: string | null;
+  quickComments?: string[];
   spots: ScreenSpot[];
   activeSignals?: ActiveSignal[];
   todayCount?: number;
@@ -197,6 +198,8 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   const loadGenerationRef = useRef(0);
 
   useScreenWakeLock();
+
+  const quickComments = ctx?.quickComments?.length ? ctx.quickComments : C.quickComments;
 
   const load = useCallback(async () => {
     if (!venueSlug || !stationKey) {
@@ -518,7 +521,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {C.quickComments.map((chip) => (
+              {quickComments.map((chip) => (
                 <button
                   key={chip}
                   type="button"

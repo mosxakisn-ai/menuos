@@ -16,6 +16,7 @@ import { isPdfVisionConfigured } from "@/lib/pdf-vision-gemini";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const auth = await requirePdfImportPlan({ roles: ["ADMIN", "MANAGER"] });

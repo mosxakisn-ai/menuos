@@ -3,10 +3,13 @@
 import { Bell } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  applyZoneLabelOverrides,
+  filterEnabledPassStationFilters,
   filterSpotsByZone,
   filterWaiterLocationsByZone,
   formatStaffStationsForLang,
   groupVenueSpotsByZone,
+  mergeTableStateLabels,
   passStationInputToDb,
   zoneIdForWaiterLocation,
   type OrderPayload,
@@ -18,6 +21,7 @@ import {
   type MonitorViewTab,
   type PassStationFilter,
 } from "@/components/dashboard/waiter-table-grid";
+import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
@@ -85,6 +89,7 @@ export function WaiterPanel({
   const pendingBaselineSetRef = useRef(false);
   const loadGenerationRef = useRef(0);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
+  const { config: opsConfig } = useVenueOperationsConfig(venueId);
 
   const load = useCallback(async () => {
     if (!venueId) return;
@@ -230,7 +235,10 @@ export function WaiterPanel({
     }
   }
 
-  const zoneGroups = useMemo(() => groupVenueSpotsByZone(spots), [spots]);
+  const zoneGroups = useMemo(() => {
+    const groups = groupVenueSpotsByZone(spots);
+    return applyZoneLabelOverrides(groups, opsConfig?.zoneLabels);
+  }, [spots, opsConfig?.zoneLabels]);
 
   const displaySpots = useMemo(
     () => filterSpotsByZone(spots, zoneFilterId, zoneGroups),
@@ -281,6 +289,30 @@ export function WaiterPanel({
     return { ...row, total: row.pending + row.pass };
   }
 
+  const passStationFilters: { id: PassStationFilter; label: string }[] = useMemo(() => {
+    const all = [
+      { id: "all" as const, label: W.passFilterAll },
+      { id: "kitchen" as const, label: W.passStation.kitchen },
+      { id: "bar" as const, label: W.passStation.bar },
+      { id: "cold" as const, label: W.passStation.cold },
+      { id: "dessert" as const, label: W.passStation.dessert },
+    ];
+    if (!opsConfig) return all;
+    return filterEnabledPassStationFilters(all, opsConfig);
+  }, [W.passFilterAll, W.passStation, opsConfig]);
+
+  useEffect(() => {
+    if (passStationFilter === "all" || !opsConfig) return;
+    if (!opsConfig.enabledStations.includes(passStationFilter)) {
+      setPassStationFilter("all");
+    }
+  }, [opsConfig, passStationFilter]);
+
+  const tableStateLabels = useMemo(
+    () => mergeTableStateLabels(opsConfig ?? undefined, lang === "EN" ? "EN" : "GR"),
+    [opsConfig, lang],
+  );
+
   if (venues.length === 0) {
     return (
       <Card>
@@ -296,14 +328,6 @@ export function WaiterPanel({
     { id: "all", label: W.monitorTabAll },
     { id: "calls", label: W.monitorTabCalls },
     { id: "pass", label: W.monitorTabPass },
-  ];
-
-  const passStationFilters: { id: PassStationFilter; label: string }[] = [
-    { id: "all", label: W.passFilterAll },
-    { id: "kitchen", label: W.passStation.kitchen },
-    { id: "bar", label: W.passStation.bar },
-    { id: "cold", label: W.passStation.cold },
-    { id: "dessert", label: W.passStation.dessert },
   ];
 
   const showStationFilters = monitorTab === "all" || monitorTab === "pass";
@@ -486,6 +510,7 @@ export function WaiterPanel({
           updatingCallId={updatingCallId}
           updatingPassId={updatingPassId}
           legendEnd={venueStatusEnd}
+          stateLabels={tableStateLabels}
           onUpdateCall={(callId, status) => void updateStatus(callId, status)}
           onUpdatePass={(signalId, status) => void updatePassStatus(signalId, status)}
         />

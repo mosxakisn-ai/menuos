@@ -1,7 +1,7 @@
 const GEMINI_API = "https://generativelanguage.googleapis.com/v1beta/models";
 
 const RETRYABLE_STATUS = new Set([429, 503, 502, 504]);
-const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_MAX_RETRIES = 5;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -25,7 +25,7 @@ export async function geminiGenerateContent(
     });
 
     if (RETRYABLE_STATUS.has(res.status) && attempt < maxRetries) {
-      const delayMs = Math.min(1000 * 2 ** attempt, 8000);
+      const delayMs = Math.min(1000 * 2 ** attempt, 15000);
       await sleep(delayMs);
       continue;
     }

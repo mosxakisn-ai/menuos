@@ -1,6 +1,10 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
+import {
+  settingsBarTabVisible,
+  settingsKitchenTabVisible,
+} from "@menuos/shared";
 import { DashboardPage, DashboardPageHeader, dashboardCardClass } from "@/components/dashboard/dashboard-page";
 import { ChangePasswordForm } from "@/components/dashboard/change-password-form";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
@@ -12,6 +16,7 @@ import {
   SettingsTablesPanel,
 } from "@/components/dashboard/settings-staff-panels";
 import { SettingsTabs, type SettingsTabId, SETTINGS_TAB_IDS } from "@/components/dashboard/settings-tabs";
+import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
 export type SettingsVenueFull = SettingsVenue & {
@@ -101,9 +106,18 @@ function SettingsPageBody({
 }) {
   const { d } = useDashboardCopy();
   const spotVenues = venues.map((v) => ({ id: v.id, name: v.name, slug: v.slug }));
-  const allowedTabs: SettingsTabId[] = canManageVenue
-    ? [...SETTINGS_TAB_IDS]
-    : ["general"];
+  const primaryVenueId = venues[0]?.id ?? "";
+  const { config: opsConfig } = useVenueOperationsConfig(primaryVenueId);
+
+  const allowedTabs: SettingsTabId[] = useMemo(() => {
+    if (!canManageVenue) return ["general"];
+    if (!opsConfig) return [...SETTINGS_TAB_IDS];
+    const tabs: SettingsTabId[] = ["general", "services"];
+    if (settingsKitchenTabVisible(opsConfig)) tabs.push("kitchen");
+    if (settingsBarTabVisible(opsConfig)) tabs.push("bar");
+    tabs.push("tables");
+    return tabs;
+  }, [canManageVenue, opsConfig]);
 
   function renderTab(tab: SettingsTabId) {
     switch (tab) {

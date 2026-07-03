@@ -216,12 +216,13 @@ model Venue {
 }
 
 model VenueSetting {
-  id           String   @id @default(cuid())
-  venueId      String   @unique
-  brandName    String?
-  openingHours Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  venueId          String   @unique
+  brandName        String?
+  openingHours     Json?
+  operationsConfig Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
 }
@@ -393,6 +394,7 @@ model VenueStationScreen {
   station     PassStation
   label       String      @db.VarChar(40)
   spotPrefix  String?     @db.VarChar(20)
+  quickChips  String[]    @default([])
   screenToken String      @unique @default(cuid())
   sortOrder   Int         @default(0)
   createdAt   DateTime    @default(now())

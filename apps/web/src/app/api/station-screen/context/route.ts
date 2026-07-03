@@ -11,6 +11,8 @@ import {
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
 import { resolvePrimaryStationScreen } from "@/lib/station-screens";
+import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
+import { quickChipsForStation } from "@menuos/shared";
 import { startOfTodayAthens } from "@/lib/athens-day";
 
 export async function GET(request: Request) {
@@ -35,6 +37,11 @@ export async function GET(request: Request) {
     stationKey,
   });
   if (auth.response) return auth.response;
+
+  const opsConfig = await getVenueOperationsConfig(auth.venue.id);
+  if (!opsConfig.enabledStations.includes(station)) {
+    return NextResponse.json({ error: "Το τμήμα δεν είναι ενεργό για αυτό το κατάστημα." }, { status: 403 });
+  }
 
   const spots = await prisma.venueSpot.findMany({
     where: { venueId: auth.venue.id },
@@ -116,6 +123,7 @@ export async function GET(request: Request) {
     station,
     screenLabel: auth.stationScreen?.label ?? null,
     spotPrefix: auth.stationScreen?.spotPrefix ?? null,
+    quickComments: quickChipsForStation(opsConfig, station),
     spots: filtered,
     activeSignals,
     todayCount,

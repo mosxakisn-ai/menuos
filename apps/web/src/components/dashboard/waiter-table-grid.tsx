@@ -314,6 +314,7 @@ export function WaiterTableGrid({
   onUpdateCall,
   onUpdatePass,
   legendEnd,
+  stateLabels: stateLabelsProp,
 }: {
   spots: TableGridSpot[];
   calls: TableGridCall[];
@@ -325,6 +326,7 @@ export function WaiterTableGrid({
   onUpdateCall: (callId: string, status: "ACKNOWLEDGED" | "COMPLETED") => void;
   onUpdatePass: (signalId: string, status: "PICKED_UP" | "DELIVERED") => void;
   legendEnd?: ReactNode;
+  stateLabels?: Record<TableTileState, string>;
 }) {
   const { d, lang } = useDashboardCopy();
   const W = d.waiter;
@@ -342,7 +344,7 @@ export function WaiterTableGrid({
 
   if (!hasConfiguredSpots && !hasAnyTiles) return null;
 
-  const stateLabels = W.tableStateLabels as Record<TableTileState, string>;
+  const stateLabels = stateLabelsProp ?? (W.tableStateLabels as Record<TableTileState, string>);
   const emptyMessage =
     viewTab === "calls"
       ? W.emptyCallsTab

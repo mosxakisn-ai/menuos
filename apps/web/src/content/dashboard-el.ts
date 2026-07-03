@@ -44,7 +44,9 @@ export const DASHBOARD_EL = {
     processingTitleGemini: "Ανάλυση με Gemini AI",
     processingTimerSeconds: (n: number) => `${n} δευτ.`,
     processingTimerMinutes: (m: number, s: number) => `${m}:${String(s).padStart(2, "0")}`,
-    processingTimerHint: "Συνήθως 30–90 δευτ. — εξαρτάται από το PDF",
+    processingTimerHint: "Συνήθως 30–90 δευτ. · μεγάλα PDF έως 3 λεπτά",
+    processingLongWaitHint:
+      "Ακόμα δουλεύει — μεγάλο ή σαρωμένο PDF. Μην κλείσεις τη σελίδα.",
     processingActivity: {
       scan: [
         "Άνοιγμα PDF…",
@@ -820,9 +822,31 @@ export const DASHBOARD_EL = {
         gridPreview: "Τι σημαίνουν τα χρώματα",
         gridHint: "Τα χρώματα ενημερώνονται live στον χάρτη σερβιτόρου — δεν τα ρυθμίζεις εδώ.",
         legendAutoNote:
-          "Τα μηνύματα (Ήσυχο, Κλήση πελάτη, Έτοιμο…) εμφανίζονται αυτόματα — δεν χρειάζεται ρύθμιση.",
+          "Ρύθμισε τα μηνύματα, τα τμήματα και τις ζώνες από την κάρτα «Λειτουργία καταστήματος» παρακάτω.",
         qrLink: "Λήψη QR codes →",
         yourVenueSpots: (name: string, count: number) => `${name} — ${count} θέσεις`,
+      },
+      operations: {
+        title: "Λειτουργία καταστήματος",
+        description:
+          "Ποιο τμήμα χρησιμοποιείς, γρήγορα μηνύματα στις οθόνες, ετικέτες χάρτη και ονόματα ζωνών.",
+        loading: "Φόρτωση ρυθμίσεων…",
+        departmentsTitle: "Ενεργά τμήματα",
+        departmentsHint:
+          "Εμφανίζονται στις Ρυθμίσεις, στον σερβιτόρο και στις οθόνες. Π.χ. ταβέρνα: Κουζίνα + Μπαρ.",
+        quickChipsTitle: "Γρήγορα μηνύματα",
+        quickChipsHint: "Κουμπιά γρήγορης επιλογής στις οθόνες κουζίνας/μπαρ (tablet).",
+        chipPlaceholder: "Νέο μήνυμα…",
+        resetDefaults: "Προεπιλογές",
+        mapLabelsTitle: "Μηνύματα χάρτη θέσεων",
+        mapLabelsHint: "Τι βλέπει ο σερβιτόρος πάνω σε κάθε τραπέζι/θέση.",
+        zonesTitle: "Ονόματα ζωνών",
+        zonesHint:
+          "Οι ζώνες δημιουργούνται από τα ονόματα θέσεων (π.χ. Αυλή-1). Άλλαξε εδώ πώς εμφανίζονται.",
+        save: "Αποθήκευση",
+        saving: "Αποθήκευση…",
+        reload: "Επαναφόρτωση",
+        saved: "Οι ρυθμίσεις αποθηκεύτηκαν.",
       },
       services: {
         title: "Υπηρεσίες",

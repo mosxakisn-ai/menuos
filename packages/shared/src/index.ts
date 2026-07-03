@@ -40,3 +40,4 @@ export * from "./station-screen";
 export * from "./station-screen-signals";
 export * from "./station-screen-spots";
 export * from "./station-spot-zones";
+export * from "./venue-operations-config";

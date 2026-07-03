@@ -44,7 +44,9 @@ export const DASHBOARD_EN = {
     processingTitleGemini: "Analyzing with Gemini AI",
     processingTimerSeconds: (n: number) => `${n}s`,
     processingTimerMinutes: (m: number, s: number) => `${m}:${String(s).padStart(2, "0")}`,
-    processingTimerHint: "Usually 30–90 sec — depends on your PDF",
+    processingTimerHint: "Usually 30–90 sec · large PDFs up to 3 min",
+    processingLongWaitHint:
+      "Still working — large or scanned PDF. Please keep this page open.",
     processingActivity: {
       scan: [
         "Opening PDF…",
@@ -808,9 +810,31 @@ export const DASHBOARD_EN = {
         gridPreview: "What the colors mean",
         gridHint: "Colors update live on the waiter map — you do not configure them here.",
         legendAutoNote:
-          "Labels (Quiet, Guest call, Ready…) appear automatically — no setup needed.",
+          "Configure labels, departments and zones in the «Venue operations» card below.",
         qrLink: "Download QR codes →",
         yourVenueSpots: (name: string, count: number) => `${name} — ${count} spots`,
+      },
+      operations: {
+        title: "Venue operations",
+        description:
+          "Which departments you use, quick messages on station screens, map labels and zone names.",
+        loading: "Loading settings…",
+        departmentsTitle: "Active departments",
+        departmentsHint:
+          "Shown in Settings, waiter panel and station screens. E.g. taverna: Kitchen + Bar only.",
+        quickChipsTitle: "Quick messages",
+        quickChipsHint: "One-tap buttons on kitchen/bar tablets.",
+        chipPlaceholder: "New message…",
+        resetDefaults: "Reset defaults",
+        mapLabelsTitle: "Spot map labels",
+        mapLabelsHint: "What waiters see on each table/spot tile.",
+        zonesTitle: "Zone names",
+        zonesHint:
+          "Zones come from spot names (e.g. Beach-1). Customize how they appear here.",
+        save: "Save",
+        saving: "Saving…",
+        reload: "Reload",
+        saved: "Settings saved.",
       },
       services: {
         title: "Services",

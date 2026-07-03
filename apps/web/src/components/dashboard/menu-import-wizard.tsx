@@ -230,6 +230,7 @@ export function MenuImportWizard({
   }, [initialPipeline]);
 
   useEffect(() => {
+    if (phase !== "upload") return;
     const venueParam = searchParams.get("venue");
     if (!venueParam || venueParam === venueId) return;
     const v = venues.find((x) => x.id === venueParam);
@@ -238,20 +239,25 @@ export function MenuImportWizard({
     const nextMenuId = resolveMenuIdForVenue(searchParams.get("menu"), v.menus);
     setMenuId(nextMenuId);
     resetAll();
-  }, [searchParams, venueId, venues, resetAll]);
+  }, [searchParams, venueId, venues, resetAll, phase]);
 
   useEffect(() => {
+    if (phase !== "upload") return;
     const menus = venue?.menus ?? [];
     if (menus.length === 0) return;
     const resolved = resolveMenuIdForVenue(searchParams.get("menu"), menus);
     setMenuId((prev) => (prev === resolved ? prev : resolved));
-  }, [searchParams, venue?.menus]);
+  }, [searchParams, venue?.menus, phase]);
 
   function syncImportUrl(next: { venueId: string; menuId?: string }) {
     router.replace(buildMenusImportUrl(next), { scroll: false });
   }
 
-  useMenusNavUrlFill("import", { venueId, menuId: menuId || undefined }, Boolean(venueId && menuId));
+  useMenusNavUrlFill(
+    "import",
+    { venueId, menuId: menuId || undefined },
+    phase === "upload" && Boolean(venueId && menuId),
+  );
 
   async function selectMenu(nextMenuId: string) {
     if (nextMenuId === menuId) return;
@@ -405,8 +411,12 @@ export function MenuImportWizard({
 
       if (!forceVision) {
         progressTimer = setInterval(() => {
-          setProgress((p) => Math.min(92, p + 1.5));
-        }, 600);
+          setProgress((p) => {
+            if (p >= 97) return p;
+            const increment = p < 50 ? 2.5 : p < 75 ? 1.2 : p < 90 ? 0.5 : 0.12;
+            return Math.min(97, p + increment);
+          });
+        }, 800);
         if (geminiConfigured) {
           aiStepTimer = setTimeout(() => {
             setPipeline((p) =>
@@ -735,6 +745,7 @@ export function MenuImportWizard({
               minutes: W.processingTimerMinutes,
             }}
             timerHint={W.processingTimerHint}
+            longWaitHint={W.processingLongWaitHint}
           />
         </Card>
       ) : null}
