@@ -29,6 +29,7 @@ check_url "/sitemap.xml" || failed=1
 check_url "/llms.txt" || failed=1
 check_url "/robots.txt" || failed=1
 check_url "/pricing" || failed=1
+check_url "/googlef328fb99f5f1f5b1.html" || failed=1
 
 if [ -n "${INDEXNOW_KEY:-}" ]; then
   check_url "/${INDEXNOW_KEY}.txt" || failed=1
