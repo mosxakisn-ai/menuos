@@ -58,8 +58,22 @@ const stationLabelSchema = z.string().trim().min(1).max(40);
 
 export const MAX_VENUE_POSTS = 12;
 
+/** Reserved for staff assignment tokens — not valid custom post ids. */
+export const RESERVED_VENUE_POST_IDS = ["services", "all"] as const;
+
+export function isReservedVenuePostId(id: string): boolean {
+  return id === "services" || id === "all";
+}
+
 export const venuePostSchema = z.object({
-  id: z.string().trim().min(1).max(40),
+  id: z
+    .string()
+    .trim()
+    .min(1)
+    .max(40)
+    .refine((id) => !isReservedVenuePostId(id), {
+      message: "Post id is reserved",
+    }),
   label: stationLabelSchema,
   enabled: z.boolean(),
   station: passStationInputSchema,
@@ -172,10 +186,21 @@ export function newVenuePostId(): string {
   return `post-${Date.now().toString(36)}`;
 }
 
+function dedupeVenuePosts(posts: VenuePost[]): VenuePost[] {
+  const seen = new Set<string>();
+  const out: VenuePost[] = [];
+  for (const post of posts) {
+    if (seen.has(post.id)) continue;
+    seen.add(post.id);
+    out.push(post);
+  }
+  return out;
+}
+
 function finalizeVenueOperationsConfig(
   data: Omit<VenueOperationsConfig, "posts"> & { posts?: VenuePost[] },
 ): VenueOperationsConfig {
-  let posts = data.posts?.length ? data.posts : postsFromLegacy(data);
+  let posts = dedupeVenuePosts(data.posts?.length ? data.posts : postsFromLegacy(data));
   if (!posts.some((post) => post.enabled)) {
     posts = posts.map((post, index) => ({ ...post, enabled: index === 0 }));
   }

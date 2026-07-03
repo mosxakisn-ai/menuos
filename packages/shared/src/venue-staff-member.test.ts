@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { passDbStationsForStaffMember, passSignalVisibleToStaffMember, waiterCallsVisibleToStaffMember } from "./venue-staff-member";
+import {
+  passDbStationsForStaffMember,
+  passSignalVisibleToStaffMember,
+  sanitizeStaffAssignments,
+  waiterCallsVisibleToStaffMember,
+} from "./venue-staff-member";
 
 describe("passDbStationsForStaffMember", () => {
   it("returns null for floor staff", () => {
@@ -44,5 +49,31 @@ describe("waiterCallsVisibleToStaffMember", () => {
     expect(waiterCallsVisibleToStaffMember(["all"])).toBe(true);
     expect(waiterCallsVisibleToStaffMember(["kitchen"])).toBe(false);
     expect(waiterCallsVisibleToStaffMember(["bar"])).toBe(false);
+  });
+});
+
+describe("sanitizeStaffAssignments", () => {
+  const posts = [
+    { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+    { id: "grill", label: "Grill", enabled: false, station: "kitchen" as const },
+    { id: "bar", label: "Μπαρ", enabled: true, station: "bar" as const },
+  ];
+
+  it("keeps special options and enabled posts", () => {
+    expect(sanitizeStaffAssignments(["services", "kitchen", "bar"], posts)).toEqual([
+      "services",
+      "kitchen",
+      "bar",
+    ]);
+  });
+
+  it("drops disabled or removed post ids and dedupes", () => {
+    expect(sanitizeStaffAssignments(["grill", "kitchen", "kitchen", "missing"], posts)).toEqual([
+      "kitchen",
+    ]);
+  });
+
+  it("can return empty when nothing valid remains", () => {
+    expect(sanitizeStaffAssignments(["grill", "missing"], posts)).toEqual([]);
   });
 });

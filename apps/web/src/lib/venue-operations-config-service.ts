@@ -1,7 +1,9 @@
 import { prisma } from "@menuos/db";
 import {
+  listVenuePosts,
   mergeVenueOperationsConfig,
   normalizeVenueOperationsConfig,
+  sanitizeStaffAssignments,
   venueOperationsConfigPatchSchema,
   venueOperationsConfigSchema,
   type VenueOperationsConfig,
@@ -26,13 +28,45 @@ export async function saveVenueOperationsConfig(
     throw new Error("Invalid operations config");
   }
 
+  const normalized = normalizeVenueOperationsConfig(parsed.data);
+
   await prisma.venueSetting.upsert({
     where: { venueId },
-    create: { venueId, operationsConfig: parsed.data },
-    update: { operationsConfig: parsed.data },
+    create: { venueId, operationsConfig: normalized },
+    update: { operationsConfig: normalized },
   });
 
-  return parsed.data;
+  await sanitizeVenueStaffAssignments(venueId, normalized);
+
+  return normalized;
+}
+
+async function sanitizeVenueStaffAssignments(
+  venueId: string,
+  config: VenueOperationsConfig,
+): Promise<void> {
+  const posts = listVenuePosts(config);
+  const members = await prisma.venueStaffMember.findMany({
+    where: { venueId },
+    select: { id: true, stations: true },
+  });
+  if (members.length === 0) return;
+
+  await Promise.all(
+    members.map((member) => {
+      const sanitized = sanitizeStaffAssignments(member.stations, posts);
+      if (
+        sanitized.length === member.stations.length &&
+        sanitized.every((station, index) => station === member.stations[index])
+      ) {
+        return Promise.resolve();
+      }
+      return prisma.venueStaffMember.update({
+        where: { id: member.id },
+        data: { stations: sanitized },
+      });
+    }),
+  );
 }
 
 export async function updateVenueOperationsConfig(

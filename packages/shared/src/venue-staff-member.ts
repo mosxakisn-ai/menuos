@@ -170,10 +170,31 @@ export function validateStaffAssignments(
   posts: VenuePost[],
 ): boolean {
   if (assignments.length === 0) return false;
-  const enabledIds = new Set(posts.filter((post) => post.enabled).map((post) => post.id));
+  const enabledIds = enabledVenuePostIds(posts);
   return assignments.every(
     (assignment) => isStaffSpecialOption(assignment) || enabledIds.has(assignment),
   );
+}
+
+function enabledVenuePostIds(posts: VenuePost[]): Set<string> {
+  return new Set(posts.filter((post) => post.enabled).map((post) => post.id));
+}
+
+/** Drop disabled or removed post ids; keep services/all and dedupe order. */
+export function sanitizeStaffAssignments(
+  assignments: string[],
+  posts: VenuePost[],
+): string[] {
+  const enabledIds = enabledVenuePostIds(posts);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const assignment of assignments) {
+    if (!isStaffSpecialOption(assignment) && !enabledIds.has(assignment)) continue;
+    if (seen.has(assignment)) continue;
+    seen.add(assignment);
+    out.push(assignment);
+  }
+  return out;
 }
 
 const PASS_DB_STATION_TO_STAFF: Record<string, StaffStationOption> = {
