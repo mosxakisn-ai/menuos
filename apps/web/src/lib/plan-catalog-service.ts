@@ -214,8 +214,9 @@ export async function ensurePlanCatalogSeeded(): Promise<void> {
 }
 
 export async function listPlanCatalogEntries(): Promise<PlanCatalogEntry[]> {
-  await ensurePlanCatalogSeeded();
   if (cache && Date.now() - cache.at < CACHE_MS) return cache.entries;
+
+  await ensurePlanCatalogSeeded();
 
   const rows = await prisma.planCatalog.findMany({ orderBy: { sortOrder: "asc" } });
   const entries = rows.map(rowToEntry);

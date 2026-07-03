@@ -450,7 +450,7 @@ export function getSeoLandingCopy(
         },
         {
           q: "Is there a trial?",
-          a: "Yes — 7 days free, no credit card.",
+          a: `Yes — ${trial.trialDays} free, no credit card.`,
         },
       ];
 

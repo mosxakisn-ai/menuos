@@ -28,16 +28,17 @@ const FAQ_BY_KEY = {
 } as const;
 
 async function resolveMarketingPage(key: MarketingJsonLdPageKey, locale: "el" | "en") {
-  if (locale === "en") return SEO_PAGES_EN[key];
   const trialDays = await getTrialDaysFromCatalog();
-  return applyTrialDayPlaceholdersDeep(SEO_PAGES[key], trialDays);
+  if (locale === "en") {
+    return applyTrialDayPlaceholdersDeep(SEO_PAGES_EN[key], trialDays, "en");
+  }
+  return applyTrialDayPlaceholdersDeep(SEO_PAGES[key], trialDays, "el");
 }
 
 async function resolveFaq(faqKey: MarketingJsonLdFaqKey, locale: "el" | "en") {
-  const faq = FAQ_BY_KEY[faqKey][locale];
-  if (locale === "en") return faq;
   const trialDays = await getTrialDaysFromCatalog();
-  return applyTrialDayPlaceholdersDeep(faq, trialDays);
+  const faq = FAQ_BY_KEY[faqKey][locale];
+  return applyTrialDayPlaceholdersDeep(faq, trialDays, locale);
 }
 
 export async function HomeJsonLd() {
@@ -59,10 +60,8 @@ export async function MarketingPageJsonLd(props: {
 
 export async function PricingOffersJsonLd() {
   const locale = await getServerLocale();
-  if (locale === "en") {
-    return <JsonLdScript data={buildPricingOffersSchema(SEO_PRICING_OFFERS_EN, locale)} />;
-  }
   const trialDays = await getTrialDaysFromCatalog();
-  const offers = applyTrialDayPlaceholdersDeep(SEO_PRICING_OFFERS, trialDays);
+  const source = locale === "en" ? SEO_PRICING_OFFERS_EN : SEO_PRICING_OFFERS;
+  const offers = applyTrialDayPlaceholdersDeep(source, trialDays, locale);
   return <JsonLdScript data={buildPricingOffersSchema(offers, locale)} />;
 }

@@ -34,23 +34,26 @@ export async function GET(request: Request) {
     const posts = listVenuePosts(opsConfig);
     const allowedStations = member ? passDbStationsForStaffMember(member.stations, posts) : null;
 
-    const stationFilter = allowedStations?.length
-      ? allowedStations.filter((s) => venueEnabledStations.includes(s as (typeof venueEnabledStations)[number]))
-      : venueEnabledStations;
+    if (member && allowedStations !== null && allowedStations.length === 0) {
+      return NextResponse.json({
+        signals: [],
+        activeCount: 0,
+        staffMember: { id: member.id, name: member.name },
+      });
+    }
+
+    const stationFilter =
+      allowedStations === null
+        ? venueEnabledStations
+        : allowedStations.filter((s) =>
+            venueEnabledStations.includes(s as (typeof venueEnabledStations)[number]),
+          );
 
     if (stationFilter.length === 0) {
       return NextResponse.json({
         signals: [],
         activeCount: 0,
         staffMember: member ? { id: member.id, name: member.name } : null,
-      });
-    }
-
-    if (member && allowedStations?.length === 0) {
-      return NextResponse.json({
-        signals: [],
-        activeCount: 0,
-        staffMember: { id: member.id, name: member.name },
       });
     }
 

@@ -11,6 +11,7 @@ import {
   listVenuePosts,
   groupVenueSpotsByZone,
   mergeTableStateLabels,
+  passSignalsVisibleToStaffMember,
   passStationInputToDb,
   stationDisplayLabel,
   tableLegendStates,
@@ -92,6 +93,12 @@ export function WaiterPanel({
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const { config: opsConfig } = useVenueOperationsConfig(venueId);
 
+  const posts = useMemo(() => listVenuePosts(opsConfig ?? undefined), [opsConfig]);
+  const shouldPollPassSignals = useMemo(() => {
+    if (!staffMember) return true;
+    return passSignalsVisibleToStaffMember(staffMember.stations, posts);
+  }, [staffMember, posts]);
+
   const load = useCallback(async () => {
     if (!venueId) return;
     const generation = ++loadGenerationRef.current;
@@ -100,10 +107,13 @@ export function WaiterPanel({
     const creds = staffViaCookie ? "include" : "same-origin";
     const [callsRes, passRes] = await Promise.all([
       fetch(`/api/waiter-call?${params}`, { credentials: creds }),
-      fetch(`/api/pass-signals?${params}`, { credentials: creds }),
+      shouldPollPassSignals
+        ? fetch(`/api/pass-signals?${params}`, { credentials: creds })
+        : Promise.resolve(null),
     ]);
     const data = await callsRes.json().catch(() => ({}));
-    const passData = await passRes.json().catch(() => ({}));
+    const passData =
+      passRes === null ? null : await passRes.json().catch(() => ({}));
 
     if (generation !== loadGenerationRef.current) return;
 
@@ -146,7 +156,11 @@ export function WaiterPanel({
       }
     }
 
-    if (passRes.ok) {
+    if (passRes === null) {
+      setPassSignals([]);
+      setPassCount(0);
+      prevPassRef.current = 0;
+    } else if (passRes.ok) {
       const nextPass = (passData.activeCount ?? 0) as number;
       if (prevPassRef.current !== null && nextPass > prevPassRef.current) {
         alertNewWaiterCall();
@@ -163,7 +177,7 @@ export function WaiterPanel({
         setFlash({ type: "error", text: W.sessionExpired });
       }
     }
-  }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash]);
+  }, [staffKey, staffViaCookie, venueId, shouldPollPassSignals, W.sessionExpired, W.loadFailed, setFlash]);
 
   useEffect(() => {
     loadGenerationRef.current += 1;

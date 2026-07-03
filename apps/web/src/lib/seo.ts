@@ -177,7 +177,11 @@ async function marketingSeoPageEl(key: MarketingSeoPageKey): Promise<SeoPageDef>
 /** Locale-aware metadata for marketing pages (cookie or ?lang=en). */
 export async function generateMarketingMetadata(key: MarketingSeoPageKey): Promise<Metadata> {
   const locale = await getServerLocale();
-  const page = locale === "en" ? marketingSeoPage(key, locale) : await marketingSeoPageEl(key);
+  const trialDays = await getTrialDaysFromCatalog();
+  const page =
+    locale === "en"
+      ? applyTrialDayPlaceholdersDeep(marketingSeoPage(key, locale), trialDays, "en")
+      : await marketingSeoPageEl(key);
   const meta = seoPageMetadata(page);
 
   if (locale !== "en") return meta;

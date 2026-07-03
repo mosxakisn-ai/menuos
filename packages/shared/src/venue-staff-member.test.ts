@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   passDbStationsForStaffMember,
   passSignalVisibleToStaffMember,
+  passSignalsVisibleToStaffMember,
   sanitizeStaffAssignments,
   waiterCallsVisibleToStaffMember,
 } from "./venue-staff-member";
@@ -52,6 +53,17 @@ describe("waiterCallsVisibleToStaffMember", () => {
   });
 });
 
+describe("passSignalsVisibleToStaffMember", () => {
+  it("allows floor and station staff", () => {
+    expect(passSignalsVisibleToStaffMember(["services"])).toBe(true);
+    expect(passSignalsVisibleToStaffMember(["kitchen"])).toBe(true);
+  });
+
+  it("blocks empty assignments", () => {
+    expect(passSignalsVisibleToStaffMember([])).toBe(false);
+  });
+});
+
 describe("sanitizeStaffAssignments", () => {
   const posts = [
     { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
@@ -73,7 +85,7 @@ describe("sanitizeStaffAssignments", () => {
     ]);
   });
 
-  it("can return empty when nothing valid remains", () => {
-    expect(sanitizeStaffAssignments(["grill", "missing"], posts)).toEqual([]);
+  it("falls back to services when nothing valid remains", () => {
+    expect(sanitizeStaffAssignments(["grill", "missing"], posts)).toEqual(["services"]);
   });
 });

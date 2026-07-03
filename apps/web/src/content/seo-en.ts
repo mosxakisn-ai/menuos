@@ -12,7 +12,7 @@ export const SEO_PAGES_EN = {
   home: {
     title: "Digital QR menu & Live 360° — restaurants, hotels & bars",
     description:
-      "QR menu and Live 360° coordination in one platform. Multilingual menu, call waiter, online price updates — no app for guests. Free 7-day trial.",
+      "QR menu and Live 360° coordination in one platform. Multilingual menu, call waiter, online price updates — no app for guests. Free {trialDaysAdj} trial.",
     path: "/",
     breadcrumbLabel: "Home",
   },
@@ -40,7 +40,7 @@ export const SEO_PAGES_EN = {
   pricing: {
     title: "Pricing — QR menu & Live 360° from €9.99/month",
     description:
-      "MenuOS pricing: free 7-day trial with Live 360°, Basic €9.99/month, Pro €19.99/month. QR menu, call waiter, live panel — no hidden fees.",
+      "MenuOS pricing: free {trialDaysAdj} trial with Live 360°, Basic €9.99/month, Pro €19.99/month. QR menu, call waiter, live panel — no hidden fees.",
     path: "/pricing",
     breadcrumbLabel: "Pricing",
   },
@@ -79,7 +79,7 @@ export const SEO_HOME_FAQ_EN = [
   },
   {
     q: "How fast can I go live?",
-    a: "With a basic menu, usually in under an hour. The trial is 7 days.",
+    a: "With a basic menu, usually in under an hour. The trial is {trialDays}.",
   },
   {
     q: "Does it work for hotels?",
@@ -121,7 +121,7 @@ export const SEO_QR_MENU_FAQ_EN = [
 export const SEO_PRICING_FAQ_EN = [
   {
     q: "Do I need a credit card for the trial?",
-    a: "No. The 7-day trial starts with email and OTP verification.",
+    a: "No. The {trialDaysAdj} trial starts with email and OTP verification.",
   },
   {
     q: "Can I change plan later?",
@@ -142,7 +142,7 @@ export const SEO_PRICING_FAQ_EN = [
 ] as const;
 
 export const SEO_PRICING_OFFERS_EN = [
-  { name: "7-day trial", price: 0, description: "1 location, QR menu, Live 360°, 50 items" },
+  { name: "{trialDaysGen} trial", price: 0, description: "1 location, QR menu, Live 360°, 50 items" },
   { name: "Basic", price: 9.99, description: "1 location, 3 menus, Live 360°, unlimited items" },
   { name: "Pro", price: 19.99, description: "3 locations, Live 360°, unlimited menus" },
 ] as const;

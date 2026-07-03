@@ -180,7 +180,7 @@ function enabledVenuePostIds(posts: VenuePost[]): Set<string> {
   return new Set(posts.filter((post) => post.enabled).map((post) => post.id));
 }
 
-/** Drop disabled or removed post ids; keep services/all and dedupe order. */
+/** Drop disabled or removed post ids; keep services/all and dedupe order. Falls back to services when empty. */
 export function sanitizeStaffAssignments(
   assignments: string[],
   posts: VenuePost[],
@@ -194,6 +194,7 @@ export function sanitizeStaffAssignments(
     seen.add(assignment);
     out.push(assignment);
   }
+  if (out.length === 0) return ["services"];
   return out;
 }
 
@@ -235,4 +236,13 @@ export function passSignalVisibleToStaffMember(
 /** Waiter calls (table buzz) only for floor/service staff. */
 export function waiterCallsVisibleToStaffMember(memberStations: string[]): boolean {
   return memberStations.includes("all") || memberStations.includes("services");
+}
+
+/** Whether this staff member should poll or receive pass signals. */
+export function passSignalsVisibleToStaffMember(
+  memberStations: string[],
+  posts?: VenuePost[],
+): boolean {
+  const allowed = passDbStationsForStaffMember(memberStations, posts);
+  return allowed === null || allowed.length > 0;
 }
