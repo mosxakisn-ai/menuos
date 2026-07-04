@@ -65,12 +65,14 @@ export function DashboardSidebar({
   userRole,
   planId,
   live360Enabled,
+  onboardingLocked = false,
 }: {
   initialPendingCount: number;
   subscription: SubscriptionDisplayInput | null;
   userRole: string;
   planId: string;
   live360Enabled: boolean;
+  onboardingLocked?: boolean;
 }) {
   const pathname = usePathname();
   const { d, lang } = useDashboardCopy();
@@ -86,17 +88,28 @@ export function DashboardSidebar({
       <nav className="mt-6 flex min-h-0 flex-1 flex-col space-y-1">
         {visibleNavItems.map(({ href, icon: Icon, match }) => {
           const locked = isLive360NavLocked(href, live360Enabled);
-          const active = !locked && isNavActive(pathname, href, match);
-          const itemHref = locked ? live360LockedNavHref(href, userRole) : href;
+          const onboardingBlocked = onboardingLocked && href !== "/dashboard";
+          const active = !locked && !onboardingBlocked && isNavActive(pathname, href, match);
+          const itemHref = onboardingBlocked
+            ? "/dashboard"
+            : locked
+              ? live360LockedNavHref(href, userRole)
+              : href;
           return (
             <Link
               key={href}
               href={itemHref}
-              aria-disabled={locked}
-              title={locked ? d.nav.proOnlyBadge : undefined}
+              aria-disabled={locked || onboardingBlocked}
+              title={
+                onboardingBlocked
+                  ? d.onboarding.navLockedHint
+                  : locked
+                    ? d.nav.proOnlyBadge
+                    : undefined
+              }
               className={cn(
                 "flex items-center gap-3 rounded-button px-3 py-2.5 text-sm transition",
-                locked
+                locked || onboardingBlocked
                   ? "cursor-not-allowed text-white/45 hover:bg-white/5 hover:text-white/55"
                   : active
                     ? "bg-white/12 font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"

@@ -16,11 +16,13 @@ export function DashboardMobileNav({
   userRole,
   planId,
   live360Enabled,
+  onboardingLocked = false,
 }: {
   initialPendingCount?: number;
   userRole: string;
   planId: string;
   live360Enabled: boolean;
+  onboardingLocked?: boolean;
 }) {
   const pathname = usePathname();
   const { d } = useDashboardCopy();
@@ -47,18 +49,23 @@ export function DashboardMobileNav({
         <ul className="mx-auto flex max-w-lg justify-between">
           {visibleLinks.map(({ href, label, icon: Icon, exact }) => {
             const locked = isLive360NavLocked(href, live360Enabled);
-            const active = !locked && (exact ? pathname === href : pathname.startsWith(href));
-            const showBadge = !locked && href === "/dashboard/waiter" && pendingCount > 0;
-            const itemHref = locked ? live360LockedNavHref(href, userRole) : href;
+            const onboardingBlocked = onboardingLocked && href !== "/dashboard";
+            const active = !locked && !onboardingBlocked && (exact ? pathname === href : pathname.startsWith(href));
+            const showBadge = !locked && !onboardingBlocked && href === "/dashboard/waiter" && pendingCount > 0;
+            const itemHref = onboardingBlocked
+              ? "/dashboard"
+              : locked
+                ? live360LockedNavHref(href, userRole)
+                : href;
             return (
               <li key={href} className="min-w-0 flex-1">
                 <Link
                   href={itemHref}
-                  aria-disabled={locked}
-                  title={locked ? d.nav.proOnlyBadge : undefined}
+                  aria-disabled={locked || onboardingBlocked}
+                  title={onboardingBlocked ? d.onboarding.navLockedHint : locked ? d.nav.proOnlyBadge : undefined}
                   className={cn(
                     "relative mx-auto flex max-w-[4.5rem] flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium leading-tight",
-                    locked ? "text-slate-400" : active ? "text-brand-blue" : "text-slate-500",
+                    locked || onboardingBlocked ? "text-slate-400" : active ? "text-brand-blue" : "text-slate-500",
                   )}
                 >
                   <span

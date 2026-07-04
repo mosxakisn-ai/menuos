@@ -1,0 +1,93 @@
+import { prisma } from "@menuos/db";
+
+/** Feature launch — venues created before this skip the QR cookie requirement (grandfather). */
+export const MANDATORY_ONBOARDING_FROM = new Date("2026-07-04T00:00:00.000Z");
+
+export type OnboardingStatus = {
+  hasVenue: boolean;
+  hasCategory: boolean;
+  hasItem: boolean;
+  venueCount: number;
+  menuCount: number;
+  itemCount: number;
+  firstVenueId?: string;
+  firstVenueSlug?: string;
+  firstVenueCreatedAt?: Date;
+};
+
+export async function getOnboardingStatus(organizationId: string): Promise<OnboardingStatus> {
+  const venues = await prisma.venue.findMany({
+    where: { organizationId },
+    include: {
+      menus: {
+        include: {
+          categories: { include: { items: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const venueCount = venues.length;
+  const menuCount = venues.reduce((n, v) => n + v.menus.length, 0);
+  const itemCount = venues.reduce(
+    (n, v) =>
+      n + v.menus.reduce((m, menu) => m + menu.categories.reduce((c, cat) => c + cat.items.length, 0), 0),
+    0,
+  );
+  const firstVenue = venues[0];
+
+  return {
+    hasVenue: venueCount > 0,
+    hasCategory: venues.some((v) => v.menus.some((m) => m.categories.length > 0)),
+    hasItem: itemCount > 0,
+    venueCount,
+    menuCount,
+    itemCount,
+    firstVenueId: firstVenue?.id,
+    firstVenueSlug: firstVenue?.slug,
+    firstVenueCreatedAt: firstVenue?.createdAt,
+  };
+}
+
+function isGrandfatheredOnboarding(status: OnboardingStatus): boolean {
+  return Boolean(
+    status.firstVenueCreatedAt && status.firstVenueCreatedAt < MANDATORY_ONBOARDING_FROM,
+  );
+}
+
+export function isOnboardingComplete(status: OnboardingStatus, qrVisited: boolean): boolean {
+  if (!status.hasVenue || !status.hasItem) return false;
+  if (qrVisited || isGrandfatheredOnboarding(status)) return true;
+  return false;
+}
+
+/** Paths allowed while onboarding is incomplete (ADMIN/MANAGER). */
+export function isOnboardingPathAllowed(
+  pathname: string,
+  status: OnboardingStatus,
+  qrVisited: boolean,
+): boolean {
+  if (isOnboardingComplete(status, qrVisited)) return true;
+  if (pathname.startsWith("/dashboard/billing")) return true;
+  if (pathname === "/dashboard") return true;
+  if (pathname.startsWith("/dashboard/settings")) return true;
+
+  if (!status.hasVenue) {
+    return pathname === "/dashboard/venues/new" || pathname.startsWith("/dashboard/venues/new/");
+  }
+
+  if (!status.hasItem) {
+    return pathname.startsWith("/dashboard/menus") || pathname.startsWith("/dashboard/venues/new");
+  }
+
+  if (!qrVisited) {
+    return (
+      pathname.startsWith("/dashboard/qr") ||
+      pathname.startsWith("/dashboard/menus") ||
+      pathname.startsWith("/dashboard/venues/new")
+    );
+  }
+
+  return true;
+}

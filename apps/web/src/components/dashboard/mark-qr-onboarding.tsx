@@ -6,6 +6,7 @@ const QR_ONBOARDING_KEY = "menuos-onboarding-qr";
 
 export function MarkQrOnboarding() {
   useEffect(() => {
+    void fetch("/api/onboarding/mark-qr", { method: "POST" });
     try {
       localStorage.setItem(QR_ONBOARDING_KEY, "1");
     } catch {

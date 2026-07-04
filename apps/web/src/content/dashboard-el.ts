@@ -985,6 +985,7 @@ export const DASHBOARD_EL = {
   },
   onboarding: {
     guideLabel: "Οδηγός εκκίνησης",
+    navLockedHint: "Ολοκλήρωσε πρώτα τον οδηγό εκκίνησης",
     stepTitle: (step: number) => `Βήμα ${step} από 3 — φτιάξε τον κατάλογο σου`,
     subtitle: "Σε λιγότερο από μία ώρα μπορείς να έχεις QR menu στα τραπέζια σου.",
     completed: (n: number) => `${n}/3 ολοκληρωμένα`,

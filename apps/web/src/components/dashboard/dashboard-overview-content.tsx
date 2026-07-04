@@ -41,6 +41,8 @@ export type DashboardOverviewProps = {
   passTodayCount?: number | null;
   passAvgDeliveryMin?: number | null;
   live360Enabled?: boolean;
+  onboardingComplete?: boolean;
+  qrVisited?: boolean;
 };
 
 function OverviewBadge({ children }: { children: React.ReactNode }) {
@@ -123,6 +125,8 @@ export function DashboardOverviewContent({
   passTodayCount,
   passAvgDeliveryMin,
   live360Enabled = false,
+  onboardingComplete = true,
+  qrVisited = false,
 }: DashboardOverviewProps) {
   const { d, lang, planLabel } = useDashboardCopy();
   const O = d.overview;
@@ -145,30 +149,32 @@ export function DashboardOverviewContent({
       <DashboardDocumentTitle page="overview" />
       <WelcomeTrialCard show={showWelcome} trialEndsAt={trialEndsAt} trialPeriodDays={trialPeriodDays} />
 
-      <section className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-brand-blue/[0.05] px-5 py-5 shadow-card sm:px-6">
-        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-cyan/10 blur-2xl" aria-hidden />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-brand-blue">
-              <Sparkles className="h-4 w-4" aria-hidden />
-              <span className="text-xs font-semibold uppercase tracking-[0.14em]">{O.heroEyebrow}</span>
+      {onboardingComplete ? (
+        <section className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-brand-blue/[0.05] px-5 py-5 shadow-card sm:px-6">
+          <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-cyan/10 blur-2xl" aria-hidden />
+          <div className="relative flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-brand-blue">
+                <Sparkles className="h-4 w-4" aria-hidden />
+                <span className="text-xs font-semibold uppercase tracking-[0.14em]">{O.heroEyebrow}</span>
+              </div>
+              <h1 className="mt-2 font-serif text-2xl font-bold tracking-tight text-brand-navy sm:text-[1.85rem]">
+                {orgName ?? O.titleFallback}
+              </h1>
             </div>
-            <h1 className="mt-2 font-serif text-2xl font-bold tracking-tight text-brand-navy sm:text-[1.85rem]">
-              {orgName ?? O.titleFallback}
-            </h1>
           </div>
-        </div>
-        <div className="relative mt-4 flex flex-wrap gap-2">
-          <OverviewBadge>{planLabel(planId)}</OverviewBadge>
-          <OverviewBadge>
-            {venueCount} {venueWord}
-          </OverviewBadge>
-          <OverviewBadge>
-            {menuCount} {menuWord}
-          </OverviewBadge>
-          <OverviewBadge>{d.catalogEntry.count(itemCount)}</OverviewBadge>
-        </div>
-      </section>
+          <div className="relative mt-4 flex flex-wrap gap-2">
+            <OverviewBadge>{planLabel(planId)}</OverviewBadge>
+            <OverviewBadge>
+              {venueCount} {venueWord}
+            </OverviewBadge>
+            <OverviewBadge>
+              {menuCount} {menuWord}
+            </OverviewBadge>
+            <OverviewBadge>{d.catalogEntry.count(itemCount)}</OverviewBadge>
+          </div>
+        </section>
+      ) : null}
 
       <TrialLimitsHint plan={planId} itemCount={itemCount} />
 
@@ -181,118 +187,121 @@ export function DashboardOverviewContent({
           venueSlug: firstVenueSlug,
           itemCount,
         }}
+        qrVisited={qrVisited}
       />
 
-      <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
-        <section className={cn(dashboardCardClass, "lg:min-h-[320px]")}>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">{O.metricsTitle}</h2>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <DashboardStatCard
-              compact
-              accent="blue"
-              label={d.venues}
-              value={venueCount}
-              hint={venueCount === 0 ? O.addFirstVenue : undefined}
-            />
-            <DashboardStatCard
-              compact
-              accent="cyan"
-              label={d.catalogEntry.label}
-              value={itemCount}
-              hint={itemCount === 0 ? O.addToCatalog : undefined}
-            />
-            <DashboardStatCard
-              compact
-              accent="slate"
-              label={renewalStat.label}
-              value={renewalStat.value}
-              hint={renewalStat.hint}
-            />
-            {showPassStats ? (
-              <>
-                <DashboardStatCard
-                  compact
-                  accent="blue"
-                  label={O.passToday}
-                  value={passTodayCount}
-                  hint={O.passTodayHint}
-                />
-                <DashboardStatCard
-                  compact
-                  accent="cyan"
-                  label={O.passAvgDelivery}
-                  value={
-                    passAvgDeliveryMin != null ? O.passAvgMinutes(passAvgDeliveryMin) : O.passAvgNone
-                  }
-                  hint={O.passAvgDeliveryHint}
-                />
-              </>
-            ) : null}
-          </div>
-        </section>
-
-        <section className={cn(dashboardCardClass, "lg:min-h-[320px]")}>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">{O.quickActions}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            {itemCount === 0 ? O.quickStartEmpty : O.quickStartReady}
-          </p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            {venueCount === 0 ? (
-              <QuickActionTile
-                href="/dashboard/venues/new"
-                icon={Plus}
-                title={d.addVenue}
-                description={O.actionVenue}
-                primary
+      {onboardingComplete ? (
+        <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+          <section className={cn(dashboardCardClass, "lg:min-h-[320px]")}>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">{O.metricsTitle}</h2>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <DashboardStatCard
+                compact
+                accent="blue"
+                label={d.venues}
+                value={venueCount}
+                hint={venueCount === 0 ? O.addFirstVenue : undefined}
               />
-            ) : (
-              <>
+              <DashboardStatCard
+                compact
+                accent="cyan"
+                label={d.catalogEntry.label}
+                value={itemCount}
+                hint={itemCount === 0 ? O.addToCatalog : undefined}
+              />
+              <DashboardStatCard
+                compact
+                accent="slate"
+                label={renewalStat.label}
+                value={renewalStat.value}
+                hint={renewalStat.hint}
+              />
+              {showPassStats ? (
+                <>
+                  <DashboardStatCard
+                    compact
+                    accent="blue"
+                    label={O.passToday}
+                    value={passTodayCount}
+                    hint={O.passTodayHint}
+                  />
+                  <DashboardStatCard
+                    compact
+                    accent="cyan"
+                    label={O.passAvgDelivery}
+                    value={
+                      passAvgDeliveryMin != null ? O.passAvgMinutes(passAvgDeliveryMin) : O.passAvgNone
+                    }
+                    hint={O.passAvgDeliveryHint}
+                  />
+                </>
+              ) : null}
+            </div>
+          </section>
+
+          <section className={cn(dashboardCardClass, "lg:min-h-[320px]")}>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">{O.quickActions}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              {itemCount === 0 ? O.quickStartEmpty : O.quickStartReady}
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {venueCount === 0 ? (
                 <QuickActionTile
-                  href={`/dashboard/menus${firstVenueId ? `?venue=${firstVenueId}` : ""}`}
-                  icon={UtensilsCrossed}
-                  title={d.editCatalog}
-                  description={O.actionCatalog}
+                  href="/dashboard/venues/new"
+                  icon={Plus}
+                  title={d.addVenue}
+                  description={O.actionVenue}
                   primary
                 />
-                <QuickActionTile
-                  href={`/dashboard/qr${firstVenueId ? `?venue=${firstVenueId}` : ""}`}
-                  icon={QrCode}
-                  title={d.qrCodes}
-                  description={O.actionQr}
-                />
-                <QuickActionTile
-                  href={live360Enabled ? "/dashboard/waiter" : live360NavUpgradeHref()}
-                  icon={Monitor}
-                  title={d.nav.waiter}
-                  description={O.actionScreens}
-                />
-                {firstVenueSlug ? (
+              ) : (
+                <>
                   <QuickActionTile
-                    href={`/m/${firstVenueSlug}`}
-                    external
-                    icon={ExternalLink}
-                    title={d.livePreview}
-                    description={O.actionPreview}
+                    href={`/dashboard/menus${firstVenueId ? `?venue=${firstVenueId}` : ""}`}
+                    icon={UtensilsCrossed}
+                    title={d.editCatalog}
+                    description={O.actionCatalog}
+                    primary
                   />
-                ) : (
                   <QuickActionTile
-                    href={live360Enabled ? "/dashboard/history" : live360NavUpgradeHref()}
-                    icon={Store}
-                    title={d.nav.history}
-                    description={O.actionHistory}
+                    href={`/dashboard/qr${firstVenueId ? `?venue=${firstVenueId}` : ""}`}
+                    icon={QrCode}
+                    title={d.qrCodes}
+                    description={O.actionQr}
                   />
-                )}
-              </>
-            )}
-            <QuickActionTile
-              href="/dashboard/billing"
-              icon={CreditCard}
-              title={d.subscription}
-              description={O.actionBilling}
-            />
-          </div>
-        </section>
-      </div>
+                  <QuickActionTile
+                    href={live360Enabled ? "/dashboard/waiter" : live360NavUpgradeHref()}
+                    icon={Monitor}
+                    title={d.nav.waiter}
+                    description={O.actionScreens}
+                  />
+                  {firstVenueSlug ? (
+                    <QuickActionTile
+                      href={`/m/${firstVenueSlug}`}
+                      external
+                      icon={ExternalLink}
+                      title={d.livePreview}
+                      description={O.actionPreview}
+                    />
+                  ) : (
+                    <QuickActionTile
+                      href={live360Enabled ? "/dashboard/history" : live360NavUpgradeHref()}
+                      icon={Store}
+                      title={d.nav.history}
+                      description={O.actionHistory}
+                    />
+                  )}
+                </>
+              )}
+              <QuickActionTile
+                href="/dashboard/billing"
+                icon={CreditCard}
+                title={d.subscription}
+                description={O.actionBilling}
+              />
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

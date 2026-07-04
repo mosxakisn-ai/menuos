@@ -8,6 +8,7 @@ import { DashboardLocaleProvider } from "@/components/dashboard/dashboard-locale
 import { DashboardDiagnosticsReporter } from "@/components/dashboard/dashboard-diagnostics-reporter";
 import { ConfirmDialogHost } from "@/components/ui/confirm-dialog";
 import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
+import { OnboardingLegacyQrSync } from "@/components/dashboard/onboarding-legacy-qr-sync";
 import { getSession } from "@/lib/auth";
 import { loginUrlWithCallback } from "@/lib/safe-callback-url";
 import { isTrialPlan, isTrialStillActive, getTrialPeriodDays } from "@menuos/shared";
@@ -20,6 +21,12 @@ import {
   parseDashboardLang,
 } from "@/content/dashboard-i18n";
 import { playfair } from "@/lib/fonts";
+import { ONBOARDING_QR_COOKIE } from "@/lib/onboarding-constants";
+import {
+  getOnboardingStatus,
+  isOnboardingComplete,
+  isOnboardingPathAllowed,
+} from "@/lib/onboarding-status";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +68,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const cookieStore = await cookies();
   const initialLang = parseDashboardLang(cookieStore.get(DASHBOARD_LANG_COOKIE)?.value);
+
+  let onboardingLocked = false;
+  if (session.role !== "STAFF") {
+    const onboardingStatus = await getOnboardingStatus(session.organizationId);
+    const qrVisited = cookieStore.get(ONBOARDING_QR_COOKIE)?.value === "1";
+    onboardingLocked = !isOnboardingComplete(onboardingStatus, qrVisited);
+    if (onboardingLocked) {
+      const pathname = headersList.get("x-menuos-pathname") ?? "/dashboard";
+      if (!isOnboardingPathAllowed(pathname, onboardingStatus, qrVisited)) {
+        redirect("/dashboard");
+      }
+    }
+  }
 
   const org = await prisma.organization.findUnique({
     where: { id: session.organizationId },
@@ -126,6 +146,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className={playfair.variable}>
       <DashboardDiagnosticsReporter />
       <ConfirmDialogHost />
+      <OnboardingLegacyQrSync enabled={onboardingLocked} />
       <div className="dashboard-shell flex min-h-screen bg-brand-surface">
         <DashboardSidebar
           initialPendingCount={initialMonitorCount}
@@ -133,6 +154,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           userRole={session.role}
           planId={planId}
           live360Enabled={live360Enabled}
+          onboardingLocked={onboardingLocked}
         />
         <div className="flex min-w-0 flex-1 flex-col">
           <DashboardHeader
@@ -158,6 +180,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           userRole={session.role}
           planId={planId}
           live360Enabled={live360Enabled}
+          onboardingLocked={onboardingLocked}
         />
       </div>
       </div>

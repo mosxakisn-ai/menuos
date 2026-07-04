@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, QrCode, Store, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DashboardStepCircle } from "@/components/dashboard/dashboard-ui";
-import { hasQrOnboardingVisit } from "@/components/dashboard/mark-qr-onboarding";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
@@ -36,15 +35,16 @@ function firstOpenStepIndex(steps: StepDef[]): number {
   return open === -1 ? steps.length - 1 : open;
 }
 
-export function OnboardingWizard({ state }: { state: OnboardingState }) {
+export function OnboardingWizard({
+  state,
+  qrVisited = false,
+}: {
+  state: OnboardingState;
+  qrVisited?: boolean;
+}) {
   const { d } = useDashboardCopy();
   const O = d.onboarding;
-  const [qrVisited, setQrVisited] = useState(false);
   const [viewStep, setViewStep] = useState(0);
-
-  useEffect(() => {
-    setQrVisited(hasQrOnboardingVisit());
-  }, []);
 
   const steps: StepDef[] = [
     {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { prisma } from "@menuos/db";
 import { getTrialPeriodDays } from "@menuos/shared";
 import { DashboardOverviewContent } from "@/components/dashboard/dashboard-overview-content";
@@ -8,6 +9,8 @@ import { getSession } from "@/lib/auth";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 import { ensureOnboardingVenuesForOrganization } from "@/lib/seed-onboarding-venue";
 import { organizationHasLive360 } from "@/lib/billing";
+import { ONBOARDING_QR_COOKIE } from "@/lib/onboarding-constants";
+import { isOnboardingComplete } from "@/lib/onboarding-status";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { startOfTodayAthens } from "@/lib/athens-day";
 
@@ -92,6 +95,20 @@ export default async function DashboardPage({ searchParams }: Props) {
   }
 
   const live360Enabled = await organizationHasLive360(session!.organizationId);
+  const qrVisited = (await cookies()).get(ONBOARDING_QR_COOKIE)?.value === "1";
+  const onboardingComplete = isOnboardingComplete(
+    {
+      hasVenue: venueCount > 0,
+      hasCategory,
+      hasItem: itemCount > 0,
+      venueCount,
+      menuCount,
+      itemCount,
+      firstVenueId: firstVenue?.id,
+      firstVenueSlug: firstVenue?.slug,
+    },
+    qrVisited,
+  );
 
   return (
     <DashboardPageShell wide>
@@ -113,6 +130,8 @@ export default async function DashboardPage({ searchParams }: Props) {
         passTodayCount={passTodayCount}
         passAvgDeliveryMin={passAvgDeliveryMin}
         live360Enabled={live360Enabled}
+        onboardingComplete={onboardingComplete}
+        qrVisited={qrVisited}
       />
     </DashboardPageShell>
   );

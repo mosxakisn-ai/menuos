@@ -7,6 +7,7 @@ import { loginUrlWithCallback } from "@/lib/safe-callback-url";
 import { SUPERVISOR_COOKIE } from "@/lib/supervisor-auth-constants";
 import { verifySupervisorTokenEdge } from "@/lib/supervisor-auth-edge";
 import { isStaffRestrictedDashboardPath } from "@/lib/dashboard-roles";
+import { ONBOARDING_QR_COOKIE } from "@/lib/onboarding-constants";
 import {
   checkSitemapAccess,
   isSitemapGuardPath,
@@ -132,6 +133,15 @@ export async function middleware(request: NextRequest) {
     }
 
     response = NextResponse.next({ request: { headers: requestHeaders } });
+    if (session.role !== "STAFF" && pathname.startsWith("/dashboard/qr")) {
+      response.cookies.set(ONBOARDING_QR_COOKIE, "1", {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 365 * 24 * 60 * 60,
+      });
+    }
   } else {
     response = NextResponse.next({ request: { headers: requestHeaders } });
   }

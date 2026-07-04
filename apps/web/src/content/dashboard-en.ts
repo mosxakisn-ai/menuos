@@ -972,6 +972,7 @@ export const DASHBOARD_EN = {
   },
   onboarding: {
     guideLabel: "Getting started",
+    navLockedHint: "Complete the getting started guide first",
     stepTitle: (step: number) => `Step ${step} of 3 — build your catalog`,
     subtitle: "In under an hour you can have a QR menu on your tables.",
     completed: (n: number) => `${n}/3 complete`,
