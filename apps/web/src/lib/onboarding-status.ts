@@ -62,6 +62,14 @@ export function isOnboardingComplete(status: OnboardingStatus, qrVisited: boolea
   return false;
 }
 
+/** 0 = venue, 1 = catalog, 2 = QR, 3 = all done */
+export function getOnboardingCurrentStepIndex(status: OnboardingStatus, qrVisited: boolean): number {
+  if (isOnboardingComplete(status, qrVisited)) return 3;
+  if (!status.hasVenue) return 0;
+  if (!status.hasItem) return 1;
+  return 2;
+}
+
 /** Paths allowed while onboarding is incomplete (ADMIN/MANAGER). */
 export function isOnboardingPathAllowed(
   pathname: string,

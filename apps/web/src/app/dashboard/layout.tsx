@@ -9,6 +9,7 @@ import { DashboardDiagnosticsReporter } from "@/components/dashboard/dashboard-d
 import { ConfirmDialogHost } from "@/components/ui/confirm-dialog";
 import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
 import { OnboardingLegacyQrSync } from "@/components/dashboard/onboarding-legacy-qr-sync";
+import { OnboardingLockBanner } from "@/components/dashboard/onboarding-lock-banner";
 import { getSession } from "@/lib/auth";
 import { loginUrlWithCallback } from "@/lib/safe-callback-url";
 import { isTrialPlan, isTrialStillActive, getTrialPeriodDays } from "@menuos/shared";
@@ -24,6 +25,7 @@ import { playfair } from "@/lib/fonts";
 import { ONBOARDING_QR_COOKIE } from "@/lib/onboarding-constants";
 import {
   getOnboardingStatus,
+  getOnboardingCurrentStepIndex,
   isOnboardingComplete,
   isOnboardingPathAllowed,
 } from "@/lib/onboarding-status";
@@ -68,15 +70,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const cookieStore = await cookies();
   const initialLang = parseDashboardLang(cookieStore.get(DASHBOARD_LANG_COOKIE)?.value);
+  const dashboardPathname = headersList.get("x-menuos-pathname") ?? "/dashboard";
 
   let onboardingLocked = false;
+  let onboardingStepIndex = 0;
   if (session.role !== "STAFF") {
     const onboardingStatus = await getOnboardingStatus(session.organizationId);
     const qrVisited = cookieStore.get(ONBOARDING_QR_COOKIE)?.value === "1";
     onboardingLocked = !isOnboardingComplete(onboardingStatus, qrVisited);
+    onboardingStepIndex = getOnboardingCurrentStepIndex(onboardingStatus, qrVisited);
     if (onboardingLocked) {
-      const pathname = headersList.get("x-menuos-pathname") ?? "/dashboard";
-      if (!isOnboardingPathAllowed(pathname, onboardingStatus, qrVisited)) {
+      if (!isOnboardingPathAllowed(dashboardPathname, onboardingStatus, qrVisited)) {
         redirect("/dashboard");
       }
     }
@@ -166,6 +170,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
           />
           <main className="flex-1 bg-brand-surface/50 p-4 pb-24 sm:p-6 md:pb-8">
             <div className="mx-auto w-full max-w-6xl">
+              {onboardingLocked && dashboardPathname !== "/dashboard" ? (
+                <div className="mb-6">
+                  <OnboardingLockBanner stepIndex={Math.min(onboardingStepIndex, 2)} />
+                </div>
+              ) : null}
               {showTrialBanner && trialEndsAtIso ? (
                 <div className="mb-6">
                   <TrialStatusBanner trialEndsAt={trialEndsAtIso} trialPeriodDays={trialPeriodDays} />
