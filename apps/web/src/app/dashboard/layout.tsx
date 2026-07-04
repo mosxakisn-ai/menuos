@@ -184,7 +184,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           />
           <main className="flex-1 bg-brand-surface/50 p-4 pb-24 sm:p-6 md:pb-8">
             <div className="mx-auto w-full max-w-6xl">
-              {showTrialBanner && trialEndsAtIso ? (
+              {showTrialBanner && trialEndsAtIso && !dashboardPathname.startsWith("/dashboard/billing") ? (
                 <div className="mb-6">
                   <TrialStatusBanner
                     trialEndsAt={trialEndsAtIso}
