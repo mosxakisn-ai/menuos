@@ -581,8 +581,16 @@ export const DASHBOARD_EN = {
     },
     qr: {
       title: "QR Codes",
+      descriptionBasic:
+        "One link and one QR for your whole catalog — print it anywhere you like.",
+      descriptionPro:
+        "Download or preview QR for each spot. Configure spots in Settings → Spots.",
       description:
         "Download or preview QR for each spot. Configure spots in Settings → Spots.",
+      catalogTitle: "Catalog QR",
+      catalogDesc:
+        "Customers scan and see your menu. One QR for the whole venue — no tables required.",
+      catalogLinkLabel: "Catalog link",
       configureSpotsLink: "Configure tables →",
       configureSpotsEmpty: "No spots yet. Set them up in Settings → Spots.",
       needVenueTitle: "You need a venue first",
@@ -1007,7 +1015,7 @@ export const DASHBOARD_EN = {
       },
       qr: {
         title: "Get QR codes",
-        desc: "Open the QR page, download codes and print them. Customers scan and see your catalog.",
+        desc: "Download one QR for your whole catalog and print it wherever you like.",
         cta: "Go to QR codes",
       },
     },

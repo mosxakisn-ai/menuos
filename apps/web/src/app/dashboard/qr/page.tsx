@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { prisma } from "@menuos/db";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
-import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
+import { QrPageHeader } from "@/components/dashboard/qr-page-header";
+import { VenueCatalogQr } from "@/components/dashboard/venue-catalog-qr";
 import { VenueSpotsQrList } from "@/components/dashboard/venue-spots-qr-list";
 import { MarkQrOnboarding } from "@/components/dashboard/mark-qr-onboarding";
 import { getSession } from "@/lib/auth";
+import { organizationHasLive360 } from "@/lib/billing";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,6 +20,8 @@ export default async function QrPage({ searchParams }: Props) {
   const session = await getSession();
   if (session!.role === "STAFF") redirect("/dashboard/waiter");
   const sp = await searchParams;
+  const proQrMode = await organizationHasLive360(session!.organizationId);
+
   const venues = await prisma.venue.findMany({
     where: { organizationId: session!.organizationId },
     select: {
@@ -44,8 +48,12 @@ export default async function QrPage({ searchParams }: Props) {
   return (
     <DashboardPage wide>
       <MarkQrOnboarding />
-      <LocalizedDashboardPageHeader page="qr" />
-      <VenueSpotsQrList venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />
+      <QrPageHeader proMode={proQrMode} />
+      {proQrMode ? (
+        <VenueSpotsQrList venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />
+      ) : (
+        <VenueCatalogQr venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />
+      )}
     </DashboardPage>
   );
 }
