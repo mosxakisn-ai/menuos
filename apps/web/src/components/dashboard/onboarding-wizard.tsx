@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ArrowRight, Check, QrCode, Store, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { useEffect } from "react";
 import { DashboardStepCircle } from "@/components/dashboard/dashboard-ui";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { shouldShowOnboardingPopup } from "@/lib/onboarding-constants";
 import { cn } from "@/lib/utils";
 
 export type OnboardingState = {
@@ -37,13 +39,12 @@ function firstOpenStepIndex(steps: StepDef[]): number {
 export function OnboardingWizard({
   state,
   qrVisited = false,
-  showPopup = false,
 }: {
   state: OnboardingState;
   qrVisited?: boolean;
-  /** Modal popup — only on overview so it never covers forms. */
-  showPopup?: boolean;
 }) {
+  const pathname = usePathname();
+  const showPopup = shouldShowOnboardingPopup(pathname);
   const { d } = useDashboardCopy();
   const O = d.onboarding;
 

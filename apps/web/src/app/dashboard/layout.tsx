@@ -200,11 +200,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </main>
         </div>
         {onboardingLocked && onboardingWizardState ? (
-          <OnboardingWizard
-            state={onboardingWizardState}
-            qrVisited={qrVisited}
-            showPopup={dashboardPathname === "/dashboard"}
-          />
+          <OnboardingWizard state={onboardingWizardState} qrVisited={qrVisited} />
         ) : null}
         <DashboardMobileNav
           initialPendingCount={initialMonitorCount}
