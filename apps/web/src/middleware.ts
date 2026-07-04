@@ -7,6 +7,11 @@ import { loginUrlWithCallback } from "@/lib/safe-callback-url";
 import { SUPERVISOR_COOKIE } from "@/lib/supervisor-auth-constants";
 import { verifySupervisorTokenEdge } from "@/lib/supervisor-auth-edge";
 import { isStaffRestrictedDashboardPath } from "@/lib/dashboard-roles";
+import {
+  checkSitemapAccess,
+  isSitemapGuardPath,
+  sitemapGuardClientIp,
+} from "@/lib/sitemap-crawler-guard";
 
 const TRIAL_EXEMPT_PREFIXES = ["/dashboard/billing"];
 
@@ -47,6 +52,26 @@ export async function middleware(request: NextRequest) {
 
   const indexNow = indexNowKeyResponse(pathname);
   if (indexNow) return indexNow;
+
+  if (isSitemapGuardPath(pathname)) {
+    const access = checkSitemapAccess({
+      ip: sitemapGuardClientIp(
+        request.headers.get("x-forwarded-for"),
+        request.headers.get("x-real-ip"),
+      ),
+      pathname,
+      userAgent: request.headers.get("user-agent"),
+    });
+    if (!access.allowed) {
+      return new NextResponse("Too many requests. Try again later.", {
+        status: 429,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Retry-After": String(access.retryAfterSec),
+        },
+      });
+    }
+  }
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-menuos-pathname", pathname);
