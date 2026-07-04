@@ -8,6 +8,12 @@ import {
 } from "@menuos/shared";
 import { getPlanFromCatalog, getPlanPriceMap } from "@/lib/plan-catalog-service";
 import { sendSubscriptionActivatedEmail } from "@/lib/mail";
+import {
+  LIVE360_UPGRADE_QUERY,
+  organizationCanUseLive360,
+} from "@/lib/live360-plan";
+
+export { LIVE360_UPGRADE_QUERY, organizationCanUseLive360 };
 
 export type OrganizationPlanContext = {
   active: boolean;
@@ -366,14 +372,7 @@ export function organizationCanUsePdfImport(planId: string): boolean {
   return planId === "PRO" || planId === "ENTERPRISE";
 }
 
-/** Live 360° — waiter panel, station screens, pass history, guest calls from QR. */
-export function organizationCanUseLive360(planId: string): boolean {
-  return planId === "PRO" || planId === "ENTERPRISE";
-}
-
 export async function organizationHasLive360(organizationId: string): Promise<boolean> {
   const ctx = await getOrganizationPlanContext(organizationId);
   return Boolean(ctx?.active && organizationCanUseLive360(ctx.planId));
 }
-
-export const LIVE360_UPGRADE_QUERY = "live-360";

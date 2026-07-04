@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LIVE360_UPGRADE_QUERY } from "@/lib/billing";
+import { LIVE360_UPGRADE_QUERY } from "@/lib/live360-plan";
 
 type Props = {
   title: string;

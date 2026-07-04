@@ -1,4 +1,4 @@
-import { LIVE360_UPGRADE_QUERY } from "@/lib/billing";
+import { LIVE360_UPGRADE_QUERY } from "@/lib/live360-plan";
 
 export const LIVE360_NAV_HREFS = ["/dashboard/waiter", "/dashboard/history"] as const;
 
