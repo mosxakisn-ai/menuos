@@ -5,13 +5,18 @@
  * Usage:
  *   MENUOS_STRIPE_SECRET_KEY=sk_live_... node scripts/setup-menuos-stripe.mjs
  *   MENUOS_STRIPE_SECRET_KEY=sk_live_... node scripts/setup-menuos-stripe.mjs --domain=menuos.gr
+ *   MENUOS_STRIPE_SECRET_KEY=sk_live_... node scripts/setup-menuos-stripe.mjs --write-env=/opt/menuos/.env
  */
+
+import fs from "node:fs";
 
 const STRIPE_API = "https://api.stripe.com/v1";
 const DEFAULT_DOMAIN = "menuos.gr";
 
 const key = process.env.MENUOS_STRIPE_SECRET_KEY?.trim();
 const domainArg = process.argv.find((a) => a.startsWith("--domain="));
+const writeEnvArg = process.argv.find((a) => a.startsWith("--write-env="));
+const writeEnvPath = writeEnvArg?.split("=")[1];
 const domain = domainArg?.split("=")[1] ?? DEFAULT_DOMAIN;
 const webhookUrl = `https://${domain}/api/billing/webhook`;
 
@@ -45,11 +50,25 @@ async function stripePost(path, body) {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: body.toString(),
+    body: body instanceof URLSearchParams ? body.toString() : body,
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message ?? `Stripe POST ${path} failed (${res.status})`);
   return data;
+}
+
+function upsertEnvValue(envPath, envKey, envValue) {
+  let content = fs.existsSync(envPath) ? fs.readFileSync(envPath, "utf8") : "";
+  content = content.replace(/\r/g, "");
+  const line = `${envKey}=${envValue}`;
+  const re = new RegExp(`^${envKey}=.*$`, "m");
+  if (re.test(content)) {
+    content = content.replace(re, line);
+  } else {
+    if (content.length && !content.endsWith("\n")) content += "\n";
+    content += `${line}\n`;
+  }
+  fs.writeFileSync(envPath, content);
 }
 
 async function main() {
@@ -74,7 +93,9 @@ async function main() {
   if (menuosHook) {
     console.log(`Webhook already exists: ${menuosHook.id}`);
     console.log(`URL: ${menuosHook.url}`);
-    webhookSecret = "(use existing whsec from Stripe Dashboard)";
+    const rolled = await stripePost(`/webhook_endpoints/${menuosHook.id}/secret`, new URLSearchParams());
+    webhookSecret = rolled.secret;
+    console.log("Rolled webhook signing secret for existing endpoint");
   } else {
     const params = new URLSearchParams();
     params.set("url", webhookUrl);
@@ -97,7 +118,15 @@ async function main() {
   console.log("Add to /opt/menuos/.env (production):");
   console.log("-------------------------------------");
   console.log(`MENUOS_STRIPE_SECRET_KEY=${key.slice(0, 12)}...`);
-  console.log(`MENUOS_STRIPE_WEBHOOK_SECRET=${webhookSecret}`);
+  console.log(`MENUOS_STRIPE_WEBHOOK_SECRET=${webhookSecret.slice(0, 10)}...`);
+
+  if (writeEnvPath) {
+    upsertEnvValue(writeEnvPath, "MENUOS_STRIPE_SECRET_KEY", key);
+    upsertEnvValue(writeEnvPath, "MENUOS_STRIPE_WEBHOOK_SECRET", webhookSecret);
+    console.log("");
+    console.log(`Wrote Stripe keys to ${writeEnvPath}`);
+  }
+
   console.log("");
   console.log("Restart:");
   console.log("  docker compose -f docker-compose.prod.yml up -d menuos-web");

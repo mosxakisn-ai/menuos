@@ -38,5 +38,9 @@ fi
 
 bash "$ROOT/scripts/align-postgres-password.sh"
 
+if [ -f "$ROOT/scripts/align-menuos-stripe-on-server.sh" ]; then
+  bash "$ROOT/scripts/align-menuos-stripe-on-server.sh"
+fi
+
 chmod +x scripts/*.sh
 APP_DIR="$ROOT" RUN_DB_PUSH="${RUN_DB_PUSH:-1}" STRICT="${STRICT:-0}" bash scripts/fix-production.sh

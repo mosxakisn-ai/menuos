@@ -89,6 +89,8 @@ fi
 echo ""
 echo "==> Postgres hostname (menuos-db avoids MatchWork network collision)"
 bash "$ROOT/scripts/align-postgres-password.sh" 2>/dev/null || true
+bash "$ROOT/scripts/align-menuos-stripe-on-server.sh" 2>/dev/null || true
+load_env "$ROOT"
 
 echo ""
 export APP_DIR="$ROOT"
