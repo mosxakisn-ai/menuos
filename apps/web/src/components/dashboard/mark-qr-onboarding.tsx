@@ -1,26 +1,37 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-const QR_ONBOARDING_KEY = "menuos-onboarding-qr";
+export function MarkQrOnboarding({ redirectToDashboard = false }: { redirectToDashboard?: boolean }) {
+  const router = useRouter();
 
-export function MarkQrOnboarding() {
   useEffect(() => {
-    void fetch("/api/onboarding/mark-qr", { method: "POST" });
-    try {
-      localStorage.setItem(QR_ONBOARDING_KEY, "1");
-    } catch {
-      // private browsing
-    }
-  }, []);
+    void fetch("/api/onboarding/mark-qr", { method: "POST" }).then((res) => {
+      if (redirectToDashboard && res.ok) {
+        router.push("/dashboard");
+        router.refresh();
+      }
+    });
+  }, [redirectToDashboard, router]);
+
   return null;
 }
 
+/** @deprecated Legacy localStorage flag — only used for one-time migration. */
 export function hasQrOnboardingVisit(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return localStorage.getItem(QR_ONBOARDING_KEY) === "1";
+    return localStorage.getItem("menuos-onboarding-qr") === "1";
   } catch {
     return false;
+  }
+}
+
+export function clearQrOnboardingVisitLocal(): void {
+  try {
+    localStorage.removeItem("menuos-onboarding-qr");
+  } catch {
+    // private browsing
   }
 }

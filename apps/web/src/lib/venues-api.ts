@@ -15,7 +15,6 @@ import {
   serializableTransaction,
 } from "@/lib/plan-limits";
 import { legacyVenueScreenToken } from "@/lib/station-screens";
-import { seedOnboardingVenueInTransaction } from "@/lib/seed-onboarding-venue";
 import { allocateGlobalVenueSlug, baseVenueSlug } from "@/lib/venue-slug";
 
 const DEFAULT_STATION_SCREENS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
@@ -81,17 +80,6 @@ export async function createVenueHandler(request: Request, organizationId: strin
             screenToken: legacyVenueScreenToken(created, station),
             sortOrder: 0,
           },
-        });
-      }
-
-      const menuId = created.menus[0]?.id;
-      if (menuId) {
-        await seedOnboardingVenueInTransaction(tx, {
-          organizationId,
-          organizationSlug: organization.slug,
-          venueId: created.id,
-          venueSlug: created.slug,
-          menuId,
         });
       }
 

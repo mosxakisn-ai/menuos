@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { prisma } from "@menuos/db";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
 import { QrPageHeader } from "@/components/dashboard/qr-page-header";
@@ -9,6 +10,8 @@ import { MarkQrOnboarding } from "@/components/dashboard/mark-qr-onboarding";
 import { getSession } from "@/lib/auth";
 import { organizationHasLive360 } from "@/lib/billing";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
+import { resolveOnboardingCookies } from "@/lib/onboarding-cookies";
+import { getOnboardingStatus, isOnboardingComplete } from "@/lib/onboarding-status";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildDashboardPageMetadata("qr", "/dashboard/qr");
@@ -45,9 +48,14 @@ export default async function QrPage({ searchParams }: Props) {
 
   const venueList = venues.map(({ id, name, slug }) => ({ id, name, slug }));
 
+  const cookieStore = await cookies();
+  const onboardingStatus = await getOnboardingStatus(session!.organizationId);
+  const { qrVisited, confirmed } = resolveOnboardingCookies(cookieStore, onboardingStatus);
+  const redirectToDashboard = !isOnboardingComplete(onboardingStatus, qrVisited, confirmed);
+
   return (
     <DashboardPage wide>
-      <MarkQrOnboarding />
+      <MarkQrOnboarding redirectToDashboard={redirectToDashboard} />
       <QrPageHeader proMode={proQrMode} />
       {proQrMode ? (
         <VenueSpotsQrList venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />

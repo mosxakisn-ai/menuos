@@ -1,7 +1,13 @@
 import { prisma } from "@menuos/db";
+import { ONBOARDING_STARTER_CATEGORIES } from "@menuos/shared";
 
 /** Feature launch — venues created before this skip the QR cookie requirement (grandfather). */
 export const MANDATORY_ONBOARDING_FROM = new Date("2026-07-04T00:00:00.000Z");
+
+export type CatalogPreviewCategory = {
+  name: string;
+  items: { name: string; price: string }[];
+};
 
 export type OnboardingStatus = {
   hasVenue: boolean;
@@ -15,7 +21,23 @@ export type OnboardingStatus = {
   firstVenueName?: string;
   firstVenueDescription?: string | null;
   firstVenueCreatedAt?: Date;
+  catalogPreview: CatalogPreviewCategory[];
 };
+
+function greekName(translations: { language: string; name: string }[]): string {
+  return translations.find((t) => t.language === "GR")?.name ?? translations[0]?.name ?? "";
+}
+
+/** Static preview for onboarding step 2 before catalog is saved. */
+export function getStarterCatalogPreview(): CatalogPreviewCategory[] {
+  return ONBOARDING_STARTER_CATEGORIES.map((cat) => ({
+    name: cat.nameGr,
+    items: cat.items.map((item) => ({
+      name: item.nameGr,
+      price: item.price.toString(),
+    })),
+  }));
+}
 
 export async function getOnboardingStatus(organizationId: string): Promise<OnboardingStatus> {
   const venues = await prisma.venue.findMany({
@@ -23,7 +45,12 @@ export async function getOnboardingStatus(organizationId: string): Promise<Onboa
     include: {
       menus: {
         include: {
-          categories: { include: { items: true } },
+          categories: {
+            include: {
+              translations: true,
+              items: { include: { translations: true } },
+            },
+          },
         },
       },
     },
@@ -38,6 +65,15 @@ export async function getOnboardingStatus(organizationId: string): Promise<Onboa
     0,
   );
   const firstVenue = venues[0];
+  const firstMenu = firstVenue?.menus[0];
+  const catalogPreview: CatalogPreviewCategory[] =
+    firstMenu?.categories.map((cat) => ({
+      name: greekName(cat.translations),
+      items: cat.items.map((item) => ({
+        name: greekName(item.translations),
+        price: item.price.toString(),
+      })),
+    })) ?? [];
 
   return {
     hasVenue: venueCount > 0,
@@ -51,6 +87,7 @@ export async function getOnboardingStatus(organizationId: string): Promise<Onboa
     firstVenueName: firstVenue?.name,
     firstVenueDescription: firstVenue?.description ?? null,
     firstVenueCreatedAt: firstVenue?.createdAt,
+    catalogPreview,
   };
 }
 
@@ -60,15 +97,21 @@ function isGrandfatheredOnboarding(status: OnboardingStatus): boolean {
   );
 }
 
-/** Steps 1–3 complete (venue, items, QR or grandfather). */
+export function isOnboardingComplete(
+  status: OnboardingStatus,
+  qrVisited: boolean,
+  confirmed: boolean,
+): boolean {
+  if (isGrandfatheredOnboarding(status)) return true;
+  if (!confirmed) return false;
+  return isOnboardingSetupComplete(status, qrVisited);
+}
+
+/** Steps 1–3 complete (venue, catalog saved, QR page visited this session). */
 export function isOnboardingSetupComplete(status: OnboardingStatus, qrVisited: boolean): boolean {
   if (!status.hasVenue || !status.hasItem) return false;
   if (qrVisited || isGrandfatheredOnboarding(status)) return true;
   return false;
-}
-
-export function isOnboardingComplete(status: OnboardingStatus, qrVisited: boolean): boolean {
-  return isOnboardingSetupComplete(status, qrVisited);
 }
 
 /** Step 4 confirmation popup — skip for grandfathered accounts. */
@@ -83,11 +126,15 @@ export function needsOnboardingConfirmation(
 }
 
 /** 0 = venue, 1 = catalog, 2 = QR, 3 = all done */
-export function getOnboardingCurrentStepIndex(status: OnboardingStatus, qrVisited: boolean): number {
-  if (isOnboardingComplete(status, qrVisited)) return 3;
+export function getOnboardingCurrentStepIndex(
+  status: OnboardingStatus,
+  qrVisited: boolean,
+): number {
+  if (isOnboardingSetupComplete(status, qrVisited)) return 3;
   if (!status.hasVenue) return 0;
   if (!status.hasItem) return 1;
-  return 2;
+  if (!qrVisited) return 2;
+  return 3;
 }
 
 /** Paths allowed while onboarding is incomplete (ADMIN/MANAGER). */
@@ -95,8 +142,9 @@ export function isOnboardingPathAllowed(
   pathname: string,
   status: OnboardingStatus,
   qrVisited: boolean,
+  confirmed: boolean,
 ): boolean {
-  if (isOnboardingComplete(status, qrVisited)) return true;
+  if (isOnboardingComplete(status, qrVisited, confirmed)) return true;
   if (pathname.startsWith("/dashboard/billing")) return true;
   if (pathname === "/dashboard") return true;
   if (pathname.startsWith("/dashboard/settings")) return true;
@@ -106,16 +154,15 @@ export function isOnboardingPathAllowed(
   }
 
   if (!status.hasItem) {
-    return pathname.startsWith("/dashboard/menus") || pathname.startsWith("/dashboard/venues/new");
+    return pathname === "/dashboard/venues/new" || pathname.startsWith("/dashboard/venues/new/");
   }
 
   if (!qrVisited) {
     return (
       pathname.startsWith("/dashboard/qr") ||
-      pathname.startsWith("/dashboard/menus") ||
       pathname.startsWith("/dashboard/venues/new")
     );
   }
 
-  return true;
+  return pathname.startsWith("/dashboard/qr");
 }

@@ -24,9 +24,11 @@ import {
 import { playfair } from "@/lib/fonts";
 import { ONBOARDING_CONFIRMED_COOKIE, ONBOARDING_QR_COOKIE } from "@/lib/onboarding-constants";
 import { APP_URL } from "@/lib/config";
+import { resolveOnboardingCookies } from "@/lib/onboarding-cookies";
 import {
   getOnboardingStatus,
-  isOnboardingSetupComplete,
+  getStarterCatalogPreview,
+  isOnboardingComplete,
   needsOnboardingConfirmation,
   isOnboardingPathAllowed,
 } from "@/lib/onboarding-status";
@@ -78,13 +80,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let showOnboardingWizard = false;
   let onboardingAwaitingConfirmation = false;
   let qrVisited = false;
+  let onboardingConfirmed = false;
   if (session.role !== "STAFF") {
     const onboardingStatus = await getOnboardingStatus(session.organizationId);
-    qrVisited = cookieStore.get(ONBOARDING_QR_COOKIE)?.value === "1";
-    const confirmed = cookieStore.get(ONBOARDING_CONFIRMED_COOKIE)?.value === "1";
-    const setupComplete = isOnboardingSetupComplete(onboardingStatus, qrVisited);
-    onboardingLocked = !setupComplete;
-    onboardingAwaitingConfirmation = needsOnboardingConfirmation(onboardingStatus, qrVisited, confirmed);
+    const resolved = resolveOnboardingCookies(cookieStore, onboardingStatus);
+    qrVisited = resolved.qrVisited;
+    onboardingConfirmed = resolved.confirmed;
+
+    onboardingLocked = !isOnboardingComplete(onboardingStatus, qrVisited, onboardingConfirmed);
+    onboardingAwaitingConfirmation = needsOnboardingConfirmation(
+      onboardingStatus,
+      qrVisited,
+      onboardingConfirmed,
+    );
     showOnboardingWizard = onboardingLocked || onboardingAwaitingConfirmation;
 
     if (showOnboardingWizard) {
@@ -101,11 +109,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
         catalogUrl: onboardingStatus.firstVenueSlug
           ? `${APP_URL}/m/${onboardingStatus.firstVenueSlug}`
           : undefined,
+        catalogPreview: onboardingStatus.hasItem
+          ? onboardingStatus.catalogPreview
+          : getStarterCatalogPreview(),
       };
     }
 
     if (onboardingLocked) {
-      if (!isOnboardingPathAllowed(dashboardPathname, onboardingStatus, qrVisited)) {
+      if (!isOnboardingPathAllowed(dashboardPathname, onboardingStatus, qrVisited, onboardingConfirmed)) {
         redirect("/dashboard");
       }
     }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { prisma } from "@menuos/db";
@@ -8,6 +9,8 @@ import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-d
 import { getSession } from "@/lib/auth";
 import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
+import { resolveOnboardingCookies } from "@/lib/onboarding-cookies";
+import { getOnboardingStatus, isOnboardingComplete } from "@/lib/onboarding-status";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildDashboardPageMetadata("menus", "/dashboard/menus");
@@ -27,6 +30,11 @@ export default async function MenusPage({ searchParams }: Props) {
     orderBy: { createdAt: "asc" },
   });
 
+  const cookieStore = await cookies();
+  const onboardingStatus = await getOnboardingStatus(session!.organizationId);
+  const { qrVisited, confirmed } = resolveOnboardingCookies(cookieStore, onboardingStatus);
+  const readOnlyDuringOnboarding = !isOnboardingComplete(onboardingStatus, qrVisited, confirmed);
+
   return (
     <DashboardPage wide>
       <LocalizedDashboardPageHeader page="menus" />
@@ -36,6 +44,7 @@ export default async function MenusPage({ searchParams }: Props) {
           initialVenueId={sp.venue}
           welcome={sp.welcome === "1"}
           canImportPdf={canImportPdf}
+          readOnlyDuringOnboarding={readOnlyDuringOnboarding}
         />
       </Suspense>
     </DashboardPage>

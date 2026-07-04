@@ -2,9 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { hasQrOnboardingVisit } from "@/components/dashboard/mark-qr-onboarding";
+import {
+  clearQrOnboardingVisitLocal,
+  hasQrOnboardingVisit,
+} from "@/components/dashboard/mark-qr-onboarding";
 
-/** Migrates legacy localStorage QR flag to httpOnly cookie. */
+/** One-time migration: localStorage QR flag → httpOnly session cookie, then remove localStorage. */
 export function OnboardingLegacyQrSync({ enabled }: { enabled: boolean }) {
   const router = useRouter();
   const synced = useRef(false);
@@ -13,6 +16,7 @@ export function OnboardingLegacyQrSync({ enabled }: { enabled: boolean }) {
     if (!enabled || synced.current || !hasQrOnboardingVisit()) return;
     synced.current = true;
     void fetch("/api/onboarding/mark-qr", { method: "POST" }).then(() => {
+      clearQrOnboardingVisitLocal();
       router.refresh();
     });
   }, [enabled, router]);

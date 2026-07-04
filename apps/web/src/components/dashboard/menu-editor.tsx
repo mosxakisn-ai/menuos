@@ -73,11 +73,13 @@ export function MenuEditor({
   initialVenueId,
   welcome,
   canImportPdf = false,
+  readOnlyDuringOnboarding = false,
 }: {
   venues: Venue[];
   initialVenueId?: string;
   welcome?: boolean;
   canImportPdf?: boolean;
+  readOnlyDuringOnboarding?: boolean;
 }) {
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -483,6 +485,7 @@ export function MenuEditor({
   }
 
   const activeMenu = menus.find((m) => m.id === activeMenuId) ?? menus[0];
+  const ro = readOnlyDuringOnboarding;
 
   if (venues.length === 0) {
     return (
@@ -499,6 +502,12 @@ export function MenuEditor({
   return (
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
+
+      {ro ? (
+        <div className="rounded-xl border border-brand-blue/15 bg-brand-blue/[0.04] px-4 py-3 text-sm text-slate-600">
+          {d.menuEditor.onboardingReadOnlyBanner}
+        </div>
+      ) : null}
 
       <DashboardToolbar>
         <label className="block min-w-[12rem] flex-1 sm:max-w-xs">
@@ -517,21 +526,21 @@ export function MenuEditor({
         </label>
         {venue ? (
           <>
-            {canImportPdf ? (
+            {!ro && canImportPdf ? (
               <a
                 href={buildMenusImportUrl({ venueId, menuId: activeMenuId || undefined })}
                 className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
               >
                 {d.importPdf}
               </a>
-            ) : (
+            ) : !ro ? (
               <a
                 href="/dashboard/billing?upgrade=pdf-import"
                 className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
               >
                 {d.importPdfPro}
               </a>
-            )}
+            ) : null}
             <a
               href={`/m/${venue.slug}`}
               target="_blank"
@@ -561,14 +570,16 @@ export function MenuEditor({
             <Card>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <h2 className="font-semibold text-brand-navy">{d.menus}</h2>
-                <button
-                  type="button"
-                  disabled={deletingAllMenus}
-                  onClick={() => void deleteAllMenus()}
-                  className="text-sm font-semibold text-red-600 underline-offset-2 hover:text-red-700 hover:underline disabled:opacity-50"
-                >
-                  {deletingAllMenus ? "..." : d.deleteAllCatalogs}
-                </button>
+                {!ro ? (
+                  <button
+                    type="button"
+                    disabled={deletingAllMenus}
+                    onClick={() => void deleteAllMenus()}
+                    className="text-sm font-semibold text-red-600 underline-offset-2 hover:text-red-700 hover:underline disabled:opacity-50"
+                  >
+                    {deletingAllMenus ? "..." : d.deleteAllCatalogs}
+                  </button>
+                ) : null}
               </div>
               <p className="mt-2 text-xs text-slate-500">{d.menuEditor.syncCatalogHint}</p>
               <DashboardScrollRow className="mt-3" innerClassName="flex gap-2 pb-0.5">
@@ -592,7 +603,7 @@ export function MenuEditor({
                       >
                         {m.name}
                       </button>
-                      {deletable ? (
+                      {deletable && !ro ? (
                         <button
                           type="button"
                           disabled={deletingMenuId === m.id}
@@ -613,41 +624,45 @@ export function MenuEditor({
                   );
                 })}
               </DashboardScrollRow>
-              <form onSubmit={addMenu} className="mt-4 flex flex-wrap items-end gap-2">
+              {!ro ? (
+                <form onSubmit={addMenu} className="mt-4 flex flex-wrap items-end gap-2">
+                  <input
+                    placeholder={d.newCatalogPlaceholder}
+                    value={newMenuName}
+                    onChange={(e) => setNewMenuName(e.target.value)}
+                    className={`min-w-[200px] flex-1 ${dashboardInputClass}`}
+                  />
+                  <button type="submit" disabled={addingMenu} className={buttonClass("secondary", "sm")}>
+                    {addingMenu ? "..." : d.addCatalog}
+                  </button>
+                </form>
+              ) : null}
+            </Card>
+          ) : null}
+
+          {!ro ? (
+            <Card>
+              <h2 className="font-semibold text-brand-navy">{d.menuEditor.categoryNew}</h2>
+              <p className="mt-1 text-xs text-slate-500">{d.menuEditor.categoryHint}</p>
+              <form onSubmit={addCategory} className="mt-4 flex flex-wrap items-end gap-2">
                 <input
-                  placeholder={d.newCatalogPlaceholder}
-                  value={newMenuName}
-                  onChange={(e) => setNewMenuName(e.target.value)}
-                  className={`min-w-[200px] flex-1 ${dashboardInputClass}`}
+                  required
+                  placeholder={`${FORM_PLACEHOLDERS.categoryGr} *`}
+                  value={catNameGr}
+                  onChange={(e) => setCatNameGr(e.target.value)}
+                  className={`min-w-[200px] flex-1 ${dashboardFieldClass}`}
                 />
-                <button type="submit" disabled={addingMenu} className={buttonClass("secondary", "sm")}>
-                  {addingMenu ? "..." : d.addCatalog}
+                <button
+                  type="submit"
+                  disabled={addingCat}
+                  className={`inline-flex w-fit items-center gap-1 ${buttonClass("primary", "sm")}`}
+                >
+                  <Plus className="h-4 w-4" />
+                  {addingCat ? d.menuEditor.addingCategory : d.menuEditor.addCategory}
                 </button>
               </form>
             </Card>
           ) : null}
-
-          <Card>
-            <h2 className="font-semibold text-brand-navy">{d.menuEditor.categoryNew}</h2>
-            <p className="mt-1 text-xs text-slate-500">{d.menuEditor.categoryHint}</p>
-            <form onSubmit={addCategory} className="mt-4 flex flex-wrap items-end gap-2">
-              <input
-                required
-                placeholder={`${FORM_PLACEHOLDERS.categoryGr} *`}
-                value={catNameGr}
-                onChange={(e) => setCatNameGr(e.target.value)}
-                className={`min-w-[200px] flex-1 ${dashboardFieldClass}`}
-              />
-              <button
-                type="submit"
-                disabled={addingCat}
-                className={`inline-flex w-fit items-center gap-1 ${buttonClass("primary", "sm")}`}
-              >
-                <Plus className="h-4 w-4" />
-                {addingCat ? d.menuEditor.addingCategory : d.menuEditor.addCategory}
-              </button>
-            </form>
-          </Card>
 
           {activeMenu?.categories.map((cat) => (
             <Card key={cat.id} className="overflow-hidden p-0">
@@ -690,38 +705,42 @@ export function MenuEditor({
                       <h3 className="truncate font-serif text-xl font-bold tracking-tight text-brand-navy sm:text-2xl">
                         {tName(cat.translations)}
                       </h3>
-                      <button
-                        type="button"
-                        onClick={() => startEditingCategory(cat)}
-                        className="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-brand-blue"
-                        title={d.menuEditor.renameCategory}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
+                      {!ro ? (
+                        <button
+                          type="button"
+                          onClick={() => startEditingCategory(cat)}
+                          className="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-brand-blue"
+                          title={d.menuEditor.renameCategory}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      ) : null}
                     </div>
                   )}
                   <p className="mt-1 text-sm text-slate-500">
                     {d.catalogEntry.count(cat.items.length)}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => deleteCategory(cat)}
-                  disabled={cat.items.length > 0}
-                  className={cn(
-                    "shrink-0 transition",
-                    cat.items.length > 0
-                      ? "cursor-not-allowed rounded-lg p-2 text-slate-300"
-                      : dashboardIconButtonClass("danger"),
-                  )}
-                  title={
-                    cat.items.length > 0
-                      ? d.catalogEntry.categoryDeleteHint
-                      : d.menuEditor.deleteEmptyCategory
-                  }
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                {!ro ? (
+                  <button
+                    type="button"
+                    onClick={() => deleteCategory(cat)}
+                    disabled={cat.items.length > 0}
+                    className={cn(
+                      "shrink-0 transition",
+                      cat.items.length > 0
+                        ? "cursor-not-allowed rounded-lg p-2 text-slate-300"
+                        : dashboardIconButtonClass("danger"),
+                    )}
+                    title={
+                      cat.items.length > 0
+                        ? d.catalogEntry.categoryDeleteHint
+                        : d.menuEditor.deleteEmptyCategory
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                ) : null}
               </div>
 
               <div className="space-y-3 p-4 sm:p-5">
@@ -812,24 +831,32 @@ export function MenuEditor({
                                       {ITEM_LABEL_OPTIONS.find((o) => o.value === item.label)?.dashboardGr}
                                     </span>
                                   ) : null}
-                                  <button
-                                    type="button"
-                                    onClick={() => startEditingItem(item)}
-                                    className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-brand-blue"
-                                    title={d.catalogEntry.editTitle}
-                                  >
-                                    <Pencil className="h-3.5 w-3.5" />
-                                  </button>
+                                  {!ro ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditingItem(item)}
+                                      className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-brand-blue"
+                                      title={d.catalogEntry.editTitle}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
+                                  ) : null}
                                 </div>
                                 <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => startEditingItem(item)}
-                                    className="text-sm font-semibold tabular-nums text-brand-blue hover:underline"
-                                    title={d.menuEditor.editPrice}
-                                  >
-                                    €{item.price.toString()}
-                                  </button>
+                                  {ro ? (
+                                    <span className="text-sm font-semibold tabular-nums text-brand-blue">
+                                      €{item.price.toString()}
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditingItem(item)}
+                                      className="text-sm font-semibold tabular-nums text-brand-blue hover:underline"
+                                      title={d.menuEditor.editPrice}
+                                    >
+                                      €{item.price.toString()}
+                                    </button>
+                                  )}
                                   {extrasCount > 0 ? (
                                     <span className="text-xs text-slate-500">{d.menuEditor.qrExtrasCount(extrasCount)}</span>
                                   ) : null}
@@ -838,7 +865,7 @@ export function MenuEditor({
                             )}
                           </div>
 
-                          {!isEditing ? (
+                          {!isEditing && !ro ? (
                             <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-2">
                               <select
                                 value={item.label ?? ""}
@@ -955,7 +982,7 @@ export function MenuEditor({
                   })
                 )}
 
-                {itemCategoryId === cat.id ? (
+                {!ro && itemCategoryId === cat.id ? (
                   <form
                     onSubmit={addItem}
                     className="space-y-3 rounded-xl border border-brand-blue/20 bg-brand-surface p-4 sm:p-5"
@@ -1024,7 +1051,7 @@ export function MenuEditor({
                       </button>
                     </div>
                   </form>
-                ) : (
+                ) : !ro ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -1036,7 +1063,7 @@ export function MenuEditor({
                     <Plus className="h-4 w-4" />
                     {d.catalogEntry.add}
                   </button>
-                )}
+                ) : null}
               </div>
             </Card>
           ))}

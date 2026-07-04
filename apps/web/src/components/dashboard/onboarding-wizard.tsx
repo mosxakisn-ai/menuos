@@ -16,6 +16,7 @@ import { DashboardStepCircle } from "@/components/dashboard/dashboard-ui";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { ONBOARDING_STEP_COUNT, shouldShowOnboardingPopup } from "@/lib/onboarding-constants";
+import type { CatalogPreviewCategory } from "@/lib/onboarding-status";
 import { cn } from "@/lib/utils";
 
 export type OnboardingState = {
@@ -29,6 +30,7 @@ export type OnboardingState = {
   itemCount: number;
   menuCount?: number;
   catalogUrl?: string;
+  catalogPreview?: CatalogPreviewCategory[];
 };
 
 type SetupStepDef = {
@@ -63,6 +65,10 @@ export function OnboardingWizard({
   const { d } = useDashboardCopy();
   const O = d.onboarding;
   const [confirming, setConfirming] = useState(false);
+  const [acknowledgingCatalog, setAcknowledgingCatalog] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+
+  const showSeededCatalogPreview = state.hasVenue && !state.hasItem;
 
   const setupSteps: SetupStepDef[] = [
     {
@@ -77,12 +83,20 @@ export function OnboardingWizard({
     {
       id: "menu",
       label: O.stepLabels[1]!,
-      desc: state.hasCategory ? O.steps.menu.descWithCategory : O.steps.menu.descWithoutCategory,
+      desc: showSeededCatalogPreview
+        ? O.steps.menu.descSeeded
+        : state.hasCategory
+          ? O.steps.menu.descWithCategory
+          : O.steps.menu.descWithoutCategory,
       done: state.hasItem,
       href: state.venueId ? `/dashboard/menus?venue=${state.venueId}` : "/dashboard/menus",
       cta: O.steps.menu.cta,
-      altHref: state.venueId ? `/dashboard/menus/import?venue=${state.venueId}` : "/dashboard/menus/import",
-      altCta: d.importPdf,
+      altHref: showSeededCatalogPreview
+        ? undefined
+        : state.venueId
+          ? `/dashboard/menus/import?venue=${state.venueId}`
+          : "/dashboard/menus/import",
+      altCta: showSeededCatalogPreview ? undefined : d.importPdf,
       icon: UtensilsCrossed,
     },
     {
@@ -122,10 +136,26 @@ export function OnboardingWizard({
   async function confirmOnboarding() {
     setConfirming(true);
     try {
-      await fetch("/api/onboarding/confirm", { method: "POST" });
+      const res = await fetch("/api/onboarding/confirm", { method: "POST" });
+      if (!res.ok) return;
       router.refresh();
     } finally {
       setConfirming(false);
+    }
+  }
+
+  async function acknowledgeCatalog() {
+    setAcknowledgingCatalog(true);
+    setCatalogError(null);
+    try {
+      const res = await fetch("/api/onboarding/mark-catalog", { method: "POST" });
+      if (!res.ok) {
+        setCatalogError(O.steps.menu.seedFailed);
+        return;
+      }
+      router.refresh();
+    } finally {
+      setAcknowledgingCatalog(false);
     }
   }
 
@@ -269,6 +299,7 @@ export function OnboardingWizard({
               {(() => {
                 const step = setupSteps[stepIndex]!;
                 const StepIcon = step.icon;
+                const isSeededCatalogStep = step.id === "menu" && showSeededCatalogPreview;
                 return (
                   <>
                     <div className="flex items-start gap-3">
@@ -281,7 +312,7 @@ export function OnboardingWizard({
                       </div>
                       <div className="min-w-0">
                         <h2 id="onboarding-wizard-title" className="font-serif text-lg font-bold text-brand-navy">
-                          {O.stepHeading(stepIndex + 1, currentLabel)}
+                          {isSeededCatalogStep ? O.steps.menu.titleSeeded : O.stepHeading(stepIndex + 1, currentLabel)}
                         </h2>
                         <p id="onboarding-wizard-desc" className="mt-1 text-sm leading-relaxed text-slate-600">
                           {step.desc}
@@ -289,22 +320,61 @@ export function OnboardingWizard({
                       </div>
                     </div>
 
+                    {isSeededCatalogStep && state.catalogPreview && state.catalogPreview.length > 0 ? (
+                      <div className="mt-4 max-h-52 space-y-3 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                        {state.catalogPreview.map((cat) => (
+                          <div key={cat.name}>
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{cat.name}</p>
+                            <ul className="mt-1.5 space-y-1">
+                              {cat.items.map((item) => (
+                                <li
+                                  key={`${cat.name}-${item.name}`}
+                                  className="flex items-center justify-between gap-2 text-sm text-brand-navy"
+                                >
+                                  <span className="truncate">{item.name}</span>
+                                  <span className="shrink-0 font-semibold tabular-nums text-brand-blue">
+                                    €{item.price}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {catalogError ? (
+                      <p className="mt-3 text-sm font-medium text-red-600">{catalogError}</p>
+                    ) : null}
+
                     <div className="mt-5 flex flex-col gap-2 sm:flex-row">
                       {!step.done ? (
-                        <>
-                          <Link
-                            href={step.href}
+                        isSeededCatalogStep ? (
+                          <button
+                            type="button"
+                            disabled={acknowledgingCatalog}
+                            onClick={() => void acknowledgeCatalog()}
                             className={`inline-flex flex-1 items-center justify-center gap-1.5 ${buttonClass("primary")}`}
                           >
-                            {step.cta}
+                            {acknowledgingCatalog ? O.steps.menu.acknowledging : O.steps.menu.ctaContinue}
                             <ArrowRight className="h-4 w-4" />
-                          </Link>
-                          {step.altHref && step.altCta ? (
-                            <Link href={step.altHref} className={`flex-1 ${buttonClass("secondary")}`}>
-                              {step.altCta}
+                          </button>
+                        ) : (
+                          <>
+                            <Link
+                              href={step.href}
+                              className={`inline-flex flex-1 items-center justify-center gap-1.5 ${buttonClass("primary")}`}
+                            >
+                              {step.cta}
+                              <ArrowRight className="h-4 w-4" />
                             </Link>
-                          ) : null}
-                        </>
+                            {step.altHref && step.altCta ? (
+                              <Link href={step.altHref} className={`flex-1 ${buttonClass("secondary")}`}>
+                                {step.altCta}
+                              </Link>
+                            ) : null}
+                          </>
+                        )
                       ) : (
                         <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100">
                           <Check className="h-4 w-4" />

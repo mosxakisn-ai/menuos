@@ -46,7 +46,7 @@ export default function NewVenuePage() {
     }
     showFromResponse(data, true);
     setTimeout(() => {
-      router.push(`/dashboard/menus?venue=${data.venue.id}&welcome=1`);
+      router.push("/dashboard");
       router.refresh();
     }, 800);
   }

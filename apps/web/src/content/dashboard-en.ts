@@ -1008,10 +1008,16 @@ export const DASHBOARD_EN = {
       },
       menu: {
         title: "Build your catalog",
+        titleSeeded: "Your catalog is ready",
         descWithCategory: "Add or edit items, prices and photos. PDF import available on Pro.",
+        descSeeded:
+          "We added sample dishes to get you started. You can edit them later from the Catalog page.",
         descWithoutCategory:
           "Create categories (Salads, Mains, Drinks...) and add at least one item with a price.",
         cta: "Go to catalog",
+        ctaContinue: "Continue to QR",
+        acknowledging: "One moment...",
+        seedFailed: "Could not save the catalog. Try again or contact us.",
       },
       qr: {
         title: "Get QR codes",
@@ -1067,6 +1073,8 @@ export const DASHBOARD_EN = {
     noVenueTitle: "You don't have a venue yet",
     noVenueDesc:
       "Create your venue (restaurant, bar or hotel) first, then add items to the catalog.",
+    onboardingReadOnlyBanner:
+      "The catalog is view-only until you finish setup — edit it later from Overview.",
     categoryNew: "New category",
     categoryHint: "Greek only — EN / DE / FR are auto-generated for the QR menu",
     addCategory: "Add category",
