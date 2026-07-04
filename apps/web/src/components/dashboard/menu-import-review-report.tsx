@@ -91,7 +91,7 @@ export function MenuImportReviewReport({
       translateButton: string;
       translateRetrying: string;
       nextStepsTitle: string;
-    nextSteps: string[];
+    nextSteps: readonly string[];
   };
   ocrPagesUsed?: number;
   extraction?: {

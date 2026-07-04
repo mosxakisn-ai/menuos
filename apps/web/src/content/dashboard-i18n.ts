@@ -9,7 +9,7 @@ type WidenCopy<T> = T extends (...args: infer A) => infer R
   : T extends string
     ? string
     : T extends readonly (infer U)[]
-      ? WidenCopy<U>[]
+      ? readonly WidenCopy<U>[]
       : T extends object
         ? { [K in keyof T]: WidenCopy<T[K]> }
         : T;

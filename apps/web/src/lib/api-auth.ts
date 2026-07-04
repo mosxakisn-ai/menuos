@@ -68,7 +68,8 @@ export async function requirePdfImportPlan(options?: {
       session: null,
       response: NextResponse.json(
         {
-          error: "Το PDF import είναι διαθέσιμο στο πλάνο Pro. Αναβάθμισε για να συνεχίσεις.",
+          error:
+            "Η εισαγωγή PDF (με Gemini AI) είναι στο πλάνο Pro. Αναβάθμισε για να συνεχίσεις.",
           code: "plan_upgrade_required",
         },
         { status: 403 },

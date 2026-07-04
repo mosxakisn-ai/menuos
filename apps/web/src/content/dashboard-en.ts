@@ -407,13 +407,29 @@ export const DASHBOARD_EN = {
       `Your plan allows up to ${max} ${max === 1 ? "venue" : "venues"}.`,
   },
   upgrade: {
-    whyHere: "Why am I here?",
-    pdfImport:
-      "PDF menu import is available on the Pro plan. Upload a PDF and fill your catalog fast — without typing every item.",
-    pdfImportCta: "See Pro plan",
-    live360:
-      "Waiter screens, delivery history and QR calls (Live 360°) are available on Pro only — not on trial or Basic.",
-    live360Cta: "See Pro plan",
+    pdfImport: {
+      title: "Bring your PDF into the catalog",
+      lead:
+        "On Pro you upload your printed menu — categories, items and prices fill in almost on their own. When the PDF is a scan or messy layout, Gemini AI steps in. You review everything before it goes live.",
+      geminiBadge: "Gemini AI",
+      steps: [
+        "Upload a PDF — printed or digital",
+        "Gemini AI for scans and tricky pages",
+        "Edit and save — nothing goes live without your OK",
+      ],
+      cta: "Upgrade to Pro",
+    },
+    live360: {
+      title: "Live 360° — kitchen, bar and waiters in sync",
+      lead:
+        "QR calls, live screens and order history run on Pro. They are not included on trial or Basic.",
+      steps: [
+        "Waiters see calls as they happen",
+        "Kitchen and bar on Pass screens",
+        "History so you know what happened each shift",
+      ],
+      cta: "Upgrade to Pro",
+    },
   },
   proFeature: {
     live360: {

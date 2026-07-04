@@ -5,7 +5,7 @@ export type ConfirmDialogContent = {
   eyebrow?: string;
   title: string;
   description?: string;
-  bullets?: string[];
+  bullets?: readonly string[];
   note?: string;
   confirmLabel?: string;
   cancelLabel?: string;
