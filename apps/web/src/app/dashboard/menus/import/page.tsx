@@ -18,12 +18,15 @@ type Props = { searchParams: Promise<{ venue?: string; menu?: string }> };
 
 export default async function MenuImportPage({ searchParams }: Props) {
   const session = await getSession();
+  const sp = await searchParams;
   const planCtx = await getOrganizationPlanContext(session!.organizationId);
   if (!planCtx || !organizationCanUsePdfImport(planCtx.planId)) {
-    redirect("/dashboard/billing?upgrade=pdf-import");
+    const qs = new URLSearchParams({ upgrade: "pdf-import" });
+    if (sp.venue) qs.set("venue", sp.venue);
+    if (sp.menu) qs.set("menu", sp.menu);
+    redirect(`/dashboard/billing?${qs.toString()}`);
   }
 
-  const sp = await searchParams;
   const venues = await prisma.venue.findMany({
     where: { organizationId: session!.organizationId },
     select: {

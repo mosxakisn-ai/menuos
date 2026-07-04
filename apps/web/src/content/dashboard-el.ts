@@ -30,6 +30,7 @@ export const DASHBOARD_EL = {
   editCatalog: "Επεξεργασία καταλόγου",
   livePreview: "Δες πώς φαίνεται",
   importPdf: "Εισαγωγή από PDF",
+  importPdfButton: "Εισαγωγή PDF",
   importPdfPro: "Εισαγωγή PDF (μόνο Pro)",
   loadingCatalog: "Φόρτωση καταλόγου...",
   importWizard: {
@@ -386,6 +387,24 @@ export const DASHBOARD_EL = {
       `Έχεις ${count}/50 είδη στη δοκιμή. Αν χρειάζεσαι περισσότερα, δες τα πλάνα.`,
     limitsNearCta: "Δες τα πλάνα",
     endsOn: "Δοκιμή έως",
+  },
+  planLimits: {
+    seePlans: "Δες τα πλάνα",
+    catalogTrial:
+      "Στη δωρεάν δοκιμή επιτρέπεται 1 κατάλογος ανά κατάστημα. Για bar, pool κ.λπ. δες Basic ή Pro.",
+    catalogBasic: (max: number) =>
+      `Το πλάνο Basic επιτρέπει μέχρι ${max} καταλόγους ανά κατάστημα.`,
+    catalogGeneric: (planName: string, max: number) =>
+      `Το πλάνο ${planName} επιτρέπει μέχρι ${max} καταλόγους ανά κατάστημα.`,
+    itemsTrial: "Έφτασες τα 50 είδη της δοκιμής. Αναβάθμισε για απεριόριστα πιάτα.",
+    itemsNearTrial: (count: number, max: number) =>
+      `Έχεις ${count}/${max} είδη στη δοκιμή — σύντομα θα φτάσεις το όριο.`,
+    itemsNearGeneric: (count: number, max: number) =>
+      `Έχεις ${count}/${max} είδη — σύντομα θα φτάσεις το όριο του πλάνου σου.`,
+    itemsAtLimit: (max: number) => `Έφτασες το όριο των ${max} ειδών του πλάνου σου.`,
+    venueTrial: "Στη δωρεάν δοκιμή επιτρέπεται 1 κατάστημα. Αναβάθμισε για περισσότερα.",
+    venueAtLimit: (max: number) =>
+      `Το πλάνο σου επιτρέπει μέχρι ${max} ${max === 1 ? "κατάστημα" : "καταστήματα"}.`,
   },
   upgrade: {
     whyHere: "Γιατί είμαι εδώ;",
@@ -1128,8 +1147,8 @@ export const DASHBOARD_EL = {
       unauthorized: "Συνδέσου ξανά.",
       forbidden: "Δεν έχεις δικαίωμα.",
       venue_limit: "Έφτασες το όριο καταστημάτων του πλάνου σου. Δες τα πλάνα στη Συνδρομή.",
-      menu_limit: "Έφτασες το όριο καταλόγων του πλάνου σου.",
-      item_limit: "Έφτασες το όριο ειδών του πλάνου σου.",
+      menu_limit: "Έφτασες το όριο καταλόγων του πλάνου σου. Δες τα πλάνα στη Συνδρομή.",
+      item_limit: "Έφτασες το όριο ειδών του πλάνου σου. Δες τα πλάνα στη Συνδρομή.",
       not_found: "Δεν βρέθηκε.",
       enterprise_contact: "Επικοινώνησε μαζί μας για Enterprise τιμολόγηση.",
       stripe_not_configured: "Το σύστημα πληρωμών δεν είναι διαθέσιμο.",

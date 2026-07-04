@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, Info, AlertTriangle, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import type { DashboardCopy } from "@/content/dashboard-i18n";
 import { reportClientDiagnostic } from "@/lib/report-client-diagnostic";
@@ -32,10 +32,18 @@ export function FlashMessages({
 }) {
   const { d } = useDashboardCopy();
   const [messages, setMessages] = useState<FlashMessage[]>(initial ? [initial] : []);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (initial) setMessages([initial]);
   }, [initial]);
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const hasError = messages.some((m) => m.type === "error");
+    if (!hasError) return;
+    containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [messages]);
 
   function dismiss(i: number) {
     setMessages((m) => m.filter((_, idx) => idx !== i));
@@ -45,7 +53,7 @@ export function FlashMessages({
   if (messages.length === 0) return null;
 
   return (
-    <div className="space-y-2">
+    <div ref={containerRef} className="space-y-2">
       {messages.map((msg, i) => (
         <div
           key={`${msg.text}-${i}`}

@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles } from "lucide-react";
 import { PAID_SUBSCRIPTION_PLANS } from "@menuos/shared";
 import { DashboardFeatureCheck, DashboardStatusDot } from "@/components/dashboard/dashboard-ui";
+import { ProBadge } from "@/components/dashboard/pro-badge";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
 import type { PlanCatalogEntry } from "@/lib/plan-catalog-types";
@@ -156,10 +156,7 @@ export function BillingPlans({
               )}
             >
               {isPro ? (
-                <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-brand-gradient px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-                  <Sparkles className="h-3 w-3" />
-                  Pro
-                </span>
+                <ProBadge size="sm" className="absolute right-4 top-4 shadow-glow" />
               ) : null}
               <p className="text-sm font-semibold uppercase tracking-wide text-brand-blue/80">{plan.name}</p>
               <p className="mt-3 font-serif text-3xl font-bold tabular-nums text-primary">

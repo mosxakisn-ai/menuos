@@ -28,6 +28,14 @@ export function buildMenusImportUrl(params: MenusNavParams): string {
   return query ? `/dashboard/menus/import?${query}` : "/dashboard/menus/import";
 }
 
+export function buildBillingUpgradeUrl(upgrade: string, params?: MenusNavParams): string {
+  const qs = new URLSearchParams();
+  qs.set("upgrade", upgrade);
+  if (params?.venueId) qs.set("venue", params.venueId);
+  if (params?.menuId) qs.set("menu", params.menuId);
+  return `/dashboard/billing?${qs.toString()}`;
+}
+
 export function resolveMenuIdForVenue(
   menuId: string | null | undefined,
   menus: { id: string }[],

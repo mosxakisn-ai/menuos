@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ExternalLink, FileUp, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
@@ -13,9 +13,11 @@ import {
   dashboardFormGridClass,
   dashboardInputClass,
   dashboardLabelClass,
-  DashboardToolbar,
 } from "@/components/dashboard/dashboard-page";
 import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
+import { ProFeatureLink } from "@/components/dashboard/pro-feature-link";
+import { PlanLimitHint } from "@/components/dashboard/plan-limit-hint";
+import { usePlanLimits } from "@/components/dashboard/plan-limits-provider";
 import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
 import { DashboardScrollRow } from "@/components/dashboard/dashboard-ui";
 import { dashboardIconButtonClass } from "@/components/dashboard/dashboard-action-button";
@@ -23,9 +25,17 @@ import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { confirmDestructive } from "@/lib/confirm-action";
-import { buildMenusImportUrl, buildMenusPageUrl, resolveMenuIdForVenue } from "@/lib/menus-nav-url";
+import { buildMenusImportUrl, buildMenusPageUrl, buildBillingUpgradeUrl, resolveMenuIdForVenue } from "@/lib/menus-nav-url";
 import { useMenusNavUrlFill } from "@/lib/use-menus-nav-url-fill";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
+import {
+  catalogLimitMessage,
+  isAtCatalogLimit,
+  isAtItemLimit,
+  itemLimitMessage,
+  itemNearLimitMessage,
+  type DashboardPlanLimitsSnapshot,
+} from "@/lib/dashboard-plan-limits";
 import { cn } from "@/lib/utils";
 
 type Translation = { language: string; name: string; description?: string | null };
@@ -87,6 +97,11 @@ export function MenuEditor({
   const [loading, setLoading] = useState(false);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const { d } = useDashboardCopy();
+  const planLimitsBase = usePlanLimits();
+  const [itemCountLive, setItemCountLive] = useState<number | null>(null);
+  const planLimits: DashboardPlanLimitsSnapshot | null = planLimitsBase
+    ? { ...planLimitsBase, itemCount: itemCountLive ?? planLimitsBase.itemCount }
+    : null;
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -236,6 +251,10 @@ export function MenuEditor({
   async function addItem(e: React.FormEvent) {
     e.preventDefault();
     if (!itemCategoryId || !itemForm.nameGr.trim() || !itemForm.price) return;
+    if (planLimits && isAtItemLimit(planLimits)) {
+      setFlash({ type: "error", text: itemLimitMessage(d, planLimits) });
+      return;
+    }
     const price = parseMenuPrice(itemForm.price);
     if (!Number.isFinite(price) || price < 0) {
       setFlash({ type: "error", text: d.menuEditor.invalidPrice });
@@ -260,6 +279,7 @@ export function MenuEditor({
       if (res.ok) {
         setItemForm({ nameGr: "", price: "", descriptionGr: "", label: "", photoUrl: "" });
         setItemCategoryId(null);
+        setItemCountLive((n) => (n ?? planLimitsBase?.itemCount ?? 0) + 1);
         await refreshMenus();
       }
     } finally {
@@ -270,6 +290,10 @@ export function MenuEditor({
   async function addMenu(e: React.FormEvent) {
     e.preventDefault();
     if (!venueId || !newMenuName.trim()) return;
+    if (planLimits && isAtCatalogLimit(planLimits, menus.length)) {
+      setFlash({ type: "error", text: catalogLimitMessage(d, planLimits) });
+      return;
+    }
     setAddingMenu(true);
     try {
       const res = await fetch("/api/menus", {
@@ -486,6 +510,18 @@ export function MenuEditor({
 
   const activeMenu = menus.find((m) => m.id === activeMenuId) ?? menus[0];
   const ro = readOnlyDuringOnboarding;
+  const atCatalogLimit = planLimits ? isAtCatalogLimit(planLimits, menus.length) : false;
+  const atItemLimit = planLimits ? isAtItemLimit(planLimits) : false;
+  const itemNearLimit = planLimits ? itemNearLimitMessage(d, planLimits) : null;
+
+  function tryOpenAddItem(categoryId: string) {
+    if (planLimits && isAtItemLimit(planLimits)) {
+      setFlash({ type: "error", text: itemLimitMessage(d, planLimits) });
+      return;
+    }
+    setEditingCategoryId(null);
+    setItemCategoryId(categoryId);
+  }
 
   if (venues.length === 0) {
     return (
@@ -503,59 +539,22 @@ export function MenuEditor({
     <div className="space-y-6">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
+      {!ro && itemNearLimit && !atItemLimit ? (
+        <PlanLimitHint message={itemNearLimit} />
+      ) : null}
+
+      {!ro && atItemLimit && planLimits ? (
+        <PlanLimitHint message={itemLimitMessage(d, planLimits)} />
+      ) : null}
+
       {ro ? (
         <div className="rounded-xl border border-brand-blue/15 bg-brand-blue/[0.04] px-4 py-3 text-sm text-slate-600">
           {d.menuEditor.onboardingReadOnlyBanner}
         </div>
       ) : null}
 
-      <DashboardToolbar>
-        <label className="block min-w-[12rem] flex-1 sm:max-w-xs">
-          <span className={dashboardLabelClass}>{d.venue}</span>
-          <select
-            value={venueId}
-            onChange={(e) => changeVenue(e.target.value)}
-            className={dashboardFieldClass}
-          >
-            {venues.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        {venue ? (
-          <>
-            {!ro && canImportPdf ? (
-              <a
-                href={buildMenusImportUrl({ venueId, menuId: activeMenuId || undefined })}
-                className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
-              >
-                {d.importPdf}
-              </a>
-            ) : !ro ? (
-              <a
-                href="/dashboard/billing?upgrade=pdf-import"
-                className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
-              >
-                {d.importPdfPro}
-              </a>
-            ) : null}
-            <a
-              href={`/m/${venue.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`inline-flex h-10 items-center gap-1 ${buttonClass("secondary", "md")}`}
-            >
-              {d.previewCatalog}
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          </>
-        ) : null}
-      </DashboardToolbar>
-
       {loading ? (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden p-0 shadow-card ring-1 ring-slate-100/80">
           <LoadingState
             variant="catalog"
             size="md"
@@ -565,24 +564,83 @@ export function MenuEditor({
           <LoadingSkeleton rows={2} className="mt-2 px-4 pb-4" />
         </Card>
       ) : (
-        <>
+        <Card className="overflow-hidden p-0 shadow-card ring-1 ring-slate-100/80">
+          <div className="border-b border-slate-100/90 bg-gradient-to-br from-brand-blue/[0.06] via-white to-cyan-50/40 px-5 py-4 sm:px-6 sm:py-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <label className="min-w-0 flex-1 sm:max-w-sm">
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                  {d.venue}
+                </span>
+                <select
+                  value={venueId}
+                  onChange={(e) => changeVenue(e.target.value)}
+                  className={`mt-2 ${dashboardFieldClass}`}
+                >
+                  {venues.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {venue ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  {!ro ? (
+                    canImportPdf ? (
+                      <a
+                        href={buildMenusImportUrl({ venueId, menuId: activeMenuId || undefined })}
+                        className="inline-flex h-10 items-center gap-2 rounded-button border border-slate-200/90 bg-white px-3.5 text-sm font-semibold text-brand-navy shadow-sm transition hover:border-brand-blue/30 hover:bg-brand-blue/[0.04]"
+                      >
+                        <FileUp className="h-4 w-4 text-brand-blue" />
+                        {d.importPdfButton}
+                      </a>
+                    ) : (
+                      <ProFeatureLink
+                        href={buildBillingUpgradeUrl("pdf-import", {
+                          venueId,
+                          menuId: activeMenuId || undefined,
+                        })}
+                        icon={<FileUp className="h-4 w-4 text-brand-blue transition group-hover:scale-105" />}
+                        label={d.importPdfButton}
+                      />
+                    )
+                  ) : null}
+                  <a
+                    href={`/m/${venue.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-10 items-center gap-2 rounded-button bg-brand-gradient px-3.5 text-sm font-semibold text-white shadow-glow transition hover:opacity-95"
+                  >
+                    {d.previewCatalog}
+                    <ExternalLink className="h-3.5 w-3.5 opacity-90" />
+                  </a>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
           {menus.length > 0 ? (
-            <Card>
+            <div className="px-5 py-4 sm:px-6 sm:py-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h2 className="font-semibold text-brand-navy">{d.menus}</h2>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                    {d.menus}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{d.menuEditor.syncCatalogHint}</p>
+                </div>
                 {!ro ? (
                   <button
                     type="button"
                     disabled={deletingAllMenus}
                     onClick={() => void deleteAllMenus()}
-                    className="text-sm font-semibold text-red-600 underline-offset-2 hover:text-red-700 hover:underline disabled:opacity-50"
+                    className="text-xs font-semibold text-red-600/90 underline-offset-2 transition hover:text-red-700 hover:underline disabled:opacity-50"
                   >
                     {deletingAllMenus ? "..." : d.deleteAllCatalogs}
                   </button>
                 ) : null}
               </div>
-              <p className="mt-2 text-xs text-slate-500">{d.menuEditor.syncCatalogHint}</p>
-              <DashboardScrollRow className="mt-3" innerClassName="flex gap-2 pb-0.5">
+
+              <DashboardScrollRow className="mt-4" innerClassName="flex gap-2 pb-0.5">
                 {menus.map((m) => {
                   const isActive = activeMenu?.id === m.id;
                   const deletable = canDeleteMenu(m);
@@ -590,16 +648,16 @@ export function MenuEditor({
                     <div
                       key={m.id}
                       className={cn(
-                        "inline-flex shrink-0 items-stretch overflow-hidden rounded-full text-sm font-semibold",
+                        "inline-flex shrink-0 items-stretch overflow-hidden rounded-full text-sm font-semibold transition-shadow",
                         isActive
                           ? "bg-brand-gradient text-white shadow-glow"
-                          : "bg-brand-surface text-brand-navy ring-1 ring-slate-200/90",
+                          : "bg-brand-surface text-brand-navy ring-1 ring-slate-200/90 hover:ring-brand-blue/25",
                       )}
                     >
                       <button
                         type="button"
                         onClick={() => selectActiveMenu(m.id)}
-                        className="px-4 py-1.5"
+                        className="px-4 py-2"
                       >
                         {m.name}
                       </button>
@@ -609,7 +667,7 @@ export function MenuEditor({
                           disabled={deletingMenuId === m.id}
                           onClick={() => void deleteMenu(m)}
                           className={cn(
-                            "inline-flex items-center border-l px-2 py-1.5 transition",
+                            "inline-flex items-center border-l px-2 py-2 transition",
                             isActive
                               ? "border-white/30 hover:bg-white/15 hover:text-white"
                               : "border-slate-200 hover:border-red-200 hover:bg-red-50 hover:text-red-700",
@@ -624,22 +682,40 @@ export function MenuEditor({
                   );
                 })}
               </DashboardScrollRow>
+
+              {!ro && atCatalogLimit && planLimits ? (
+                <PlanLimitHint message={catalogLimitMessage(d, planLimits)} className="mt-4" />
+              ) : null}
+
               {!ro ? (
-                <form onSubmit={addMenu} className="mt-4 flex flex-wrap items-end gap-2">
+                <form
+                  onSubmit={addMenu}
+                  className="mt-4 flex flex-col gap-2 rounded-xl border border-dashed border-slate-200/90 bg-slate-50/50 p-3 sm:flex-row sm:items-center"
+                >
                   <input
                     placeholder={d.newCatalogPlaceholder}
                     value={newMenuName}
                     onChange={(e) => setNewMenuName(e.target.value)}
-                    className={`min-w-[200px] flex-1 ${dashboardInputClass}`}
+                    disabled={atCatalogLimit}
+                    className={`min-w-0 flex-1 border-0 bg-transparent shadow-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 ${dashboardInputClass}`}
                   />
-                  <button type="submit" disabled={addingMenu} className={buttonClass("secondary", "sm")}>
+                  <button
+                    type="submit"
+                    disabled={addingMenu || atCatalogLimit}
+                    className={`inline-flex shrink-0 items-center gap-1.5 ${buttonClass("primary", "sm")}`}
+                  >
+                    <Plus className="h-4 w-4" />
                     {addingMenu ? "..." : d.addCatalog}
                   </button>
                 </form>
               ) : null}
-            </Card>
+            </div>
           ) : null}
+        </Card>
+      )}
 
+      {!loading ? (
+        <>
           {!ro ? (
             <Card>
               <h2 className="font-semibold text-brand-navy">{d.menuEditor.categoryNew}</h2>
@@ -1054,11 +1130,14 @@ export function MenuEditor({
                 ) : !ro ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      setEditingCategoryId(null);
-                      setItemCategoryId(cat.id);
-                    }}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-brand-blue/40 hover:bg-brand-blue/5 hover:text-brand-blue"
+                    onClick={() => tryOpenAddItem(cat.id)}
+                    disabled={atItemLimit}
+                    className={cn(
+                      "flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed px-4 py-3 text-sm font-semibold transition",
+                      atItemLimit
+                        ? "cursor-not-allowed border-slate-200 bg-slate-50/40 text-slate-400"
+                        : "border-slate-300 bg-slate-50/60 text-slate-600 hover:border-brand-blue/40 hover:bg-brand-blue/5 hover:text-brand-blue",
+                    )}
                   >
                     <Plus className="h-4 w-4" />
                     {d.catalogEntry.add}
@@ -1076,7 +1155,7 @@ export function MenuEditor({
             </Card>
           ) : null}
         </>
-      )}
+      ) : null}
     </div>
   );
 }

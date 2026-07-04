@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import { PlanLimitHint } from "@/components/dashboard/plan-limit-hint";
+import { usePlanLimits } from "@/components/dashboard/plan-limits-provider";
 import {
   DashboardPage,
   DashboardPageHeader,
@@ -16,15 +18,22 @@ import { slugifyOrFallback } from "@/lib/utils";
 import { DashboardDocumentTitle } from "@/components/dashboard/localized-dashboard-page-header";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
+import { isAtVenueLimit, venueLimitMessage } from "@/lib/dashboard-plan-limits";
 
 export default function NewVenuePage() {
   const router = useRouter();
   const { d } = useDashboardCopy();
+  const planLimits = usePlanLimits();
+  const atVenueLimit = planLimits ? isAtVenueLimit(planLimits) : false;
   const [loading, setLoading] = useState(false);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (planLimits && isAtVenueLimit(planLimits)) {
+      setFlash({ type: "error", text: venueLimitMessage(d, planLimits) });
+      return;
+    }
     setLoading(true);
     setFlash(null);
     const form = new FormData(e.currentTarget);
@@ -59,6 +68,9 @@ export default function NewVenuePage() {
         description={d.pages.newVenue.description}
       />
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
+      {atVenueLimit && planLimits ? (
+        <PlanLimitHint message={venueLimitMessage(d, planLimits)} className="mb-4" />
+      ) : null}
       <div className={dashboardCardClass}>
         <form onSubmit={onSubmit} className="space-y-4">
           <label className="block">
@@ -79,7 +91,11 @@ export default function NewVenuePage() {
               placeholder={FORM_PLACEHOLDERS.venueDescription}
             />
           </label>
-          <button type="submit" disabled={loading} className={`h-10 w-full sm:w-auto ${buttonClass("primary", "md")}`}>
+          <button
+            type="submit"
+            disabled={loading || atVenueLimit}
+            className={`h-10 w-full sm:w-auto ${buttonClass("primary", "md")}`}
+          >
             {loading ? d.pages.newVenue.submitting : d.pages.newVenue.submit}
           </button>
         </form>

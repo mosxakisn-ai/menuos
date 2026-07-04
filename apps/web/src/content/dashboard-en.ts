@@ -30,6 +30,7 @@ export const DASHBOARD_EN = {
   editCatalog: "Edit catalog",
   livePreview: "Live preview",
   importPdf: "Import from PDF",
+  importPdfButton: "PDF import",
   importPdfPro: "PDF import (Pro only)",
   loadingCatalog: "Loading catalog...",
   importWizard: {
@@ -379,6 +380,23 @@ export const DASHBOARD_EN = {
       `You have ${count}/50 items on trial. Need more? View the plans.`,
     limitsNearCta: "View plans",
     endsOn: "Trial until",
+  },
+  planLimits: {
+    seePlans: "See plans",
+    catalogTrial:
+      "The free trial includes 1 catalog per venue. For bar, pool, etc. see Basic or Pro.",
+    catalogBasic: (max: number) => `The Basic plan allows up to ${max} catalogs per venue.`,
+    catalogGeneric: (planName: string, max: number) =>
+      `The ${planName} plan allows up to ${max} catalogs per venue.`,
+    itemsTrial: "You've reached the 50-item trial limit. Upgrade for unlimited dishes.",
+    itemsNearTrial: (count: number, max: number) =>
+      `You have ${count}/${max} items on trial — you're close to the limit.`,
+    itemsNearGeneric: (count: number, max: number) =>
+      `You have ${count}/${max} items — you're close to your plan limit.`,
+    itemsAtLimit: (max: number) => `You've reached your plan limit of ${max} items.`,
+    venueTrial: "The free trial includes 1 venue. Upgrade for more locations.",
+    venueAtLimit: (max: number) =>
+      `Your plan allows up to ${max} ${max === 1 ? "venue" : "venues"}.`,
   },
   upgrade: {
     whyHere: "Why am I here?",
@@ -1114,8 +1132,8 @@ export const DASHBOARD_EN = {
       unauthorized: "Please sign in again.",
       forbidden: "You don't have permission.",
       venue_limit: "You've reached your plan's venue limit. See plans on Subscription.",
-      menu_limit: "You've reached your plan's catalog limit.",
-      item_limit: "You've reached your plan's item limit.",
+      menu_limit: "You've reached your plan's catalog limit. See plans on Subscription.",
+      item_limit: "You've reached your plan's item limit. See plans on Subscription.",
       not_found: "Not found.",
       enterprise_contact: "Contact us for Enterprise pricing.",
       stripe_not_configured: "Payments are not available.",

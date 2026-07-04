@@ -21,7 +21,6 @@ export function Live360FeatureGate({
     <ProFeatureLockedPanel
       title={copy.title}
       description={staffMode ? copy.staffDescription : copy.description}
-      proBadge={copy.proBadge}
       upgradeLabel={copy.upgrade}
       backLabel={copy.back}
       backHref={staffMode ? "/dashboard/waiter" : "/dashboard"}

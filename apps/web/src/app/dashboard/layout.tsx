@@ -13,7 +13,9 @@ import { OnboardingWizard, type OnboardingState } from "@/components/dashboard/o
 import { getSession } from "@/lib/auth";
 import { loginUrlWithCallback } from "@/lib/safe-callback-url";
 import { isTrialPlan, isTrialStillActive, getTrialPeriodDays } from "@menuos/shared";
-import { organizationHasActiveSubscription, organizationHasLive360 } from "@/lib/billing";
+import { organizationHasActiveSubscription, organizationHasLive360, getOrganizationPlanContext } from "@/lib/billing";
+import type { DashboardPlanLimitsSnapshot } from "@/lib/dashboard-plan-limits";
+import { PlanLimitsProvider } from "@/components/dashboard/plan-limits-provider";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { formatSubscriptionSummary } from "@/lib/subscription-display";
 import { resolveBusinessDisplay } from "@/lib/business-display";
@@ -182,14 +184,32 @@ export default async function DashboardLayout({ children }: { children: React.Re
       : catalogTrialDays;
 
   let trialItemCount = 0;
-  if (showTrialBanner && session.role !== "STAFF") {
-    trialItemCount = await prisma.item.count({
-      where: { category: { menu: { venue: { organizationId: session.organizationId } } } },
-    });
+  let planLimitsSnapshot: DashboardPlanLimitsSnapshot | null = null;
+  if (session.role !== "STAFF") {
+    const planCtx = await getOrganizationPlanContext(session.organizationId);
+    if (planCtx) {
+      const [venueCount, itemCount] = await Promise.all([
+        prisma.venue.count({ where: { organizationId: session.organizationId } }),
+        prisma.item.count({
+          where: { category: { menu: { venue: { organizationId: session.organizationId } } } },
+        }),
+      ]);
+      planLimitsSnapshot = {
+        planId: planCtx.planId,
+        planName: planCtx.plan.name,
+        maxVenues: planCtx.plan.maxVenues,
+        maxMenusPerVenue: planCtx.plan.maxMenusPerVenue,
+        maxItems: planCtx.plan.maxItems,
+        venueCount,
+        itemCount,
+      };
+      if (showTrialBanner) trialItemCount = itemCount;
+    }
   }
 
   return (
     <DashboardLocaleProvider initialLang={initialLang}>
+      <PlanLimitsProvider value={planLimitsSnapshot}>
       <div className={playfair.variable}>
       <DashboardDiagnosticsReporter />
       <ConfirmDialogHost />
@@ -244,6 +264,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         />
       </div>
       </div>
+      </PlanLimitsProvider>
     </DashboardLocaleProvider>
   );
 }
