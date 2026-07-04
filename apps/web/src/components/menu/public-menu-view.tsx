@@ -921,10 +921,9 @@ export function PublicMenuView({
                               description={tr?.description}
                               price={item.price.toString()}
                               photoUrl={item.photoUrl!}
-                              photoDisplayWidth={isEmbedded ? 140 : 240}
                               photoSizes={
                                 isEmbedded
-                                  ? "140px"
+                                  ? "240px"
                                   : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 240px"
                               }
                               label={item.label}

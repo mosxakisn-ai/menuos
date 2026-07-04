@@ -13,16 +13,24 @@ function withSearchParams(url: string, mutate: (parsed: URL) => void): string {
 
 const UNSPLASH_HOST = "images.unsplash.com";
 
-function unsplashQuality(displayWidth: number): string {
-  if (displayWidth <= 140) return "55";
-  if (displayWidth <= 200) return "58";
+function menuCardFetchWidth(displayWidth: number): number {
+  if (displayWidth <= 280) {
+    // Match CSS box (~235–240px in hero embed); avoid 2× overserving on Unsplash CDN.
+    return Math.ceil(displayWidth);
+  }
+  return Math.min(440, Math.ceil(displayWidth * 1.5));
+}
+
+function menuCardQuality(displayWidth: number): string {
+  if (displayWidth <= 280) return "48";
+  if (displayWidth <= 360) return "55";
   return "60";
 }
 
-/** Menu card thumbnails — 2× display width for retina; cap avoids oversized Unsplash fetches. */
+/** Menu card thumbnails — width tracks display size; stronger compression on small cards. */
 export function optimizeMenuCardPhotoUrl(url: string, displayWidth = 240): string {
-  const w = Math.min(displayWidth <= 200 ? 360 : 440, Math.ceil(displayWidth * 2));
-  const quality = unsplashQuality(displayWidth);
+  const w = menuCardFetchWidth(displayWidth);
+  const quality = menuCardQuality(displayWidth);
   return withSearchParams(url, (parsed) => {
     if (parsed.hostname === UNSPLASH_HOST) {
       parsed.searchParams.set("auto", "format");
