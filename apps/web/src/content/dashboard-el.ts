@@ -1017,6 +1017,7 @@ export const DASHBOARD_EL = {
     lockBanner: (step: number, label: string) =>
       `Βήμα ${step}/4: ${label} — οι υπόλοιπες σελίδες κλειδώνονται μέχρι να τελειώσεις.`,
     backToGuide: "Πήγαινε στον οδηγό",
+    qrPageHint: "Κατέβασε ή δες τα QR εδώ. Όταν τελειώσεις, γύρνα στην Επισκόπηση για το τελευταίο βήμα.",
     stepTitle: (step: number) => `Βήμα ${step} από 4 — φτιάξε τον κατάλογο σου`,
     subtitle: "Σε λιγότερο από μία ώρα μπορείς να έχεις QR menu στα τραπέζια σου.",
     completed: (n: number) => `${n}/4 ολοκληρωμένα`,
@@ -1054,7 +1055,9 @@ export const DASHBOARD_EL = {
       qr: {
         title: "Βγάλε QR codes",
         desc: "Κατέβασε ένα QR για όλον τον κατάλογο και τύπωσέ το όπου θες.",
-        cta: "Πήγαινε στα QR",
+        cta: "Δες τα QR codes",
+        ctaContinue: "Συνέχεια",
+        acknowledging: "Λίγο ακόμα...",
       },
       done: {
         title: "Όλα έτοιμα!",

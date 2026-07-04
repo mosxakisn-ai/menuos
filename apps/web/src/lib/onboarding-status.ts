@@ -137,6 +137,10 @@ export function getOnboardingCurrentStepIndex(
   return 3;
 }
 
+function isDashboardOverview(pathname: string): boolean {
+  return pathname === "/dashboard" || pathname === "/dashboard/";
+}
+
 /** Paths allowed while onboarding is incomplete (ADMIN/MANAGER). */
 export function isOnboardingPathAllowed(
   pathname: string,
@@ -146,23 +150,26 @@ export function isOnboardingPathAllowed(
 ): boolean {
   if (isOnboardingComplete(status, qrVisited, confirmed)) return true;
   if (pathname.startsWith("/dashboard/billing")) return true;
-  if (pathname === "/dashboard") return true;
+  if (isDashboardOverview(pathname)) return true;
   if (pathname.startsWith("/dashboard/settings")) return true;
 
   if (!status.hasVenue) {
-    return pathname === "/dashboard/venues/new" || pathname.startsWith("/dashboard/venues/new/");
+    return pathname.startsWith("/dashboard/venues/new");
   }
 
   if (!status.hasItem) {
-    return pathname === "/dashboard/venues/new" || pathname.startsWith("/dashboard/venues/new/");
-  }
-
-  if (!qrVisited) {
     return (
-      pathname.startsWith("/dashboard/qr") ||
-      pathname.startsWith("/dashboard/venues/new")
+      pathname.startsWith("/dashboard/venues/new") || pathname.startsWith("/dashboard/menus")
     );
   }
 
-  return pathname.startsWith("/dashboard/qr");
+  if (!qrVisited) {
+    return pathname.startsWith("/dashboard/qr") || pathname.startsWith("/dashboard/venues/new");
+  }
+
+  if (!confirmed) {
+    return pathname.startsWith("/dashboard/qr");
+  }
+
+  return true;
 }

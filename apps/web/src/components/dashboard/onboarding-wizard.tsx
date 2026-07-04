@@ -66,6 +66,7 @@ export function OnboardingWizard({
   const O = d.onboarding;
   const [confirming, setConfirming] = useState(false);
   const [acknowledgingCatalog, setAcknowledgingCatalog] = useState(false);
+  const [acknowledgingQr, setAcknowledgingQr] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
 
   const showSeededCatalogPreview = state.hasVenue && !state.hasItem;
@@ -159,6 +160,17 @@ export function OnboardingWizard({
     }
   }
 
+  async function acknowledgeQr() {
+    setAcknowledgingQr(true);
+    try {
+      const res = await fetch("/api/onboarding/mark-qr", { method: "POST" });
+      if (!res.ok) return;
+      router.refresh();
+    } finally {
+      setAcknowledgingQr(false);
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:items-center"
@@ -189,7 +201,12 @@ export function OnboardingWizard({
           <ol className="mt-3 flex items-center gap-0.5">
             {stepLabels.map((label, i) => {
               const isCurrent = i === stepIndex;
-              const isDone = i < 3 ? Boolean(setupSteps[i]?.done) : false;
+              const isDone =
+                i < 3
+                  ? Boolean(setupSteps[i]?.done)
+                  : onConfirmStep
+                    ? false
+                    : setupComplete;
               const circleState = isDone ? "done" : isCurrent ? "active" : "pending";
               return (
                 <li key={label} className="flex min-w-0 flex-1 items-center gap-0.5">
@@ -300,6 +317,7 @@ export function OnboardingWizard({
                 const step = setupSteps[stepIndex]!;
                 const StepIcon = step.icon;
                 const isSeededCatalogStep = step.id === "menu" && showSeededCatalogPreview;
+                const isQrStep = step.id === "qr" && !step.done;
                 return (
                   <>
                     <div className="flex items-start gap-3">
@@ -359,6 +377,21 @@ export function OnboardingWizard({
                             {acknowledgingCatalog ? O.steps.menu.acknowledging : O.steps.menu.ctaContinue}
                             <ArrowRight className="h-4 w-4" />
                           </button>
+                        ) : isQrStep ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={acknowledgingQr}
+                              onClick={() => void acknowledgeQr()}
+                              className={`inline-flex flex-1 items-center justify-center gap-1.5 ${buttonClass("primary")}`}
+                            >
+                              {acknowledgingQr ? O.steps.qr.acknowledging : O.steps.qr.ctaContinue}
+                              <ArrowRight className="h-4 w-4" />
+                            </button>
+                            <Link href={step.href} className={`flex-1 ${buttonClass("secondary")}`}>
+                              {O.steps.qr.cta}
+                            </Link>
+                          </>
                         ) : (
                           <>
                             <Link

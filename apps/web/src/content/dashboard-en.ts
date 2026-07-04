@@ -1003,6 +1003,7 @@ export const DASHBOARD_EN = {
     lockBanner: (step: number, label: string) =>
       `Step ${step}/4: ${label} — other pages stay locked until you finish.`,
     backToGuide: "Go to guide",
+    qrPageHint: "Download or preview your QR codes here. When you're done, return to Overview for the final step.",
     stepTitle: (step: number) => `Step ${step} of 4 — build your catalog`,
     subtitle: "In under an hour you can have a QR menu on your tables.",
     completed: (n: number) => `${n}/4 complete`,
@@ -1040,7 +1041,9 @@ export const DASHBOARD_EN = {
       qr: {
         title: "Get QR codes",
         desc: "Download one QR for your whole catalog and print it wherever you like.",
-        cta: "Go to QR codes",
+        cta: "View QR codes",
+        ctaContinue: "Continue",
+        acknowledging: "One moment...",
       },
       done: {
         title: "All set!",

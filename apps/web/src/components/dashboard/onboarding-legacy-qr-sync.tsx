@@ -15,9 +15,9 @@ export function OnboardingLegacyQrSync({ enabled }: { enabled: boolean }) {
   useEffect(() => {
     if (!enabled || synced.current || !hasQrOnboardingVisit()) return;
     synced.current = true;
-    void fetch("/api/onboarding/mark-qr", { method: "POST" }).then(() => {
+    void fetch("/api/onboarding/mark-qr", { method: "POST" }).then((res) => {
       clearQrOnboardingVisitLocal();
-      router.refresh();
+      if (res.ok) router.refresh();
     });
   }, [enabled, router]);
 

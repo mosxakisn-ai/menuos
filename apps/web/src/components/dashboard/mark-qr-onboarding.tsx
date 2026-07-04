@@ -1,19 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 
-export function MarkQrOnboarding({ redirectToDashboard = false }: { redirectToDashboard?: boolean }) {
-  const router = useRouter();
+/** Marks QR onboarding visit (httpOnly cookie). Idempotent — safe to call on QR page load. */
+export function MarkQrOnboarding() {
+  const marked = useRef(false);
 
   useEffect(() => {
-    void fetch("/api/onboarding/mark-qr", { method: "POST" }).then((res) => {
-      if (redirectToDashboard && res.ok) {
-        router.push("/dashboard");
-        router.refresh();
-      }
-    });
-  }, [redirectToDashboard, router]);
+    if (marked.current) return;
+    marked.current = true;
+    void fetch("/api/onboarding/mark-qr", { method: "POST" });
+  }, []);
 
   return null;
 }

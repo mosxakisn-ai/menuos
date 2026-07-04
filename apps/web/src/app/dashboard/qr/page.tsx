@@ -7,6 +7,7 @@ import { QrPageHeader } from "@/components/dashboard/qr-page-header";
 import { VenueCatalogQr } from "@/components/dashboard/venue-catalog-qr";
 import { VenueSpotsQrList } from "@/components/dashboard/venue-spots-qr-list";
 import { MarkQrOnboarding } from "@/components/dashboard/mark-qr-onboarding";
+import { OnboardingQrHint } from "@/components/dashboard/onboarding-qr-hint";
 import { getSession } from "@/lib/auth";
 import { organizationHasLive360 } from "@/lib/billing";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
@@ -51,11 +52,12 @@ export default async function QrPage({ searchParams }: Props) {
   const cookieStore = await cookies();
   const onboardingStatus = await getOnboardingStatus(session!.organizationId);
   const { qrVisited, confirmed } = resolveOnboardingCookies(cookieStore, onboardingStatus);
-  const redirectToDashboard = !isOnboardingComplete(onboardingStatus, qrVisited, confirmed);
+  const onboardingInProgress = !isOnboardingComplete(onboardingStatus, qrVisited, confirmed);
 
   return (
     <DashboardPage wide>
-      <MarkQrOnboarding redirectToDashboard={redirectToDashboard} />
+      <MarkQrOnboarding />
+      {onboardingInProgress ? <OnboardingQrHint /> : null}
       <QrPageHeader proMode={proQrMode} />
       {proQrMode ? (
         <VenueSpotsQrList venues={venueList} initialVenueId={sp.venue} itemCountByVenue={itemCountByVenue} />

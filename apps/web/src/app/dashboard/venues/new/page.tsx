@@ -54,10 +54,7 @@ export default function NewVenuePage() {
       return;
     }
     showFromResponse(data, true);
-    setTimeout(() => {
-      router.push("/dashboard");
-      router.refresh();
-    }, 800);
+    router.push("/dashboard");
   }
 
   return (
