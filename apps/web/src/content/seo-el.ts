@@ -176,7 +176,7 @@ export const SEO_QR_MENU_FAQ = [
 
 export const SEO_PRICING_OFFERS = [
   { name: "Δοκιμή {trialDaysGen}", price: 0, description: "1 κατάστημα, QR menu, Live 360°, 50 πιάτα" },
-  { name: "Basic", price: 9.99, description: "1 κατάστημα, 3 κατάλογοι, Live 360°, απεριόριστα πιάτα" },
+  { name: "Basic", price: 9.99, description: "1 κατάστημα, 5 κατάλογοι, Live 360°, απεριόριστα πιάτα" },
   { name: "Pro", price: 19.99, description: "3 καταστήματα, Live 360°, απεριόριστοι κατάλογοι" },
 ] as const;
 

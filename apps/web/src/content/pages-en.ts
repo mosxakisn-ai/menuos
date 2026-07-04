@@ -236,7 +236,7 @@ export const PAGES_EN = {
         description: "Ideal for restaurant, café or single venue.",
         features: [
           "1 venue",
-          "3 catalogs",
+          "5 catalogs",
           "Unlimited items",
           "QR codes",
           "Multiple languages",

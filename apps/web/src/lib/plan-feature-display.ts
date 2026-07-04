@@ -5,6 +5,7 @@ const FEATURE_EN: Record<string, string> = {
   "3 καταστήματα": "3 venues",
   "1 κατάλογος": "1 catalog",
   "3 κατάλογοι": "3 catalogs",
+  "5 κατάλογοι": "5 catalogs",
   "Απεριόριστοι κατάλογοι": "Unlimited catalogs",
   "50 είδη": "50 items",
   "50 πιάτα": "50 items",
