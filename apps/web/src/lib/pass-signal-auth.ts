@@ -3,7 +3,7 @@ import { prisma } from "@menuos/db";
 import type { PassStationInput } from "@menuos/shared";
 import { getSession } from "@/lib/auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
-import { getOrganizationPlanContext } from "@/lib/billing";
+import { getOrganizationPlanContext, organizationCanUseLive360 } from "@/lib/billing";
 import type { StaffVenueContext } from "@/lib/staff-auth";
 import { legacyVenueTokenMatches, resolvePrimaryStationScreen, resolveStationScreenByToken } from "@/lib/station-screens";
 
@@ -84,6 +84,17 @@ export async function authorizePassSignalCreate(
       stationScreen: null,
       response: NextResponse.json(
         { error: "Η συνδρομή δεν είναι ενεργή.", code: "subscription_inactive" },
+        { status: 403 },
+      ),
+    };
+  }
+
+  if (!organizationCanUseLive360(planCtx.planId)) {
+    return {
+      venue: null,
+      stationScreen: null,
+      response: NextResponse.json(
+        { error: "Το Live 360° είναι διαθέσιμο στο πλάνο Pro.", code: "pro_required" },
         { status: 403 },
       ),
     };

@@ -3,10 +3,10 @@ import {
   venueOperationsConfigSchema,
   zodFirstErrorMessage,
 } from "@menuos/shared";
-import { requireActiveSubscription } from "@/lib/api-auth";
+import { requireLive360Plan } from "@/lib/api-auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 import { resolveStaffAuthByKey, resolveStaffKey } from "@/lib/staff-auth";
-import { getOrganizationPlanContext } from "@/lib/billing";
+import { getOrganizationPlanContext, organizationCanUseLive360 } from "@/lib/billing";
 import {
   getVenueOperationsConfig,
   saveVenueOperationsConfig,
@@ -16,7 +16,7 @@ import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 type Params = { params: Promise<{ venueId: string }> };
 
 async function readVenueOperationsConfig(request: Request, venueId: string) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER", "STAFF"] });
+  const auth = await requireLive360Plan({ roles: ["ADMIN", "MANAGER", "STAFF"] });
   if (!auth.response) {
     const venue = await getVenueForOrganization(venueId, auth.session!.organizationId);
     if (venue) {
@@ -30,7 +30,7 @@ async function readVenueOperationsConfig(request: Request, venueId: string) {
     const staffAuth = await resolveStaffAuthByKey(venueId, staffKey);
     if (staffAuth) {
       const plan = await getOrganizationPlanContext(staffAuth.venue.organizationId);
-      if (plan?.active) {
+      if (plan?.active && organizationCanUseLive360(plan.planId)) {
         const config = await getVenueOperationsConfig(venueId);
         return NextResponse.json({ config });
       }
@@ -46,7 +46,7 @@ export async function GET(request: Request, { params }: Params) {
 }
 
 export async function PATCH(request: Request, { params }: Params) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requireLive360Plan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const copy = dashboardCopyFromRequest(request);

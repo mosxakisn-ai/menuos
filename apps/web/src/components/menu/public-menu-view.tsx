@@ -107,6 +107,7 @@ export function PublicMenuView({
   roomNumber,
   sunbedNumber,
   embedMode = false,
+  live360Enabled = false,
 }: {
   venue: Venue;
   language: QrMenuLanguage;
@@ -114,6 +115,7 @@ export function PublicMenuView({
   roomNumber?: string;
   sunbedNumber?: string;
   embedMode?: boolean;
+  live360Enabled?: boolean;
 }) {
   const [lang, setLang] = useState<QrMenuLanguage>(language);
   const [activeMenuId, setActiveMenuId] = useState(venue.menus[0]?.id);
@@ -310,8 +312,9 @@ export function PublicMenuView({
   }, [selectedItem?.id]);
 
   useEffect(() => {
+    if (!live360Enabled) return;
     void restoreActiveCall();
-  }, [restoreActiveCall]);
+  }, [live360Enabled, restoreActiveCall]);
 
   useEffect(() => {
     if (isEmbedded) {
@@ -664,16 +667,18 @@ export function PublicMenuView({
   const cancelTarget = cancellableCalls[0] ?? null;
   const hasCancellableCall = cancellableCalls.length > 0;
   const multipleCancellable = cancellableCalls.length > 1;
-  const canUseCallActions = Boolean(tableNumber || roomNumber || sunbedNumber);
+  const canUseCallActions =
+    live360Enabled && Boolean(tableNumber || roomNumber || sunbedNumber);
 
   useEffect(() => {
+    if (!live360Enabled) return;
     if (!menuLocation.tableNumber && !menuLocation.roomNumber && !menuLocation.sunbedNumber) return;
     const intervalMs = hasCancellableCall ? 3000 : 8000;
     const poll = setInterval(() => {
       void syncTableStatus();
     }, intervalMs);
     return () => clearInterval(poll);
-  }, [hasCancellableCall, menuLocation, syncTableStatus]);
+  }, [live360Enabled, hasCancellableCall, menuLocation, syncTableStatus]);
 
   const cartCount = cartItemCount(cartLines);
   const cartTotalStr = cartTotal(cartLines);

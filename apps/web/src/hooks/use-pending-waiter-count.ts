@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 const POLL_MS = 5_000;
 
 /** Sidebar badge: pending waiter calls + active pass signals. */
-export function usePendingWaiterCount(initialCount: number) {
+export function usePendingWaiterCount(initialCount: number, enabled = true) {
   const [activeCount, setActiveCount] = useState(initialCount);
 
   useEffect(() => {
@@ -13,6 +13,8 @@ export function usePendingWaiterCount(initialCount: number) {
   }, [initialCount]);
 
   useEffect(() => {
+    if (!enabled) return;
+
     let cancelled = false;
 
     async function refresh() {
@@ -34,7 +36,7 @@ export function usePendingWaiterCount(initialCount: number) {
       cancelled = true;
       clearInterval(timer);
     };
-  }, []);
+  }, [enabled]);
 
-  return activeCount;
+  return enabled ? activeCount : 0;
 }

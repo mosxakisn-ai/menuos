@@ -385,6 +385,21 @@ export const DASHBOARD_EN = {
     pdfImport:
       "PDF menu import is available on the Pro plan. Upload a PDF and fill your catalog fast — without typing every item.",
     pdfImportCta: "See Pro plan",
+    live360:
+      "Waiter screens, delivery history and QR calls (Live 360°) are available on Pro only — not on trial or Basic.",
+    live360Cta: "See Pro plan",
+  },
+  proFeature: {
+    live360: {
+      title: "Live 360° — Pro only",
+      description:
+        "Waiter screens, delivery history and QR calls work on the Pro plan. Upgrade to coordinate kitchen, bar and waiters live.",
+      staffDescription:
+        "Live 360° (screens and calls) is available on Pro only. Ask your account admin to upgrade.",
+      proBadge: "Pro only",
+      upgrade: "Upgrade to Pro",
+      back: "Back to overview",
+    },
   },
   welcome:
     "Welcome to MenuOS! Follow the guide below: set up your venue, add items to the catalog, then generate QR codes for your tables.",
@@ -551,6 +566,7 @@ export const DASHBOARD_EN = {
     history: "History",
     qrShort: "QR",
     callsShort: "Screens",
+    proOnlyBadge: "Pro only",
   },
   pages: {
     menus: {

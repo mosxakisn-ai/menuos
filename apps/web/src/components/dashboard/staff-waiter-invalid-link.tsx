@@ -4,10 +4,12 @@ export function StaffWaiterInvalidLink({
   venueSlug,
   invalidKey = false,
   subscriptionInactive = false,
+  proRequired = false,
 }: {
   venueSlug: string;
   invalidKey?: boolean;
   subscriptionInactive?: boolean;
+  proRequired?: boolean;
 }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-brand-surface/40 px-4">
@@ -15,7 +17,12 @@ export function StaffWaiterInvalidLink({
         <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">MenuOS</p>
         <h1 className="mt-2 font-serif text-xl font-bold text-primary">Σύνδεσμος σερβιτόρου</h1>
         <p className="mt-3 text-sm text-slate-600">
-          {subscriptionInactive ? (
+          {proRequired ? (
+            <>
+              Το Live 360° (οθόνες και κλήσεις σερβιτόρου) είναι διαθέσιμο μόνο στο πλάνο Pro. Ζήτησε από τον
+              διαχειριστή να αναβαθμίσει τη συνδρομή.
+            </>
+          ) : subscriptionInactive ? (
             <>
               Η συνδρομή του καταστήματος δεν είναι ενεργή — το panel σερβιτόρου δεν είναι διαθέσιμο. Επικοινώνησε
               με τον υπεύθυνο για ανανέωση συνδρομής.

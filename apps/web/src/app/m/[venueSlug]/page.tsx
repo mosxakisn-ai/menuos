@@ -4,6 +4,7 @@ import { prisma } from "@menuos/db";
 import { parseQrMenuLanguage } from "@menuos/shared";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
+import { organizationCanUseLive360 } from "@/lib/billing";
 import { appendPhotoSignature } from "@/lib/photo-signing";
 import { PublicMenuView } from "@/components/menu/public-menu-view";
 import { PublicMenuUnavailable } from "@/components/menu/public-menu-unavailable";
@@ -77,6 +78,8 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
     })),
   };
 
+  const live360Enabled = organizationCanUseLive360(venue.organization.subscription?.plan ?? "TRIAL");
+
   return (
     <PublicMenuView
       venue={publicVenue}
@@ -85,6 +88,7 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
       roomNumber={trimParam(sp.room)}
       sunbedNumber={trimParam(sp.sunbed)}
       embedMode={sp.embed === "1"}
+      live360Enabled={live360Enabled}
     />
   );
 }

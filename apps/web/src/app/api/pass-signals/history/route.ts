@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import type { Prisma } from "@menuos/db";
 import { passStationInputToDb, spotToQueryParams, type PassStationInput } from "@menuos/shared";
-import { requireActiveSubscription } from "@/lib/api-auth";
+import { requireLive360Plan } from "@/lib/api-auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 const MAX_DAYS = 90;
@@ -13,7 +13,7 @@ const DEFAULT_LIMIT = 100;
 const STATION_INPUTS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
 
 export async function GET(request: Request) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requireLive360Plan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const { searchParams } = new URL(request.url);

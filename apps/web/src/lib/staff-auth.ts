@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import type { SessionPayload } from "@/lib/auth";
 import { getSession } from "@/lib/auth";
-import { getOrganizationPlanContext } from "@/lib/billing";
+import { getOrganizationPlanContext, organizationHasLive360 } from "@/lib/billing";
 import { APP_URL } from "@/lib/config";
 import { getVenueForOrganization } from "@/lib/venue-access";
 import { readStaffSessionFromCookies } from "@/lib/staff-session";
@@ -144,6 +144,18 @@ export async function requireWaiterVenueAccess(
           ),
         };
       }
+      if (!(await organizationHasLive360(auth.venue.organizationId))) {
+        return {
+          access: null,
+          response: NextResponse.json(
+            {
+              error: "Το Live 360° είναι διαθέσιμο στο πλάνο Pro.",
+              code: "pro_required",
+            },
+            { status: 403 },
+          ),
+        };
+      }
       return {
         access: {
           mode: "staff",
@@ -180,6 +192,18 @@ export async function requireWaiterVenueAccess(
         access: null,
         response: NextResponse.json(
           { error: "Η συνδρομή δεν είναι ενεργή.", code: "subscription_inactive" },
+          { status: 403 },
+        ),
+      };
+    }
+    if (!(await organizationHasLive360(session.organizationId))) {
+      return {
+        access: null,
+        response: NextResponse.json(
+          {
+            error: "Το Live 360° είναι διαθέσιμο στο πλάνο Pro.",
+            code: "pro_required",
+          },
           { status: 403 },
         ),
       };

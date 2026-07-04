@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { isTrialPlan } from "@menuos/shared";
+import { live360NavUpgradeHref } from "@/lib/dashboard-nav";
 import { WelcomeTrialCard } from "@/components/dashboard/welcome-trial-card";
 import { DashboardStatCard, dashboardCardClass } from "@/components/dashboard/dashboard-page";
 import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
@@ -39,6 +40,7 @@ export type DashboardOverviewProps = {
   subscriptionCurrentPeriodEnd: string | null;
   passTodayCount?: number | null;
   passAvgDeliveryMin?: number | null;
+  live360Enabled?: boolean;
 };
 
 function OverviewBadge({ children }: { children: React.ReactNode }) {
@@ -120,6 +122,7 @@ export function DashboardOverviewContent({
   subscriptionCurrentPeriodEnd,
   passTodayCount,
   passAvgDeliveryMin,
+  live360Enabled = false,
 }: DashboardOverviewProps) {
   const { d, lang, planLabel } = useDashboardCopy();
   const O = d.overview;
@@ -135,7 +138,7 @@ export function DashboardOverviewContent({
     d,
     planLabel,
   );
-  const showPassStats = venueCount > 0 && passTodayCount != null;
+  const showPassStats = live360Enabled && venueCount > 0 && passTodayCount != null;
 
   return (
     <div className="space-y-5">
@@ -258,7 +261,7 @@ export function DashboardOverviewContent({
                   description={O.actionQr}
                 />
                 <QuickActionTile
-                  href="/dashboard/waiter"
+                  href={live360Enabled ? "/dashboard/waiter" : live360NavUpgradeHref()}
                   icon={Monitor}
                   title={d.nav.waiter}
                   description={O.actionScreens}
@@ -273,7 +276,7 @@ export function DashboardOverviewContent({
                   />
                 ) : (
                   <QuickActionTile
-                    href="/dashboard/history"
+                    href={live360Enabled ? "/dashboard/history" : live360NavUpgradeHref()}
                     icon={Store}
                     title={d.nav.history}
                     description={O.actionHistory}

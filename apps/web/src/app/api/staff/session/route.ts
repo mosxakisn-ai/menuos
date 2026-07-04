@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolveStaffAuthBySlug } from "@/lib/staff-auth";
 import { STAFF_SESSION_COOKIE } from "@/lib/staff-auth-constants";
-import { getOrganizationPlanContext } from "@/lib/billing";
+import { getOrganizationPlanContext, organizationCanUseLive360 } from "@/lib/billing";
 import { resolvePublicOrigin } from "@/lib/public-app-origin";
 import { createStaffSessionToken, staffSessionCookieOptions } from "@/lib/staff-session";
 
@@ -26,6 +26,12 @@ export async function GET(request: Request) {
   if (!plan?.active) {
     return NextResponse.json(
       { error: "Η συνδρομή δεν είναι ενεργή.", code: "subscription_inactive" },
+      { status: 403 },
+    );
+  }
+  if (!organizationCanUseLive360(plan.planId)) {
+    return NextResponse.json(
+      { error: "Το Live 360° είναι διαθέσιμο στο πλάνο Pro.", code: "pro_required" },
       { status: 403 },
     );
   }

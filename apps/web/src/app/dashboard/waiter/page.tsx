@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { prisma } from "@menuos/db";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
+import { Live360FeatureGate } from "@/components/dashboard/live360-feature-gate";
 import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
 import { SubscriptionInactiveBanner } from "@/components/dashboard/subscription-inactive-banner";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { getSession } from "@/lib/auth";
+import { organizationHasLive360 } from "@/lib/billing";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,6 +18,7 @@ type Props = { searchParams: Promise<{ venue?: string; inactive?: string }> };
 export default async function WaiterPage({ searchParams }: Props) {
   const session = await getSession();
   const sp = await searchParams;
+  const live360Enabled = await organizationHasLive360(session!.organizationId);
   const showInactiveBanner = sp.inactive === "1" && session!.role === "STAFF";
   const venues = await prisma.venue.findMany({
     where: { organizationId: session!.organizationId },
@@ -31,12 +34,14 @@ export default async function WaiterPage({ searchParams }: Props) {
           <SubscriptionInactiveBanner show staffMode subscription={null} />
         </div>
       ) : null}
-      <WaiterPanel
-        venues={venues}
-        initialVenueId={
-          sp.venue && venues.some((v) => v.id === sp.venue) ? sp.venue : undefined
-        }
-      />
+      <Live360FeatureGate enabled={live360Enabled} staffMode={session!.role === "STAFF"}>
+        <WaiterPanel
+          venues={venues}
+          initialVenueId={
+            sp.venue && venues.some((v) => v.id === sp.venue) ? sp.venue : undefined
+          }
+        />
+      </Live360FeatureGate>
     </DashboardPage>
   );
 }

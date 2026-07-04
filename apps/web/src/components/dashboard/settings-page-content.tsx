@@ -14,7 +14,8 @@ import {
   SettingsTablesPanel,
   SettingsVenuePanel,
 } from "@/components/dashboard/settings-staff-panels";
-import { SettingsTabs, type SettingsTabId, SETTINGS_TAB_IDS } from "@/components/dashboard/settings-tabs";
+import { Live360FeatureGate } from "@/components/dashboard/live360-feature-gate";
+import { SettingsTabs, type SettingsTabId, SETTINGS_TAB_IDS, isSettingsTabLocked } from "@/components/dashboard/settings-tabs";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
 export type SettingsVenueFull = SettingsVenue & {
@@ -31,11 +32,13 @@ function SettingsGeneralTab({
   name,
   role,
   showManagerExtras,
+  live360Enabled,
 }: {
   email: string;
   name: string;
   role: string;
   showManagerExtras: boolean;
+  live360Enabled: boolean;
 }) {
   const { d, roleLabel } = useDashboardCopy();
 
@@ -66,7 +69,7 @@ function SettingsGeneralTab({
         </div>
       </div>
 
-      {showManagerExtras ? <SettingsGeneralExtrasPanel /> : null}
+      {showManagerExtras && live360Enabled ? <SettingsGeneralExtrasPanel /> : null}
     </div>
   );
 }
@@ -77,30 +80,35 @@ function SettingsPageBody({
   role,
   canManageVenue,
   venues,
+  live360Enabled,
 }: {
   email: string;
   name: string;
   role: string;
   canManageVenue: boolean;
   venues: SettingsVenueFull[];
+  live360Enabled: boolean;
 }) {
   const { d } = useDashboardCopy();
   const spotVenues = venues.map((v) => ({ id: v.id, name: v.name, slug: v.slug }));
   const allowedTabs: SettingsTabId[] = canManageVenue ? [...SETTINGS_TAB_IDS] : ["general"];
 
   function renderTab(tab: SettingsTabId) {
+    let content: React.ReactNode;
     switch (tab) {
       case "general":
-        return (
+        content = (
           <SettingsGeneralTab
             email={email}
             name={name}
             role={role}
             showManagerExtras={canManageVenue}
+            live360Enabled={live360Enabled}
           />
         );
+        break;
       case "staff":
-        return (
+        content = (
           <SettingsPersonnelPanel
             venues={venues.map((v) => ({
               id: v.id,
@@ -110,27 +118,46 @@ function SettingsPageBody({
             }))}
           />
         );
+        break;
       case "posts":
-        return <SettingsPostsPanel venues={spotVenues} />;
+        content = <SettingsPostsPanel venues={spotVenues} />;
+        break;
       case "links":
-        return <SettingsLinksPanel venues={spotVenues} />;
+        content = <SettingsLinksPanel venues={spotVenues} />;
+        break;
       case "venue":
-        return <SettingsVenuePanel venues={venues} />;
+        content = <SettingsVenuePanel venues={venues} />;
+        break;
       case "messages":
-        return <SettingsMessagesPanel venues={spotVenues} />;
+        content = <SettingsMessagesPanel venues={spotVenues} />;
+        break;
       case "tables":
-        return <SettingsTablesPanel venues={spotVenues} />;
+        content = <SettingsTablesPanel venues={spotVenues} />;
+        break;
       case "spaces":
-        return <SettingsSpacesPanel venues={spotVenues} />;
+        content = <SettingsSpacesPanel venues={spotVenues} />;
+        break;
       default:
-        return null;
+        content = null;
     }
+
+    if (isSettingsTabLocked(tab, live360Enabled)) {
+      return (
+        <Live360FeatureGate enabled={false} staffMode={role === "STAFF"}>
+          {content}
+        </Live360FeatureGate>
+      );
+    }
+
+    return content;
   }
 
   return (
     <DashboardPage wide className="space-y-5">
       <DashboardPageHeader title={d.pages.settings.title} description={d.pages.settings.description} />
-      <SettingsTabs allowedTabs={allowedTabs}>{(tab) => renderTab(tab)}</SettingsTabs>
+      <SettingsTabs allowedTabs={allowedTabs} live360Enabled={live360Enabled}>
+        {(tab) => renderTab(tab)}
+      </SettingsTabs>
     </DashboardPage>
   );
 }
@@ -141,12 +168,14 @@ export function SettingsPageContent({
   role,
   canManageVenue,
   venues,
+  live360Enabled,
 }: {
   email: string;
   name: string;
   role: string;
   canManageVenue: boolean;
   venues: SettingsVenueFull[];
+  live360Enabled: boolean;
 }) {
   return (
     <Suspense fallback={null}>
@@ -156,6 +185,7 @@ export function SettingsPageContent({
         role={role}
         canManageVenue={canManageVenue}
         venues={venues}
+        live360Enabled={live360Enabled}
       />
     </Suspense>
   );

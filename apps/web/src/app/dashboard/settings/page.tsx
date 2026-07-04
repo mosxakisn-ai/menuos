@@ -3,6 +3,7 @@ import { prisma } from "@menuos/db";
 import type { UserRole } from "@menuos/db";
 import { SettingsPageContent } from "@/components/dashboard/settings-page-content";
 import { getSession } from "@/lib/auth";
+import { organizationHasLive360 } from "@/lib/billing";
 import { canManageVenueSecrets } from "@/lib/dashboard-roles";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
@@ -36,6 +37,8 @@ export default async function SettingsPage() {
     orderBy: { createdAt: "asc" },
   });
 
+  const live360Enabled = await organizationHasLive360(session!.organizationId);
+
   return (
     <SettingsPageContent
       email={session!.email}
@@ -43,6 +46,7 @@ export default async function SettingsPage() {
       role={session!.role}
       canManageVenue={canManage}
       venues={venuesRaw}
+      live360Enabled={live360Enabled}
     />
   );
 }

@@ -7,6 +7,7 @@ import { DashboardPage as DashboardPageShell } from "@/components/dashboard/dash
 import { getSession } from "@/lib/auth";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 import { ensureOnboardingVenuesForOrganization } from "@/lib/seed-onboarding-venue";
+import { organizationHasLive360 } from "@/lib/billing";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { startOfTodayAthens } from "@/lib/athens-day";
 
@@ -90,6 +91,8 @@ export default async function DashboardPage({ searchParams }: Props) {
     }
   }
 
+  const live360Enabled = await organizationHasLive360(session!.organizationId);
+
   return (
     <DashboardPageShell wide>
       <DashboardOverviewContent
@@ -109,6 +112,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         subscriptionCurrentPeriodEnd={org?.subscription?.currentPeriodEnd?.toISOString() ?? null}
         passTodayCount={passTodayCount}
         passAvgDeliveryMin={passAvgDeliveryMin}
+        live360Enabled={live360Enabled}
       />
     </DashboardPageShell>
   );

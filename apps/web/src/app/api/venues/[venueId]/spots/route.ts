@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { venueSpotBulkCreateSchema, venueSpotCreateSchema, zodFirstErrorMessage } from "@menuos/shared";
-import { requireActiveSubscription } from "@/lib/api-auth";
+import { requireLive360Plan } from "@/lib/api-auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
@@ -12,7 +12,7 @@ function isBulkBody(body: unknown): body is { from: unknown; to: unknown } {
 }
 
 export async function GET(_req: Request, { params }: Params) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requireLive360Plan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const { venueId } = await params;
@@ -30,7 +30,7 @@ export async function GET(_req: Request, { params }: Params) {
 }
 
 export async function POST(request: Request, { params }: Params) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requireLive360Plan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const copy = dashboardCopyFromRequest(request);

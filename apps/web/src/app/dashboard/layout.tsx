@@ -11,7 +11,7 @@ import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
 import { getSession } from "@/lib/auth";
 import { loginUrlWithCallback } from "@/lib/safe-callback-url";
 import { isTrialPlan, isTrialStillActive, getTrialPeriodDays } from "@menuos/shared";
-import { organizationHasActiveSubscription } from "@/lib/billing";
+import { organizationHasActiveSubscription, organizationHasLive360 } from "@/lib/billing";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { formatSubscriptionSummary } from "@/lib/subscription-display";
 import { resolveBusinessDisplay } from "@/lib/business-display";
@@ -48,6 +48,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
           billingParams.set("upgrade", upgrade);
         } else if (pathname.startsWith("/dashboard/menus/import")) {
           billingParams.set("upgrade", "pdf-import");
+        } else if (
+          pathname.startsWith("/dashboard/waiter") ||
+          pathname.startsWith("/dashboard/history")
+        ) {
+          billingParams.set("upgrade", "live-360");
         }
         redirect(`/dashboard/billing?${billingParams.toString()}`);
       }
@@ -56,22 +61,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const cookieStore = await cookies();
   const initialLang = parseDashboardLang(cookieStore.get(DASHBOARD_LANG_COOKIE)?.value);
-
-  const [pendingWaiterCount, passSignalCount] = await Promise.all([
-    prisma.waiterCall.count({
-      where: {
-        venue: { organizationId: session.organizationId },
-        status: "PENDING",
-      },
-    }),
-    prisma.passSignal.count({
-      where: {
-        venue: { organizationId: session.organizationId },
-        status: { in: ["READY", "PICKED_UP"] },
-      },
-    }),
-  ]);
-  const initialMonitorCount = pendingWaiterCount + passSignalCount;
 
   const org = await prisma.organization.findUnique({
     where: { id: session.organizationId },
@@ -88,6 +77,25 @@ export default async function DashboardLayout({ children }: { children: React.Re
       },
     },
   });
+
+  const planId = org?.subscription?.plan ?? "TRIAL";
+  const live360Enabled = await organizationHasLive360(session.organizationId);
+
+  const [pendingWaiterCount, passSignalCount] = await Promise.all([
+    prisma.waiterCall.count({
+      where: {
+        venue: { organizationId: session.organizationId },
+        status: "PENDING",
+      },
+    }),
+    prisma.passSignal.count({
+      where: {
+        venue: { organizationId: session.organizationId },
+        status: { in: ["READY", "PICKED_UP"] },
+      },
+    }),
+  ]);
+  const initialMonitorCount = live360Enabled ? pendingWaiterCount + passSignalCount : 0;
 
   const business = org
     ? resolveBusinessDisplay({ organizationName: org.name, venues: org.venues })
@@ -123,6 +131,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
           initialPendingCount={initialMonitorCount}
           subscription={subscription}
           userRole={session.role}
+          planId={planId}
+          live360Enabled={live360Enabled}
         />
         <div className="flex min-w-0 flex-1 flex-col">
           <DashboardHeader
@@ -143,7 +153,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
           </main>
         </div>
-        <DashboardMobileNav initialPendingCount={initialMonitorCount} userRole={session.role} />
+        <DashboardMobileNav
+          initialPendingCount={initialMonitorCount}
+          userRole={session.role}
+          planId={planId}
+          live360Enabled={live360Enabled}
+        />
       </div>
       </div>
     </DashboardLocaleProvider>

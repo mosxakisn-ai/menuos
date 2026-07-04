@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { pushSubscriptionSchema } from "@menuos/shared";
-import { requireActiveSubscription } from "@/lib/api-auth";
-import { getOrganizationPlanContext } from "@/lib/billing";
+import { requireLive360Plan } from "@/lib/api-auth";
+import { getOrganizationPlanContext, organizationCanUseLive360 } from "@/lib/billing";
 import { isPushEnabled } from "@/lib/push-config";
 import { resolveStaffAuthByKey, resolveStaffKey } from "@/lib/staff-auth";
 
@@ -46,11 +46,17 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     }
+    if (!organizationCanUseLive360(plan.planId)) {
+      return NextResponse.json(
+        { error: "Το Live 360° είναι διαθέσιμο στο πλάνο Pro.", code: "pro_required" },
+        { status: 403 },
+      );
+    }
     organizationId = auth.venue.organizationId;
     venueId = auth.venue.id;
     staffMemberId = auth.staffMember?.id ?? null;
   } else {
-    const auth = await requireActiveSubscription();
+    const auth = await requireLive360Plan();
     if (auth.response) return auth.response;
     organizationId = auth.session!.organizationId;
     userId = auth.session!.userId;

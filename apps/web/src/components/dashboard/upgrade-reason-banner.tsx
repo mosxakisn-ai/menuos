@@ -21,5 +21,17 @@ export function UpgradeReasonBanner() {
     );
   }
 
+  if (reason === "live-360") {
+    return (
+      <div className="rounded-card border border-brand-blue/20 bg-brand-blue/5 px-4 py-4 text-sm text-brand-navy">
+        <p className="font-semibold">{d.upgrade.whyHere}</p>
+        <p className="mt-2 leading-relaxed text-slate-700">{d.upgrade.live360}</p>
+        <a href="#plans" className={`mt-3 inline-flex ${buttonClass("primary", "sm")}`}>
+          {d.upgrade.live360Cta}
+        </a>
+      </div>
+    );
+  }
+
   return null;
 }

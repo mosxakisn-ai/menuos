@@ -9,6 +9,7 @@ import {
   waiterCallsVisibleToStaffMember,
 } from "@menuos/shared";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
+import { organizationCanUseLive360 } from "@/lib/billing";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { validateOrderItemsForVenue } from "@/lib/validate-order-items";
 import { pushStaffWaiterCall } from "@/lib/waiter-call-push";
@@ -188,6 +189,14 @@ export async function POST(request: Request) {
     if (!organizationIsPubliclyActive(venue.organization.subscription)) {
       return NextResponse.json(
         { error: "Η υπηρεσία δεν είναι διαθέσιμη.", code: "subscription_inactive" },
+        { status: 403 },
+      );
+    }
+
+    const planId = venue.organization.subscription?.plan ?? "TRIAL";
+    if (!organizationCanUseLive360(planId)) {
+      return NextResponse.json(
+        { error: "Το Live 360° είναι διαθέσιμο στο πλάνο Pro.", code: "pro_required" },
         { status: 403 },
       );
     }

@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Lock } from "lucide-react";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,26 @@ export const SETTINGS_TAB_IDS = [
 ] as const;
 
 export type SettingsTabId = (typeof SETTINGS_TAB_IDS)[number];
+
+/** Always available — branding + account. */
+export const SETTINGS_FREE_TAB_IDS = ["venue", "general"] as const;
+
+/** Live 360° setup tabs — Pro only. */
+export const SETTINGS_LIVE360_TAB_IDS = [
+  "staff",
+  "spaces",
+  "posts",
+  "links",
+  "messages",
+  "tables",
+] as const;
+
+export function isSettingsTabLocked(tabId: SettingsTabId, live360Enabled: boolean): boolean {
+  return (
+    !live360Enabled &&
+    (SETTINGS_LIVE360_TAB_IDS as readonly string[]).includes(tabId)
+  );
+}
 
 const LEGACY_TAB_REDIRECTS: Record<string, SettingsTabId> = {
   waiters: "staff",
@@ -43,9 +64,11 @@ function resolveSettingsTab(value: string | null, allowedTabs: readonly Settings
 export function SettingsTabs({
   children,
   allowedTabs = SETTINGS_TAB_IDS,
+  live360Enabled = true,
 }: {
   children: (tab: SettingsTabId) => React.ReactNode;
   allowedTabs?: readonly SettingsTabId[];
+  live360Enabled?: boolean;
 }) {
   const { d } = useDashboardCopy();
   const router = useRouter();
@@ -74,21 +97,35 @@ export function SettingsTabs({
       >
         {allowedTabs.map((id) => {
           const selected = activeTab === id;
+          const locked = isSettingsTabLocked(id, live360Enabled);
           return (
             <button
               key={id}
               type="button"
-              onClick={() => selectTab(id)}
+              onClick={() => {
+                if (locked) return;
+                selectTab(id);
+              }}
               aria-selected={selected}
+              aria-disabled={locked}
+              title={locked ? d.nav.proOnlyBadge : undefined}
               role="tab"
               className={cn(
-                "shrink-0 whitespace-nowrap rounded-t-button border-b-2 px-3 py-2.5 text-sm font-medium transition",
-                selected
-                  ? "border-brand-blue text-brand-blue"
-                  : "border-transparent text-slate-600 hover:border-slate-200 hover:text-brand-navy",
+                "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-button border-b-2 px-3 py-2.5 text-sm font-medium transition",
+                locked
+                  ? "cursor-not-allowed text-slate-400 hover:text-slate-500"
+                  : selected
+                    ? "border-brand-blue text-brand-blue"
+                    : "border-transparent text-slate-600 hover:border-slate-200 hover:text-brand-navy",
               )}
             >
+              {locked ? <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
               {tabs[id]}
+              {locked ? (
+                <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                  {d.nav.proOnlyBadge}
+                </span>
+              ) : null}
             </button>
           );
         })}

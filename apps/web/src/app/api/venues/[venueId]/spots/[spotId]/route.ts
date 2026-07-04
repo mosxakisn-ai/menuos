@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { venueSpotUpdateSchema, zodFirstErrorMessage } from "@menuos/shared";
-import { requireActiveSubscription } from "@/lib/api-auth";
+import { requireLive360Plan } from "@/lib/api-auth";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ venueId: string; spotId: string }> };
 
 export async function PATCH(request: Request, { params }: Params) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requireLive360Plan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const { venueId, spotId } = await params;
@@ -52,7 +52,7 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(_req: Request, { params }: Params) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requireLive360Plan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const { venueId, spotId } = await params;

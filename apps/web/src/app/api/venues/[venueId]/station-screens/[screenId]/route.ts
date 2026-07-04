@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
 import { passStationDbToInput, normalizeStationScreenSpotPrefix, stationScreenUpdateSchema, zodFirstErrorMessage } from "@menuos/shared";
-import { requireActiveSubscription } from "@/lib/api-auth";
+import { requireLive360Plan } from "@/lib/api-auth";
 import { countStationScreens, isStationScreenLabelTaken, syncLegacyVenueToken } from "@/lib/station-screens";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
@@ -19,7 +19,7 @@ async function loadOwnedScreen(venueId: string, screenId: string, organizationId
 }
 
 export async function PATCH(request: Request, { params }: Params) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requireLive360Plan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const { venueId, screenId } = await params;
@@ -72,7 +72,7 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requireLive360Plan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const { venueId, screenId } = await params;
@@ -111,7 +111,7 @@ export async function DELETE(_request: Request, { params }: Params) {
 }
 
 export async function POST(request: Request, { params }: Params) {
-  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
+  const auth = await requireLive360Plan({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const { venueId, screenId } = await params;

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { UserRole } from "@menuos/db";
 import { getSession, type SessionPayload } from "@/lib/auth";
 import { getSupervisorSession } from "@/lib/supervisor-auth";
-import { getOrganizationPlanContext, organizationCanUsePdfImport } from "@/lib/billing";
+import { getOrganizationPlanContext, organizationCanUseLive360, organizationCanUsePdfImport } from "@/lib/billing";
 
 type AuthResult =
   | { session: SessionPayload; response: null }
@@ -70,6 +70,29 @@ export async function requirePdfImportPlan(options?: {
         {
           error: "Το PDF import είναι διαθέσιμο στο πλάνο Pro. Αναβάθμισε για να συνεχίσεις.",
           code: "plan_upgrade_required",
+        },
+        { status: 403 },
+      ),
+    };
+  }
+
+  return auth;
+}
+
+export async function requireLive360Plan(options?: {
+  roles?: UserRole[];
+}): Promise<AuthResult> {
+  const auth = await requireActiveSubscription(options);
+  if (auth.response) return auth;
+
+  const ctx = await getOrganizationPlanContext(auth.session!.organizationId);
+  if (!ctx || !organizationCanUseLive360(ctx.planId)) {
+    return {
+      session: null,
+      response: NextResponse.json(
+        {
+          error: "Το Live 360° (οθόνες, ιστορικό, κλήσεις) είναι διαθέσιμο στο πλάνο Pro.",
+          code: "pro_required",
         },
         { status: 403 },
       ),
