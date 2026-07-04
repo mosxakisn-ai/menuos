@@ -12,7 +12,7 @@ function isBulkBody(body: unknown): body is { from: unknown; to: unknown } {
 }
 
 export async function GET(_req: Request, { params }: Params) {
-  const auth = await requireActiveSubscription();
+  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const { venueId } = await params;

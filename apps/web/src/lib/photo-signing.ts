@@ -1,5 +1,16 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { APP_URL } from "@/lib/config";
+import {
+  organizationIdFromPhotoKey,
+  photoKeyFromPublicUrl,
+  photoStorageKeyFromPath,
+} from "@/lib/photo-keys";
+
+export {
+  organizationIdFromPhotoKey,
+  photoKeyFromPublicUrl,
+  photoStorageKeyFromPath,
+} from "@/lib/photo-keys";
 
 function photoSignSecret(): string {
   const secret = process.env.NEXTAUTH_SECRET?.trim();
@@ -9,54 +20,10 @@ function photoSignSecret(): string {
   return secret ?? "dev-photo-signing-change-me";
 }
 
-export function photoStorageKeyFromPath(pathname: string): string | null {
-  const prefix = "/api/photos/serve/";
-  const idx = pathname.indexOf(prefix);
-  if (idx < 0) return null;
-  const encoded = pathname.slice(idx + prefix.length);
-  if (!encoded) return null;
-  try {
-    return encoded.split("/").map((segment) => decodeURIComponent(segment)).join("/");
-  } catch {
-    return null;
-  }
-}
-
-/** Extract storage key from signed serve URL or legacy R2 public URL. */
-export function photoKeyFromPublicUrl(url: string): string | null {
-  try {
-    const parsed = new URL(url, APP_URL);
-    const fromServe = photoStorageKeyFromPath(parsed.pathname);
-    if (fromServe) return fromServe;
-
-    const r2Base = process.env.R2_PUBLIC_URL?.trim().replace(/\/$/, "");
-    if (r2Base) {
-      const normalized = url.startsWith("http://") || url.startsWith("https://") ? url : `${APP_URL}${url}`;
-      if (normalized.startsWith(`${r2Base}/`)) {
-        const key = normalized.slice(r2Base.length + 1);
-        if (key.startsWith("photos/") && !key.includes("..")) return key;
-      }
-    }
-
-    const bare = url.replace(/^\/+/, "");
-    if (bare.startsWith("photos/") && !bare.includes("..")) return bare;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export function ensureSignedPhotoServeUrl(url: string): string {
   const key = photoKeyFromPublicUrl(url);
   if (!key) return url;
   return signedPhotoServeUrl(key);
-}
-
-export function organizationIdFromPhotoKey(key: string): string | null {
-  const normalized = key.replace(/\\/g, "/").replace(/^\/+/, "");
-  const parts = normalized.split("/");
-  if (parts[0] !== "photos" || !parts[1]) return null;
-  return parts[1];
 }
 
 export function signPhotoKey(key: string): string {
@@ -79,24 +46,17 @@ export function signedPhotoServeUrl(relativeKey: string): string {
   return `${APP_URL}/api/photos/serve/${encoded}?sig=${encodeURIComponent(sig)}`;
 }
 
-/** Add HMAC sig to local MenuOS photo serve URLs (R2/external URLs unchanged). */
+/** Normalize MenuOS photo URLs to a signed serve URL on the current APP_URL host. */
+export function normalizeStoredPhotoUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null;
+  return ensureSignedPhotoServeUrl(url.trim());
+}
+
+/** Add HMAC sig and canonical host for MenuOS photo serve URLs (R2/external URLs unchanged). */
 export function appendPhotoSignature(url: string | null | undefined): string | null {
   if (!url?.trim()) return null;
   const trimmed = url.trim();
-  const legacyKey = photoKeyFromPublicUrl(trimmed);
-  if (legacyKey && !trimmed.includes("/api/photos/serve/")) {
-    return signedPhotoServeUrl(legacyKey);
-  }
-  try {
-    const parsed = new URL(trimmed, APP_URL);
-    const key = photoStorageKeyFromPath(parsed.pathname);
-    if (!key) return trimmed;
-    parsed.searchParams.set("sig", signPhotoKey(key));
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-      return parsed.toString();
-    }
-    return `${parsed.pathname}${parsed.search}`;
-  } catch {
-    return trimmed;
-  }
+  const key = photoKeyFromPublicUrl(trimmed);
+  if (key) return signedPhotoServeUrl(key);
+  return trimmed;
 }

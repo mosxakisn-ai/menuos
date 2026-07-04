@@ -6,7 +6,7 @@ import { stripVenuesSecrets } from "@/lib/venue-secrets";
 import { createVenueHandler } from "@/lib/venues-api";
 
 export async function GET() {
-  const auth = await requireActiveSubscription();
+  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const venues = await listVenuesForOrganization(auth.session!.organizationId);

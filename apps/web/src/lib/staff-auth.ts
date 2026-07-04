@@ -131,6 +131,30 @@ export async function requireWaiterVenueAccess(
   request: Request,
   venueId: string,
 ): Promise<{ access: WaiterAccess; response: null } | { access: null; response: NextResponse }> {
+  const staffKey = await resolveStaffKey(request, venueId);
+  if (staffKey) {
+    const auth = await resolveStaffAuthByKey(venueId, staffKey);
+    if (auth) {
+      if (!(await organizationIsActive(auth.venue.organizationId))) {
+        return {
+          access: null,
+          response: NextResponse.json(
+            { error: "Η συνδρομή δεν είναι ενεργή.", code: "subscription_inactive" },
+            { status: 403 },
+          ),
+        };
+      }
+      return {
+        access: {
+          mode: "staff",
+          venue: auth.venue,
+          staffMember: auth.staffMember,
+        },
+        response: null,
+      };
+    }
+  }
+
   const session = await getSession();
   if (session) {
     const venue = await getVenueForOrganization(venueId, session.organizationId);
@@ -165,39 +189,13 @@ export async function requireWaiterVenueAccess(
     };
   }
 
-  const staffKey = await resolveStaffKey(request, venueId);
-  if (!staffKey) {
-    return {
-      access: null,
-      response: NextResponse.json(
-        { error: "Μη έγκυρο link σερβιτόρου.", code: "unauthorized" },
-        { status: 401 },
-      ),
-    };
-  }
-
-  const auth = await resolveStaffAuthByKey(venueId, staffKey);
-  if (!auth) {
-    return {
-      access: null,
-      response: NextResponse.json(
-        { error: "Μη έγκυρο link σερβιτόρου.", code: "unauthorized" },
-        { status: 401 },
-      ),
-    };
-  }
-
-  if (!(await organizationIsActive(auth.venue.organizationId))) {
-    return {
-      access: null,
-      response: NextResponse.json(
-        { error: "Η συνδρομή δεν είναι ενεργή.", code: "subscription_inactive" },
-        { status: 403 },
-      ),
-    };
-  }
-
-  return { access: { mode: "staff", venue: auth.venue, staffMember: auth.staffMember }, response: null };
+  return {
+    access: null,
+    response: NextResponse.json(
+      { error: "Μη έγκυρο link σερβιτόρου.", code: "unauthorized" },
+      { status: 401 },
+    ),
+  };
 }
 
 export async function requireWaiterCallAccess(

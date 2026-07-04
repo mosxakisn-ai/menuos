@@ -5,6 +5,7 @@ import { itemPatchSchema } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { autoFillMenuNames } from "@/lib/menu-translation-service";
 import { getItemForOrganization } from "@/lib/venue-access";
+import { normalizeStoredPhotoUrl } from "@/lib/photo-signing";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
 type Params = { params: Promise<{ itemId: string }> };
@@ -68,7 +69,7 @@ export async function PATCH(request: Request, { params }: Params) {
       ? undefined
       : photoUrl === "" || photoUrl === null
         ? null
-        : photoUrl.trim();
+        : normalizeStoredPhotoUrl(photoUrl);
 
   const normalizedExtras =
     extras === undefined ? undefined : extras.length > 0 ? extras : [];

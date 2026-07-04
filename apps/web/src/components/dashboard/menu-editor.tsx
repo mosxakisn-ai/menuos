@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
 import { LoadingSkeleton, LoadingState } from "@/components/ui/loading-state";
+import { panelPhotoDisplayUrl } from "@/lib/photo-display-url";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
   dashboardCardClass,
@@ -747,7 +748,7 @@ export function MenuEditor({
                           {item.photoUrl && !isEditing ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
-                              src={item.photoUrl}
+                              src={panelPhotoDisplayUrl(item.photoUrl) ?? item.photoUrl}
                               alt=""
                               className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 object-cover sm:h-14 sm:w-14"
                             />

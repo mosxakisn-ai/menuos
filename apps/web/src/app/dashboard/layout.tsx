@@ -35,15 +35,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
     const active = await organizationHasActiveSubscription(session.organizationId);
     if (!active) {
       const pathname = headersList.get("x-menuos-pathname") ?? "";
-      const billingParams = new URLSearchParams({ inactive: "1" });
-      const search = headersList.get("x-menuos-search") ?? "";
-      const upgrade = new URLSearchParams(search).get("upgrade");
-      if (upgrade) {
-        billingParams.set("upgrade", upgrade);
-      } else if (pathname.startsWith("/dashboard/menus/import")) {
-        billingParams.set("upgrade", "pdf-import");
+      // STAFF cannot open billing (middleware) — keep them on waiter with a flag instead of looping.
+      if (session.role === "STAFF") {
+        if (!pathname.startsWith("/dashboard/waiter")) {
+          redirect("/dashboard/waiter?inactive=1");
+        }
+      } else {
+        const billingParams = new URLSearchParams({ inactive: "1" });
+        const search = headersList.get("x-menuos-search") ?? "";
+        const upgrade = new URLSearchParams(search).get("upgrade");
+        if (upgrade) {
+          billingParams.set("upgrade", upgrade);
+        } else if (pathname.startsWith("/dashboard/menus/import")) {
+          billingParams.set("upgrade", "pdf-import");
+        }
+        redirect(`/dashboard/billing?${billingParams.toString()}`);
       }
-      redirect(`/dashboard/billing?${billingParams.toString()}`);
     }
   }
 

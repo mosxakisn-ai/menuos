@@ -9,6 +9,7 @@ import {
   serializableTransaction,
 } from "@/lib/plan-limits";
 import { getCategoryForOrganization } from "@/lib/venue-access";
+import { normalizeStoredPhotoUrl } from "@/lib/photo-signing";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
 export async function POST(request: Request) {
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
           categoryId: parsed.data.categoryId,
           price: parsed.data.price,
           label: parsed.data.label ?? null,
-          photoUrl: parsed.data.photoUrl?.trim() || null,
+          photoUrl: normalizeStoredPhotoUrl(parsed.data.photoUrl),
           available: parsed.data.available ?? true,
           sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
           extras: parsed.data.extras?.length ? parsed.data.extras : undefined,

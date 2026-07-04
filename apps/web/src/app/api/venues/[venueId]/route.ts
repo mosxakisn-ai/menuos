@@ -5,6 +5,7 @@ import { requireActiveSubscription } from "@/lib/api-auth";
 import { canManageVenueSecrets } from "@/lib/dashboard-roles";
 import { getVenueForOrganization } from "@/lib/venue-access";
 import { stripVenueSecrets } from "@/lib/venue-secrets";
+import { normalizeStoredPhotoUrl } from "@/lib/photo-signing";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 
 type Params = { params: Promise<{ venueId: string }> };
@@ -50,7 +51,11 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const { logoUrl, ...rest } = parsed.data;
   const normalizedLogo =
-    logoUrl === undefined ? undefined : logoUrl === "" || logoUrl === null ? null : logoUrl.trim();
+    logoUrl === undefined
+      ? undefined
+      : logoUrl === "" || logoUrl === null
+        ? null
+        : normalizeStoredPhotoUrl(logoUrl);
 
   const venue = await prisma.venue.update({
     where: { id: venueId },
