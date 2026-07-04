@@ -16,9 +16,7 @@ import { isTrialPlan } from "@menuos/shared";
 import { live360NavUpgradeHref } from "@/lib/dashboard-nav";
 import { WelcomeTrialCard } from "@/components/dashboard/welcome-trial-card";
 import { DashboardStatCard, dashboardCardClass } from "@/components/dashboard/dashboard-page";
-import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
 import { DashboardDocumentTitle } from "@/components/dashboard/localized-dashboard-page-header";
-import { TrialLimitsHint } from "@/components/dashboard/trial-limits-hint";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { formatDashboardDate } from "@/content/dashboard-i18n";
 import { cn } from "@/lib/utils";
@@ -175,20 +173,6 @@ export function DashboardOverviewContent({
           </div>
         </section>
       ) : null}
-
-      <TrialLimitsHint plan={planId} itemCount={itemCount} />
-
-      <OnboardingWizard
-        state={{
-          hasVenue: venueCount > 0,
-          hasCategory,
-          hasItem: itemCount > 0,
-          venueId: firstVenueId,
-          venueSlug: firstVenueSlug,
-          itemCount,
-        }}
-        qrVisited={qrVisited}
-      />
 
       {onboardingComplete ? (
         <div className="grid gap-5 lg:grid-cols-2 lg:items-start">

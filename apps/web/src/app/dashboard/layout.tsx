@@ -9,7 +9,7 @@ import { DashboardDiagnosticsReporter } from "@/components/dashboard/dashboard-d
 import { ConfirmDialogHost } from "@/components/ui/confirm-dialog";
 import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
 import { OnboardingLegacyQrSync } from "@/components/dashboard/onboarding-legacy-qr-sync";
-import { OnboardingLockBanner } from "@/components/dashboard/onboarding-lock-banner";
+import { OnboardingWizard, type OnboardingState } from "@/components/dashboard/onboarding-wizard";
 import { getSession } from "@/lib/auth";
 import { loginUrlWithCallback } from "@/lib/safe-callback-url";
 import { isTrialPlan, isTrialStillActive, getTrialPeriodDays } from "@menuos/shared";
@@ -25,7 +25,6 @@ import { playfair } from "@/lib/fonts";
 import { ONBOARDING_QR_COOKIE } from "@/lib/onboarding-constants";
 import {
   getOnboardingStatus,
-  getOnboardingCurrentStepIndex,
   isOnboardingComplete,
   isOnboardingPathAllowed,
 } from "@/lib/onboarding-status";
@@ -73,13 +72,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const dashboardPathname = headersList.get("x-menuos-pathname") ?? "/dashboard";
 
   let onboardingLocked = false;
-  let onboardingStepIndex = 0;
+  let onboardingWizardState: OnboardingState | null = null;
+  let qrVisited = false;
   if (session.role !== "STAFF") {
     const onboardingStatus = await getOnboardingStatus(session.organizationId);
-    const qrVisited = cookieStore.get(ONBOARDING_QR_COOKIE)?.value === "1";
+    qrVisited = cookieStore.get(ONBOARDING_QR_COOKIE)?.value === "1";
     onboardingLocked = !isOnboardingComplete(onboardingStatus, qrVisited);
-    onboardingStepIndex = getOnboardingCurrentStepIndex(onboardingStatus, qrVisited);
     if (onboardingLocked) {
+      onboardingWizardState = {
+        hasVenue: onboardingStatus.hasVenue,
+        hasCategory: onboardingStatus.hasCategory,
+        hasItem: onboardingStatus.hasItem,
+        venueId: onboardingStatus.firstVenueId,
+        venueSlug: onboardingStatus.firstVenueSlug,
+        itemCount: onboardingStatus.itemCount,
+      };
       if (!isOnboardingPathAllowed(dashboardPathname, onboardingStatus, qrVisited)) {
         redirect("/dashboard");
       }
@@ -145,6 +152,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
       ? getTrialPeriodDays(org.subscription.trialEndsAt, org.createdAt)
       : catalogTrialDays;
 
+  let trialItemCount = 0;
+  if (showTrialBanner && session.role !== "STAFF") {
+    trialItemCount = await prisma.item.count({
+      where: { category: { menu: { venue: { organizationId: session.organizationId } } } },
+    });
+  }
+
   return (
     <DashboardLocaleProvider initialLang={initialLang}>
       <div className={playfair.variable}>
@@ -168,22 +182,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
             subscriptionExpiryLine={subscriptionSummary.expiryLine}
             subscriptionActive={subscriptionSummary.active}
           />
-          <main className="flex-1 bg-brand-surface/50 p-4 pb-24 sm:p-6 md:pb-8">
+          <main
+            className={
+              onboardingLocked
+                ? "flex-1 bg-brand-surface/50 p-4 pb-52 sm:p-6 md:pb-36"
+                : "flex-1 bg-brand-surface/50 p-4 pb-24 sm:p-6 md:pb-8"
+            }
+          >
             <div className="mx-auto w-full max-w-6xl">
-              {onboardingLocked && dashboardPathname !== "/dashboard" ? (
-                <div className="mb-6">
-                  <OnboardingLockBanner stepIndex={Math.min(onboardingStepIndex, 2)} />
-                </div>
-              ) : null}
               {showTrialBanner && trialEndsAtIso ? (
                 <div className="mb-6">
-                  <TrialStatusBanner trialEndsAt={trialEndsAtIso} trialPeriodDays={trialPeriodDays} />
+                  <TrialStatusBanner
+                    trialEndsAt={trialEndsAtIso}
+                    trialPeriodDays={trialPeriodDays}
+                    planId={planId}
+                    itemCount={trialItemCount}
+                  />
                 </div>
               ) : null}
               {children}
             </div>
           </main>
         </div>
+        {onboardingLocked && onboardingWizardState ? (
+          <OnboardingWizard state={onboardingWizardState} qrVisited={qrVisited} />
+        ) : null}
         <DashboardMobileNav
           initialPendingCount={initialMonitorCount}
           userRole={session.role}

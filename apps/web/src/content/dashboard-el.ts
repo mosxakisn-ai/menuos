@@ -372,7 +372,7 @@ export const DASHBOARD_EL = {
     bannerEnding: (days: number, date: string) =>
       `Η δοκιμή λήγει σύντομα — ${days} ${days === 1 ? "μέρα" : "μέρες"} (έως ${date})`,
     bannerLastDay: "Η δοκιμή σου λήγει αύριο — κράτησε το menu online",
-    setupHint: "Ολοκλήρωσε: κατάστημα → κατάλογος → QR.",
+    setupHint: "1. Άνοιξε κατάστημα · 2. Φτιάξε κατάλογο · 3. Βγάλε QR",
     choosePlan: "Δες τα πλάνα",
     upgradeNow: "Αναβάθμιση τώρα",
     welcomeBadge: "Ξεκίνημα δοκιμής",

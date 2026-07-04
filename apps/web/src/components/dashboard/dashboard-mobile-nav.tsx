@@ -42,7 +42,14 @@ export function DashboardMobileNav({
 
   return (
     <>
-      <div className="fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] right-3 z-40 md:hidden">
+      <div
+        className={cn(
+          "fixed right-3 z-40 md:hidden",
+          onboardingLocked
+            ? "bottom-[calc(3.75rem+10.5rem+env(safe-area-inset-bottom))]"
+            : "bottom-[calc(3.75rem+env(safe-area-inset-bottom))]",
+        )}
+      >
         <DashboardLanguageSwitcher className="shadow-card" />
       </div>
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 bg-white/95 px-0.5 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">

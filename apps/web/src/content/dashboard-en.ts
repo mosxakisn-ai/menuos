@@ -366,7 +366,7 @@ export const DASHBOARD_EN = {
     bannerEnding: (days: number, date: string) =>
       `Trial ending soon — ${days} ${days === 1 ? "day" : "days"} (until ${date})`,
     bannerLastDay: "Your trial ends tomorrow — keep your menu online",
-    setupHint: "Complete: venue → catalog → QR.",
+    setupHint: "1. Open venue · 2. Build catalog · 3. Get QR codes",
     choosePlan: "View plans",
     upgradeNow: "Upgrade now",
     welcomeBadge: "Trial started",
