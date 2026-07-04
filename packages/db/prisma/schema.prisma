@@ -177,6 +177,7 @@ model Subscription {
   currentPeriodEnd DateTime?
   trialMidEmailSentAt     DateTime?
   trialEndingEmailSentAt  DateTime?
+  trialGraceStartedEmailSentAt DateTime?
   trialExpiredEmailSentAt DateTime?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt

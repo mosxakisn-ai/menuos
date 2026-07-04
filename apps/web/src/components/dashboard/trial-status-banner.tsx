@@ -1,9 +1,19 @@
 "use client";
 
-import { Clock } from "lucide-react";
-import { getTrialDaysLeft, getTrialUrgency, isTrialPlan } from "@menuos/shared";
+import { Clock, Sparkles } from "lucide-react";
+import Link from "next/link";
+import {
+  computeTrialGraceEndsAt,
+  getTrialAccessPhase,
+  getTrialDaysLeft,
+  getTrialGraceDaysLeft,
+  getTrialGraceUrgency,
+  getTrialUrgency,
+  isTrialPlan,
+} from "@menuos/shared";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { formatDashboardDate } from "@/content/dashboard-i18n";
+import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function TrialStatusBanner({
@@ -22,12 +32,50 @@ export function TrialStatusBanner({
   const { d, lang } = useDashboardCopy();
   if (!isTrialPlan(planId)) return null;
 
-  const end = new Date(trialEndsAt);
-  const daysLeft = getTrialDaysLeft(end);
+  const trialEnd = new Date(trialEndsAt);
+  const phase = getTrialAccessPhase(trialEnd);
+  if (phase === "expired") return null;
+
+  if (phase === "grace") {
+    const graceDaysLeft = getTrialGraceDaysLeft(trialEnd);
+    const graceEndsAt = computeTrialGraceEndsAt(trialEnd);
+    const graceEndsLabel = formatDashboardDate(lang, graceEndsAt);
+    const urgency = getTrialGraceUrgency(graceDaysLeft);
+
+    const toneClass =
+      urgency === "last_day"
+        ? "border-orange-300 bg-gradient-to-br from-orange-50 via-amber-50/80 to-white text-orange-950"
+        : urgency === "ending"
+          ? "border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50/40 to-white text-amber-950"
+          : "border-violet-200 bg-gradient-to-br from-violet-50/80 via-brand-blue/[0.04] to-white text-brand-navy";
+
+    const headline =
+      urgency === "last_day"
+        ? d.trial.bannerGraceLastDay
+        : d.trial.bannerGrace(graceDaysLeft, graceEndsLabel);
+
+    return (
+      <div className={cn("rounded-xl border px-4 py-3.5 sm:px-5", toneClass)}>
+        <p className="flex items-center gap-2 text-sm font-semibold">
+          <Sparkles className="h-4 w-4 shrink-0 text-brand-blue" aria-hidden />
+          {headline}
+        </p>
+        <p className="mt-1.5 text-sm leading-relaxed opacity-90">{d.trial.graceHint}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Link href="/dashboard/billing" className={buttonClass("primary", "sm")}>
+            {d.trial.graceChoosePlan}
+          </Link>
+          <span className="text-xs opacity-75">{d.trial.graceUntil(graceEndsLabel)}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const daysLeft = getTrialDaysLeft(trialEnd);
   if (daysLeft <= 0) return null;
 
   const urgency = getTrialUrgency(daysLeft);
-  const endsLabel = formatDashboardDate(lang, end);
+  const endsLabel = formatDashboardDate(lang, trialEnd);
 
   const toneClass =
     urgency === "last_day"
@@ -57,6 +105,9 @@ export function TrialStatusBanner({
         <p className="mt-1.5 text-sm leading-relaxed opacity-90">{d.trial.setupHint}</p>
       ) : null}
       <p className="mt-1.5 text-xs leading-relaxed opacity-80">{d.trial.limits}</p>
+      {urgency === "last_day" || urgency === "ending" ? (
+        <p className="mt-1.5 text-xs leading-relaxed opacity-80">{d.trial.gracePromise}</p>
+      ) : null}
       {itemCount >= 40 ? (
         <p className="mt-1.5 text-xs font-medium text-amber-800">{d.trial.limitsNear(itemCount)}</p>
       ) : null}

@@ -12,7 +12,7 @@ import { OnboardingLegacyQrSync } from "@/components/dashboard/onboarding-legacy
 import { OnboardingWizard, type OnboardingState } from "@/components/dashboard/onboarding-wizard";
 import { getSession } from "@/lib/auth";
 import { loginUrlWithCallback } from "@/lib/safe-callback-url";
-import { isTrialPlan, isTrialStillActive, getTrialPeriodDays } from "@menuos/shared";
+import { isTrialPlan, getTrialPeriodDays, getTrialAccessPhase, computeTrialGraceEndsAt } from "@menuos/shared";
 import { organizationHasActiveSubscription, organizationHasLive360, getOrganizationPlanContext } from "@/lib/billing";
 import type { DashboardPlanLimitsSnapshot } from "@/lib/dashboard-plan-limits";
 import { PlanLimitsProvider } from "@/components/dashboard/plan-limits-provider";
@@ -175,7 +175,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     subscription?.plan &&
     isTrialPlan(subscription.plan) &&
     subscription.trialEndsAt &&
-    isTrialStillActive(subscription.trialEndsAt);
+    getTrialAccessPhase(subscription.trialEndsAt) !== "expired";
   const trialEndsAtIso = subscription?.trialEndsAt?.toISOString() ?? null;
   const catalogTrialDays = await getTrialDaysFromCatalog();
   const trialPeriodDays =

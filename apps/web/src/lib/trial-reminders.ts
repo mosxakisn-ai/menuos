@@ -1,8 +1,12 @@
 import { UserRole, prisma } from "@menuos/db";
-import { getTrialDaysLeft } from "@menuos/shared";
+import {
+  getTrialDaysLeft,
+  getTrialGraceDaysLeft,
+} from "@menuos/shared";
 import {
   sendTrialEndingReminderEmail,
   sendTrialExpiredEmail,
+  sendTrialGraceStartedEmail,
   sendTrialMidReminderEmail,
 } from "@/lib/mail";
 
@@ -10,6 +14,7 @@ export type TrialReminderResult = {
   checked: number;
   mid: number;
   ending: number;
+  graceStarted: number;
   expired: number;
   skipped: number;
   errors: number;
@@ -28,6 +33,7 @@ export async function processTrialReminderEmails(now = new Date()): Promise<Tria
     checked: 0,
     mid: 0,
     ending: 0,
+    graceStarted: 0,
     expired: 0,
     skipped: 0,
     errors: 0,
@@ -47,6 +53,7 @@ export async function processTrialReminderEmails(now = new Date()): Promise<Tria
     result.checked += 1;
     const trialEndsAt = sub.trialEndsAt!;
     const daysLeft = getTrialDaysLeft(trialEndsAt, now);
+    const graceDaysLeft = getTrialGraceDaysLeft(trialEndsAt, now);
     const admin = await findTrialAdmin(sub.organizationId);
     if (!admin?.email) {
       result.skipped += 1;
@@ -61,13 +68,23 @@ export async function processTrialReminderEmails(now = new Date()): Promise<Tria
     };
 
     try {
-      if (daysLeft <= 0 && !sub.trialExpiredEmailSentAt) {
+      if (graceDaysLeft <= 0 && !sub.trialExpiredEmailSentAt) {
         await sendTrialExpiredEmail(mailInput);
         await prisma.subscription.update({
           where: { id: sub.id },
           data: { trialExpiredEmailSentAt: now },
         });
         result.expired += 1;
+        continue;
+      }
+
+      if (daysLeft <= 0 && graceDaysLeft > 0 && !sub.trialGraceStartedEmailSentAt) {
+        await sendTrialGraceStartedEmail(mailInput);
+        await prisma.subscription.update({
+          where: { id: sub.id },
+          data: { trialGraceStartedEmailSentAt: now },
+        });
+        result.graceStarted += 1;
         continue;
       }
 

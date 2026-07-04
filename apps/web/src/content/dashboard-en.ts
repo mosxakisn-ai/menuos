@@ -355,18 +355,26 @@ export const DASHBOARD_EN = {
   },
   trial: {
     expired:
-      "Your free trial has ended. Choose a plan to continue — customers no longer see your menu.",
+      "Your extension period has ended. Choose Basic or Pro — your catalog is saved and goes live again instantly.",
     endingSoon: (days: number) =>
       days === 1
-        ? "Your free trial ends tomorrow. Choose a plan so your menu stays online."
-        : `Your free trial ends in ${days} days. Choose a plan when you're ready.`,
+        ? "Your free trial ends tomorrow. After that you get 7 extra days to choose a plan."
+        : `Your free trial ends in ${days} days. Then you get 7 extra days — your menu stays online.`,
     bannerHealthy: (days: number, date: string) =>
       `Free trial — ${days} ${days === 1 ? "day" : "days"} left (until ${date})`,
     bannerMid: (days: number, date: string) =>
       `Trial in progress — ${days} ${days === 1 ? "day" : "days"} left (until ${date})`,
     bannerEnding: (days: number, date: string) =>
       `Trial ending soon — ${days} ${days === 1 ? "day" : "days"} (until ${date})`,
-    bannerLastDay: "Your trial ends tomorrow — keep your menu online",
+    bannerLastDay: "Your trial ends tomorrow — then 7 extra days to choose a plan",
+    bannerGrace: (days: number, date: string) =>
+      `Trial ended — ${days} ${days === 1 ? "day" : "days"} extension left (until ${date})`,
+    bannerGraceLastDay: "Last day of your extension — choose a plan to keep your menu online",
+    graceHint:
+      "Your QR menu stays live. Choose Basic (€9.99) or Pro (€19.99) — your dishes are saved.",
+    graceChoosePlan: "Choose a plan",
+    graceUntil: (date: string) => `Extension until ${date}`,
+    gracePromise: "After your trial ends we give you 7 extra days — your menu stays online.",
     setupHint: "1. Venue · 2. Catalog · 3. QR · 4. Done",
     choosePlan: "View plans",
     upgradeNow: "Upgrade now",
@@ -1238,8 +1246,10 @@ export const DASHBOARD_EN = {
     PAST_DUE: "Payment overdue",
     CANCELED: "Canceled",
     trialActive: "Active trial",
+    trialGrace: "Extension period",
     trialExpired: "Expired",
     expiresOn: (date: string) => `Expires ${date}`,
+    graceUntil: (date: string) => `Extension until ${date}`,
     renewsOn: (date: string) => `Renews ${date}`,
     expiredOn: (date: string) => `Expired ${date}`,
   },

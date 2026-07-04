@@ -117,7 +117,7 @@ export function buildWelcomeEmailHtml(input: {
     preheader: `Ξεκίνα τη δοκιμή σου — ${trialDays} ημέρες, έως ${input.trialEndsAt}`,
     title: "MenuOS — καλώς ήρθες",
     bodyHtml,
-    footerNote: "Θα σου στείλουμε υπενθύμιση πριν λήξει η δοκιμή. Μπορείς να αναβαθμιστείς Basic ή Pro όποτε θες.",
+    footerNote: "Θα σου στείλουμε υπενθύμιση πριν λήξει η δοκιμή. Μετά έχεις 7 μέρες παράτασης για να διαλέξεις Basic ή Pro.",
   });
 }
 
@@ -222,7 +222,7 @@ export function buildTrialEndingReminderEmailHtml(input: {
     <p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:#475569;">
       ${escapeHtml(input.name)}, η δωρεάν δοκιμή για <strong>${escapeHtml(input.businessName)}</strong>
       λήγει <strong>${escapeHtml(input.trialEndsAt)}</strong>.
-      Μετά, οι πελάτες σου δεν θα βλέπουν τον QR κατάλογο εκτός αν επιλέξεις πλάνο.
+      Μετά έχεις <strong>7 ημέρες παράτασης</strong> — ο QR κατάλογος μένει online ενώ διαλέγεις πλάνο.
     </p>
     <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#475569;">
       Basic από €9,99/μήνα ή Pro με εισαγωγή PDF — ακύρωση οποτεδήποτε.
@@ -254,7 +254,53 @@ export function buildTrialEndingReminderEmailText(input: {
 Γεια σου ${input.name},
 
 Η δωρεάν δοκιμή για «${input.businessName}» λήγει ${input.trialEndsAt}.
-Μετά τη λήξη, το panel κλειδώνει και οι πελάτες δεν βλέπουν τον κατάλογο.
+Μετά έχεις 7 ημέρες παράτασης — το menu μένει online.
+
+Διάλεξε πλάνο: ${billingUrl}`;
+}
+
+export function buildTrialGraceStartedEmailHtml(input: {
+  name: string;
+  businessName: string;
+  graceEndsAt: string;
+}): string {
+  const billingUrl = `${mailAppBaseUrl()}/dashboard/billing`;
+  const bodyHtml = `
+    <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#0f172a;">Η δοκιμή έληξε — έχεις παράταση</p>
+    <p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:#475569;">
+      ${escapeHtml(input.name)}, η δωρεάν δοκιμή για <strong>${escapeHtml(input.businessName)}</strong> ολοκληρώθηκε.
+      Σου δίνουμε <strong>7 ημέρες παράτασης</strong> (έως ${escapeHtml(input.graceEndsAt)}) — ο QR κατάλογος σου συνεχίζει κανονικά.
+    </p>
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#475569;">
+      Διάλεξε Basic (€9,99) ή Pro (€19,99) όποτε είσαι έτοιμος. Ο κατάλογός σου είναι αποθηκευμένος.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0">
+      <tr>
+        <td style="border-radius:12px;background:#2563EB;">
+          <a href="${billingUrl}" style="display:inline-block;padding:14px 24px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">Διάλεξε πλάνο</a>
+        </td>
+      </tr>
+    </table>`;
+
+  return brandedEmailLayout({
+    preheader: `7 μέρες παράτασης — το menu μένει online έως ${input.graceEndsAt}`,
+    title: "MenuOS — περίοδος παράτασης",
+    bodyHtml,
+    footerNote: "Λαμβάνεις αυτό το email επειδή ξεκίνησε η περίοδος παράτασης μετά τη δοκιμή σου.",
+  });
+}
+
+export function buildTrialGraceStartedEmailText(input: {
+  name: string;
+  businessName: string;
+  graceEndsAt: string;
+}): string {
+  const billingUrl = `${mailAppBaseUrl()}/dashboard/billing`;
+  return `MenuOS — περίοδος παράτασης
+
+Γεια σου ${input.name},
+
+Η δοκιμή για «${input.businessName}» έληξε. Έχεις 7 μέρες παράτασης (έως ${input.graceEndsAt}) — το QR menu συνεχίζει online.
 
 Διάλεξε πλάνο: ${billingUrl}`;
 }
@@ -265,10 +311,10 @@ export function buildTrialExpiredEmailHtml(input: {
 }): string {
   const billingUrl = `${mailAppBaseUrl()}/dashboard/billing`;
   const bodyHtml = `
-    <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#0f172a;">Η δωρεάν δοκιμή έληξε</p>
+    <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#0f172a;">Έληξε η περίοδος παράτασης</p>
     <p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:#475569;">
-      ${escapeHtml(input.name)}, η δοκιμή για <strong>${escapeHtml(input.businessName)}</strong> ολοκληρώθηκε.
-      Ο κατάλογός σου είναι αποθηκευμένος — διάλεξε πλάνο για να τον ξαναβάλεις online.
+      ${escapeHtml(input.name)}, έληξαν και οι 7 μέρες παράτασης για <strong>${escapeHtml(input.businessName)}</strong>.
+      Ο κατάλογός σου είναι αποθηκευμένος — διάλεξε Basic ή Pro για να ξανανοίξει το menu.
     </p>
     <table role="presentation" cellspacing="0" cellpadding="0">
       <tr>
@@ -279,10 +325,10 @@ export function buildTrialExpiredEmailHtml(input: {
     </table>`;
 
   return brandedEmailLayout({
-    preheader: "Η δοκιμή έληξε — ενεργοποίησε συνδρομή για να συνεχίσεις",
-    title: "MenuOS — δοκιμή έληξε",
+    preheader: "Έληξε η παράταση — διάλεξε πλάνο για να ξανανοίξει το menu",
+    title: "MenuOS — χρειάζεται πλάνο",
     bodyHtml,
-    footerNote: "Λαμβάνεις αυτό το email επειδή έληξε η δωρεάν δοκιμή σου.",
+    footerNote: "Λαμβάνεις αυτό το email επειδή έληξε η περίοδος παράτασης μετά τη δοκιμή σου.",
   });
 }
 
@@ -291,11 +337,11 @@ export function buildTrialExpiredEmailText(input: {
   businessName: string;
 }): string {
   const billingUrl = `${mailAppBaseUrl()}/dashboard/billing`;
-  return `MenuOS — η δωρεάν δοκιμή έληξε
+  return `MenuOS — χρειάζεται πλάνο
 
 Γεια σου ${input.name},
 
-Η δοκιμή για «${input.businessName}» έληξε. Ο κατάλογός σου είναι αποθηκευμένος.
+Έληξε η περίοδος παράτασης για «${input.businessName}». Ο κατάλογός σου είναι αποθηκευμένος.
 Basic από €9,99/μήνα · Pro €19,99/μήνα
 
 Ενεργοποίηση: ${billingUrl}`;

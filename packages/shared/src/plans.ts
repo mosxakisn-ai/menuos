@@ -4,8 +4,24 @@ export type SubscriptionPlanId = (typeof SUBSCRIPTION_PLANS)[number];
 /** Free trial length for new organizations. */
 export const TRIAL_DAYS = 7;
 
+/** Extra days after trial ends — QR menu & panel stay open while owner picks a plan. */
+export const TRIAL_GRACE_DAYS = 7;
+
 export function computeTrialEndsAt(from = new Date()): Date {
   return new Date(from.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+}
+
+export function computeTrialGraceEndsAt(trialEndsAt: Date): Date {
+  return new Date(trialEndsAt.getTime() + TRIAL_GRACE_DAYS * 24 * 60 * 60 * 1000);
+}
+
+/** Trial + grace window — guests & panel until grace ends. */
+export function isTrialSubscriptionActive(
+  trialEndsAt: Date | null | undefined,
+  now = new Date(),
+): boolean {
+  if (!trialEndsAt) return false;
+  return computeTrialGraceEndsAt(trialEndsAt).getTime() > now.getTime();
 }
 
 export type PlanDefinition = {
@@ -100,8 +116,7 @@ export function organizationHasPaidPlan(input: {
   trialEndsAt?: Date | null;
 }): boolean {
   if (input.plan === "TRIAL") {
-    if (!input.trialEndsAt) return false;
-    return input.trialEndsAt.getTime() > Date.now();
+    return isTrialSubscriptionActive(input.trialEndsAt);
   }
   if (input.plan === "ENTERPRISE") {
     return isActivePaidStatus(input.status);

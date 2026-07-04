@@ -1,4 +1,8 @@
-import { organizationHasPaidPlan } from "@menuos/shared";
+import {
+  organizationHasPaidPlan,
+  computeTrialGraceEndsAt,
+  getTrialAccessPhase,
+} from "@menuos/shared";
 import {
   formatDashboardDate,
   getDashboardCopy,
@@ -40,12 +44,30 @@ export function formatSubscriptionSummary(
     trialEndsAt,
   });
 
-  if (plan === "TRIAL") {
+  if (plan === "TRIAL" && trialEndsAt) {
+    const phase = getTrialAccessPhase(trialEndsAt);
+    if (phase === "grace") {
+      const graceEndsAt = computeTrialGraceEndsAt(trialEndsAt);
+      return {
+        active: true,
+        statusLine: `${planLabelForLang(lang, plan)} · ${statusCopy.trialGrace}`,
+        expiryLine: statusCopy.graceUntil(formatDate(graceEndsAt, lang)),
+      };
+    }
     const statusText = active ? statusCopy.trialActive : statusCopy.trialExpired;
     return {
       active,
       statusLine: `${planLabelForLang(lang, plan)} · ${statusText}`,
       expiryLine: trialEndsAt ? statusCopy.expiresOn(formatDate(trialEndsAt, lang)) : null,
+    };
+  }
+
+  if (plan === "TRIAL") {
+    const statusText = active ? statusCopy.trialActive : statusCopy.trialExpired;
+    return {
+      active,
+      statusLine: `${planLabelForLang(lang, plan)} · ${statusText}`,
+      expiryLine: null,
     };
   }
 

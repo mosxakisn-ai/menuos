@@ -361,18 +361,26 @@ export const DASHBOARD_EL = {
   },
   trial: {
     expired:
-      "Η δωρεάν δοκιμή σου έληξε. Διάλεξε πλάνο για να συνεχίσεις — οι πελάτες σου δεν βλέπουν πλέον το menu.",
+      "Έληξε η περίοδος παράτασης. Διάλεξε Basic ή Pro — ο κατάλογός σου είναι αποθηκευμένος και ξανανοίγει αμέσως.",
     endingSoon: (days: number) =>
       days === 1
-        ? "Η δωρεάν δοκιμή σου λήγει αύριο. Διάλεξε πλάνο για να μην σταματήσει το menu."
-        : `Η δωρεάν δοκιμή σου λήγει σε ${days} μέρες. Διάλεξε πλάνο όταν είσαι έτοιμος.`,
+        ? "Η δωρεάν δοκιμή σου λήγει αύριο. Μετά έχεις 7 μέρες παράτασης για να διαλέξεις πλάνο."
+        : `Η δωρεάν δοκιμή σου λήγει σε ${days} μέρες. Μετά έχεις 7 μέρες παράτασης — χωρίς να κλείσει το menu.`,
     bannerHealthy: (days: number, date: string) =>
       `Δωρεάν δοκιμή — ${days} ${days === 1 ? "μέρα" : "μέρες"} απομένουν (έως ${date})`,
     bannerMid: (days: number, date: string) =>
       `Μέσα στη δοκιμή σου — ${days} ${days === 1 ? "μέρα" : "μέρες"} απομένουν (έως ${date})`,
     bannerEnding: (days: number, date: string) =>
       `Η δοκιμή λήγει σύντομα — ${days} ${days === 1 ? "μέρα" : "μέρες"} (έως ${date})`,
-    bannerLastDay: "Η δοκιμή σου λήγει αύριο — κράτησε το menu online",
+    bannerLastDay: "Η δοκιμή σου λήγει αύριο — μετά ακολουθούν 7 μέρες παράτασης",
+    bannerGrace: (days: number, date: string) =>
+      `Η δοκιμή έληξε — ${days} ${days === 1 ? "μέρα" : "μέρες"} παράτασης (έως ${date})`,
+    bannerGraceLastDay: "Τελευταία μέρα παράτασης — διάλεξε πλάνο για να μείνει online το menu",
+    graceHint:
+      "Ο QR κατάλογος σου συνεχίζει κανονικά. Διάλεξε Basic (€9,99) ή Pro (€19,99) — χωρίς να χάσεις τα πιάτα σου.",
+    graceChoosePlan: "Διάλεξε πλάνο",
+    graceUntil: (date: string) => `Παράταση έως ${date}`,
+    gracePromise: "Μετά τη λήξη της δοκιμής σου δίνουμε 7 μέρες παράτασης — το menu μένει online.",
     setupHint: "1. Κατάστημα · 2. Κατάλογος · 3. QR · 4. Έτοιμο",
     choosePlan: "Δες τα πλάνα",
     upgradeNow: "Αναβάθμιση τώρα",
@@ -1253,8 +1261,10 @@ export const DASHBOARD_EL = {
     PAST_DUE: "Καθυστέρηση πληρωμής",
     CANCELED: "Ακυρωμένη",
     trialActive: "Ενεργή δοκιμή",
+    trialGrace: "Περίοδος παράτασης",
     trialExpired: "Ληγμένη",
     expiresOn: (date: string) => `Λήγει ${date}`,
+    graceUntil: (date: string) => `Παράταση έως ${date}`,
     renewsOn: (date: string) => `Ανανέωση ${date}`,
     expiredOn: (date: string) => `Έληξε ${date}`,
   },

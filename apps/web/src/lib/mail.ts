@@ -5,6 +5,8 @@ import {
   buildSubscriptionActivatedEmailText,
   buildTrialEndingReminderEmailHtml,
   buildTrialEndingReminderEmailText,
+  buildTrialGraceStartedEmailHtml,
+  buildTrialGraceStartedEmailText,
   buildTrialExpiredEmailHtml,
   buildTrialExpiredEmailText,
   buildTrialMidReminderEmailHtml,
@@ -12,6 +14,7 @@ import {
   buildWelcomeEmailHtml,
   buildWelcomeEmailText,
 } from "@/lib/mail-templates";
+import { computeTrialGraceEndsAt } from "@menuos/shared";
 import { createMailTransporter, isMailConfigured, mailFromAddress } from "@/lib/mail-transport";
 
 export { isMailConfigured };
@@ -156,6 +159,30 @@ export async function sendTrialEndingReminderEmail(input: {
   });
 }
 
+export async function sendTrialGraceStartedEmail(input: {
+  to: string;
+  name: string;
+  businessName: string;
+  trialEndsAt: Date;
+}): Promise<void> {
+  const graceEndsAt = computeTrialGraceEndsAt(input.trialEndsAt).toLocaleDateString("el-GR");
+  await sendBrandedEmail({
+    to: input.to,
+    subject: "MenuOS — 7 μέρες παράτασης · το menu μένει online",
+    text: buildTrialGraceStartedEmailText({
+      name: input.name,
+      businessName: input.businessName,
+      graceEndsAt,
+    }),
+    html: buildTrialGraceStartedEmailHtml({
+      name: input.name,
+      businessName: input.businessName,
+      graceEndsAt,
+    }),
+    logLabel: "trial-grace-started",
+  });
+}
+
 export async function sendTrialExpiredEmail(input: {
   to: string;
   name: string;
@@ -163,7 +190,7 @@ export async function sendTrialExpiredEmail(input: {
 }): Promise<void> {
   await sendBrandedEmail({
     to: input.to,
-    subject: "MenuOS — η δωρεάν δοκιμή έληξε",
+    subject: "MenuOS — έληξε η παράταση · διάλεξε πλάνο",
     text: buildTrialExpiredEmailText({
       name: input.name,
       businessName: input.businessName,
