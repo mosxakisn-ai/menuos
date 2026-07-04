@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { optimizeMenuCardPhotoUrl } from "./menu-photo-url";
+import { optimizeCoverPhotoUrl, optimizeMenuCardPhotoUrl } from "./menu-photo-url";
 
 const SAMPLE =
   "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=800";
@@ -17,6 +17,13 @@ describe("optimizeMenuCardPhotoUrl", () => {
     const url = optimizeMenuCardPhotoUrl(SAMPLE, 360);
     const parsed = new URL(url);
     expect(parsed.searchParams.get("w")).toBe("440");
+    expect(parsed.searchParams.get("q")).toBe("55");
+  });
+
+  it("sizes hero cover photos to display width with stronger compression", () => {
+    const url = optimizeCoverPhotoUrl(SAMPLE, 460);
+    const parsed = new URL(url);
+    expect(parsed.searchParams.get("w")).toBe("520");
     expect(parsed.searchParams.get("q")).toBe("55");
   });
 });

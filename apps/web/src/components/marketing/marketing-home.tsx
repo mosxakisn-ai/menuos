@@ -23,6 +23,10 @@ import {
   StatStrip,
   ValuePill,
 } from "@/components/marketing/marketing-blocks";
+import { DeferredMount } from "@/components/marketing/deferred-mount";
+import {
+  HERO_SHOWCASE_PLACEHOLDER_CLASS,
+} from "@/components/marketing/hero-showcase-shell";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n/context";
@@ -31,12 +35,7 @@ const HeroShowcase = dynamic(
   () => import("@/components/marketing/hero-showcase").then((m) => m.HeroShowcase),
   {
     ssr: false,
-    loading: () => (
-      <div
-        className="mx-auto h-52 max-w-xl rounded-[2rem] bg-slate-100/70 lg:h-[700px]"
-        aria-hidden
-      />
-    ),
+    loading: () => <div className={HERO_SHOWCASE_PLACEHOLDER_CLASS} aria-hidden />,
   },
 );
 
@@ -76,12 +75,7 @@ function HeroShowcaseSlot() {
   }, []);
 
   if (!ready) {
-    return (
-      <div
-        className="mx-auto h-52 max-w-xl rounded-[2rem] bg-slate-100/70 lg:h-[700px]"
-        aria-hidden
-      />
-    );
+    return <div className={HERO_SHOWCASE_PLACEHOLDER_CLASS} aria-hidden />;
   }
 
   return <HeroShowcase />;
@@ -97,9 +91,9 @@ export function MarketingHome() {
     <>
       {/* ── Hero ── */}
       <section className="relative overflow-hidden bg-hero-gradient pb-16 pt-12 sm:pb-24 sm:pt-16">
-        {/* Background orbs */}
+        {/* Background orbs — fixed offsets (not %) so hero min-height changes do not move them */}
         <div className="pointer-events-none absolute -left-32 top-0 h-[28rem] w-[28rem] rounded-full bg-brand-blue/10 blur-3xl" />
-        <div className="pointer-events-none absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-brand-cyan/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 top-40 h-80 w-80 rounded-full bg-brand-cyan/10 blur-3xl lg:top-48" />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(15,23,42,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_70%_at_50%_0%,#000_50%,transparent_100%)]" />
 
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
@@ -113,7 +107,7 @@ export function MarketingHome() {
                 </ValuePill>
               </div>
 
-              <h1 className="mt-6 text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-brand-navy sm:text-5xl lg:text-[3.5rem]">
+              <h1 className="mt-6 min-h-[4.75rem] text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-brand-navy sm:min-h-[5.25rem] sm:text-5xl lg:min-h-[7.25rem] lg:text-[3.5rem]">
                 {h.hero.title}
                 <span className="mt-1 block text-gradient-brand">{h.hero.titleAccent}</span>
               </h1>
@@ -163,7 +157,11 @@ export function MarketingHome() {
         </div>
       </section>
 
-      <HomeLive360 copy={h.live360} />
+      <DeferredMount
+        fallback={<div className="h-[28rem] animate-pulse bg-brand-surface/40 sm:h-[32rem]" aria-hidden />}
+      >
+        <HomeLive360 copy={h.live360} />
+      </DeferredMount>
 
       {/* ── Stats ── */}
       <section className="relative border-b border-slate-100 bg-white py-10 sm:py-12">
@@ -174,7 +172,9 @@ export function MarketingHome() {
 
       <DesignedForStrip label={pages.common.designedFor} industries={pages.common.industries} />
 
-      <MarketingTestimonials />
+      <DeferredMount fallback={<div className="h-72 animate-pulse bg-white" aria-hidden />}>
+        <MarketingTestimonials />
+      </DeferredMount>
 
       <section className="border-b border-slate-100 bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">

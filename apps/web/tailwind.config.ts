@@ -51,6 +51,7 @@ const config: Config = {
         "fade-up-delay-2": "fadeUp 0.8s ease-out 0.3s forwards",
         float: "float 6s ease-in-out infinite",
         "scan-line": "scanLine 2.8s ease-in-out infinite",
+        "scan-line-band": "scanLineBand 2.8s ease-in-out infinite",
         shimmer: "shimmer 3s ease-in-out infinite",
       },
       keyframes: {
@@ -63,10 +64,16 @@ const config: Config = {
           "50%": { transform: "translateY(-8px)" },
         },
         scanLine: {
-          "0%, 100%": { top: "0%", opacity: "0" },
+          "0%, 100%": { transform: "translate3d(0, 0, 0)", opacity: "0" },
           "10%": { opacity: "1" },
+          "50%": { transform: "translate3d(0, calc(100% - 0.125rem), 0)", opacity: "1" },
           "90%": { opacity: "1" },
-          "50%": { top: "100%" },
+        },
+        scanLineBand: {
+          "0%, 100%": { transform: "translate3d(0, 0, 0)", opacity: "0" },
+          "10%": { opacity: "1" },
+          "50%": { transform: "translate3d(0, calc(100% - 2rem), 0)", opacity: "1" },
+          "90%": { opacity: "1" },
         },
         shimmer: {
           "0%, 100%": { opacity: "0.4" },

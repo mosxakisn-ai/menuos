@@ -40,7 +40,7 @@ function ImportProcessingVisual({ poweredByGemini }: { poweredByGemini: boolean 
             <span className="h-2 w-2 rounded-full bg-emerald-300/80" aria-hidden />
             <FileText className="ml-auto h-3.5 w-3.5 text-brand-blue/70" aria-hidden />
           </div>
-          <div className="relative space-y-1.5 bg-gradient-to-b from-white to-slate-50/80 p-3">
+          <div className="relative space-y-1.5 overflow-hidden bg-gradient-to-b from-white to-slate-50/80 p-3">
             {[0.9, 0.75, 0.6, 0.45].map((w, i) => (
               <div
                 key={i}
@@ -49,14 +49,14 @@ function ImportProcessingVisual({ poweredByGemini }: { poweredByGemini: boolean 
                 aria-hidden
               />
             ))}
-            <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-brand-cyan/25 via-brand-blue/10 to-transparent animate-scan-line"
-              aria-hidden
-            />
-            <div
-              className="pointer-events-none absolute inset-x-2 top-0 h-0.5 rounded-full bg-brand-cyan shadow-[0_0_12px_#06B6D4] animate-scan-line"
-              aria-hidden
-            />
+            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+              <div className="animate-scan-line-band absolute inset-0 will-change-transform">
+                <div className="h-8 w-full bg-gradient-to-b from-brand-cyan/25 via-brand-blue/10 to-transparent" />
+              </div>
+              <div className="animate-scan-line absolute inset-0 will-change-transform">
+                <div className="h-0.5 w-full rounded-full bg-brand-cyan shadow-[0_0_12px_#06B6D4]" />
+              </div>
+            </div>
           </div>
         </div>
         {poweredByGemini ? (

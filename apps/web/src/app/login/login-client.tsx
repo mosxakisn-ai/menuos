@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AuthFooterLink, AuthShell } from "@/components/marketing/marketing-layout";
+import { AuthFooterLink, AuthShell } from "@/components/marketing/marketing-auth-shell";
 import { buttonClass } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";

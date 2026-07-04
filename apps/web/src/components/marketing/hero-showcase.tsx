@@ -9,13 +9,14 @@ import { HeroQrCode } from "@/components/marketing/hero-qr-code";
 import { Logo } from "@/components/brand/logo";
 import { APP_URL } from "@/lib/config";
 import { optimizeCoverPhotoUrl } from "@/lib/menu-photo-url";
+import { HERO_SHOWCASE_SHELL_CLASS } from "@/components/marketing/hero-showcase-shell";
 import { useI18n } from "@/i18n/context";
 
 const PHOTOS = {
   /** Mediterranean terrace dining — lifestyle card max ~440px wide */
   taverna: optimizeCoverPhotoUrl(
     "https://images.unsplash.com/photo-1559339352-11d035aa65de",
-    440,
+    460,
   ),
   /** Guest scanning phone at table — overlay ~128px */
   guest: optimizeCoverPhotoUrl(
@@ -120,7 +121,7 @@ export function HeroShowcase() {
   );
 
   return (
-    <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
+    <div className={`relative ${HERO_SHOWCASE_SHELL_CLASS}`}>
       <div className="pointer-events-none absolute -left-8 top-1/4 h-48 w-48 rounded-full bg-brand-cyan/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-4 bottom-8 h-56 w-56 rounded-full bg-brand-blue/15 blur-3xl" />
 
@@ -209,7 +210,7 @@ export function HeroShowcase() {
                 src={PHOTOS.taverna}
                 alt={hs.photoAlt}
                 fill
-                quality={65}
+                quality={52}
                 sizes="(max-width: 1024px) 440px, 460px"
                 className="object-cover object-center"
               />
@@ -264,7 +265,9 @@ export function HeroShowcase() {
                         />
                         {scanning ? (
                           <div className="pointer-events-none absolute inset-1 overflow-hidden rounded-md">
-                            <div className="animate-scan-line absolute inset-x-0 h-0.5 bg-brand-cyan shadow-[0_0_10px_#06B6D4]" />
+                            <div className="animate-scan-line absolute inset-0 will-change-transform">
+                              <div className="h-0.5 w-full bg-brand-cyan shadow-[0_0_10px_#06B6D4]" />
+                            </div>
                           </div>
                         ) : null}
                       </div>

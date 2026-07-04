@@ -55,14 +55,19 @@ export function LoadingState({
           )}
           aria-hidden
         />
-        <div
-          className={cn(
-            "relative flex items-center justify-center rounded-2xl bg-brand-gradient shadow-glow",
-            size === "sm" && "h-12 w-12",
-            size === "md" && "h-16 w-16",
-            size === "lg" && "h-20 w-20",
-          )}
-        >
+          <div
+            className={cn(
+              "relative overflow-hidden",
+              size === "sm" && "h-12 w-12",
+              size === "md" && "h-16 w-16",
+              size === "lg" && "h-20 w-20",
+            )}
+          >
+            <div
+              className={cn(
+                "flex h-full w-full items-center justify-center rounded-2xl bg-brand-gradient shadow-glow",
+              )}
+            >
           {variant === "default" ? (
             <Loader2
               className={cn("animate-spin text-white", size === "sm" ? "h-5 w-5" : size === "md" ? "h-7 w-7" : "h-9 w-9")}
@@ -76,14 +81,16 @@ export function LoadingState({
                 )}
               />
               {(variant === "scan" || variant === "parse") && (
-                <span
-                  className="pointer-events-none absolute inset-x-2 top-0 h-0.5 rounded-full bg-white/70 animate-scan-line"
-                  aria-hidden
-                />
+                <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl" aria-hidden>
+                  <span className="animate-scan-line absolute inset-0 will-change-transform">
+                    <span className="block h-0.5 rounded-full bg-white/70" />
+                  </span>
+                </span>
               )}
             </>
           )}
-        </div>
+            </div>
+          </div>
       </div>
 
       <div className="max-w-sm space-y-1">

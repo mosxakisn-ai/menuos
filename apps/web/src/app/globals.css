@@ -125,7 +125,9 @@
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-up,
     .animate-fade-up-delay,
-    .animate-fade-up-delay-2 {
+    .animate-fade-up-delay-2,
+    .animate-scan-line,
+    .animate-scan-line-band {
       opacity: 1 !important;
       animation: none !important;
       transform: none !important;

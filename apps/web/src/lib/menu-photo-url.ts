@@ -48,14 +48,18 @@ export function optimizeMenuCardPhotoUrl(url: string, displayWidth = 240): strin
 
 /** Hero / marketing cover photos (next/image still benefits from a smaller remote source). */
 export function optimizeCoverPhotoUrl(url: string, displayWidth = 440): string {
-  const w = Math.min(640, Math.ceil(displayWidth * 1.5));
+  const w =
+    displayWidth <= 160
+      ? Math.min(192, Math.ceil(displayWidth * 1.5))
+      : Math.min(520, Math.ceil(displayWidth * 1.15));
+  const quality = displayWidth <= 160 ? "58" : "55";
   return withSearchParams(url, (parsed) => {
     if (parsed.hostname === UNSPLASH_HOST) {
       parsed.searchParams.set("auto", "format");
       parsed.searchParams.set("fit", "crop");
       parsed.searchParams.set("w", String(w));
       parsed.searchParams.set("h", String(Math.ceil(w * 0.75)));
-      parsed.searchParams.set("q", "65");
+      parsed.searchParams.set("q", quality);
       return;
     }
     if (parsed.pathname.includes("/api/photos/serve/")) {

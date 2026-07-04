@@ -12,8 +12,7 @@ import {
   Phone,
   X,
 } from "lucide-react";
-import { useState } from "react";
-import { SEO_FOOTER_HUB } from "@/lib/seo-landing";
+import { useState, type ReactNode } from "react";
 import { Logo } from "@/components/brand/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { buttonClass } from "@/components/ui/button";
@@ -115,28 +114,16 @@ export function SiteHeader() {
   );
 }
 
-export function SiteFooter() {
+export function SiteFooter({ seoHub }: { seoHub?: ReactNode }) {
   const { m, locale } = useI18n();
   const marketing = m.marketing;
   const f = marketing.footer;
-  const isEn = locale === "en";
   const demoHref = demoMenuUrl({ table: "12", siteLocale: locale });
 
   const highlights =
     "highlights" in f
       ? (f as { highlights: readonly { title: string; text: string }[] }).highlights
       : [];
-  const hub =
-    "hub" in f
-      ? (f as {
-          hub: {
-            title: string;
-            localTitle: string;
-            verticalTitle: string;
-            description: string;
-          };
-        }).hub
-      : null;
   const taglineSuffix = "taglineSuffix" in f ? f.taglineSuffix : null;
 
   return (
@@ -306,22 +293,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        {/* SEO hub — crawlable, visually hidden */}
-        <nav className="sr-only" aria-label={isEn ? "Site guides" : "Οδηγοί ιστοτόπου"}>
-          {hub ? <p>{hub.description}</p> : null}
-          <ul>
-            {SEO_FOOTER_HUB.local.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href}>{isEn ? link.labelEn : link.labelEl}</Link>
-              </li>
-            ))}
-            {SEO_FOOTER_HUB.verticals.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href}>{isEn ? link.labelEn : link.labelEl}</Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {seoHub}
 
         <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row">
           <p className="text-xs text-slate-500">
