@@ -9,6 +9,7 @@ import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provid
 import { usePendingWaiterCount } from "@/hooks/use-pending-waiter-count";
 import { dashboardNavHrefsForRole } from "@/lib/dashboard-roles";
 import { isLive360NavLocked, live360LockedNavHref } from "@/lib/dashboard-nav";
+import { isOnboardingNavHrefBlocked } from "@/lib/onboarding-logic";
 import { cn } from "@/lib/utils";
 
 export function DashboardMobileNav({
@@ -49,7 +50,7 @@ export function DashboardMobileNav({
         <ul className="mx-auto flex max-w-lg justify-between">
           {visibleLinks.map(({ href, label, icon: Icon, exact }) => {
             const locked = isLive360NavLocked(href, live360Enabled);
-            const onboardingBlocked = onboardingLocked && href !== "/dashboard";
+            const onboardingBlocked = isOnboardingNavHrefBlocked(href, onboardingLocked);
             const active = !locked && !onboardingBlocked && (exact ? pathname === href : pathname.startsWith(href));
             const showBadge = !locked && !onboardingBlocked && href === "/dashboard/waiter" && pendingCount > 0;
             const itemHref = onboardingBlocked

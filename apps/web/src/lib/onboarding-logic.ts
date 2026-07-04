@@ -74,6 +74,13 @@ export function isOnboardingPathAllowed(
   return isDashboardOverview(pathname);
 }
 
+/** Sidebar/mobile nav — overview + billing stay reachable during onboarding wizard. */
+export function isOnboardingNavHrefBlocked(href: string, onboardingLocked: boolean): boolean {
+  if (!onboardingLocked) return false;
+  if (href === "/dashboard" || href.startsWith("/dashboard/billing")) return false;
+  return true;
+}
+
 /** Ignore stale QR/confirmed cookies when setup was reset mid-flow. */
 export function resolveOnboardingCookieFlags(
   status: OnboardingStatusSnapshot,

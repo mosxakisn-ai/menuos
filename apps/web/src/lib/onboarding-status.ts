@@ -27,6 +27,7 @@ export {
   needsOnboardingConfirmation,
   getOnboardingCurrentStepIndex,
   isOnboardingPathAllowed,
+  isOnboardingNavHrefBlocked,
   MANDATORY_ONBOARDING_FROM,
 } from "@/lib/onboarding-logic";
 

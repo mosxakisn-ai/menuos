@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   isOnboardingComplete,
+  isOnboardingNavHrefBlocked,
   isOnboardingPathAllowed,
   isOnboardingSetupComplete,
   needsOnboardingConfirmation,
@@ -26,6 +27,11 @@ assert.equal(isOnboardingPathAllowed("/dashboard/menus", withVenue, false, false
 assert.equal(isOnboardingPathAllowed("/dashboard", withVenue, false, false), true);
 assert.equal(isOnboardingPathAllowed("/dashboard/billing", withVenue, false, false), true);
 assert.equal(isOnboardingPathAllowed("/dashboard/menus", withCatalog, true, true), true);
+
+assert.equal(isOnboardingNavHrefBlocked("/dashboard", true), false);
+assert.equal(isOnboardingNavHrefBlocked("/dashboard/billing", true), false);
+assert.equal(isOnboardingNavHrefBlocked("/dashboard/menus", true), true);
+assert.equal(isOnboardingNavHrefBlocked("/dashboard/menus", false), false);
 
 const stale = resolveOnboardingCookieFlags(withVenue, true, true);
 assert.equal(stale.qrVisited, false);

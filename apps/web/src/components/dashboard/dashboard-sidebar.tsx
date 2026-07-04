@@ -20,6 +20,7 @@ import { DashboardSidebarSubscription } from "@/components/dashboard/dashboard-s
 import { usePendingWaiterCount } from "@/hooks/use-pending-waiter-count";
 import { dashboardNavHrefsForRole } from "@/lib/dashboard-roles";
 import { isLive360NavLocked, live360LockedNavHref } from "@/lib/dashboard-nav";
+import { isOnboardingNavHrefBlocked } from "@/lib/onboarding-logic";
 import type { SubscriptionDisplayInput } from "@/lib/subscription-display";
 import { cn } from "@/lib/utils";
 
@@ -88,7 +89,7 @@ export function DashboardSidebar({
       <nav className="mt-6 flex min-h-0 flex-1 flex-col space-y-1">
         {visibleNavItems.map(({ href, icon: Icon, match }) => {
           const locked = isLive360NavLocked(href, live360Enabled);
-          const onboardingBlocked = onboardingLocked && href !== "/dashboard";
+          const onboardingBlocked = isOnboardingNavHrefBlocked(href, onboardingLocked);
           const active = !locked && !onboardingBlocked && isNavActive(pathname, href, match);
           const itemHref = onboardingBlocked
             ? "/dashboard"
