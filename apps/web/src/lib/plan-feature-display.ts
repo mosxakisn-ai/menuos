@@ -9,6 +9,7 @@ const FEATURE_EN: Record<string, string> = {
   "50 είδη": "50 items",
   "50 πιάτα": "50 items",
   "Απεριόριστα είδη": "Unlimited items",
+  "Απεριόριστα extra": "Unlimited extras",
   "Απεριόριστα πιάτα": "Unlimited items",
   "QR codes": "QR codes",
   "Πολλαπλές γλώσσες": "Multiple languages",

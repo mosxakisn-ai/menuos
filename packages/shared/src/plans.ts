@@ -29,7 +29,13 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlanId, PlanDefinition> = {
     maxMenusPerVenue: 1,
     maxItems: 50,
     maxGeminiTokensPerMonth: 0,
-    features: ["1 κατάστημα", "1 κατάλογος", "50 πιάτα", "QR codes", "Πολλαπλές γλώσσες"],
+    features: [
+      "1 κατάστημα",
+      "1 κατάλογος",
+      "50 πιάτα",
+      "Πολλαπλές γλώσσες",
+      "Χωρίς κάρτα",
+    ],
   },
   BASIC: {
     id: "BASIC",
@@ -39,7 +45,14 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlanId, PlanDefinition> = {
     maxMenusPerVenue: 3,
     maxItems: null,
     maxGeminiTokensPerMonth: 0,
-    features: ["1 κατάστημα", "3 κατάλογοι", "Απεριόριστα πιάτα", "QR codes", "Πολλαπλές γλώσσες", "Κλήση σερβιτόρου"],
+    features: [
+      "1 κατάστημα",
+      "3 κατάλογοι",
+      "Απεριόριστα πιάτα",
+      "QR codes",
+      "Πολλαπλές γλώσσες",
+      "Απεριόριστα extra",
+    ],
   },
   PRO: {
     id: "PRO",
