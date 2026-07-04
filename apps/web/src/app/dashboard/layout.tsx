@@ -182,13 +182,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             subscriptionExpiryLine={subscriptionSummary.expiryLine}
             subscriptionActive={subscriptionSummary.active}
           />
-          <main
-            className={
-              onboardingLocked
-                ? "flex-1 bg-brand-surface/50 p-4 pb-52 sm:p-6 md:pb-36"
-                : "flex-1 bg-brand-surface/50 p-4 pb-24 sm:p-6 md:pb-8"
-            }
-          >
+          <main className="flex-1 bg-brand-surface/50 p-4 pb-24 sm:p-6 md:pb-8">
             <div className="mx-auto w-full max-w-6xl">
               {showTrialBanner && trialEndsAtIso ? (
                 <div className="mb-6">
@@ -197,6 +191,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                     trialPeriodDays={trialPeriodDays}
                     planId={planId}
                     itemCount={trialItemCount}
+                    onboardingLocked={onboardingLocked}
                   />
                 </div>
               ) : null}
@@ -205,7 +200,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </main>
         </div>
         {onboardingLocked && onboardingWizardState ? (
-          <OnboardingWizard state={onboardingWizardState} qrVisited={qrVisited} />
+          <OnboardingWizard
+            state={onboardingWizardState}
+            qrVisited={qrVisited}
+            showPopup={dashboardPathname === "/dashboard"}
+          />
         ) : null}
         <DashboardMobileNav
           initialPendingCount={initialMonitorCount}

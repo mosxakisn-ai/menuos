@@ -106,6 +106,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       itemCount,
       firstVenueId: firstVenue?.id,
       firstVenueSlug: firstVenue?.slug,
+      firstVenueCreatedAt: firstVenue?.createdAt,
     },
     qrVisited,
   );
