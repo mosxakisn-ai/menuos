@@ -32,10 +32,10 @@
     "zod": "^3.24.1"
   },
   "browserslist": [
-    "chrome >= 92",
-    "edge >= 92",
-    "firefox >= 90",
-    "safari >= 15.4",
+    "chrome >= 111",
+    "edge >= 111",
+    "firefox >= 111",
+    "safari >= 16.4",
     "not dead"
   ],
   "devDependencies": {
