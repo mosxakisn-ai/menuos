@@ -975,7 +975,7 @@ export const DASHBOARD_EL = {
     nextStep: "Επόμενο",
     backStep: "Πίσω",
     stepOf: (current: number) => `Βήμα ${current} από 3`,
-    stepLabels: ["Κατάστημα", "Κατάλογος", "QR"],
+    stepLabels: ["Κατάστημα", "Κατάλογος", "QR"] as string[],
     done: "Έτοιμο",
     pending: "Σε αναμονή",
     previewIntro: "Δες πώς φαίνεται στους πελάτες:",

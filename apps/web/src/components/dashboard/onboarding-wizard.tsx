@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, QrCode, Store, UtensilsCrossed } from "lucide-react";
-import { useEffect, useState, type ComponentType } from "react";
+import { ArrowLeft, ArrowRight, Check, QrCode, Store, UtensilsCrossed, type LucideIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { DashboardStepCircle } from "@/components/dashboard/dashboard-ui";
 import { hasQrOnboardingVisit } from "@/components/dashboard/mark-qr-onboarding";
 import { Card } from "@/components/ui/card";
@@ -28,7 +28,7 @@ type StepDef = {
   cta: string;
   altHref?: string;
   altCta?: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: LucideIcon;
 };
 
 function firstOpenStepIndex(steps: StepDef[]): number {

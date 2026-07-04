@@ -962,7 +962,7 @@ export const DASHBOARD_EN = {
     nextStep: "Next",
     backStep: "Back",
     stepOf: (current: number) => `Step ${current} of 3`,
-    stepLabels: ["Venue", "Catalog", "QR"],
+    stepLabels: ["Venue", "Catalog", "QR"] as string[],
     done: "Done",
     pending: "Pending",
     previewIntro: "See how it looks to customers:",
