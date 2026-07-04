@@ -1,13 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ArrowRight, Check, QrCode, Store, UtensilsCrossed, type LucideIcon } from "lucide-react";
-import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  ArrowRight,
+  Check,
+  PartyPopper,
+  QrCode,
+  Store,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { DashboardStepCircle } from "@/components/dashboard/dashboard-ui";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
-import { shouldShowOnboardingPopup } from "@/lib/onboarding-constants";
+import { ONBOARDING_STEP_COUNT, shouldShowOnboardingPopup } from "@/lib/onboarding-constants";
 import { cn } from "@/lib/utils";
 
 export type OnboardingState = {
@@ -16,10 +24,14 @@ export type OnboardingState = {
   hasItem: boolean;
   venueId?: string;
   venueSlug?: string;
+  venueName?: string;
+  venueDescription?: string | null;
   itemCount: number;
+  menuCount?: number;
+  catalogUrl?: string;
 };
 
-type StepDef = {
+type SetupStepDef = {
   id: string;
   label: string;
   desc: string;
@@ -31,7 +43,7 @@ type StepDef = {
   icon: LucideIcon;
 };
 
-function firstOpenStepIndex(steps: StepDef[]): number {
+function firstOpenSetupIndex(steps: SetupStepDef[]): number {
   const open = steps.findIndex((s) => !s.done);
   return open === -1 ? steps.length - 1 : open;
 }
@@ -39,16 +51,20 @@ function firstOpenStepIndex(steps: StepDef[]): number {
 export function OnboardingWizard({
   state,
   qrVisited = false,
+  needsConfirmation = false,
 }: {
   state: OnboardingState;
   qrVisited?: boolean;
+  needsConfirmation?: boolean;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const showPopup = shouldShowOnboardingPopup(pathname);
   const { d } = useDashboardCopy();
   const O = d.onboarding;
+  const [confirming, setConfirming] = useState(false);
 
-  const steps: StepDef[] = [
+  const setupSteps: SetupStepDef[] = [
     {
       id: "venue",
       label: O.stepLabels[0]!,
@@ -80,23 +96,38 @@ export function OnboardingWizard({
     },
   ];
 
-  const completed = steps.filter((s) => s.done).length;
+  const setupComplete = setupSteps.every((s) => s.done);
+  const setupDoneCount = setupSteps.filter((s) => s.done).length;
+  const showWizard = showPopup && (!setupComplete || needsConfirmation);
 
   useEffect(() => {
-    if (!showPopup || completed >= 3) return;
+    if (!showWizard) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [showPopup, completed]);
+  }, [showWizard]);
 
-  if (!showPopup || completed >= 3) return null;
+  if (!showWizard) return null;
 
-  const stepIndex = firstOpenStepIndex(steps);
-  const step = steps[stepIndex]!;
-  const StepIcon = step.icon;
-  const progressPct = Math.round((completed / steps.length) * 100);
+  const onConfirmStep = setupComplete && needsConfirmation;
+  const stepIndex = onConfirmStep ? 3 : firstOpenSetupIndex(setupSteps);
+  const progressDone = onConfirmStep ? ONBOARDING_STEP_COUNT - 1 : setupDoneCount;
+  const progressPct = Math.round((progressDone / ONBOARDING_STEP_COUNT) * 100);
+
+  const stepLabels = O.stepLabels;
+  const currentLabel = stepLabels[stepIndex] ?? stepLabels[0]!;
+
+  async function confirmOnboarding() {
+    setConfirming(true);
+    try {
+      await fetch("/api/onboarding/confirm", { method: "POST" });
+      router.refresh();
+    } finally {
+      setConfirming(false);
+    }
+  }
 
   return (
     <div
@@ -115,37 +146,38 @@ export function OnboardingWizard({
         <div className="h-1 bg-slate-100">
           <div
             className="h-full bg-brand-gradient transition-all duration-500"
-            style={{ width: `${Math.max(progressPct, completed === 0 ? 8 : progressPct)}%` }}
+            style={{ width: `${Math.max(progressPct, progressDone === 0 ? 8 : progressPct)}%` }}
           />
         </div>
 
         <div className="border-b border-brand-blue/10 bg-gradient-to-br from-brand-blue/[0.06] to-white px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-blue">{O.guideLabel}</p>
-            <p className="text-xs font-semibold text-brand-blue">{O.completed(completed)}</p>
+            <p className="text-xs font-semibold text-brand-blue">{O.completed(progressDone)}</p>
           </div>
 
-          <ol className="mt-3 flex items-center gap-1">
-            {steps.map((s, i) => {
+          <ol className="mt-3 flex items-center gap-0.5">
+            {stepLabels.map((label, i) => {
               const isCurrent = i === stepIndex;
-              const circleState = s.done ? "done" : isCurrent ? "active" : "pending";
+              const isDone = i < 3 ? Boolean(setupSteps[i]?.done) : false;
+              const circleState = isDone ? "done" : isCurrent ? "active" : "pending";
               return (
-                <li key={s.id} className="flex min-w-0 flex-1 items-center gap-1">
-                  {i > 0 ? <span className="h-px min-w-1 flex-1 bg-slate-200" aria-hidden /> : null}
+                <li key={label} className="flex min-w-0 flex-1 items-center gap-0.5">
+                  {i > 0 ? <span className="h-px min-w-0.5 flex-1 bg-slate-200" aria-hidden /> : null}
                   <div
                     className={cn(
-                      "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-center",
+                      "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-0.5 py-1.5 text-center",
                       isCurrent && "bg-brand-blue/[0.08]",
                     )}
                   >
                     <DashboardStepCircle state={circleState} index={i + 1} size="sm" />
                     <span
                       className={cn(
-                        "w-full truncate text-[10px] font-semibold leading-tight sm:text-[11px]",
-                        s.done ? "text-emerald-700" : isCurrent ? "text-brand-navy" : "text-slate-400",
+                        "w-full truncate text-[9px] font-semibold leading-tight sm:text-[10px]",
+                        isDone ? "text-emerald-700" : isCurrent ? "text-brand-navy" : "text-slate-400",
                       )}
                     >
-                      {s.label}
+                      {label}
                     </span>
                   </div>
                 </li>
@@ -155,47 +187,136 @@ export function OnboardingWizard({
         </div>
 
         <div className="px-5 py-5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-glow">
-              {step.done ? (
-                <Check className="h-5 w-5" strokeWidth={2.5} />
-              ) : (
-                <StepIcon className="h-5 w-5" strokeWidth={2} />
-              )}
-            </div>
-            <div className="min-w-0">
-              <h2 id="onboarding-wizard-title" className="font-serif text-lg font-bold text-brand-navy">
-                {O.stepHeading(stepIndex + 1, step.label)}
-              </h2>
-              <p id="onboarding-wizard-desc" className="mt-1 text-sm leading-relaxed text-slate-600">
-                {step.desc}
-              </p>
-            </div>
-          </div>
+          {onConfirmStep ? (
+            <>
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-glow">
+                  <PartyPopper className="h-5 w-5" strokeWidth={2} />
+                </div>
+                <div className="min-w-0">
+                  <h2 id="onboarding-wizard-title" className="font-serif text-lg font-bold text-brand-navy">
+                    {O.steps.done.title}
+                  </h2>
+                  <p id="onboarding-wizard-desc" className="mt-1 text-sm leading-relaxed text-slate-600">
+                    {O.steps.done.desc}
+                  </p>
+                </div>
+              </div>
 
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            {!step.done ? (
-              <>
-                <Link
-                  href={step.href}
-                  className={`inline-flex flex-1 items-center justify-center gap-1.5 ${buttonClass("primary")}`}
-                >
-                  {step.cta}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                {step.altHref && step.altCta ? (
-                  <Link href={step.altHref} className={`flex-1 ${buttonClass("secondary")}`}>
-                    {step.altCta}
-                  </Link>
+              <ul className="mt-5 space-y-2.5 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm">
+                {state.venueName ? (
+                  <li className="flex gap-2">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <span>
+                      <span className="font-semibold text-brand-navy">{O.steps.done.summaryVenue}:</span>{" "}
+                      {state.venueName}
+                    </span>
+                  </li>
                 ) : null}
-              </>
-            ) : (
-              <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                <Check className="h-4 w-4" />
-                {O.stepStatusDone}
-              </span>
-            )}
-          </div>
+                {state.venueDescription ? (
+                  <li className="flex gap-2">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <span>
+                      <span className="font-semibold text-brand-navy">{O.steps.done.summaryDescription}:</span>{" "}
+                      {state.venueDescription}
+                    </span>
+                  </li>
+                ) : null}
+                <li className="flex gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <span>
+                    <span className="font-semibold text-brand-navy">{O.steps.done.summaryCatalog}:</span>{" "}
+                    {O.steps.done.summaryItems(state.itemCount)}
+                    {state.menuCount != null && state.menuCount > 0
+                      ? ` · ${O.steps.done.summaryMenus(state.menuCount)}`
+                      : null}
+                  </span>
+                </li>
+                {state.catalogUrl ? (
+                  <li className="flex gap-2">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <span className="min-w-0 break-all">
+                      <span className="font-semibold text-brand-navy">{O.steps.done.summaryLink}:</span>{" "}
+                      <a
+                        href={state.catalogUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-blue hover:underline"
+                      >
+                        {state.catalogUrl}
+                      </a>
+                    </span>
+                  </li>
+                ) : null}
+                <li className="flex gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <span>{O.steps.done.summaryQr}</span>
+                </li>
+              </ul>
+
+              <button
+                type="button"
+                disabled={confirming}
+                onClick={() => void confirmOnboarding()}
+                className={`mt-5 inline-flex w-full items-center justify-center gap-1.5 ${buttonClass("primary")}`}
+              >
+                {confirming ? O.steps.done.confirming : O.steps.done.cta}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              {(() => {
+                const step = setupSteps[stepIndex]!;
+                const StepIcon = step.icon;
+                return (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-glow">
+                        {step.done ? (
+                          <Check className="h-5 w-5" strokeWidth={2.5} />
+                        ) : (
+                          <StepIcon className="h-5 w-5" strokeWidth={2} />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h2 id="onboarding-wizard-title" className="font-serif text-lg font-bold text-brand-navy">
+                          {O.stepHeading(stepIndex + 1, currentLabel)}
+                        </h2>
+                        <p id="onboarding-wizard-desc" className="mt-1 text-sm leading-relaxed text-slate-600">
+                          {step.desc}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+                      {!step.done ? (
+                        <>
+                          <Link
+                            href={step.href}
+                            className={`inline-flex flex-1 items-center justify-center gap-1.5 ${buttonClass("primary")}`}
+                          >
+                            {step.cta}
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                          {step.altHref && step.altCta ? (
+                            <Link href={step.altHref} className={`flex-1 ${buttonClass("secondary")}`}>
+                              {step.altCta}
+                            </Link>
+                          ) : null}
+                        </>
+                      ) : (
+                        <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                          <Check className="h-4 w-4" />
+                          {O.stepStatusDone}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+            </>
+          )}
         </div>
       </div>
     </div>

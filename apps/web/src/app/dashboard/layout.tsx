@@ -22,10 +22,12 @@ import {
   parseDashboardLang,
 } from "@/content/dashboard-i18n";
 import { playfair } from "@/lib/fonts";
-import { ONBOARDING_QR_COOKIE } from "@/lib/onboarding-constants";
+import { ONBOARDING_CONFIRMED_COOKIE, ONBOARDING_QR_COOKIE } from "@/lib/onboarding-constants";
+import { APP_URL } from "@/lib/config";
 import {
   getOnboardingStatus,
-  isOnboardingComplete,
+  isOnboardingSetupComplete,
+  needsOnboardingConfirmation,
   isOnboardingPathAllowed,
 } from "@/lib/onboarding-status";
 
@@ -73,20 +75,36 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   let onboardingLocked = false;
   let onboardingWizardState: OnboardingState | null = null;
+  let showOnboardingWizard = false;
+  let onboardingAwaitingConfirmation = false;
   let qrVisited = false;
   if (session.role !== "STAFF") {
     const onboardingStatus = await getOnboardingStatus(session.organizationId);
     qrVisited = cookieStore.get(ONBOARDING_QR_COOKIE)?.value === "1";
-    onboardingLocked = !isOnboardingComplete(onboardingStatus, qrVisited);
-    if (onboardingLocked) {
+    const confirmed = cookieStore.get(ONBOARDING_CONFIRMED_COOKIE)?.value === "1";
+    const setupComplete = isOnboardingSetupComplete(onboardingStatus, qrVisited);
+    onboardingLocked = !setupComplete;
+    onboardingAwaitingConfirmation = needsOnboardingConfirmation(onboardingStatus, qrVisited, confirmed);
+    showOnboardingWizard = onboardingLocked || onboardingAwaitingConfirmation;
+
+    if (showOnboardingWizard) {
       onboardingWizardState = {
         hasVenue: onboardingStatus.hasVenue,
         hasCategory: onboardingStatus.hasCategory,
         hasItem: onboardingStatus.hasItem,
         venueId: onboardingStatus.firstVenueId,
         venueSlug: onboardingStatus.firstVenueSlug,
+        venueName: onboardingStatus.firstVenueName,
+        venueDescription: onboardingStatus.firstVenueDescription,
         itemCount: onboardingStatus.itemCount,
+        menuCount: onboardingStatus.menuCount,
+        catalogUrl: onboardingStatus.firstVenueSlug
+          ? `${APP_URL}/m/${onboardingStatus.firstVenueSlug}`
+          : undefined,
       };
+    }
+
+    if (onboardingLocked) {
       if (!isOnboardingPathAllowed(dashboardPathname, onboardingStatus, qrVisited)) {
         redirect("/dashboard");
       }
@@ -199,8 +217,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
           </main>
         </div>
-        {onboardingLocked && onboardingWizardState ? (
-          <OnboardingWizard state={onboardingWizardState} qrVisited={qrVisited} />
+        {showOnboardingWizard && onboardingWizardState ? (
+          <OnboardingWizard
+            state={onboardingWizardState}
+            qrVisited={qrVisited}
+            needsConfirmation={onboardingAwaitingConfirmation}
+          />
         ) : null}
         <DashboardMobileNav
           initialPendingCount={initialMonitorCount}

@@ -12,6 +12,8 @@ export type OnboardingStatus = {
   itemCount: number;
   firstVenueId?: string;
   firstVenueSlug?: string;
+  firstVenueName?: string;
+  firstVenueDescription?: string | null;
   firstVenueCreatedAt?: Date;
 };
 
@@ -46,6 +48,8 @@ export async function getOnboardingStatus(organizationId: string): Promise<Onboa
     itemCount,
     firstVenueId: firstVenue?.id,
     firstVenueSlug: firstVenue?.slug,
+    firstVenueName: firstVenue?.name,
+    firstVenueDescription: firstVenue?.description ?? null,
     firstVenueCreatedAt: firstVenue?.createdAt,
   };
 }
@@ -56,10 +60,26 @@ function isGrandfatheredOnboarding(status: OnboardingStatus): boolean {
   );
 }
 
-export function isOnboardingComplete(status: OnboardingStatus, qrVisited: boolean): boolean {
+/** Steps 1–3 complete (venue, items, QR or grandfather). */
+export function isOnboardingSetupComplete(status: OnboardingStatus, qrVisited: boolean): boolean {
   if (!status.hasVenue || !status.hasItem) return false;
   if (qrVisited || isGrandfatheredOnboarding(status)) return true;
   return false;
+}
+
+export function isOnboardingComplete(status: OnboardingStatus, qrVisited: boolean): boolean {
+  return isOnboardingSetupComplete(status, qrVisited);
+}
+
+/** Step 4 confirmation popup — skip for grandfathered accounts. */
+export function needsOnboardingConfirmation(
+  status: OnboardingStatus,
+  qrVisited: boolean,
+  confirmed: boolean,
+): boolean {
+  if (confirmed) return false;
+  if (isGrandfatheredOnboarding(status)) return false;
+  return isOnboardingSetupComplete(status, qrVisited);
 }
 
 /** 0 = venue, 1 = catalog, 2 = QR, 3 = all done */
