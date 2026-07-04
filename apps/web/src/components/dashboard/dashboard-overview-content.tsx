@@ -145,7 +145,12 @@ export function DashboardOverviewContent({
   return (
     <div className="space-y-5">
       <DashboardDocumentTitle page="overview" />
-      <WelcomeTrialCard show={showWelcome} trialEndsAt={trialEndsAt} trialPeriodDays={trialPeriodDays} />
+      <WelcomeTrialCard
+        show={showWelcome}
+        trialEndsAt={trialEndsAt}
+        trialPeriodDays={trialPeriodDays}
+        onboardingComplete={onboardingComplete}
+      />
 
       {onboardingComplete ? (
         <section className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-brand-blue/[0.05] px-5 py-5 shadow-card sm:px-6">

@@ -1012,7 +1012,7 @@ export const DASHBOARD_EL = {
   },
   onboarding: {
     guideLabel: "Οδηγός εκκίνησης",
-    guideIntro: "Ολοκλήρωσε 4 βήματα — μετά ανοίγουν όλες οι σελίδες του panel.",
+    guideIntro: "Ολοκλήρωσε 4 βήματα εδώ — ίδια ροή σε δοκιμή, Basic και Pro. Μετά ανοίγει όλο το panel.",
     navLockedHint: "Ολοκλήρωσε πρώτα τα βήματα εκκίνησης (Επισκόπηση)",
     lockBanner: (step: number, label: string) =>
       `Βήμα ${step}/4: ${label} — οι υπόλοιπες σελίδες κλειδώνονται μέχρι να τελειώσεις.`,

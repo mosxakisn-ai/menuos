@@ -86,7 +86,6 @@ export function buildWelcomeEmailHtml(input: {
   trialDays?: number;
 }): string {
   const dashboardUrl = `${mailAppBaseUrl()}/dashboard?welcome=1`;
-  const venueUrl = `${mailAppBaseUrl()}/dashboard/venues/new`;
   const trialDays = input.trialDays ?? 7;
   const bodyHtml = `
     <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#0f172a;">Καλώς ήρθες, ${escapeHtml(input.name)}!</p>
@@ -111,7 +110,7 @@ export function buildWelcomeEmailHtml(input: {
       </tr>
     </table>
     <p style="margin:0;font-size:13px;line-height:1.6;color:#64748b;">
-      Δεν έχεις ακόμα κατάστημα; <a href="${venueUrl}" style="color:#2563EB;text-decoration:none;font-weight:600;">Ξεκίνα εδώ</a>
+      Όλα γίνονται από τον οδηγό εκκίνησης στο panel — ίδια ροή σε δοκιμή, Basic και Pro.
     </p>`;
 
   return brandedEmailLayout({
@@ -129,7 +128,6 @@ export function buildWelcomeEmailText(input: {
   trialDays?: number;
 }): string {
   const dashboardUrl = `${mailAppBaseUrl()}/dashboard?welcome=1`;
-  const venueUrl = `${mailAppBaseUrl()}/dashboard/venues/new`;
   const trialDays = input.trialDays ?? 7;
   return `Καλώς ήρθες στο MenuOS, ${input.name}!
 
@@ -142,19 +140,19 @@ export function buildWelcomeEmailText(input: {
 2. Βάλε πιάτα στον κατάλογο
 3. Βγάλε QR για τα τραπέζια
 
-Άνοιγμα panel: ${dashboardUrl}
-Νέο κατάστημα: ${venueUrl}
+Άνοιγμα panel (οδηγός εκκίνησης): ${dashboardUrl}
 
 MenuOS — ${mailAppBaseUrl()}`;
 }
 
 function trialEmailStepsHtml(): string {
   const base = mailAppBaseUrl();
+  const dashboardUrl = `${base}/dashboard`;
   return `
     <ol style="margin:16px 0 0;padding-left:20px;font-size:14px;line-height:1.75;color:#475569;">
-      <li><a href="${base}/dashboard/venues/new" style="color:#2563EB;text-decoration:none;font-weight:600;">Κατάστημα</a> — αν δεν το έχεις φτιάξει</li>
-      <li><a href="${base}/dashboard/menus" style="color:#2563EB;text-decoration:none;font-weight:600;">Κατάλογος</a> — κατηγορίες &amp; πιάτα</li>
-      <li><a href="${base}/dashboard/qr" style="color:#2563EB;text-decoration:none;font-weight:600;">QR codes</a> — λήψη &amp; εκτύπωση</li>
+      <li>Άνοιξε το <a href="${dashboardUrl}" style="color:#2563EB;text-decoration:none;font-weight:600;">panel</a> — ο οδηγός εκκίνησης σε 4 βήματα</li>
+      <li>Κατάστημα, κατάλογος και QR — όλα μέσα στον οδηγό</li>
+      <li>Μετά «Εντάξει» ανοίγουν όλες οι σελίδες (δοκιμή, Basic, Pro)</li>
     </ol>`;
 }
 

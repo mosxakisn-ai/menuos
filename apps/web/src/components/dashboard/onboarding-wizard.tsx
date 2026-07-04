@@ -95,9 +95,8 @@ function OnboardingVenueForm({ defaultName }: { defaultName?: string }) {
         <input
           name="name"
           required
-          defaultValue={defaultName ?? ""}
           className={dashboardFieldClass}
-          placeholder={FORM_PLACEHOLDERS.venueName}
+          placeholder={defaultName?.trim() || FORM_PLACEHOLDERS.venueName}
         />
       </label>
       <label className="block">

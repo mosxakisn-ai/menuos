@@ -998,7 +998,7 @@ export const DASHBOARD_EN = {
   },
   onboarding: {
     guideLabel: "Getting started",
-    guideIntro: "Complete 4 steps — then the full panel unlocks.",
+    guideIntro: "Complete 4 steps here — same flow on trial, Basic and Pro. Then the full panel unlocks.",
     navLockedHint: "Complete the getting-started steps first (Overview)",
     lockBanner: (step: number, label: string) =>
       `Step ${step}/4: ${label} — other pages stay locked until you finish.`,

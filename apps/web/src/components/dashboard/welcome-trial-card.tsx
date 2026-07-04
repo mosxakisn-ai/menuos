@@ -11,10 +11,12 @@ export function WelcomeTrialCard({
   show,
   trialEndsAt,
   trialPeriodDays,
+  onboardingComplete = true,
 }: {
   show?: boolean;
   trialEndsAt: string | null;
   trialPeriodDays: number;
+  onboardingComplete?: boolean;
 }) {
   const { d, lang } = useDashboardCopy();
   if (!show) return null;
@@ -38,10 +40,16 @@ export function WelcomeTrialCard({
           ) : null}
           <p className="mt-2 text-xs leading-relaxed text-slate-500">{d.trial.welcomeEmailHint}</p>
         </div>
-        <Link href="/dashboard/venues/new" className={`inline-flex shrink-0 items-center gap-1 ${buttonClass("primary", "sm")}`}>
-          {d.addVenue}
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        {onboardingComplete ? (
+          <Link href="/dashboard/venues/new" className={`inline-flex shrink-0 items-center gap-1 ${buttonClass("primary", "sm")}`}>
+            {d.addVenue}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        ) : (
+          <p className="shrink-0 rounded-lg border border-brand-blue/15 bg-white/80 px-3 py-2 text-xs font-medium leading-relaxed text-slate-600">
+            {d.onboarding.guideIntro}
+          </p>
+        )}
       </div>
     </Card>
   );
