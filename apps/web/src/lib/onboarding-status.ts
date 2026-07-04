@@ -1,5 +1,5 @@
 import { prisma } from "@menuos/db";
-import { ONBOARDING_STARTER_CATEGORIES } from "@menuos/shared";
+import { ONBOARDING_STARTER_CATEGORIES, type CuisineType } from "@menuos/shared";
 
 export type CatalogPreviewCategory = {
   name: string;
@@ -17,6 +17,7 @@ export type OnboardingStatus = {
   firstVenueSlug?: string;
   firstVenueName?: string;
   firstVenueDescription?: string | null;
+  firstVenueCuisineType?: CuisineType | null;
   firstVenueCreatedAt?: Date;
   catalogPreview: CatalogPreviewCategory[];
 };
@@ -93,6 +94,7 @@ export async function getOnboardingStatus(organizationId: string): Promise<Onboa
     firstVenueSlug: firstVenue?.slug,
     firstVenueName: firstVenue?.name,
     firstVenueDescription: firstVenue?.description ?? null,
+    firstVenueCuisineType: firstVenue?.cuisineType ?? null,
     firstVenueCreatedAt: firstVenue?.createdAt,
     catalogPreview,
   };

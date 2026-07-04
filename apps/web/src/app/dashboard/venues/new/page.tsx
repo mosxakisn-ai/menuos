@@ -14,6 +14,7 @@ import {
   dashboardTextareaClass,
 } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
+import { CuisineTypeSelect } from "@/components/dashboard/cuisine-type-select";
 import { slugifyOrFallback } from "@/lib/utils";
 import { DashboardDocumentTitle } from "@/components/dashboard/localized-dashboard-page-header";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
@@ -45,6 +46,7 @@ export default function NewVenuePage() {
         name,
         slug: slugifyOrFallback(name, "venue"),
         description: form.get("description") || undefined,
+        cuisineType: form.get("cuisineType") || undefined,
       }),
     });
     const data = await res.json();
@@ -79,13 +81,15 @@ export default function NewVenuePage() {
               placeholder={FORM_PLACEHOLDERS.venueName}
             />
           </label>
+          <CuisineTypeSelect name="cuisineType" />
           <label className="block">
-            <span className={dashboardLabelClass}>{d.pages.newVenue.descriptionLabel}</span>
+            <span className={dashboardLabelClass}>{d.pages.newVenue.taglineLabel}</span>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">{d.pages.newVenue.taglineHint}</p>
             <textarea
               name="description"
               rows={3}
               className={dashboardTextareaClass}
-              placeholder={FORM_PLACEHOLDERS.venueDescription}
+              placeholder={FORM_PLACEHOLDERS.venueTagline}
             />
           </label>
           <button

@@ -184,8 +184,8 @@ export function buildRootMetadata(locale: Locale = DEFAULT_LOCALE): Metadata {
   };
 }
 
-export function buildPrivatePageMetadata(title: string, path: string): Metadata {
-  return buildPageMetadata({ title, path, noIndex: true });
+export function buildPrivatePageMetadata(title: string, path: string, description?: string): Metadata {
+  return buildPageMetadata({ title, path, noIndex: true, ...(description ? { description } : {}) });
 }
 
 export function seoPageMetadata(

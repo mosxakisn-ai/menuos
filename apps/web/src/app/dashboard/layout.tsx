@@ -106,6 +106,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         venueSlug: onboardingStatus.firstVenueSlug,
         venueName: onboardingStatus.firstVenueName,
         venueDescription: onboardingStatus.firstVenueDescription,
+        venueCuisineType: onboardingStatus.firstVenueCuisineType,
         itemCount: onboardingStatus.itemCount,
         menuCount: onboardingStatus.menuCount,
         catalogUrl: onboardingStatus.firstVenueSlug

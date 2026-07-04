@@ -60,6 +60,7 @@ export async function createVenueHandler(request: Request, organizationId: strin
           name: parsed.data.name,
           slug,
           description: parsed.data.description,
+          cuisineType: parsed.data.cuisineType,
           settings: { create: { brandName: parsed.data.name } },
           menus: {
             create: {

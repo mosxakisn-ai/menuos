@@ -4,6 +4,7 @@ import { ExternalLink, Store } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
+import { CuisineTypeSelect } from "@/components/dashboard/cuisine-type-select";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import {
   dashboardCardClass,
@@ -17,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { panelPhotoDisplayUrl } from "@/lib/photo-display-url";
+import type { CuisineType } from "@menuos/shared";
 import { cn } from "@/lib/utils";
 
 type Venue = SettingsVenue;
@@ -26,6 +28,7 @@ export type SettingsVenue = {
   name: string;
   slug: string;
   description: string | null;
+  cuisineType: CuisineType | null;
   logoUrl: string | null;
   primaryColor: string;
   secondaryColor: string;
@@ -71,6 +74,7 @@ export function SettingsForm({ venues }: { venues: SettingsVenue[] }) {
   const venue = venues.find((v) => v.id === venueId);
   const [name, setName] = useState(venue?.name ?? "");
   const [description, setDescription] = useState(venue?.description ?? "");
+  const [cuisineType, setCuisineType] = useState<CuisineType | "">(venue?.cuisineType ?? "");
   const [logoUrl, setLogoUrl] = useState(venue?.logoUrl ?? "");
   const [primaryColor, setPrimaryColor] = useState(venue?.primaryColor ?? "#2563EB");
   const [secondaryColor, setSecondaryColor] = useState(venue?.secondaryColor ?? "#06B6D4");
@@ -86,6 +90,7 @@ export function SettingsForm({ venues }: { venues: SettingsVenue[] }) {
     if (v) {
       setName(v.name);
       setDescription(v.description ?? "");
+      setCuisineType(v.cuisineType ?? "");
       setLogoUrl(v.logoUrl ?? "");
       setPrimaryColor(v.primaryColor);
       setSecondaryColor(v.secondaryColor);
@@ -103,6 +108,7 @@ export function SettingsForm({ venues }: { venues: SettingsVenue[] }) {
         body: JSON.stringify({
           name,
           description: description || undefined,
+          cuisineType: cuisineType || null,
           logoUrl: logoUrl.trim() || "",
           primaryColor,
           secondaryColor,
@@ -236,14 +242,20 @@ export function SettingsForm({ venues }: { venues: SettingsVenue[] }) {
                 className={dashboardFieldClass}
               />
             </label>
+            <CuisineTypeSelect
+              className="sm:col-span-2"
+              value={cuisineType}
+              onChange={setCuisineType}
+            />
             <label className="block sm:col-span-2">
-              <span className={dashboardLabelClass}>{d.pages.settings.descriptionLabel}</span>
+              <span className={dashboardLabelClass}>{d.pages.settings.taglineLabel}</span>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">{d.pages.settings.taglineHint}</p>
               <textarea
                 rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.storeDescription}
-                className={dashboardTextareaClass}
+                placeholder={FORM_PLACEHOLDERS.venueTagline}
+                className={cn(dashboardTextareaClass, "mt-2")}
               />
             </label>
             <PhotoUploadField

@@ -7,6 +7,8 @@ import {
   QR_MENU_LANGUAGE_LABELS,
   QR_MENU_LANGUAGES,
   QR_MENU_UI,
+  cuisineTypeQrLabel,
+  isCuisineType,
   buildOrderPayload,
   cartItemCount,
   cartStorageKey,
@@ -29,6 +31,7 @@ import {
   type OrderLine,
   type OrderPayload,
   type QrMenuLanguage,
+  type CuisineType,
 } from "@menuos/shared";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { cn } from "@/lib/utils";
@@ -70,6 +73,8 @@ type Venue = {
   slug: string;
   logoUrl: string | null;
   primaryColor: string;
+  description?: string | null;
+  cuisineType?: CuisineType | null;
   menus: Menu[];
 };
 
@@ -150,6 +155,11 @@ export function PublicMenuView({
 
   const ui = QR_MENU_UI[lang];
   const activeMenu = venue.menus.find((m) => m.id === activeMenuId) ?? venue.menus[0];
+  const cuisineLabel =
+    venue.cuisineType && isCuisineType(venue.cuisineType)
+      ? cuisineTypeQrLabel(venue.cuisineType, lang)
+      : null;
+  const tagline = venue.description?.trim() || null;
   const storageKey = useMemo(
     () => callStorageKey(venue.slug, tableNumber, roomNumber, sunbedNumber),
     [venue.slug, tableNumber, roomNumber, sunbedNumber],
@@ -786,9 +796,24 @@ export function PublicMenuView({
                 >
                   {venue.name}
                 </h1>
+                {cuisineLabel ? (
+                  <p
+                    className={cn(
+                      "font-semibold text-white/90",
+                      isEmbedded ? "mt-1 text-xs" : "mt-1.5 text-sm",
+                    )}
+                  >
+                    {cuisineLabel}
+                  </p>
+                ) : null}
                 {activeMenu ? (
                   <p className={cn("text-white/75", isEmbedded ? "mt-0.5 text-xs" : "mt-1 text-sm")}>
                     {activeMenu.name}
+                  </p>
+                ) : null}
+                {tagline ? (
+                  <p className={cn("text-white/70", isEmbedded ? "mt-1 text-xs leading-snug" : "mt-1.5 text-sm leading-relaxed")}>
+                    {tagline}
                   </p>
                 ) : null}
                 {locationLabel ? (

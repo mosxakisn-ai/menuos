@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@menuos/db";
-import { parseQrMenuLanguage } from "@menuos/shared";
+import { parseQrMenuLanguage, cuisineTypeQrLabel, isCuisineType } from "@menuos/shared";
 import { buildPrivatePageMetadata } from "@/lib/seo";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { organizationCanUseLive360 } from "@/lib/billing";
@@ -16,7 +16,24 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { venueSlug } = await params;
-  return buildPrivatePageMetadata(`Menu — ${venueSlug}`, `/m/${venueSlug}`);
+  const venue = await prisma.venue.findUnique({
+    where: { slug: venueSlug },
+    select: { name: true, description: true, cuisineType: true },
+  });
+  if (!venue) {
+    return buildPrivatePageMetadata(`Menu — ${venueSlug}`, `/m/${venueSlug}`);
+  }
+  const cuisine =
+    venue.cuisineType && isCuisineType(venue.cuisineType)
+      ? cuisineTypeQrLabel(venue.cuisineType, "EN")
+      : null;
+  const title = cuisine ? `${venue.name} — ${cuisine}` : venue.name;
+  const description =
+    venue.description?.trim() ||
+    (cuisine
+      ? `${venue.name}: ${cuisine}. Browse the digital menu on your phone.`
+      : `${venue.name} — digital menu on MenuOS.`);
+  return buildPrivatePageMetadata(title, `/m/${venueSlug}`, description);
 }
 
 export default async function PublicMenuPage({ params, searchParams }: Props) {
@@ -64,6 +81,8 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
     slug: venue.slug,
     logoUrl: appendPhotoSignature(venue.logoUrl),
     primaryColor: venue.primaryColor,
+    description: venue.description,
+    cuisineType: venue.cuisineType,
     menus: venue.menus.map((menu) => ({
       ...menu,
       categories: menu.categories

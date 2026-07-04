@@ -76,6 +76,20 @@ enum VenueSpotType {
   SUNBED
 }
 
+enum CuisineType {
+  MEDITERRANEAN
+  GREEK
+  ITALIAN
+  GOURMET
+  SEAFOOD
+  GRILL
+  CAFE_BAR
+  ASIAN
+  INTERNATIONAL
+  VEGETARIAN
+  OTHER
+}
+
 enum SupportedLanguage {
   GR
   EN
@@ -196,6 +210,7 @@ model Venue {
   coldScreenToken     String   @unique @default(cuid())
   dessertScreenToken  String   @unique @default(cuid())
   description    String?
+  cuisineType    CuisineType?
   logoUrl        String?
   primaryColor   String   @default("#2563EB")
   secondaryColor String   @default("#06B6D4")

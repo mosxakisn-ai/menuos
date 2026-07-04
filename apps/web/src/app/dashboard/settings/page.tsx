@@ -21,6 +21,7 @@ export default async function SettingsPage() {
       name: true,
       slug: true,
       description: true,
+      cuisineType: true,
       logoUrl: true,
       primaryColor: true,
       secondaryColor: true,

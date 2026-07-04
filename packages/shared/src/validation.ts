@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CUISINE_TYPES } from "./cuisine-type";
 import { itemExtrasSchema } from "./item-extras";
 
 export const registerOtpSendSchema = z.object({
@@ -41,6 +42,7 @@ export const venueSchema = z.object({
     .max(60)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase latin with hyphens"),
   description: z.string().max(500).optional(),
+  cuisineType: z.enum(CUISINE_TYPES).optional(),
 });
 
 export const categorySchema = z.object({
@@ -219,6 +221,7 @@ export const itemCreateSchema = z.object({
 export const venueUpdateSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   description: z.string().max(500).optional(),
+  cuisineType: z.enum(CUISINE_TYPES).nullable().optional(),
   logoUrl: z
     .union([z.string().url().max(2048), z.literal(""), z.null()])
     .optional(),

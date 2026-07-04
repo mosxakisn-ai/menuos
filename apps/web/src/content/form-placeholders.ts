@@ -9,6 +9,7 @@ export const FORM_PLACEHOLDERS = {
   venueName: "π.χ. Hellas Taverna",
   venueDescription: "π.χ. Pool bar & restaurant στη Ρόδο",
   storeDescription: "π.χ. Με θέα στο λιμάνι",
+  venueTagline: "π.χ. Pool bar & restaurant στη Ρόδο",
   categoryGr: "π.χ. Κυρίως πιάτα",
   categoryEn: "e.g. Main courses",
   categoryDe: "z.B. Hauptgerichte",

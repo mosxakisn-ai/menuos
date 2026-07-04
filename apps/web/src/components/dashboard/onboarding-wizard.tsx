@@ -22,7 +22,9 @@ import {
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
+import type { CuisineType } from "@menuos/shared";
 import { slugifyOrFallback, cn } from "@/lib/utils";
+import { CuisineTypeSelect } from "@/components/dashboard/cuisine-type-select";
 import type { CatalogPreviewCategory } from "@/lib/onboarding-status";
 import { ONBOARDING_STEP_COUNT } from "@/lib/onboarding-constants";
 import { requestConfirmDialog } from "@/lib/confirm-dialog-store";
@@ -35,6 +37,7 @@ export type OnboardingState = {
   venueSlug?: string;
   venueName?: string;
   venueDescription?: string | null;
+  venueCuisineType?: CuisineType | null;
   itemCount: number;
   menuCount?: number;
   catalogUrl?: string;
@@ -75,6 +78,7 @@ function OnboardingVenueForm({ defaultName }: { defaultName?: string }) {
           name,
           slug: slugifyOrFallback(name, "venue"),
           description: form.get("description") || undefined,
+          cuisineType: form.get("cuisineType") || undefined,
         }),
       });
       const data = (await res.json()) as { error?: string; message?: string };
@@ -99,13 +103,15 @@ function OnboardingVenueForm({ defaultName }: { defaultName?: string }) {
           placeholder={defaultName?.trim() || FORM_PLACEHOLDERS.venueName}
         />
       </label>
+      <CuisineTypeSelect name="cuisineType" />
       <label className="block">
-        <span className={dashboardLabelClass}>{V.descriptionLabel}</span>
+        <span className={dashboardLabelClass}>{V.taglineLabel}</span>
+        <p className="mt-1 text-xs leading-relaxed text-slate-500">{V.taglineHint}</p>
         <textarea
           name="description"
           rows={2}
-          className={dashboardTextareaClass}
-          placeholder={FORM_PLACEHOLDERS.venueDescription}
+          className={cn(dashboardTextareaClass, "mt-2")}
+          placeholder={FORM_PLACEHOLDERS.venueTagline}
         />
       </label>
       {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
@@ -413,6 +419,15 @@ export function OnboardingWizard({
                     <span>
                       <span className="font-semibold text-brand-navy">{O.steps.done.summaryVenue}:</span>{" "}
                       {state.venueName}
+                    </span>
+                  </li>
+                ) : null}
+                {state.venueCuisineType ? (
+                  <li className="flex gap-2">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <span>
+                      <span className="font-semibold text-brand-navy">{O.steps.done.summaryCuisine}:</span>{" "}
+                      {d.cuisineType.options[state.venueCuisineType]}
                     </span>
                   </li>
                 ) : null}
