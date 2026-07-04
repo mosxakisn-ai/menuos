@@ -11,6 +11,7 @@ import type { PlanCatalogEntry } from "@/lib/plan-catalog-types";
 import { formatPlanPriceDisplay } from "@/lib/plan-catalog-types";
 import { displayPlanFeature } from "@/lib/plan-feature-display";
 import { formatDashboardDate } from "@/content/dashboard-i18n";
+import type { SubscriptionDisplaySummary } from "@/lib/subscription-display";
 import { cn } from "@/lib/utils";
 
 type Subscription = {
@@ -37,12 +38,16 @@ function planChangeButtonLabel(
 export function BillingPlans({
   organizationId: _organizationId,
   subscription,
+  subscriptionAccessActive,
+  subscriptionSummary,
   userRole,
   plans,
   enterprisePlan,
 }: {
   organizationId: string;
   subscription: Subscription | null;
+  subscriptionAccessActive: boolean;
+  subscriptionSummary: SubscriptionDisplaySummary;
   userRole?: string;
   plans: PlanCatalogEntry[];
   enterprisePlan: PlanCatalogEntry | null;
@@ -88,16 +93,8 @@ export function BillingPlans({
   }
 
   const currentPlan = subscription?.plan ?? "TRIAL";
-  const statusKey = subscription?.status ?? "TRIALING";
-  const statusLabels = d.subscriptionStatus;
-  const statusLabel =
-    statusKey in statusLabels &&
-    typeof statusLabels[statusKey as keyof typeof statusLabels] === "string"
-      ? (statusLabels[statusKey as "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED"] as string)
-      : statusKey;
   const canCheckout = userRole !== "STAFF";
   const currentPlanEntry = plansById[currentPlan];
-  const isActive = statusKey === "ACTIVE" || statusKey === "TRIALING";
 
   return (
     <div className="space-y-6">
@@ -116,20 +113,18 @@ export function BillingPlans({
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm">
-            <DashboardStatusDot active={isActive} />
+            <DashboardStatusDot active={subscriptionAccessActive} />
             <span className="text-slate-600">
-              {B.statusLabel}: <span className="font-semibold text-primary">{statusLabel}</span>
+              {B.statusLabel}:{" "}
+              <span className="font-semibold text-primary">{subscriptionSummary.statusLine}</span>
             </span>
           </div>
         </div>
-        {subscription?.trialEndsAt && currentPlan === "TRIAL" ? (
+        {subscriptionSummary.expiryLine ? (
+          <p className="mt-3 text-sm text-slate-500">{subscriptionSummary.expiryLine}</p>
+        ) : subscription?.trialEndsAt && currentPlan === "TRIAL" ? (
           <p className="mt-3 text-sm text-slate-500">
             {B.trialUntil}: {formatDashboardDate(lang, new Date(subscription.trialEndsAt))}
-          </p>
-        ) : null}
-        {subscription?.currentPeriodEnd && currentPlan !== "TRIAL" ? (
-          <p className="mt-3 text-sm text-slate-500">
-            {B.periodUntil}: {formatDashboardDate(lang, new Date(subscription.currentPeriodEnd))}
           </p>
         ) : null}
       </div>

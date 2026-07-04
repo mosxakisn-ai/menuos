@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { prisma } from "@menuos/db";
 import { BillingConfirmHandler } from "@/components/dashboard/billing-confirm-handler";
 import { BillingPlans } from "@/components/dashboard/billing-plans";
@@ -12,6 +13,8 @@ import { getSession } from "@/lib/auth";
 import { organizationHasActiveSubscription } from "@/lib/billing";
 import { getEnterprisePlanEntrySafe, listPlanCatalogEntriesSafe } from "@/lib/plan-catalog-service";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
+import { formatSubscriptionSummary } from "@/lib/subscription-display";
+import { DASHBOARD_LANG_COOKIE, parseDashboardLang } from "@/content/dashboard-i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildDashboardPageMetadata("billing", "/dashboard/billing");
@@ -32,6 +35,19 @@ export default async function BillingPage({ searchParams: _searchParams }: Props
     getEnterprisePlanEntrySafe(),
   ]);
   const showInactive = !hasActiveSubscription;
+  const cookieStore = await cookies();
+  const lang = parseDashboardLang(cookieStore.get(DASHBOARD_LANG_COOKIE)?.value);
+  const subscriptionSummary = formatSubscriptionSummary(
+    subscription
+      ? {
+          plan: subscription.plan,
+          status: subscription.status,
+          trialEndsAt: subscription.trialEndsAt,
+          currentPeriodEnd: subscription.currentPeriodEnd,
+        }
+      : null,
+    lang,
+  );
 
   return (
     <DashboardPage wide>
@@ -53,6 +69,8 @@ export default async function BillingPage({ searchParams: _searchParams }: Props
           userRole={session.role}
           plans={plans}
           enterprisePlan={enterprisePlan}
+          subscriptionAccessActive={hasActiveSubscription}
+          subscriptionSummary={subscriptionSummary}
           subscription={
             subscription
               ? {

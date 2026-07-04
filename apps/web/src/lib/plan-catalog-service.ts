@@ -47,6 +47,7 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
       "1 κατάστημα",
       "1 κατάλογος",
       "50 πιάτα",
+      "QR καταλόγου",
       "Πολλαπλές γλώσσες",
       "Χωρίς κάρτα",
     ],
@@ -71,9 +72,9 @@ const DEFAULT_CATALOG: Record<SubscriptionPlanId, PlanCatalogSeed> = {
       "1 κατάστημα",
       "5 κατάλογοι",
       "Απεριόριστα πιάτα",
-      "QR codes",
+      "QR καταλόγου",
       "Πολλαπλές γλώσσες",
-      "Απεριόριστα extra",
+      "Συνεχής λειτουργία — ανανέωση κάθε μήνα",
     ],
     maxVenues: 1,
     maxMenusPerVenue: 5,
@@ -167,30 +168,44 @@ export function invalidatePlanCatalogCache() {
   cache = null;
 }
 
-function featureSignature(feature: string): string {
-  return feature
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .replace(/πιάτα/g, "ειδη")
-    .replace(/dishes/g, "items")
-    .replace(/pdf import/g, "pdf gemini")
-    .replace(/εισαγωγή pdf/g, "pdf gemini")
-    .replace(/priority support/g, "priority")
-    .replace(/προτεραιότητα υποστήριξης/g, "priority")
-    .replace(/προτεραιότητα/g, "priority")
-    .replace(/live 360°/g, "live360")
-    .replace(/\s+/g, " ")
-    .trim();
+function mergeFeaturesWithSeed(_current: string[], seed: string[]): string[] {
+  return [...seed];
 }
 
-function mergeFeaturesWithSeed(current: string[], seed: string[]): string[] {
-  const seedSignatures = new Set(seed.map(featureSignature));
-  const extras = current.filter((feature) => {
-    if (seed.includes(feature)) return false;
-    return !seedSignatures.has(featureSignature(feature));
-  });
-  return [...seed, ...extras];
+async function syncPlanCatalogLimitsFromSeed(): Promise<boolean> {
+  let anyChanged = false;
+  for (const planId of SUBSCRIPTION_PLANS) {
+    const seed = DEFAULT_CATALOG[planId];
+    const row = await prisma.planCatalog.findUnique({
+      where: { plan: planId as SubscriptionPlan },
+      select: {
+        maxVenues: true,
+        maxMenusPerVenue: true,
+        maxItems: true,
+        maxGeminiTokensPerMonth: true,
+      },
+    });
+    if (!row) continue;
+
+    const sameLimits =
+      row.maxVenues === seed.maxVenues &&
+      row.maxMenusPerVenue === seed.maxMenusPerVenue &&
+      row.maxItems === seed.maxItems &&
+      row.maxGeminiTokensPerMonth === seed.maxGeminiTokensPerMonth;
+    if (sameLimits) continue;
+
+    await prisma.planCatalog.update({
+      where: { plan: planId as SubscriptionPlan },
+      data: {
+        maxVenues: seed.maxVenues,
+        maxMenusPerVenue: seed.maxMenusPerVenue,
+        maxItems: seed.maxItems,
+        maxGeminiTokensPerMonth: seed.maxGeminiTokensPerMonth,
+      },
+    });
+    anyChanged = true;
+  }
+  return anyChanged;
 }
 
 async function syncPlanCatalogFeaturesFromSeed(): Promise<boolean> {
@@ -252,7 +267,8 @@ export async function ensurePlanCatalogSeeded(): Promise<void> {
   });
 
   const featuresSynced = await syncPlanCatalogFeaturesFromSeed();
-  if (featuresSynced) invalidatePlanCatalogCache();
+  const limitsSynced = await syncPlanCatalogLimitsFromSeed();
+  if (featuresSynced || limitsSynced) invalidatePlanCatalogCache();
 }
 
 export async function listPlanCatalogEntries(options?: { fresh?: boolean }): Promise<PlanCatalogEntry[]> {

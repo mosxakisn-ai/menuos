@@ -13,6 +13,8 @@ const FEATURE_EN: Record<string, string> = {
   "Απεριόριστα extra": "Unlimited extras",
   "Απεριόριστα πιάτα": "Unlimited items",
   "QR codes": "QR codes",
+  "QR καταλόγου": "Catalog QR code",
+  "Συνεχής λειτουργία — ανανέωση κάθε μήνα": "Always online — renews monthly",
   "Πολλαπλές γλώσσες": "Multiple languages",
   "Χωρίς κάρτα": "No card required",
   "Κλήση σερβιτόρου": "Call waiter",
