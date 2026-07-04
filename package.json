@@ -20,7 +20,8 @@
     "indexnow": "node scripts/submit-indexnow.mjs",
     "env:ensure": "bash scripts/ensure-env.sh",
     "sync:check": "npm run db:generate && npm test && npm run build",
-    "test": "npm run test -w @menuos/shared"
+    "test": "npm run test -w @menuos/shared",
+    "test:onboarding": "npx tsx scripts/test-onboarding-logic.mts"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

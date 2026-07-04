@@ -3,7 +3,7 @@ export const ONBOARDING_CONFIRMED_COOKIE = "menuos-onboarding-confirmed";
 
 export const ONBOARDING_STEP_COUNT = 4;
 
-/** Show the onboarding modal only on overview — never over forms. */
-export function shouldShowOnboardingPopup(pathname: string): boolean {
-  return pathname === "/dashboard";
+/** Onboarding wizard overlay — only on overview (billing stays usable without modal). */
+export function isOnboardingWizardOverlayPath(pathname: string): boolean {
+  return pathname === "/dashboard" || pathname === "/dashboard/";
 }

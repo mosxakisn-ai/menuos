@@ -1017,6 +1017,11 @@ export const DASHBOARD_EL = {
     lockBanner: (step: number, label: string) =>
       `Βήμα ${step}/4: ${label} — οι υπόλοιπες σελίδες κλειδώνονται μέχρι να τελειώσεις.`,
     backToGuide: "Πήγαινε στον οδηγό",
+    retryFromStart: "Ξαναδοκιμή από την αρχή",
+    retryConfirmTitle: "Νέα εκκίνηση;",
+    retryConfirmDesc:
+      "Θα διαγραφεί το κατάστημα και ο κατάλογος που έφτιαξες μέχρι τώρα. Θα ξεκινήσεις ξανά από βήμα 1.",
+    retryConfirming: "Διαγραφή…",
     qrPageHint: "Κατέβασε ή δες τα QR εδώ. Όταν τελειώσεις, γύρνα στην Επισκόπηση για το τελευταίο βήμα.",
     stepTitle: (step: number) => `Βήμα ${step} από 4 — φτιάξε τον κατάλογο σου`,
     subtitle: "Σε λιγότερο από μία ώρα μπορείς να έχεις QR menu στα τραπέζια σου.",
@@ -1060,8 +1065,8 @@ export const DASHBOARD_EL = {
         acknowledging: "Λίγο ακόμα...",
       },
       done: {
-        title: "Όλα έτοιμα!",
-        desc: "Ο κατάλογος σου είναι online. Δες τι έφτιαξες:",
+        title: "Συγχαρητήρια!",
+        desc: "Ο κατάλογος σου είναι online. Πάτα Εντάξει για να ανοίξει το panel.",
         summaryVenue: "Κατάστημα",
         summaryDescription: "Περιγραφή",
         summaryCatalog: "Κατάλογος",
@@ -1069,7 +1074,7 @@ export const DASHBOARD_EL = {
         summaryMenus: (n: number) => `${n} ${n === 1 ? "κατάλογος" : "κατάλογοι"}`,
         summaryLink: "Link QR menu",
         summaryQr: "QR codes — έτοιμα για εκτύπωση",
-        cta: "Ξεκίνα",
+        cta: "Εντάξει",
         confirming: "Λίγο ακόμα...",
       },
     },

@@ -24,7 +24,7 @@ import {
   parseDashboardLang,
 } from "@/content/dashboard-i18n";
 import { playfair } from "@/lib/fonts";
-import { ONBOARDING_CONFIRMED_COOKIE, ONBOARDING_QR_COOKIE } from "@/lib/onboarding-constants";
+import { ONBOARDING_CONFIRMED_COOKIE, ONBOARDING_QR_COOKIE, isOnboardingWizardOverlayPath } from "@/lib/onboarding-constants";
 import { APP_URL } from "@/lib/config";
 import { resolveOnboardingCookies } from "@/lib/onboarding-cookies";
 import {
@@ -250,11 +250,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
           </main>
         </div>
-        {showOnboardingWizard && onboardingWizardState ? (
+        {showOnboardingWizard &&
+        onboardingWizardState &&
+        isOnboardingWizardOverlayPath(dashboardPathname) ? (
           <OnboardingWizard
             state={onboardingWizardState}
             qrVisited={qrVisited}
             needsConfirmation={onboardingAwaitingConfirmation}
+            defaultVenueName={org?.name}
           />
         ) : null}
         <DashboardMobileNav

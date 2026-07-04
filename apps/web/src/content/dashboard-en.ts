@@ -1003,6 +1003,11 @@ export const DASHBOARD_EN = {
     lockBanner: (step: number, label: string) =>
       `Step ${step}/4: ${label} — other pages stay locked until you finish.`,
     backToGuide: "Go to guide",
+    retryFromStart: "Start over",
+    retryConfirmTitle: "Start from scratch?",
+    retryConfirmDesc:
+      "Your venue and catalog created so far will be deleted. You will begin again at step 1.",
+    retryConfirming: "Deleting…",
     qrPageHint: "Download or preview your QR codes here. When you're done, return to Overview for the final step.",
     stepTitle: (step: number) => `Step ${step} of 4 — build your catalog`,
     subtitle: "In under an hour you can have a QR menu on your tables.",
@@ -1046,8 +1051,8 @@ export const DASHBOARD_EN = {
         acknowledging: "One moment...",
       },
       done: {
-        title: "All set!",
-        desc: "Your catalog is online. Here's what you created:",
+        title: "Congratulations!",
+        desc: "Your catalog is online. Press OK to open the full panel.",
         summaryVenue: "Venue",
         summaryDescription: "Description",
         summaryCatalog: "Catalog",
@@ -1055,7 +1060,7 @@ export const DASHBOARD_EN = {
         summaryMenus: (n: number) => `${n} ${n === 1 ? "menu" : "menus"}`,
         summaryLink: "QR menu link",
         summaryQr: "QR codes — ready to print",
-        cta: "Get started",
+        cta: "OK",
         confirming: "One moment...",
       },
     },
