@@ -4,6 +4,7 @@ import { LogoutButton } from "@/components/dashboard/logout-button";
 import { DashboardLanguageSwitcher } from "@/components/dashboard/dashboard-language-switcher";
 import { DashboardStatusDot } from "@/components/dashboard/dashboard-ui";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { panelPhotoDisplayUrl } from "@/lib/photo-display-url";
 
 type DashboardHeaderProps = {
   businessName: string;
@@ -28,7 +29,7 @@ export function DashboardHeader({
         {businessLogoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={businessLogoUrl}
+            src={panelPhotoDisplayUrl(businessLogoUrl) ?? businessLogoUrl}
             alt=""
             className="hidden h-11 w-11 shrink-0 rounded-xl border border-slate-200/80 bg-slate-50 object-cover sm:block"
           />

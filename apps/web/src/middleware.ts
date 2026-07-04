@@ -101,7 +101,7 @@ export async function middleware(request: NextRequest) {
       requestHeaders.set("x-menuos-check-subscription", "1");
     }
 
-    if (session.role === "STAFF" && isStaffRestrictedDashboardPath(pathname)) {
+    if (session.role === "STAFF" && (pathname === "/dashboard" || isStaffRestrictedDashboardPath(pathname))) {
       response = NextResponse.redirect(new URL("/dashboard/waiter", request.url));
       return applyLocale(request, response);
     }

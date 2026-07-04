@@ -11,7 +11,7 @@ import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
 type Params = { params: Promise<{ venueId: string }> };
 
 export async function GET(_req: Request, { params }: Params) {
-  const auth = await requireActiveSubscription();
+  const auth = await requireActiveSubscription({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const { venueId } = await params;

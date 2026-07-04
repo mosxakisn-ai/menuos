@@ -107,7 +107,9 @@ export function DashboardSidebar({
           );
         })}
       </nav>
-      {subscription ? <DashboardSidebarSubscription subscription={subscription} lang={lang} /> : null}
+      {subscription ? (
+        <DashboardSidebarSubscription subscription={subscription} lang={lang} userRole={userRole} />
+      ) : null}
     </aside>
   );
 }

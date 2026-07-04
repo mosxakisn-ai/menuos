@@ -153,6 +153,17 @@ export async function requireWaiterVenueAccess(
         response: null,
       };
     }
+
+    const cookieSession = await readStaffSessionFromCookies();
+    if (cookieSession?.venueId === venueId) {
+      return {
+        access: null,
+        response: NextResponse.json(
+          { error: "Μη έγκυρο link σερβιτόρου.", code: "unauthorized" },
+          { status: 401 },
+        ),
+      };
+    }
   }
 
   const session = await getSession();

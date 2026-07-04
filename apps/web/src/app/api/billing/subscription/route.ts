@@ -3,7 +3,7 @@ import { requireSession } from "@/lib/api-auth";
 import { getOrganizationSubscription } from "@/lib/billing";
 
 export async function GET(req: NextRequest) {
-  const auth = await requireSession();
+  const auth = await requireSession({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
   const organizationId = req.nextUrl.searchParams.get("organizationId");

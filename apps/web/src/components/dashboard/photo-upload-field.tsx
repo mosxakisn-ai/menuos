@@ -4,6 +4,7 @@ import { ImagePlus, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { panelPhotoDisplayUrl } from "@/lib/photo-display-url";
 
 export function PhotoUploadField({
   value,
@@ -62,7 +63,7 @@ export function PhotoUploadField({
         <div className="mt-2 flex items-start gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={value}
+            src={panelPhotoDisplayUrl(value) ?? value}
             alt=""
             className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 object-cover"
           />

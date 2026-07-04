@@ -9,18 +9,17 @@ import type { DashboardLang } from "@/content/dashboard-i18n";
 export function DashboardSidebarSubscription({
   subscription,
   lang,
+  userRole,
 }: {
   subscription: SubscriptionDisplayInput | null;
   lang: DashboardLang;
+  userRole: string;
 }) {
   const { d } = useDashboardCopy();
   const summary = formatSubscriptionSummary(subscription, lang);
 
-  return (
-    <Link
-      href="/dashboard/billing"
-      className="mt-auto block rounded-lg bg-white/5 px-3 py-2.5 transition hover:bg-white/10"
-    >
+  const content = (
+    <>
       <p className="flex items-center gap-2 text-xs font-medium text-white/90">
         <DashboardStatusDot active={summary.active} />
         <span>
@@ -28,6 +27,19 @@ export function DashboardSidebarSubscription({
         </span>
       </p>
       {summary.expiryLine ? <p className="mt-1 pl-4 text-[11px] text-white/55">{summary.expiryLine}</p> : null}
+    </>
+  );
+
+  if (userRole === "STAFF") {
+    return <div className="mt-auto rounded-lg bg-white/5 px-3 py-2.5">{content}</div>;
+  }
+
+  return (
+    <Link
+      href="/dashboard/billing"
+      className="mt-auto block rounded-lg bg-white/5 px-3 py-2.5 transition hover:bg-white/10"
+    >
+      {content}
     </Link>
   );
 }
