@@ -1,6 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   ArrowDown,
   Building2,
@@ -13,9 +15,6 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { useDemoMenuUrl } from "@/lib/demo-menu-url";
-import { HeroShowcase } from "@/components/marketing/hero-showcase";
-import { HomeLive360 } from "@/components/marketing/home-live-360";
-import { MarketingTestimonials } from "@/components/marketing/marketing-testimonials";
 import {
   FaqBlock,
   DesignedForStrip,
@@ -28,7 +27,65 @@ import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n/context";
 
+const HeroShowcase = dynamic(
+  () => import("@/components/marketing/hero-showcase").then((m) => m.HeroShowcase),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="mx-auto h-52 max-w-xl rounded-[2rem] bg-slate-100/70 lg:h-[700px]"
+        aria-hidden
+      />
+    ),
+  },
+);
+
+const HomeLive360 = dynamic(
+  () => import("@/components/marketing/home-live-360").then((m) => m.HomeLive360),
+  {
+    ssr: false,
+    loading: () => <div className="h-[28rem] animate-pulse bg-brand-surface/40 sm:h-[32rem]" aria-hidden />,
+  },
+);
+
+const MarketingTestimonials = dynamic(
+  () => import("@/components/marketing/marketing-testimonials").then((m) => m.MarketingTestimonials),
+  {
+    ssr: false,
+    loading: () => <div className="h-72 animate-pulse bg-white" aria-hidden />,
+  },
+);
+
 const serviceIcons = [QrCode, Globe, Orbit, UtensilsCrossed, Building2, Smartphone];
+
+function HeroShowcaseSlot() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)").matches;
+    if (desktop) {
+      setReady(true);
+      return;
+    }
+    const run = () => setReady(true);
+    if (typeof requestIdleCallback !== "undefined") {
+      requestIdleCallback(run, { timeout: 2500 });
+    } else {
+      window.setTimeout(run, 800);
+    }
+  }, []);
+
+  if (!ready) {
+    return (
+      <div
+        className="mx-auto h-52 max-w-xl rounded-[2rem] bg-slate-100/70 lg:h-[700px]"
+        aria-hidden
+      />
+    );
+  }
+
+  return <HeroShowcase />;
+}
 
 export function MarketingHome() {
   const { m } = useI18n();
@@ -56,7 +113,7 @@ export function MarketingHome() {
                 </ValuePill>
               </div>
 
-              <h1 className="animate-fade-up mt-6 text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-brand-navy sm:text-5xl lg:text-[3.5rem]">
+              <h1 className="mt-6 text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-brand-navy sm:text-5xl lg:text-[3.5rem]">
                 {h.hero.title}
                 <span className="mt-1 block text-gradient-brand">{h.hero.titleAccent}</span>
               </h1>
@@ -98,9 +155,9 @@ export function MarketingHome() {
               </Link>
             </div>
 
-            {/* Visual — min-height reserves space before iframe/photos load (CLS) */}
-            <div className="animate-fade-up-delay-2 min-h-[620px] opacity-0 sm:min-h-[660px] lg:min-h-[700px] lg:justify-self-end">
-              <HeroShowcase />
+            {/* Visual — deferred on mobile so hero copy stays the LCP element */}
+            <div className="lg:justify-self-end">
+              <HeroShowcaseSlot />
             </div>
           </div>
         </div>

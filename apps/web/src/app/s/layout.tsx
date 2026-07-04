@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { DashboardLocaleProvider } from "@/components/dashboard/dashboard-locale-provider";
 import { ConfirmDialogHost } from "@/components/ui/confirm-dialog";
 import { DASHBOARD_LANG_COOKIE, parseDashboardLang } from "@/content/dashboard-i18n";
+import { playfair } from "@/lib/fonts";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +12,10 @@ export default async function StaffWaiterLayout({ children }: { children: React.
 
   return (
     <DashboardLocaleProvider initialLang={initialLang}>
-      <ConfirmDialogHost />
-      {children}
+      <div className={playfair.variable}>
+        <ConfirmDialogHost />
+        {children}
+      </div>
     </DashboardLocaleProvider>
   );
 }

@@ -19,6 +19,7 @@ import {
   DASHBOARD_LANG_COOKIE,
   parseDashboardLang,
 } from "@/content/dashboard-i18n";
+import { playfair } from "@/lib/fonts";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +108,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <DashboardLocaleProvider initialLang={initialLang}>
+      <div className={playfair.variable}>
       <DashboardDiagnosticsReporter />
       <ConfirmDialogHost />
       <div className="dashboard-shell flex min-h-screen bg-brand-surface">
@@ -135,6 +137,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </main>
         </div>
         <DashboardMobileNav initialPendingCount={initialMonitorCount} userRole={session.role} />
+      </div>
       </div>
     </DashboardLocaleProvider>
   );

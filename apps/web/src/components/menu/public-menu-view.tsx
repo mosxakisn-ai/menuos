@@ -921,11 +921,11 @@ export function PublicMenuView({
                               description={tr?.description}
                               price={item.price.toString()}
                               photoUrl={item.photoUrl!}
-                              photoDisplayWidth={isEmbedded ? 176 : 260}
+                              photoDisplayWidth={isEmbedded ? 140 : 240}
                               photoSizes={
                                 isEmbedded
-                                  ? "176px"
-                                  : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 260px"
+                                  ? "140px"
+                                  : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 240px"
                               }
                               label={item.label}
                               lang={lang}

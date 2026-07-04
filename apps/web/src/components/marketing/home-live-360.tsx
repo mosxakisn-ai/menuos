@@ -43,18 +43,14 @@ function SegmentCards({
           <li
             key={label}
             className={cn(
-              "rounded-2xl border px-3 py-2.5 text-left shadow-soft backdrop-blur-sm transition-all duration-500 sm:px-4 sm:py-3",
+              "rounded-2xl border px-3 py-2.5 text-left shadow-soft backdrop-blur-sm sm:px-4 sm:py-3",
+              "transition-opacity duration-500 motion-reduce:transition-none",
               isActive
-                ? "border-brand-cyan/50 bg-gradient-to-br from-brand-blue/[0.08] to-brand-cyan/[0.12] ring-2 ring-brand-cyan/35"
+                ? "border-brand-cyan/50 bg-gradient-to-br from-brand-blue/[0.08] to-brand-cyan/[0.12] ring-2 ring-brand-cyan/35 opacity-100"
                 : "border-slate-200/80 bg-white/70 opacity-55",
             )}
           >
-            <p
-              className={cn(
-                "text-sm font-bold transition-colors duration-500",
-                isActive ? "text-brand-navy" : "text-slate-500",
-              )}
-            >
+            <p className={cn("text-sm font-bold", isActive ? "text-brand-navy" : "text-slate-500")}>
               {label}
             </p>
             <p className={cn("mt-0.5 text-xs leading-snug", isActive ? "text-slate-600" : "text-slate-400")}>
@@ -85,14 +81,14 @@ function OrbitVisual({
         <div className="absolute inset-[12%] rounded-full border border-dashed border-brand-blue/35" />
         <div
           className={cn(
-            "absolute inset-[12%] rounded-full border-2 border-transparent transition-all duration-700 motion-reduce:transition-none",
+            "absolute inset-[12%] rounded-full motion-reduce:animate-none",
             !motionReduced && "animate-[spin_12s_linear_infinite]",
           )}
           style={{
-            borderTopColor: "rgba(6, 182, 212, 0.85)",
-            borderRightColor: "rgba(37, 99, 235, 0.15)",
-            borderBottomColor: "rgba(37, 99, 235, 0.15)",
-            borderLeftColor: "rgba(37, 99, 235, 0.15)",
+            background:
+              "conic-gradient(from 0deg, rgba(6, 182, 212, 0.85), rgba(37, 99, 235, 0.15) 25%, rgba(37, 99, 235, 0.15) 100%)",
+            WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px))",
+            mask: "radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px))",
           }}
         />
 
@@ -101,7 +97,7 @@ function OrbitVisual({
         <div className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
           <div
             className={cn(
-              "scale-[0.82] rounded-2xl bg-white p-2 shadow-glow ring-2 transition-all duration-500 sm:scale-100",
+              "scale-[0.82] rounded-2xl bg-white p-2 shadow-glow ring-2 sm:scale-100",
               activeIndex >= 0 ? "ring-brand-cyan/40" : "ring-brand-blue/10",
             )}
           >
@@ -123,17 +119,21 @@ function OrbitVisual({
               ) : null}
               <div
                 className={cn(
-                  "relative flex h-12 w-12 items-center justify-center rounded-2xl border transition-all duration-500 ease-out sm:h-16 sm:w-16",
+                  "relative flex h-12 w-12 items-center justify-center rounded-2xl border sm:h-16 sm:w-16",
+                  "transition-[transform,opacity] duration-500 ease-out motion-reduce:transition-none",
                   isActive
-                    ? "scale-110 border-transparent bg-brand-gradient shadow-[0_0_36px_rgba(6,182,212,0.55)] ring-2 ring-brand-cyan/50"
+                    ? "scale-110 border-transparent bg-brand-gradient ring-2 ring-brand-cyan/50 opacity-100"
                     : "scale-[0.88] border-slate-200/90 bg-slate-100 opacity-40",
                 )}
               >
+                {isActive ? (
+                  <span
+                    className="pointer-events-none absolute -inset-1 -z-10 rounded-2xl bg-brand-cyan/35 blur-md"
+                    aria-hidden
+                  />
+                ) : null}
                 <Icon
-                  className={cn(
-                    "h-6 w-6 transition-colors duration-500 sm:h-7 sm:w-7",
-                    isActive ? "text-white" : "text-slate-400",
-                  )}
+                  className={cn("h-6 w-6 sm:h-7 sm:w-7", isActive ? "text-white" : "text-slate-400")}
                   strokeWidth={isActive ? 2.25 : 1.75}
                   aria-hidden
                 />

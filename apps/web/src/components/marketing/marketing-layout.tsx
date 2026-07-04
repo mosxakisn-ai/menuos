@@ -132,7 +132,7 @@ export function AuthShell({
       <SiteHeader />
       <main className="relative mx-auto flex max-w-md flex-col px-4 py-12 sm:py-16">
         <div className="rounded-card border border-slate-200/80 bg-white/95 p-8 shadow-card backdrop-blur-sm">
-          <h1 className="font-serif text-2xl font-bold text-brand-navy">{title}</h1>
+          <h1 className="text-2xl font-extrabold text-brand-navy">{title}</h1>
           {subtitle ? <p className="mt-2 text-sm leading-relaxed text-slate-600">{subtitle}</p> : null}
           {children}
         </div>

@@ -8,18 +8,25 @@ import { DemoTavernaLogo } from "@/components/marketing/demo-taverna-logo";
 import { HeroQrCode } from "@/components/marketing/hero-qr-code";
 import { Logo } from "@/components/brand/logo";
 import { APP_URL } from "@/lib/config";
+import { optimizeCoverPhotoUrl } from "@/lib/menu-photo-url";
 import { useI18n } from "@/i18n/context";
 
 const PHOTOS = {
-  /** Mediterranean terrace dining — hero card ~460px wide */
-  taverna:
-    "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=920&h=690&q=80",
+  /** Mediterranean terrace dining — lifestyle card max ~440px wide */
+  taverna: optimizeCoverPhotoUrl(
+    "https://images.unsplash.com/photo-1559339352-11d035aa65de",
+    440,
+  ),
   /** Guest scanning phone at table — overlay ~128px */
-  guest:
-    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=256&h=320&q=75",
+  guest: optimizeCoverPhotoUrl(
+    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
+    128,
+  ),
   /** Greek/Mediterranean dish close-up — overlay ~96px */
-  food:
-    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=192&h=192&q=75",
+  food: optimizeCoverPhotoUrl(
+    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe",
+    96,
+  ),
 } as const;
 
 function PhoneStatusBar() {
@@ -202,8 +209,8 @@ export function HeroShowcase() {
                 src={PHOTOS.taverna}
                 alt={hs.photoAlt}
                 fill
-                priority
-                sizes="(max-width: 768px) 100vw, 460px"
+                quality={65}
+                sizes="(max-width: 1024px) 440px, 460px"
                 className="object-cover object-center"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/85 via-brand-navy/25 to-brand-navy/10" />
@@ -218,6 +225,7 @@ export function HeroShowcase() {
                     src={PHOTOS.food}
                     alt={hs.foodAlt}
                     fill
+                    quality={60}
                     sizes="96px"
                     className="object-cover"
                   />
@@ -230,6 +238,7 @@ export function HeroShowcase() {
                     src={PHOTOS.guest}
                     alt={hs.guestAlt}
                     fill
+                    quality={60}
                     sizes="128px"
                     className="object-cover object-top"
                   />

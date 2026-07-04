@@ -14,6 +14,11 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+    // Inlines Tailwind CSS (~17 KiB) to remove render-blocking <link> on first visit.
+    inlineCss: true,
+  },
   // Next.js bundles polyfill-module unconditionally (~12 KiB Array.at, Object.hasOwn, etc.).
   // MenuOS targets modern mobile browsers only — see browserslist in package.json.
   webpack(config, { isServer }) {
