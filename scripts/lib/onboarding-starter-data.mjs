@@ -84,9 +84,9 @@ export const ONBOARDING_STARTER_CATEGORIES = [
   },
 ];
 
-export const ONBOARDING_STARTER_SPOTS: { type: "TABLE" | "SUNBED" | "ROOM"; label: string }[] = [];
+export const ONBOARDING_STARTER_SPOTS = [];
 
-export const ONBOARDING_STARTER_STAFF: {
+export const ONBOARDING_STARTER_STAFF = [
   { name: "Μαρία Π.", roleLabel: "Σερβιτόρος", stations: ["services"] },
   { name: "Γιώργος Κ.", roleLabel: "Σερβιτόρος", stations: ["services"] },
   { name: "Νίκος Α.", roleLabel: "Μάγειρας", stations: ["kitchen"] },

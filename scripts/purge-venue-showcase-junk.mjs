@@ -96,6 +96,57 @@ const slugArg = args.find((a) => !a.startsWith("--"));
 const ACTIVE_CALL = new Set(["PENDING", "ACKNOWLEDGED"]);
 const ACTIVE_PASS = new Set(["READY", "PICKED_UP"]);
 
+function isJunkQuickChip(text) {
+  const t = text.trim();
+  if (!t) return true;
+  if (t.length <= 3 && /^[a-z]+$/i.test(t)) return true;
+  if (/^[ΔΓΦΞΛΚ]+[\d]*$/u.test(t)) return true;
+  return false;
+}
+
+async function scrubVenueConfig(prisma, venueId) {
+  const setting = await prisma.venueSetting.findUnique({
+    where: { venueId },
+    select: { operationsConfig: true },
+  });
+  const raw = setting?.operationsConfig;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { scrubbedChips: 0, clearedScreenChips: 0 };
+  }
+
+  const config = { ...raw };
+  let scrubbedChips = 0;
+  if (config.quickChips && typeof config.quickChips === "object") {
+    const next = {};
+    for (const [postId, chips] of Object.entries(config.quickChips)) {
+      if (!Array.isArray(chips)) continue;
+      const filtered = chips.filter((chip) => {
+        if (typeof chip !== "string" || isJunkQuickChip(chip)) {
+          scrubbedChips += 1;
+          return false;
+        }
+        return true;
+      });
+      if (filtered.length > 0) next[postId] = filtered;
+    }
+    config.quickChips = Object.keys(next).length ? next : undefined;
+  }
+
+  const clearedScreens = await prisma.venueStationScreen.updateMany({
+    where: { venueId, quickChips: { isEmpty: false } },
+    data: { quickChips: [] },
+  });
+
+  if (scrubbedChips > 0 || JSON.stringify(config) !== JSON.stringify(raw)) {
+    await prisma.venueSetting.update({
+      where: { venueId },
+      data: { operationsConfig: config },
+    });
+  }
+
+  return { scrubbedChips, clearedScreenChips: clearedScreens.count };
+}
+
 async function purgeVenue(prisma, venue) {
   const spots = await prisma.venueSpot.findMany({
     where: { venueId: venue.id },
@@ -193,6 +244,8 @@ async function purgeVenue(prisma, venue) {
     ? await prisma.passSignal.deleteMany({ where: { id: { in: passIdList } } })
     : { count: 0 };
 
+  const configCleanup = await scrubVenueConfig(prisma, venue.id);
+
   return {
     venue: venue.name,
     slug: venue.slug,
@@ -203,6 +256,7 @@ async function purgeVenue(prisma, venue) {
     junkSpotLabels: spots.filter((s) => junkSpotIds.includes(s.id)).map((s) => s.label),
     orphanCallLocations: orphanCallLabels,
     orphanPassLocations: orphanPassLabels,
+    ...configCleanup,
   };
 }
 

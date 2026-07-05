@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isShowcaseJunkQuickChip,
   isShowcaseJunkSpotLabel,
   isShowcaseJunkStationScreenLabel,
   isShowcaseJunkWaiterLocation,
@@ -25,5 +26,12 @@ describe("showcase-junk", () => {
   it("flags paralia station screen", () => {
     expect(isShowcaseJunkStationScreenLabel("Παραλία")).toBe(true);
     expect(isShowcaseJunkStationScreenLabel("Κουζίνα")).toBe(false);
+  });
+
+  it("flags junk quick chips", () => {
+    expect(isShowcaseJunkQuickChip("ggg")).toBe(true);
+    expect(isShowcaseJunkQuickChip("ΔΦΔΔ111")).toBe(true);
+    expect(isShowcaseJunkQuickChip("Έλα Πάσο")).toBe(false);
+    expect(isShowcaseJunkQuickChip("Ξέχασες τον πάγο")).toBe(false);
   });
 });

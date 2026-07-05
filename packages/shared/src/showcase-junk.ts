@@ -41,3 +41,12 @@ export function isShowcaseJunkWaiterLocation(
   if (location.roomNumber && isShowcaseJunkSpotLabel(location.roomNumber, options)) return true;
   return false;
 }
+
+/** Typed test chips / keyboard mash — not real pass messages. */
+export function isShowcaseJunkQuickChip(text: string): boolean {
+  const t = text.trim();
+  if (!t) return true;
+  if (t.length <= 3 && /^[a-z]+$/i.test(t)) return true;
+  if (/^[ΔΓΦΞΛΚ]+[\d]*$/u.test(t)) return true;
+  return false;
+}

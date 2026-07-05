@@ -50,32 +50,25 @@ const SINGLE_SLUG = (process.env.SEED_VENUE_SLUG ?? DEFAULT_SLUG).trim();
 const STAFF = [
   { name: "Μαρία Π.", roleLabel: "Σερβιτόρος", stations: ["services"] },
   { name: "Γιώργος Κ.", roleLabel: "Σερβιτόρος", stations: ["services"] },
-  { name: "Σοφία Λ.", roleLabel: "Σερβιτόρος παραλίας", stations: ["services", "bar"] },
   { name: "Νίκος Α.", roleLabel: "Μάγειρας", stations: ["kitchen"] },
   { name: "Ελένη Μ.", roleLabel: "Μπαρ", stations: ["bar"] },
-  { name: "Άννα Κ.", roleLabel: "Μπαρ παραλίας", stations: ["bar"] },
-  { name: "Πέτρος Δ.", roleLabel: "Κρύα κουζίνα", stations: ["cold"] },
   { name: "Κώστας Δ.", roleLabel: "Manager", stations: ["all"] },
 ];
 
 const PASS_ACTIVE = [
   { station: "KITCHEN", table: "8", message: "2 μουσακάς — έλα πάσο", screenLabel: "Κουζίνα", minutesAgo: 2, status: "READY" },
   { station: "BAR", table: "5", message: "Ξέχασες τον πάγο", screenLabel: "Μπαρ", minutesAgo: 4, status: "READY" },
-  { station: "BAR", table: "Αυλή-2", message: "2 μπύρες — παραλία", screenLabel: "Παραλία", minutesAgo: 3, status: "READY" },
   { station: "COLD", table: "12", message: "Χωριάτικη έτοιμη", screenLabel: "Κρύα", minutesAgo: 5, status: "READY" },
   { station: "DESSERT", table: "7", message: "Παγωτό παρφέ", screenLabel: "Γλυκά", minutesAgo: 6, status: "READY" },
-  { station: "KITCHEN", table: "Όροφος-1", message: "Σουβλάκι — πήρα", screenLabel: "Κουζίνα", minutesAgo: 1, status: "PICKED_UP" },
+  { station: "KITCHEN", table: "3", message: "Σουβλάκι — πήρα", screenLabel: "Κουζίνα", minutesAgo: 1, status: "PICKED_UP" },
 ];
 
 const PASS_HISTORY = [
   { station: "KITCHEN", table: "12", message: "Σουβλάκι", hoursAgo: 2, deliveryMins: 3 },
   { station: "BAR", table: "5", message: "Κρασί λευκό", hoursAgo: 5, deliveryMins: 2 },
-  { station: "BAR", table: "Αυλή-1", message: "Φραπέ παραλίας", hoursAgo: 8, deliveryMins: 4, screenLabel: "Παραλία" },
   { station: "DESSERT", table: "9", message: "Γαλακτομπούρεκο", hoursAgo: 24, deliveryMins: 5 },
   { station: "COLD", table: "3", message: "Τζατζίκι + πίτα", hoursAgo: 3, deliveryMins: 2 },
-  { station: "KITCHEN", table: "Όροφος-2", message: "Ψητή τσιπούρα", hoursAgo: 12, deliveryMins: 6 },
   { station: "BAR", table: "10", message: "Μοχίτο x2", hoursAgo: 48, deliveryMins: 3, screenLabel: "Μπαρ" },
-  { station: "DESSERT", table: "Αυλή-3", message: "Μπακλαβάς", hoursAgo: 72, deliveryMins: 4 },
 ];
 
 const WAITER_CALLS = [
@@ -93,26 +86,13 @@ const WAITER_CALLS = [
       total: "33.50",
     },
   },
-  { type: "WAITER", table: "Αυλή-2" },
-  { type: "BILL", table: "Όροφος-1", status: "ACKNOWLEDGED" },
-  { type: "WAITER", sunbed: "paralia-1" },
-  { type: "BILL", room: "101" },
+  { type: "WAITER", table: "2" },
+  { type: "BILL", table: "6", status: "ACKNOWLEDGED" },
 ];
 
-/** Spots always upserted — not skipped when venue already has tables. */
+/** Spots always upserted — saloni tables 1–12 only (no demo paralia/όροφος junk). */
 const SPOT_ROWS = [
   ...Array.from({ length: 12 }, (_, i) => ({ type: "TABLE", label: String(i + 1) })),
-  { type: "TABLE", label: "Αυλή-1" },
-  { type: "TABLE", label: "Αυλή-2" },
-  { type: "TABLE", label: "Αυλή-3" },
-  { type: "TABLE", label: "Όροφος-1" },
-  { type: "TABLE", label: "Όροφος-2" },
-  { type: "TABLE", label: "Όροφος-3" },
-  { type: "SUNBED", label: "paralia-1" },
-  { type: "SUNBED", label: "paralia-2" },
-  { type: "SUNBED", label: "paralia-3" },
-  { type: "ROOM", label: "101" },
-  { type: "ROOM", label: "102" },
 ];
 
 async function resolveVenueSlugs() {
@@ -184,7 +164,6 @@ async function ensureStationScreens(venueId) {
   const stations = [
     { station: "KITCHEN", label: "Κουζίνα", spotPrefix: null },
     { station: "BAR", label: "Μπαρ", spotPrefix: null },
-    { station: "BAR", label: "Παραλία", spotPrefix: "Αυλή" },
     { station: "COLD", label: "Κρύα", spotPrefix: null },
     { station: "DESSERT", label: "Γλυκά", spotPrefix: null },
   ];
