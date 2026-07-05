@@ -840,7 +840,7 @@ export const DASHBOARD_EN = {
         title: "Spaces",
         description:
           "Spaces the waiter sees — Tables, Patio, Floor, Sunbeds, Rooms.",
-        hint: "Add, rename or delete spaces. For individual tables/spots, use the «Tables» tab.",
+        hint: "Add, rename or delete spaces. For individual tables/spots, use the «Tables» tab.\nZone QR codes are at the bottom — for per-person links, use «Staff».",
         previewTitle: "Preview",
         previewHint: "This is how they appear in the waiter «Pick a space» panel.",
         empty: "No spaces yet. Tap «New space» to get started.",
@@ -867,6 +867,17 @@ export const DASHBOARD_EN = {
           `Created space «${name}» with ${count} spot${count === 1 ? "" : "s"}.`,
         tablesTabLink: "Edit individual spots →",
         invalidRange: "Check the From and To numbers.",
+        zoneQrTitle: "QR & link per space",
+        zoneQrDescription:
+          "Each space has its own QR — scanning it shows only that space (e.g. Main hall, Patio).",
+        zoneQrHint:
+          "For named staff with their own link, go to «Staff» — that is also where you rotate access codes.",
+        zoneQrLoading: "Loading…",
+        zoneQrLoadingQr: "QR…",
+        zoneQrNoToken: "No access link found for this venue.",
+        zoneQrOpenLink: "Open link",
+        zoneQrCopyLink: "Copy link",
+        zoneQrDownload: "Download QR",
       },
       demoBadge: "Sample — UI preview",
       personnel: {

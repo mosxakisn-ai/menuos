@@ -10,7 +10,6 @@ import {
 } from "@menuos/shared";
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
-import { WaiterShareLink } from "@/components/dashboard/waiter-share-link";
 import { dashboardCardClass } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
@@ -18,7 +17,7 @@ import { buildStaffShareUrl } from "@/lib/staff-share-url";
 
 type Venue = { id: string; name: string; slug: string; staffToken?: string };
 
-function SpaceStaffLinkCard({
+function SpaceZoneQrCard({
   venueId,
   zone,
   staffUrl,
@@ -132,27 +131,20 @@ function SpaceStaffLinkCard({
   );
 }
 
-export function SpaceStaffLinksPanel({ venues }: { venues: Venue[] }) {
+/** Zone-scoped waiter QR/link cards — one per space, under Χώροι settings. */
+export function SpaceZoneQrPanel({
+  venues,
+  venueId,
+}: {
+  venues: Venue[];
+  venueId: string;
+}) {
   const { d, lang } = useDashboardCopy();
-  const L = d.pages.settings.linksTab;
+  const Z = d.pages.settings.spacesTab;
   const langCode = lang === "EN" ? "EN" : "GR";
-  const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
-  const [staffTokens, setStaffTokens] = useState<Record<string, string>>(() => {
-    const map: Record<string, string> = {};
-    for (const venue of venues) {
-      if (venue.staffToken) map[venue.id] = venue.staffToken;
-    }
-    return map;
-  });
 
   const { spots, loading: spotsLoading } = useVenueSpots(venueId);
   const { config: opsConfig, loading: configLoading } = useVenueOperationsConfig(venueId);
-
-  useEffect(() => {
-    if (venues.length && !venues.some((v) => v.id === venueId)) {
-      setVenueId(venues[0]!.id);
-    }
-  }, [venues, venueId]);
 
   const zoneGroups = useMemo(() => {
     const groups = groupVenueSpotsByZone(spots);
@@ -160,86 +152,46 @@ export function SpaceStaffLinksPanel({ venues }: { venues: Venue[] }) {
   }, [spots, opsConfig?.zoneLabels]);
 
   const venue = venues.find((v) => v.id === venueId);
-  const staffToken = venue ? staffTokens[venue.id] : undefined;
+  const staffToken = venue?.staffToken;
   const loading = spotsLoading || configLoading;
 
-  if (venues.length === 0) {
-    return (
-      <div className={dashboardCardClass}>
-        <p className="text-sm text-slate-600">{d.pages.qr.needVenueDesc}</p>
-      </div>
-    );
-  }
+  if (!venueId || zoneGroups.length === 0) return null;
 
   return (
-    <div className="space-y-5">
-      {venues.length > 1 ? (
-        <label className={`${dashboardCardClass} block max-w-md`}>
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            {d.venue}
-          </span>
-          <select
-            value={venueId}
-            onChange={(e) => setVenueId(e.target.value)}
-            className="mt-1.5 w-full rounded-button border border-slate-200 px-3 py-2 text-sm"
-          >
-            {venues.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
-
-      {venue && staffToken ? (
-        <WaiterShareLink
-          venueSlug={venue.slug}
-          staffToken={staffToken}
-          venueId={venue.id}
-          onStaffTokenRotated={(next) =>
-            setStaffTokens((prev) => ({ ...prev, [venue.id]: next }))
-          }
-        />
-      ) : null}
+    <section className="space-y-4">
+      <div className={dashboardCardClass}>
+        <h3 className="text-sm font-semibold text-brand-navy">{Z.zoneQrTitle}</h3>
+        <p className="mt-2 text-sm text-slate-600">{Z.zoneQrDescription}</p>
+        <p className="mt-2 text-xs text-slate-500">{Z.zoneQrHint}</p>
+      </div>
 
       {loading ? (
-        <p className="text-sm text-slate-500">{L.loading}</p>
-      ) : zoneGroups.length === 0 ? (
-        <div className={dashboardCardClass}>
-          <p className="text-sm text-slate-600">{L.empty}</p>
-          <a
-            href="/dashboard/settings?tab=spaces"
-            className="mt-3 inline-block text-sm font-semibold text-brand-blue hover:underline"
-          >
-            {L.spacesTabLink}
-          </a>
-        </div>
+        <p className="text-sm text-slate-500">{Z.zoneQrLoading}</p>
       ) : !staffToken ? (
         <div className={dashboardCardClass}>
-          <p className="text-sm text-slate-600">{L.noStaffToken}</p>
+          <p className="text-sm text-slate-600">{Z.zoneQrNoToken}</p>
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2">
           {zoneGroups.map((zone) => (
-            <SpaceStaffLinkCard
+            <SpaceZoneQrCard
               key={zone.id}
               venueId={venueId}
               zone={zone}
               staffUrl={buildStaffShareUrl(venue!.slug, staffToken, zone.id)}
               langCode={langCode}
               copy={{
-                spotCount: L.spotCount,
-                openLink: L.openLink,
-                copyLink: L.copyLink,
+                spotCount: Z.spotCount,
+                openLink: Z.zoneQrOpenLink,
+                copyLink: Z.zoneQrCopyLink,
                 copied: d.waiter.copied,
-                downloadQr: L.downloadQr,
-                loadingQr: L.loadingQr,
+                downloadQr: Z.zoneQrDownload,
+                loadingQr: Z.zoneQrLoadingQr,
               }}
             />
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

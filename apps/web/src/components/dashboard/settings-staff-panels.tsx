@@ -2,13 +2,12 @@
 
 import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
-import { SpaceStaffLinksPanel } from "@/components/dashboard/space-staff-links-panel";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
+import { SpaceZoneQrPanel } from "@/components/dashboard/space-zone-qr-panel";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
 import { VenueTablesBySpacePanel } from "@/components/dashboard/venue-tables-by-space-panel";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
 import {
-  useVenueOperationsConfig,
   VenueOperationsConfigPanel,
 } from "@/components/dashboard/venue-operations-config-panel";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
@@ -82,11 +81,7 @@ function TabIntro({
   );
 }
 
-export function SettingsPersonnelPanel({
-  venues,
-}: {
-  venues: (VenueSpotVenue & { staffToken?: string })[];
-}) {
+export function SettingsPersonnelPanel({ venues }: { venues: VenueSpotVenue[] }) {
   return <VenueStaffSetup venues={venues} />;
 }
 
@@ -101,26 +96,6 @@ export function SettingsPostsPanel({ venues }: { venues: VenueSpotVenue[] }) {
       showHeader={false}
       intro={{ title: T.title, description: T.description, hint: T.hint }}
     />
-  );
-}
-
-export function SettingsLinksPanel({ venues }: { venues: VenueSpotVenue[] }) {
-  const { d } = useDashboardCopy();
-  const L = d.pages.settings.linksTab;
-
-  return (
-    <div className="space-y-5">
-      <TabIntro
-        title={L.title}
-        description={L.description}
-        hint={L.hint}
-        venues={venues}
-        venueId={venues[0]?.id ?? ""}
-        onVenueChange={() => {}}
-        hideVenuePicker
-      />
-      <SpaceStaffLinksPanel venues={venues} />
-    </div>
   );
 }
 
@@ -178,7 +153,11 @@ export function SettingsTablesPanel({ venues }: { venues: VenueSpotVenue[] }) {
   );
 }
 
-export function SettingsSpacesPanel({ venues }: { venues: VenueSpotVenue[] }) {
+export function SettingsSpacesPanel({
+  venues,
+}: {
+  venues: (VenueSpotVenue & { staffToken?: string })[];
+}) {
   const { d } = useDashboardCopy();
   const Z = d.pages.settings.spacesTab;
   const { venueId, setVenueId } = useVenuePicker(venues);
@@ -200,6 +179,8 @@ export function SettingsSpacesPanel({ venues }: { venues: VenueSpotVenue[] }) {
         sections={["zones"]}
         showHeader={false}
       />
+
+      <SpaceZoneQrPanel venues={venues} venueId={venueId} />
     </div>
   );
 }
@@ -243,14 +224,4 @@ export function SettingsGeneralExtrasPanel() {
       </div>
     </div>
   );
-}
-
-/** @deprecated Use SettingsLinksPanel — kept for imports during migration */
-export function SettingsKitchenPanel({ venues }: { venues: VenueSpotVenue[] }) {
-  return <SettingsLinksPanel venues={venues} />;
-}
-
-/** @deprecated Use SettingsLinksPanel */
-export function SettingsBarPanel({ venues }: { venues: VenueSpotVenue[] }) {
-  return <SettingsLinksPanel venues={venues} />;
 }

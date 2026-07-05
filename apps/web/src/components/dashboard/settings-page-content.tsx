@@ -113,7 +113,6 @@ function SettingsPageBody({
               id: v.id,
               name: v.name,
               slug: v.slug,
-              staffToken: v.staffToken,
             }))}
           />
         );
@@ -131,7 +130,16 @@ function SettingsPageBody({
         content = <SettingsTablesPanel venues={spotVenues} />;
         break;
       case "spaces":
-        content = <SettingsSpacesPanel venues={spotVenues} />;
+        content = (
+          <SettingsSpacesPanel
+            venues={venues.map((v) => ({
+              id: v.id,
+              name: v.name,
+              slug: v.slug,
+              staffToken: v.staffToken,
+            }))}
+          />
+        );
         break;
       default:
         content = null;
