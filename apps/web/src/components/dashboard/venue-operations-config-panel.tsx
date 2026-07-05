@@ -34,6 +34,7 @@ import {
 import { TableGridLegend } from "@/components/dashboard/table-grid-preview";
 import {
   MessageChipList,
+  type MessageChipListHandle,
 } from "@/components/dashboard/post-messages-editor";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
@@ -41,6 +42,7 @@ import { confirmDestructive } from "@/lib/confirm-action";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { DashboardIconButton } from "@/components/dashboard/dashboard-action-button";
 import { Plus, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type SpaceKind = "prefixed" | "main" | "sunbed" | "room";
 
@@ -200,8 +202,16 @@ export function VenueOperationsConfigPanel({
   const [newSpaceFrom, setNewSpaceFrom] = useState("1");
   const [newSpaceTo, setNewSpaceTo] = useState("");
   const [zoneBusy, setZoneBusy] = useState<string | null>(null);
-  const [selectedMessagePostId, setSelectedMessagePostId] = useState<string>("");
-  const [messageAddPending, setMessageAddPending] = useState(false);
+  const messageListRefs = useRef<Map<string, MessageChipListHandle>>(new Map());
+
+  function flushAllMessageDrafts() {
+    messageListRefs.current.forEach((handle) => handle.flushPending());
+  }
+
+  function registerMessageListRef(postId: string, handle: MessageChipListHandle | null) {
+    if (handle) messageListRefs.current.set(postId, handle);
+    else messageListRefs.current.delete(postId);
+  }
 
   useEffect(() => {
     if (initialVenueId) setVenueId(initialVenueId);
@@ -213,18 +223,6 @@ export function VenueOperationsConfigPanel({
     if (config) setDraft(config);
     else setDraft(null);
   }, [config]);
-
-  useEffect(() => {
-    if (!messagesByPost || !draft) return;
-    const posts = enabledVenuePosts(draft, langCode);
-    if (posts.length === 0) {
-      if (selectedMessagePostId) setSelectedMessagePostId("");
-      return;
-    }
-    if (!posts.some((post) => post.id === selectedMessagePostId)) {
-      setSelectedMessagePostId(posts[0]!.id);
-    }
-  }, [draft, langCode, messagesByPost, selectedMessagePostId]);
 
   const previewZones = useMemo(() => {
     if (!zoneGroups?.length || !draft) return zoneGroups ?? [];
@@ -238,6 +236,7 @@ export function VenueOperationsConfigPanel({
 
   async function save() {
     if (!venueId || !draft) return;
+    flushAllMessageDrafts();
     const langCode = lang === "EN" ? "EN" : "GR";
     const posts = listVenuePosts(draft, langCode);
     const payload = { ...draft, ...syncLegacyFromPosts(posts), posts };
@@ -678,43 +677,11 @@ export function VenueOperationsConfigPanel({
 
             {show("chips") && messagesByPost ? (
             <section className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
-                <p className="mt-1 text-sm text-slate-600">{M.byPostHint}</p>
-              </div>
-
-              <div className="flex max-w-2xl flex-wrap items-end gap-3">
-                <label className="min-w-[12rem] flex-1">
-                  <span className={dashboardLabelClass}>{M.selectPostLabel}</span>
-                  <select
-                    value={selectedMessagePostId}
-                    onChange={(e) => {
-                      setSelectedMessagePostId(e.target.value);
-                      setMessageAddPending(false);
-                    }}
-                    disabled={enabledPosts.length === 0}
-                    className={`${dashboardFieldClass} mt-1.5 w-full text-sm`}
-                  >
-                    {enabledPosts.length === 0 ? (
-                      <option value="">{M.noPostsHint}</option>
-                    ) : (
-                      enabledPosts.map((post) => (
-                        <option key={post.id} value={post.id}>
-                          {post.label.trim()}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  disabled={!selectedMessagePostId || enabledPosts.length === 0}
-                  onClick={() => setMessageAddPending(true)}
-                  className={`inline-flex shrink-0 items-center gap-1.5 ${buttonClass("primary", "sm")}`}
-                >
-                  <Plus className="h-4 w-4" aria-hidden />
-                  {M.addMessage}
-                </button>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
+                  <p className="mt-1 max-w-2xl text-sm text-slate-600">{M.byPostHint}</p>
+                </div>
                 <Link
                   href="/dashboard/settings?tab=posts"
                   className={`inline-flex shrink-0 items-center gap-1 ${buttonClass("secondary", "sm")}`}
@@ -730,43 +697,61 @@ export function VenueOperationsConfigPanel({
                     {M.managePostsLink}
                   </Link>
                 </p>
-              ) : null}
-
-              {selectedMessagePostId && draft ? (
-                <div className="max-w-2xl space-y-3">
-                  {(draft.quickChips?.[selectedMessagePostId]?.length ?? 0) > 0 ? (
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        {M.messagesListLabel}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const post = enabledPosts.find((row) => row.id === selectedMessagePostId);
-                          if (post) resetQuickChips(post);
-                        }}
-                        className="text-xs font-medium text-slate-500 hover:text-brand-blue"
+              ) : draft ? (
+                <div className="space-y-4">
+                  {enabledPosts.map((post) => {
+                    const items = draft.quickChips?.[post.id] ?? [];
+                    const hasCustom = items.length > 0;
+                    const stationLabels =
+                      lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+                    return (
+                      <div
+                        key={post.id}
+                        className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5"
                       >
-                        {M.resetPostMessages}
-                      </button>
-                    </div>
-                  ) : null}
-                  <MessageChipList
-                    key={selectedMessagePostId}
-                    items={draft.quickChips?.[selectedMessagePostId] ?? []}
-                    onChange={(next) => {
-                      setQuickChips(selectedMessagePostId, next);
-                      if (next.length > 0) setMessageAddPending(false);
-                    }}
-                    placeholder={M.messagePlaceholder}
-                    hideAddRow
-                    focusAdd={messageAddPending}
-                    onFocusAddHandled={() => setMessageAddPending(false)}
-                  />
-                  {!messageAddPending &&
-                  (draft.quickChips?.[selectedMessagePostId]?.length ?? 0) === 0 ? (
-                    <p className="text-sm text-slate-500">{M.previewEmpty}</p>
-                  ) : null}
+                        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <h4 className="text-base font-semibold text-brand-navy">{post.label.trim()}</h4>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {stationLabels[post.station]}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={cn(
+                                "rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                                hasCustom
+                                  ? "bg-emerald-50 text-emerald-800"
+                                  : "bg-slate-100 text-slate-500",
+                              )}
+                            >
+                              {M.messageCount(items.length)}
+                            </span>
+                            {hasCustom ? (
+                              <button
+                                type="button"
+                                onClick={() => resetQuickChips(post)}
+                                className="text-xs font-medium text-slate-500 hover:text-brand-blue"
+                              >
+                                {M.resetPostMessages}
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                        <MessageChipList
+                          ref={(handle) => registerMessageListRef(post.id, handle)}
+                          items={items}
+                          onChange={(next) => setQuickChips(post.id, next)}
+                          placeholder={M.messagePlaceholder}
+                          addLabel={M.addMessage}
+                        />
+                        {!hasCustom ? (
+                          <p className="mt-2 text-sm text-slate-500">{M.previewEmpty}</p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                  <p className="text-xs leading-relaxed text-slate-500">{M.messageSaveHint}</p>
                 </div>
               ) : null}
             </section>

@@ -785,11 +785,14 @@ export const DASHBOARD_EN = {
           "First create posts in the Posts tab (e.g. Kitchen, Bar).\nThen pick a post here and add your own messages — one by one, manually.",
         byPostTitle: "Messages by post",
         byPostHint:
-          "Pick a post, tap Add message. To create a new post (e.g. Bar), use the Posts tab.",
+          "See every post and its messages at once. Add messages in each card, then Save at the bottom.",
         selectPostLabel: "Choose post",
-        addMessage: "Add message",
+        addMessage: "Add",
         addPostLink: "New post →",
+        messageCount: (n: number) => (n === 1 ? "1 message" : `${n} messages`),
         messagePlaceholder: "Type your message…",
+        messageSaveHint:
+          "Each message appears in the list below. Press Enter or Save. They show on kitchen/bar tablets — not on the waiter panel.",
         noPostsHint: "You have no active posts.",
         servicesPostTitle: "Services — Waiter",
         servicesPostHint: "What appears on the spot map (guest call, kitchen ready, etc.).",

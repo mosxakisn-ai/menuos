@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { dashboardFieldClass } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { DEFAULT_POST_MESSAGE_COLORS } from "@menuos/shared";
@@ -87,27 +87,36 @@ export function PostMessagePreview({
 }
 
 /** Editable message list — add, edit inline, delete. */
-export function MessageChipList({
-  items,
-  onChange,
-  placeholder,
-  addLabel,
-  maxItems = 12,
-  focusAdd = false,
-  onFocusAddHandled,
-  hideAddRow = false,
-}: {
-  items: string[];
-  onChange: (next: string[]) => void;
-  placeholder: string;
-  addLabel?: string;
-  maxItems?: number;
-  /** Focus the blank add field (e.g. after «Προσθήκη» next to post picker). */
-  focusAdd?: boolean;
-  onFocusAddHandled?: () => void;
-  /** Hide built-in add row when parent provides its own «Προσθήκη» button. */
-  hideAddRow?: boolean;
-}) {
+export type MessageChipListHandle = {
+  /** Commit text still in the add field (e.g. before panel save). */
+  flushPending: () => void;
+};
+
+export const MessageChipList = forwardRef<
+  MessageChipListHandle,
+  {
+    items: string[];
+    onChange: (next: string[]) => void;
+    placeholder: string;
+    addLabel?: string;
+    maxItems?: number;
+    focusAdd?: boolean;
+    onFocusAddHandled?: () => void;
+    hideAddRow?: boolean;
+  }
+>(function MessageChipList(
+  {
+    items,
+    onChange,
+    placeholder,
+    addLabel,
+    maxItems = 12,
+    focusAdd = false,
+    onFocusAddHandled,
+    hideAddRow = false,
+  },
+  ref,
+) {
   const [draft, setDraft] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
@@ -146,12 +155,20 @@ export function MessageChipList({
     }
   }
 
-  function addItem() {
-    const value = draft.trim();
-    if (!value || items.includes(value) || items.length >= maxItems) return;
+  function addItem(forceValue?: string) {
+    const value = (forceValue ?? draft).trim();
+    if (!value || items.includes(value) || items.length >= maxItems) return false;
     onChange([...items, value]);
     setDraft("");
+    setAddFieldOpen(true);
+    return true;
   }
+
+  useImperativeHandle(ref, () => ({
+    flushPending: () => {
+      addItem();
+    },
+  }));
 
   return (
     <div className="space-y-3">
@@ -213,7 +230,7 @@ export function MessageChipList({
           />
           <button
             type="button"
-            onClick={addItem}
+            onClick={() => addItem()}
             disabled={!draft.trim()}
             className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
           >
@@ -228,7 +245,11 @@ export function MessageChipList({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={() => {
-              if (!draft.trim() && items.length === 0) setAddFieldOpen(false);
+              if (draft.trim()) {
+                addItem();
+                return;
+              }
+              if (items.length === 0) setAddFieldOpen(false);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -244,4 +265,4 @@ export function MessageChipList({
       ) : null}
     </div>
   );
-}
+});
