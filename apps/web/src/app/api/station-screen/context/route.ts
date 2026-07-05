@@ -125,7 +125,10 @@ export async function GET(request: Request) {
     stationLabel: stationDisplayLabel(opsConfig, station),
     screenLabel: auth.stationScreen?.label ?? null,
     spotPrefix: auth.stationScreen?.spotPrefix ?? null,
-    quickComments: quickChipsForStation(opsConfig, station),
+    quickComments: quickChipsForStation(opsConfig, station, {
+      screenLabel: auth.stationScreen?.label,
+      lang: "GR",
+    }),
     spots: filtered,
     activeSignals,
     todayCount,

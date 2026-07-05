@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PassStationInput, TableTileState, VenueOperationsConfig, VenuePost, VenueSpotType } from "@menuos/shared";
 import {
-  DEFAULT_PASS_QUICK_CHIPS,
   DEFAULT_STATION_LABELS_EL,
   DEFAULT_STATION_LABELS_EN,
   DEFAULT_TABLE_STATE_LABELS_EL,
@@ -16,6 +15,7 @@ import {
   mergeTableStateLabels,
   newVenuePostId,
   PASS_STATION_INPUTS,
+  quickChipsForPost,
   syncLegacyFromPosts,
   TABLE_TILE_STATES,
   tableLegendStates,
@@ -79,7 +79,7 @@ export function useVenueOperationsConfig(venueId: string) {
   return { config, loading, reload, setConfig };
 }
 
-function ChipEditor({
+export function ChipEditor({
   chips,
   onChange,
   placeholder,
@@ -151,15 +151,19 @@ export function VenueOperationsConfigPanel({
   sections = ALL_OPS_SECTIONS,
   showHeader = true,
   intro,
+  messagesByPost = false,
 }: {
   venues: Venue[];
   initialVenueId?: string;
   sections?: OpsConfigSection[];
   showHeader?: boolean;
   intro?: PanelIntro;
+  /** Messages tab: one editor per post; Services = map labels for waiters. */
+  messagesByPost?: boolean;
 }) {
   const { d, lang } = useDashboardCopy();
   const O = d.pages.settings.operations;
+  const M = d.pages.settings.messagesTab;
   const Z = d.pages.settings.spacesTab;
   const Posts = d.pages.settings.postsTab;
   const P = d.pages.settings.personnel.stationLabels;
@@ -281,18 +285,24 @@ export function VenueOperationsConfigPanel({
     ]);
   }
 
-  function setQuickChips(station: PassStationInput, chips: string[]) {
+  function setQuickChips(postId: string, chips: string[]) {
     if (!draft) return;
     setDraft({
       ...draft,
-      quickChips: { ...(draft.quickChips ?? {}), [station]: chips },
+      quickChips: { ...(draft.quickChips ?? {}), [postId]: chips },
     });
   }
 
-  function resetQuickChips(station: PassStationInput) {
+  function resetQuickChips(post: VenuePost) {
     if (!draft) return;
     const next = { ...(draft.quickChips ?? {}) };
-    delete next[station];
+    delete next[post.id];
+    const sameStation = listVenuePosts(draft, langCode).filter(
+      (row) => row.enabled && row.station === post.station,
+    );
+    if (sameStation.length === 1 && sameStation[0]?.id === post.id) {
+      delete next[post.station];
+    }
     setDraft({ ...draft, quickChips: Object.keys(next).length ? next : undefined });
   }
 
@@ -620,14 +630,85 @@ export function VenueOperationsConfigPanel({
             </section>
             ) : null}
 
-            {show("chips") ? (
+            {show("chips") && messagesByPost ? (
+            <section className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
+                <p className="mt-1 text-sm text-slate-600">{M.byPostHint}</p>
+              </div>
+
+              {show("map") ? (
+                <div className="rounded-2xl border border-brand-blue/20 bg-gradient-to-br from-brand-blue/[0.04] to-cyan-400/[0.06] p-4 sm:p-5">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-brand-navy">{M.servicesPostTitle}</p>
+                      <p className="mt-0.5 text-xs text-slate-600">{M.servicesPostHint}</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {(draft ? tableLegendStates(draft) : TABLE_TILE_STATES).map((state) => (
+                      <label key={state} className="block">
+                        <span className="text-xs font-medium text-slate-500">
+                          {stateLabelDefaults[state]}
+                        </span>
+                        <input
+                          value={draft.tableStateLabels?.[state] ?? stateLabelDefaults[state]}
+                          onChange={(e) => setTableStateLabel(state, e.target.value)}
+                          maxLength={40}
+                          className={`${dashboardFieldClass} mt-1 text-sm`}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <div className="mt-4">
+                    <TableGridLegend
+                      stateLabels={previewLabels}
+                      states={draft ? tableLegendStates(draft) : undefined}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              {enabledPosts.map((post) => {
+                const chips =
+                  draft.quickChips?.[post.id] ??
+                  quickChipsForPost(draft, post.id, langCode);
+                return (
+                  <div
+                    key={post.id}
+                    className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5"
+                  >
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-brand-navy">{post.label.trim()}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{M.passPostHint}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => resetQuickChips(post)}
+                        className="text-xs font-medium text-slate-500 hover:text-brand-blue"
+                      >
+                        {O.resetDefaults}
+                      </button>
+                    </div>
+                    <ChipEditor
+                      chips={chips}
+                      onChange={(next) => setQuickChips(post.id, next)}
+                      placeholder={O.chipPlaceholder}
+                    />
+                  </div>
+                );
+              })}
+            </section>
+            ) : show("chips") ? (
             <section>
               <h3 className="text-sm font-semibold text-brand-navy">{O.quickChipsTitle}</h3>
               <p className="mt-1 text-sm text-slate-600">{O.quickChipsHint}</p>
               <div className="mt-4 space-y-5">
                 {enabledPosts.map((post) => {
                   const chips =
-                    draft.quickChips?.[post.station] ?? DEFAULT_PASS_QUICK_CHIPS[post.station];
+                    draft.quickChips?.[post.id] ??
+                    quickChipsForPost(draft, post.id, langCode);
                   return (
                     <div
                       key={post.id}
@@ -639,7 +720,7 @@ export function VenueOperationsConfigPanel({
                         </p>
                         <button
                           type="button"
-                          onClick={() => resetQuickChips(post.station)}
+                          onClick={() => resetQuickChips(post)}
                           className="text-xs font-medium text-slate-500 hover:text-brand-blue"
                         >
                           {O.resetDefaults}
@@ -647,7 +728,7 @@ export function VenueOperationsConfigPanel({
                       </div>
                       <ChipEditor
                         chips={chips}
-                        onChange={(next) => setQuickChips(post.station, next)}
+                        onChange={(next) => setQuickChips(post.id, next)}
                         placeholder={O.chipPlaceholder}
                       />
                     </div>
@@ -657,7 +738,7 @@ export function VenueOperationsConfigPanel({
             </section>
             ) : null}
 
-            {show("map") ? (
+            {show("map") && !messagesByPost ? (
             <section>
               <h3 className="text-sm font-semibold text-brand-navy">{O.mapLabelsTitle}</h3>
               <p className="mt-1 text-sm text-slate-600">{O.mapLabelsHint}</p>

@@ -14,6 +14,8 @@ import {
   staffRoleOptionsForLang,
   staffRoleOptionsWithLegacy,
   staffStationLabelForLang,
+  visibleMessagesForStaffAssignment,
+  type VenueOperationsConfig,
   type VenuePost,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -148,6 +150,66 @@ function StaffMemberLinkActions({
           {labels.rotateLink}
         </button>
       </div>
+    </div>
+  );
+}
+
+function StaffPostMessagesPreview({
+  config,
+  loading,
+  postId,
+  copy,
+  langCode,
+}: {
+  config: VenueOperationsConfig | null;
+  loading: boolean;
+  postId: string;
+  copy: {
+    title: string;
+    waiter: string;
+    pass: string;
+    empty: string;
+    manageLink: string;
+  };
+  langCode: "GR" | "EN";
+}) {
+  const visible = useMemo(
+    () => visibleMessagesForStaffAssignment(config ?? undefined, postId, langCode),
+    [config, postId, langCode],
+  );
+
+  if (loading) return null;
+
+  const kindLabel = visible.kind === "waiter_map" ? copy.waiter : copy.pass;
+  const items = [...new Set(visible.labels.filter(Boolean))];
+
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3">
+      <p className="text-xs font-semibold text-brand-navy">
+        {copy.title} · <span className="font-medium text-brand-blue">{kindLabel}</span>
+      </p>
+      {items.length === 0 ? (
+        <p className="mt-2 text-xs text-slate-500">
+          {copy.empty}{" "}
+          <Link href="/dashboard/settings?tab=messages" className="font-semibold text-brand-blue hover:underline">
+            {copy.manageLink}
+          </Link>
+        </p>
+      ) : (
+        <ul className="mt-2 flex flex-wrap gap-1.5">
+          {items.slice(0, 8).map((item, index) => (
+            <li
+              key={`${item}-${index}`}
+              className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200/80"
+            >
+              {item}
+            </li>
+          ))}
+          {items.length > 8 ? (
+            <li className="self-center text-[11px] text-slate-400">+{items.length - 8}</li>
+          ) : null}
+        </ul>
+      )}
     </div>
   );
 }
@@ -339,6 +401,14 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
   const roleListId = "staff-role-suggestions";
 
+  const messagesPreviewCopy = {
+    title: S.messagesPreviewTitle,
+    waiter: S.messagesPreviewWaiter,
+    pass: S.messagesPreviewPass,
+    empty: S.messagesPreviewEmpty,
+    manageLink: S.manageMessagesLink,
+  };
+
   function renderAssignmentFields(
     values: {
       name: string;
@@ -480,6 +550,13 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                 </table>
               </div>
               <p className="text-xs text-slate-500">{S.formHint}</p>
+              <StaffPostMessagesPreview
+                config={opsConfig}
+                loading={opsLoading}
+                postId={postAssignment}
+                copy={messagesPreviewCopy}
+                langCode={langCode}
+              />
               <div className="flex justify-end">
                 <button
                   type="submit"
@@ -522,43 +599,56 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
                     if (isEditing) {
                       return (
-                        <tr key={member.id} className="border-b border-slate-50 bg-blue-50/30">
-                          {renderAssignmentFields(
-                            {
-                              name: editName,
-                              role: editRole,
-                              zone: editZoneId,
-                              post: editPostAssignment,
-                            },
-                            {
-                              setName: setEditName,
-                              setRole: setEditRole,
-                              setZone: setEditZoneId,
-                              setPost: setEditPostAssignment,
-                            },
-                            staffRoleOptionsWithLegacy(langCode, editRole),
-                          )}
-                          <td className="px-3 py-2 align-top text-right">
-                            <div className="flex flex-wrap justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setEditingId(null)}
-                                className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
-                              >
-                                <X className="h-4 w-4" />
-                                {S.cancelEdit}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={isBusy || !editName.trim() || !editRole.trim() || !editZoneId}
-                                onClick={() => void saveEdit(member.id)}
-                                className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
-                              >
-                                {S.saveEdit}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                        <>
+                          <tr key={member.id} className="border-b border-slate-50 bg-blue-50/30">
+                            {renderAssignmentFields(
+                              {
+                                name: editName,
+                                role: editRole,
+                                zone: editZoneId,
+                                post: editPostAssignment,
+                              },
+                              {
+                                setName: setEditName,
+                                setRole: setEditRole,
+                                setZone: setEditZoneId,
+                                setPost: setEditPostAssignment,
+                              },
+                              staffRoleOptionsWithLegacy(langCode, editRole),
+                            )}
+                            <td className="px-3 py-2 align-top text-right">
+                              <div className="flex flex-wrap justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingId(null)}
+                                  className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+                                >
+                                  <X className="h-4 w-4" />
+                                  {S.cancelEdit}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isBusy || !editName.trim() || !editRole.trim() || !editZoneId}
+                                  onClick={() => void saveEdit(member.id)}
+                                  className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
+                                >
+                                  {S.saveEdit}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr key={`${member.id}-messages`} className="border-b border-slate-50 bg-blue-50/20">
+                            <td colSpan={5} className="px-3 py-3">
+                              <StaffPostMessagesPreview
+                                config={opsConfig}
+                                loading={opsLoading}
+                                postId={editPostAssignment}
+                                copy={messagesPreviewCopy}
+                                langCode={langCode}
+                              />
+                            </td>
+                          </tr>
+                        </>
                       );
                     }
 

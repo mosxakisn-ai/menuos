@@ -782,16 +782,47 @@ export const DASHBOARD_EN = {
       },
       messagesTab: {
         title: "Messages",
-        description: "Quick buttons on tablet screens and what waiters see on the spot map.",
+        description:
+          "Configure messages per post — waiters see theirs, kitchen/bar see theirs.",
+        hint:
+          "Services = labels on the waiter spot map.\nEach post (Cook, Bar…) = quick buttons on the tablet screen.\nIn Staff, the post assignment decides which messages each person sees.",
+        byPostTitle: "Messages by post",
+        byPostHint:
+          "Each employee only sees messages for the post you assign in the Staff tab.",
+        servicesPostTitle: "Services — Waiter",
+        servicesPostHint: "What appears on the spot map (guest call, kitchen ready, etc.).",
+        passPostHint: "Quick buttons when sending a pass from tablet — for this post only.",
+        managePostsLink: "Manage posts →",
       },
       venueTab: {
         title: "Venue",
         description: "Name, colours and logo — what guests see on the QR menu.",
       },
       tablesTab: {
-        title: "Tables & spots",
+        title: "Tables",
         description:
-          "Add tables per space — e.g. Bar 1–10, Hall 1–20. Each space appears separately on the waiter panel.",
+          "Pick a space, say how many tables it has, and create them. Each space is separate — expand to view or delete.",
+        hint:
+          "One space = one number range (e.g. Patio 1–20).\nWith 100+ tables, spaces stay collapsed — expand only when you need them.",
+        createTitle: "New space with tables",
+        createDesc: "Choose space type, name (if needed) and number range.",
+        createSpace: "Create space",
+        creating: "Creating…",
+        createPreview: (space: string, from: number, to: number, count: number) =>
+          `${count} spots will be created in «${space}» (${from}–${to}).`,
+        listTitle: "Your spaces",
+        listDesc: "Tap a space to see its tables. Deleting a space removes all its tables.",
+        spotCount: (n: number) => `${n} tables`,
+        addMoreTitle: "Add more to this space",
+        addMore: "Add",
+        expandAll: "Expand all",
+        collapseAll: "Collapse all",
+        loading: "Loading…",
+        empty: "No spaces yet.",
+        emptyHint: "Use the form above for your first space — e.g. Hall 1–30.",
+        emptyZone: "No tables in this space.",
+        renameHint: "To rename how a space appears to waiters:",
+        spacesTabLink: "Manage spaces →",
       },
       spacesTab: {
         title: "Spaces",
@@ -829,7 +860,7 @@ export const DASHBOARD_EN = {
       personnel: {
         title: "Staff",
         description:
-          "Add an employee: name, role, space and post. Each person gets their own link — opens the waiter panel for their space only.",
+          "Add an employee: name, role, space and post. The post also decides which messages they see — each person gets their own link.",
         addTitle: "New employee",
         addStaff: "Add",
         listTitle: "Team",
@@ -840,6 +871,11 @@ export const DASHBOARD_EN = {
         stationsHint: "Services = guest calls. Post = which pass alerts they see.",
         managePostsLink: "Manage posts →",
         manageSpacesLink: "Manage spaces →",
+        manageMessagesLink: "Manage messages →",
+        messagesPreviewTitle: "Messages they will see",
+        messagesPreviewWaiter: "Spot map labels",
+        messagesPreviewPass: "Pass quick buttons",
+        messagesPreviewEmpty: "No messages configured for this post yet.",
         noPosts: "No active posts.",
         noSpaces: "No spaces yet.",
         saving: "Saving...",

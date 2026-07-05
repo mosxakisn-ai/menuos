@@ -94,13 +94,7 @@ export const venueOperationsConfigSchema = z.object({
     .partial()
     .optional(),
   quickChips: z
-    .object({
-      kitchen: z.array(quickChipSchema).max(12),
-      bar: z.array(quickChipSchema).max(12),
-      cold: z.array(quickChipSchema).max(12),
-      dessert: z.array(quickChipSchema).max(12),
-    })
-    .partial()
+    .record(z.string().trim().min(1).max(40), z.array(quickChipSchema).max(12))
     .optional(),
   tableStateLabels: z.record(tableTileStateSchema, zoneLabelSchema).optional(),
   zoneLabels: z.record(z.string().trim().max(60), zoneLabelSchema).optional(),
@@ -286,10 +280,74 @@ export function passPushTitle(
   }
 }
 
+export function quickChipsForPost(
+  config: VenueOperationsConfig | undefined,
+  postId: string,
+  lang: "GR" | "EN" = "GR",
+): string[] {
+  const posts = listVenuePosts(config, lang);
+  const post = posts.find((row) => row.id === postId);
+  const byId = config?.quickChips?.[postId];
+  if (byId && byId.length > 0) return byId;
+
+  if (post) {
+    const legacyStation = config?.quickChips?.[post.station];
+    if (legacyStation && legacyStation.length > 0) {
+      const sameStation = posts.filter((row) => row.enabled && row.station === post.station);
+      if (sameStation.length === 1 || sameStation[0]?.id === postId) {
+        return legacyStation;
+      }
+    }
+    return DEFAULT_PASS_QUICK_CHIPS[post.station];
+  }
+
+  return [];
+}
+
+export function resolvePostIdForStationScreen(
+  config: VenueOperationsConfig,
+  station: PassStationInput,
+  screenLabel?: string | null,
+  lang: "GR" | "EN" = "GR",
+): string | null {
+  const posts = enabledVenuePosts(config, lang).filter((post) => post.station === station);
+  const label = screenLabel?.trim();
+  if (label) {
+    const match = posts.find((post) => post.label.trim() === label);
+    if (match) return match.id;
+  }
+  return posts[0]?.id ?? null;
+}
+
+export type StaffVisibleMessages =
+  | { kind: "waiter_map"; labels: string[] }
+  | { kind: "pass_quick"; labels: string[] };
+
+/** Messages a staff member sees based on their post assignment (services = map labels). */
+export function visibleMessagesForStaffAssignment(
+  config: VenueOperationsConfig | undefined,
+  assignment: string,
+  lang: "GR" | "EN" = "GR",
+): StaffVisibleMessages {
+  if (assignment === "services" || assignment === "all") {
+    const merged = mergeTableStateLabels(config, lang);
+    const states = tableLegendStates(config);
+    return { kind: "waiter_map", labels: states.map((state) => merged[state]) };
+  }
+  return { kind: "pass_quick", labels: quickChipsForPost(config, assignment, lang) };
+}
+
 export function quickChipsForStation(
   config: VenueOperationsConfig,
   station: PassStationInput,
+  opts?: { screenLabel?: string | null; postId?: string | null; lang?: "GR" | "EN" },
 ): string[] {
+  const lang = opts?.lang ?? "GR";
+  const postId =
+    opts?.postId?.trim() ||
+    resolvePostIdForStationScreen(config, station, opts?.screenLabel, lang);
+  if (postId) return quickChipsForPost(config, postId, lang);
+
   const custom = config.quickChips?.[station];
   if (custom && custom.length > 0) return custom;
   return DEFAULT_PASS_QUICK_CHIPS[station];

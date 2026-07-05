@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { SpaceStaffLinksPanel } from "@/components/dashboard/space-staff-links-panel";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
-import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
+import { VenueTablesBySpacePanel } from "@/components/dashboard/venue-tables-by-space-panel";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
 import {
   useVenueOperationsConfig,
@@ -142,6 +142,7 @@ export function SettingsMessagesPanel({ venues }: { venues: VenueSpotVenue[] }) 
       <TabIntro
         title={T.title}
         description={T.description}
+        hint={T.hint}
         venues={venues}
         venueId={venueId}
         onVenueChange={setVenueId}
@@ -151,6 +152,7 @@ export function SettingsMessagesPanel({ venues }: { venues: VenueSpotVenue[] }) 
         initialVenueId={venueId}
         sections={["chips", "map"]}
         showHeader={false}
+        messagesByPost
       />
     </div>
   );
@@ -159,8 +161,21 @@ export function SettingsMessagesPanel({ venues }: { venues: VenueSpotVenue[] }) 
 export function SettingsTablesPanel({ venues }: { venues: VenueSpotVenue[] }) {
   const { d } = useDashboardCopy();
   const T = d.pages.settings.tablesTab;
+  const { venueId, setVenueId } = useVenuePicker(venues);
 
-  return <VenueSpotsSetup venues={venues} intro={{ title: T.title, description: T.description }} />;
+  return (
+    <div className="space-y-5">
+      <TabIntro
+        title={T.title}
+        description={T.description}
+        hint={T.hint}
+        venues={venues}
+        venueId={venueId}
+        onVenueChange={setVenueId}
+      />
+      <VenueTablesBySpacePanel venues={venues} venueId={venueId} />
+    </div>
+  );
 }
 
 export function SettingsSpacesPanel({ venues }: { venues: VenueSpotVenue[] }) {

@@ -3,8 +3,66 @@ import { describe, expect, it } from "vitest";
 import {
   isReservedVenuePostId,
   normalizeVenueOperationsConfig,
+  quickChipsForPost,
+  resolvePostIdForStationScreen,
   venueOperationsConfigSchema,
+  visibleMessagesForStaffAssignment,
 } from "./venue-operations-config";
+
+describe("quickChipsForPost", () => {
+  it("returns chips keyed by post id", () => {
+    const config = {
+      enabledStations: ["kitchen" as const, "bar" as const],
+      posts: [
+        { id: "grill", label: "Grill", enabled: true, station: "kitchen" as const },
+        { id: "kitchen", label: "Kitchen", enabled: true, station: "kitchen" as const },
+      ],
+      quickChips: { grill: ["Custom grill msg"] },
+    };
+    expect(quickChipsForPost(config, "grill")).toEqual(["Custom grill msg"]);
+    expect(quickChipsForPost(config, "kitchen", "EN")[0]).toBeTruthy();
+  });
+
+  it("falls back to legacy station key for single post", () => {
+    const config = {
+      enabledStations: ["kitchen" as const],
+      quickChips: { kitchen: ["Legacy"] },
+    };
+    expect(quickChipsForPost(config, "kitchen")).toEqual(["Legacy"]);
+  });
+});
+
+describe("resolvePostIdForStationScreen", () => {
+  it("matches screen label to post label", () => {
+    const config = {
+      enabledStations: ["kitchen" as const],
+      posts: [
+        { id: "grill", label: "Grill", enabled: true, station: "kitchen" as const },
+        { id: "kitchen", label: "Kitchen", enabled: true, station: "kitchen" as const },
+      ],
+    };
+    expect(resolvePostIdForStationScreen(config, "kitchen", "Grill")).toBe("grill");
+  });
+});
+
+describe("visibleMessagesForStaffAssignment", () => {
+  it("returns map labels for services", () => {
+    const result = visibleMessagesForStaffAssignment(undefined, "services", "GR");
+    expect(result.kind).toBe("waiter_map");
+    expect(result.labels.length).toBeGreaterThan(0);
+  });
+
+  it("returns pass chips for post id", () => {
+    const config = {
+      enabledStations: ["bar" as const],
+      posts: [{ id: "bar", label: "Bar", enabled: true, station: "bar" as const }],
+      quickChips: { bar: ["No ice"] },
+    };
+    const result = visibleMessagesForStaffAssignment(config, "bar");
+    expect(result.kind).toBe("pass_quick");
+    expect(result.labels).toEqual(["No ice"]);
+  });
+});
 
 describe("isReservedVenuePostId", () => {
   it("flags staff-only tokens", () => {
