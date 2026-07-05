@@ -289,7 +289,7 @@ export function VenueSpotsQrList({
   }
 
   function qrCacheKey(spot: Spot): string {
-    return `${spot.type}:${spot.label}`;
+    return spot.id;
   }
 
   async function fetchQr(spot: Spot): Promise<QrData | null> {
