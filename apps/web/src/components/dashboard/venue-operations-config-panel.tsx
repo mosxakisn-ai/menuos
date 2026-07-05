@@ -308,8 +308,8 @@ export function VenueOperationsConfigPanel({
     if (posts.length >= MAX_VENUE_POSTS) return;
     const fallback = lang === "EN" ? "New post" : "Νέο πόστο";
     updatePosts([
-      ...posts,
       { id: newVenuePostId(), label: fallback, enabled: true, station: "kitchen" },
+      ...posts,
     ]);
   }
 
@@ -674,11 +674,12 @@ export function VenueOperationsConfigPanel({
                           type="button"
                           onClick={() => void confirmRemovePost(post.id)}
                           disabled={draftPosts.length <= 1}
-                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
+                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
                           aria-label={O.removePost}
                           title={O.removePost}
                         >
-                          <Trash2 className="h-4 w-4" aria-hidden />
+                          <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+                          {O.removePost}
                         </button>
                       </div>
                     </div>
@@ -814,11 +815,12 @@ export function VenueOperationsConfigPanel({
                           type="button"
                           onClick={() => void confirmRemovePost(post.id)}
                           disabled={draftPosts.length <= 1}
-                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
+                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
                           aria-label={O.removePost}
                           title={O.removePost}
                         >
-                          <Trash2 className="h-4 w-4" aria-hidden />
+                          <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+                          {O.removePost}
                         </button>
                       </div>
                     </div>

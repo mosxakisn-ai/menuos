@@ -792,7 +792,8 @@ export const DASHBOARD_EN = {
         hint:
           "Services = waiter spot map.\nEach post = tablet quick buttons.\nOne colour per post — all messages in that post share the same colour.",
         byPostTitle: "Messages by post",
-        byPostHint: "Edit text, add or remove messages. Add or delete posts here or in the Posts tab.",
+        byPostHint:
+          "Edit text, add or remove messages. New posts appear first. To delete a whole post, use Remove post on its card (not on Services).",
         servicesPostTitle: "Services — Waiter",
         servicesPostHint: "What appears on the spot map (guest call, kitchen ready, etc.).",
         passPostHint: "Quick buttons when sending a pass from tablet — for this post only.",
