@@ -483,6 +483,7 @@ export const DASHBOARD_EL = {
     newItems: "Νέα είδη",
     needVenueFirst: "Φτιάξε πρώτα κατάστημα για να λαμβάνεις κλήσεις από πελάτες.",
     managerViewBadge: "Προβολή: όλο το κατάστημα",
+    managerZoneViewBadge: (zone: string) => `Προβολή: ${zone}`,
     staffViewBadge: (name: string, zone: string | null, stations: string) =>
       zone
         ? `Προβολή: ${name} · ${zone} · ${stations}`
@@ -759,9 +760,22 @@ export const DASHBOARD_EL = {
         title: "Πόστα",
         description:
           "Ορίστε ποιος κάνει τι — μάγειρας, σερβιτόρος, μπαρ, κ.λπ. Το όνομα εμφανίζεται στο προσωπικό, push και tablet.",
-        hint: "Μέχρι 12 πόστα. Πάτα «Νέο πόστο» και γράψε τον ρόλο (π.χ. Κουζίνα, Bar).",
+        hint: "Μέχρι 12 πόστα (π.χ. Κουζίνα, Bar). Οι σερβιτόροι δάπεδου ρυθμίζονται στο Προσωπικό — όχι εδώ.",
         postNamePlaceholder: "π.χ. Κουζίνα, Bar",
         postTypeHint: "Τύπος tablet — κουζίνα, μπαρ κ.λπ. (για routing πάσου).",
+        waiterNameWarning:
+          "Αυτό το όνομα είναι για σερβιτόρο δάπεδου — διάλεξε «Σερβιτόρος — δάπεδο (κινητό)» στο Προσωπικό, όχι πόστο εδώ.",
+        linkedTitle: "Πού συνδέονται τα πόστα",
+        linkedWaiterNote:
+          "Σερβιτόροι δάπεδου (κινητό, κλήσεις πελάτη) δεν φτιάχνονται εδώ — μόνο στο tab Προσωπικό.",
+        linkedTablet: (postName: string, stationName: string) =>
+          `«${postName}» (${stationName}) → Μηνύματα + tablet στο Προσωπικό`,
+        nextMessagesLink: "Μηνύματα →",
+        nextStaffLink: "Προσωπικό →",
+        savedNextSteps:
+          "Αποθηκεύτηκαν. Επόμενα: πρόσθεσε μηνύματα ανά πόστο και ανάθεσε εργαζόμενους στο Προσωπικό.",
+        junkRemovedHint:
+          "Αφαιρέθηκε πόστο με όνομα σερβιτόρου — οι σερβιτόροι δάπεδου ρυθμίζονται μόνο από Προσωπικό.",
       },
       screensTab: {
         title: "Οθόνες tablet",
@@ -801,11 +815,13 @@ export const DASHBOARD_EL = {
           "Βλέπεις όλα τα πόστα και τα μηνύματά τους. Πρόσθεσε μηνύματα σε κάθε κάρτα και πάτα Αποθήκευση στο τέλος.",
         selectPostLabel: "Διάλεξε πόστο",
         addMessage: "Προσθήκη",
-        addPostLink: "Νέο πόστο →",
         messageCount: (n: number) => (n === 1 ? "1 μήνυμα" : `${n} μηνύματα`),
         messagePlaceholder: "Γράψε το μήνυμά σου…",
         messageSaveHint:
-          "Κάθε μήνυμα εμφανίζεται στη λίστα παρακάτω. Πάτα Enter ή Αποθήκευση. Φαίνονται στο tablet κουζίνας/μπαρ — όχι στο panel σερβιτόρου.",
+          "Πάτα Αποθήκευση στο τέλος. Για να φανούν στο tablet, στο Προσωπικό διάλεξε το ίδιο πόστο — όχι «Σερβιτόρος».",
+        passTabletStaffHint: (postName: string) =>
+          `Tablet πάσου: στο Προσωπικό διάλεξε πόστο «${postName}» (όχι «Σερβιτόρος» — αυτός λαμβάνει ειδοποιήσεις στο κινητό).`,
+        assignInStaffLink: "Προσωπικό →",
         noPostsHint: "Δεν έχεις ενεργά πόστα.",
         servicesPostTitle: "Services — Σερβιτόρος",
         servicesPostHint: "Τι βλέπει στον χάρτη θέσεων (κλήση πελάτη, έτοιμο κουζίνας κ.λπ.).",
@@ -907,8 +923,10 @@ export const DASHBOARD_EL = {
         editTitle: "Επεξεργασία",
         cancelEdit: "Άκυρο",
         formHint:
-          "Το πόστο ορίζει τα μηνύματα (Ρυθμίσεις → Μηνύματα). Σερβιτόρος = κλήσεις πελάτη, όχι μηνύματα πάσου.",
-        messagesScopeWaiter: "Κλήσεις πελάτη — χωρίς μηνύματα πάσου",
+          "Σερβιτόρος = κινητό (κλήσεις πελάτη, πάσο). Κουζίνα/μπαρ = tablet με γρήγορα μηνύματα — το πόστο πρέπει να ταιριάζει με Ρυθμίσεις → Μηνύματα.",
+        messagesScopeWaiter:
+          "Σερβιτόρος δάπεδου — κλήσεις & πάσο στο κινητό (δεν στέλνει γρήγορα μηνύματα)",
+        messagesScopeTablet: "Tablet πάσου — στέλνει τα μηνύματα αυτού του πόστου",
         colSpaceAll: "Όλοι οι χώροι",
         managePostsLink: "Ρύθμιση πόστων →",
         manageSpacesLink: "Ρύθμιση χώρων →",
@@ -921,13 +939,19 @@ export const DASHBOARD_EL = {
         colName: "Όνομα",
         colSpace: "Χώρος",
         colPost: "Πόστο",
+        colSpaceRequired: "Χώρος *",
+        colPostRequired: "Πόστο *",
+        selectSpacePlaceholder: "Επίλεξε χώρο",
+        selectPostPlaceholder: "Επίλεξε πόστο",
+        fieldsRequiredHint:
+          "Όνομα, χώρος και πόστο είναι υποχρεωτικά. Σερβιτόρος = συγκεκριμένος χώρος (Σάλα, Αυλή). Κουζίνα/μπαρ = πόστο από tab Πόστα.",
         colLink: "Link",
         colLinkHint:
           "Σερβιτόρος: link κινητού (χάρτης). Κουζίνα/μπαρ: link tablet — άνοιγμα χωρίς login.",
         colActions: "Ενέργειες",
         viewLink: "Προβολή",
         viewLinkTablet: "Άνοιγμα οθόνης",
-        missingScreen: "Δεν υπάρχει οθόνη — Ρυθμίσεις → Οθόνες.",
+        missingScreen: "Δεν υπάρχει οθόνη tablet — πρόσθεσε εργαζόμενο με πόστο κουζίνας/μπαρ.",
         invalidAssignment: "Το πόστο δεν είναι ενεργό — επεξεργασία.",
         copyLink: "Αντιγραφή",
         copied: "Αντιγράφηκε!",

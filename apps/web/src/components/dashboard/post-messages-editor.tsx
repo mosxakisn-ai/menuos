@@ -88,8 +88,8 @@ export function PostMessagePreview({
 
 /** Editable message list — add, edit inline, delete. */
 export type MessageChipListHandle = {
-  /** Commit text still in the add field (e.g. before panel save). */
-  flushPending: () => void;
+  /** Commit pending text/edits and return the final list (for sync save). */
+  flushPending: () => string[];
 };
 
 export const MessageChipList = forwardRef<
@@ -155,18 +155,38 @@ export const MessageChipList = forwardRef<
     }
   }
 
-  function addItem(forceValue?: string) {
+  function addItem(forceValue?: string): string[] | null {
     const value = (forceValue ?? draft).trim();
-    if (!value || items.includes(value) || items.length >= maxItems) return false;
-    onChange([...items, value]);
+    if (!value || items.includes(value) || items.length >= maxItems) return null;
+    const next = [...items, value];
+    onChange(next);
     setDraft("");
     setAddFieldOpen(true);
-    return true;
+    return next;
   }
 
   useImperativeHandle(ref, () => ({
     flushPending: () => {
-      addItem();
+      let next = items;
+      if (editingIndex !== null) {
+        const value = editDraft.trim();
+        if (!value) {
+          next = items.filter((_, i) => i !== editingIndex);
+        } else {
+          next = items.map((item, i) => (i === editingIndex ? value : item));
+          next = [...new Set(next)];
+        }
+        onChange(next);
+        setEditingIndex(null);
+        setEditDraft("");
+      }
+      const pending = draft.trim();
+      if (pending && !next.includes(pending) && next.length < maxItems) {
+        next = [...next, pending];
+        onChange(next);
+        setDraft("");
+      }
+      return next;
     },
   }));
 

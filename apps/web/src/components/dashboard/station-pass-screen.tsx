@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Clock, MapPin, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, MapPin, X } from "lucide-react";
 import {
   findZoneIdForSpot,
   formatWaiterCallLocation,
@@ -56,6 +56,7 @@ const COPY = {
     waitingPicked: "Ο σερβιτόρος πήγε",
     noTable: "Διάλεξε τραπέζι παραπάνω",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
+    messagesTitle: "Μηνύματα",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     quickComments: ["Ξέχασες τον πάγο", "Ξέχασες το ψωμί", "2 πιάτα μαζί", "Επείγον"],
@@ -74,6 +75,7 @@ const COPY = {
     waitingPicked: "Ο σερβιτόρος πήγε",
     noTable: "Διάλεξε τραπέζι παραπάνω",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
+    messagesTitle: "Μηνύματα",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     quickComments: ["Χωρίς πάγο", "Με πάγο", "Ξέχασες καλαμάκι", "Επείγον"],
@@ -92,6 +94,7 @@ const COPY = {
     waitingPicked: "Ο σερβιτόρος πήγε",
     noTable: "Διάλεξε τραπέζι παραπάνω",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
+    messagesTitle: "Μηνύματα",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     quickComments: ["Με σως χωριστά", "Χωρίς κρεμμύδι", "Ξέχασες πίτα", "Επείγον"],
@@ -110,6 +113,7 @@ const COPY = {
     waitingPicked: "Ο σερβιτόρος πήγε",
     noTable: "Διάλεξε τραπέζι παραπάνω",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
+    messagesTitle: "Μηνύματα",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     quickComments: ["Με παγωτό", "Χωρίς ζάχαρη", "Ξέχασες κουταλάκι", "Επείγον"],
@@ -120,6 +124,120 @@ export type StationScreenKind = keyof typeof COPY;
 
 const EMPTY_SPOTS: ScreenSpot[] = [];
 const POLL_MS = 8_000;
+const QUICK_MESSAGE_ROW_PX = 56;
+const QUICK_MESSAGES_MAX_HEIGHT_PX = QUICK_MESSAGE_ROW_PX * 4 + 8;
+
+function QuickMessagesPanel({
+  title,
+  messages,
+  selectedMessage,
+  disabled,
+  onSelect,
+}: {
+  title: string;
+  messages: string[];
+  selectedMessage?: string | null;
+  disabled: boolean;
+  onSelect: (message: string) => void;
+}) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = listRef.current;
+    if (!el) {
+      setCanScrollUp(false);
+      setCanScrollDown(false);
+      setHasOverflow(false);
+      return;
+    }
+    const overflow = el.scrollHeight > el.clientHeight + 4;
+    setHasOverflow(overflow);
+    setCanScrollUp(el.scrollTop > 4);
+    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    const el = listRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => updateScrollState());
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [messages, updateScrollState]);
+
+  function scrollMessages(direction: "up" | "down") {
+    listRef.current?.scrollBy({
+      top: direction === "up" ? -QUICK_MESSAGE_ROW_PX * 2 : QUICK_MESSAGE_ROW_PX * 2,
+      behavior: "smooth",
+    });
+    window.setTimeout(updateScrollState, 320);
+  }
+
+  if (messages.length === 0) return null;
+
+  const showArrows = hasOverflow || messages.length > 4;
+
+  return (
+    <div className="mt-4 flex justify-end">
+      <div className="flex gap-2">
+        <div className="flex min-w-0 flex-col items-stretch gap-2">
+          <p className="text-right text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</p>
+          <div
+            ref={listRef}
+            onScroll={updateScrollState}
+            className="flex w-[11.5rem] flex-col gap-2 overflow-y-auto scroll-smooth sm:w-[13rem] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            style={{ maxHeight: QUICK_MESSAGES_MAX_HEIGHT_PX }}
+          >
+            {messages.map((chip, index) => {
+              const selected = selectedMessage?.trim() === chip;
+              return (
+              <button
+                key={`${index}-${chip}`}
+                type="button"
+                disabled={disabled}
+                onClick={() => onSelect(chip)}
+                className={cn(
+                  "min-h-[3.25rem] shrink-0 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold leading-snug transition active:scale-[0.98] disabled:opacity-40",
+                  selected
+                    ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
+                    : "border-white/20 bg-white/10 text-slate-100 hover:border-cyan-400/50 hover:bg-cyan-500/15",
+                )}
+              >
+                {chip}
+              </button>
+            );
+            })}
+          </div>
+        </div>
+        {showArrows ? (
+          <div className="flex flex-col justify-end gap-2 pb-0.5">
+            <button
+              type="button"
+              aria-label="Προηγούμενα μηνύματα"
+              disabled={!canScrollUp}
+              onClick={() => scrollMessages("up")}
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 disabled:opacity-30"
+            >
+              <ChevronUp className="h-6 w-6" />
+            </button>
+            <button
+              type="button"
+              aria-label="Επόμενα μηνύματα"
+              disabled={!canScrollDown}
+              onClick={() => scrollMessages("down")}
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 disabled:opacity-30"
+            >
+              <ChevronDown className="h-6 w-6" />
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 function spotSelected(selected: ScreenSpot | null, spot: ScreenSpot): boolean {
   return selected?.type === spot.type && selected.label === spot.label;
@@ -289,10 +407,10 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     }
   }
 
-  async function send(messageOverride?: string) {
+  async function send() {
     const manual = manualTable.trim();
     if ((!table && !manual) || !ctx) return;
-    const messageText = (messageOverride ?? comment).trim();
+    const messageText = comment.trim();
     setSending(true);
     setFlash(null);
     try {
@@ -347,7 +465,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-slate-900 text-white">
       <header className="shrink-0 border-b border-white/10 px-4 py-4 sm:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-cyan-400">MenuOS</p>
             <h1 className="font-serif text-2xl font-bold sm:text-3xl">
@@ -355,11 +473,22 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
             </h1>
             {ctx ? <p className="mt-1 text-sm text-slate-400 sm:text-base">{ctx.venueName}</p> : null}
           </div>
-          {ctx && typeof ctx.todayCount === "number" ? (
-            <p className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-300">
-              {C.todayCount(ctx.todayCount)}
-            </p>
-          ) : null}
+          <div className="flex shrink-0 flex-col items-end gap-0">
+            {ctx && typeof ctx.todayCount === "number" ? (
+              <p className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-300">
+                {C.todayCount(ctx.todayCount)}
+              </p>
+            ) : null}
+            {ctx && quickComments.length > 0 ? (
+              <QuickMessagesPanel
+                title={C.messagesTitle}
+                messages={quickComments}
+                selectedMessage={comment}
+                disabled={sending}
+                onSelect={setComment}
+              />
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -511,8 +640,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
       {ctx ? (
         <footer className="shrink-0 border-t border-white/10 bg-slate-950/95 px-4 py-4 backdrop-blur-sm sm:px-6">
-          <div className="mx-auto flex w-full max-w-5xl gap-3 sm:gap-4">
-            <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div className="mx-auto w-full max-w-2xl space-y-3">
               <div
                 className={cn(
                   "flex items-center gap-2 rounded-xl border px-4 py-3",
@@ -559,26 +687,6 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               >
                 {sending ? "…" : C.send}
               </button>
-            </div>
-
-            {quickComments.length > 0 ? (
-              <div className="flex w-[10.5rem] shrink-0 flex-col justify-end gap-2 sm:w-[12.5rem]">
-                {quickComments.map((chip) => (
-                  <button
-                    key={chip}
-                    type="button"
-                    disabled={sending || !hasSelection}
-                    onClick={() => void send(chip)}
-                    className={cn(
-                      "min-h-[3.25rem] rounded-xl border px-3 py-2.5 text-left text-sm font-semibold leading-snug transition active:scale-[0.98] disabled:opacity-40",
-                      "border-white/20 bg-white/10 text-slate-100 hover:border-cyan-400/50 hover:bg-cyan-500/15",
-                    )}
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
-            ) : null}
           </div>
         </footer>
       ) : null}

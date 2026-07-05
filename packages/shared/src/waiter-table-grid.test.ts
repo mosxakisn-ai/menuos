@@ -104,6 +104,19 @@ describe("buildTableGridTiles", () => {
     expect(tiles.find((t) => t.label === "99" && !t.spotId.startsWith("__unmapped__:"))).toBeUndefined();
   });
 
+  it("adds unmapped tile when pass location does not match any spot", () => {
+    const tiles = buildTableGridTiles(
+      spots,
+      [],
+      [{ id: "p1", station: "KITCHEN", tableNumber: "99", message: "έλα πάσο" }],
+      { includeUnmapped: true },
+    );
+    const unmapped = tiles.find((t) => t.spotId.startsWith("__unmapped__:"));
+    expect(unmapped?.label).toBe("99");
+    expect(unmapped?.state).toBe("kitchen_ready");
+    expect(tiles).toHaveLength(spots.length + 1);
+  });
+
   it("shows unmapped calls when no spots are configured", () => {
     const tiles = buildTableGridTiles(
       [],

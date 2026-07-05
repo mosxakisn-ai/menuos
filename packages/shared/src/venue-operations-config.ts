@@ -207,6 +207,24 @@ export function newVenuePostId(): string {
   return `post-${Date.now().toString(36)}`;
 }
 
+/** Post names like «Σερβιτόρος/Σερβιτοροi» — floor role is «Σερβιτόρος» in Staff, not a tablet post. */
+export function postLabelLooksLikeFloorWaiter(label: string): boolean {
+  const normalized = label
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  return /(^|[^a-z])waiter|(^|[^a-z])services|σερβιτορ|servitor/i.test(normalized);
+}
+
+export function isJunkVenuePost(post: VenuePost): boolean {
+  return postLabelLooksLikeFloorWaiter(post.label);
+}
+
+function stripJunkVenuePosts(posts: VenuePost[]): VenuePost[] {
+  return posts.filter((post) => !isJunkVenuePost(post));
+}
+
 function dedupeVenuePosts(posts: VenuePost[]): VenuePost[] {
   const seen = new Set<string>();
   const out: VenuePost[] = [];
@@ -222,13 +240,34 @@ function finalizeVenueOperationsConfig(
   data: Omit<VenueOperationsConfig, "posts"> & { posts?: VenuePost[] },
 ): VenueOperationsConfig {
   let posts = dedupeVenuePosts(data.posts?.length ? data.posts : postsFromLegacy(data));
+  const removedIds = new Set(posts.filter(isJunkVenuePost).map((post) => post.id));
+  posts = stripJunkVenuePosts(posts);
+  if (posts.length === 0) {
+    posts = defaultVenuePosts("GR");
+  }
   if (!posts.some((post) => post.enabled)) {
     posts = posts.map((post, index) => ({ ...post, enabled: index === 0 }));
   }
   const legacy = syncLegacyFromPosts(posts);
+  let quickChips = data.quickChips;
+  let postColors = data.postColors;
+  if (removedIds.size > 0) {
+    if (quickChips) {
+      quickChips = { ...quickChips };
+      for (const id of removedIds) delete quickChips[id];
+      if (Object.keys(quickChips).length === 0) quickChips = undefined;
+    }
+    if (postColors) {
+      postColors = { ...postColors };
+      for (const id of removedIds) delete postColors[id];
+      if (Object.keys(postColors).length === 0) postColors = undefined;
+    }
+  }
   return {
     ...data,
     ...legacy,
+    quickChips,
+    postColors,
     enabledStations: uniqueStations(legacy.enabledStations),
     posts,
   };

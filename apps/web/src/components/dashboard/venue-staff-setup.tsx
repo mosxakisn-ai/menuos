@@ -14,9 +14,10 @@ import {
   staffAssignmentLinkKind,
   staffAssignmentLabelForLang,
   staffAssignmentsFromPrimary,
+  staffPostPickerLabel,
   staffPostRequiresZoneAssignment,
+  staffPostStationSubtitle,
   staffPrimaryAssignment,
-  staffStationLabelForLang,
   visibleMessagesForStaffAssignment,
   type PassStationInput,
   type VenueOperationsConfig,
@@ -386,8 +387,11 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
   function postOptions(): Array<{ id: string; label: string }> {
     return [
-      { id: "services", label: staffStationLabelForLang("services", langCode) },
-      ...enabledPosts.map((post) => ({ id: post.id, label: post.label.trim() })),
+      { id: "services", label: staffPostPickerLabel("services", langCode, venuePosts) },
+      ...enabledPosts.map((post) => ({
+        id: post.id,
+        label: staffPostPickerLabel(post.id, langCode, venuePosts),
+      })),
     ];
   }
 
@@ -603,11 +607,16 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           <select
             value={values.zone}
             onChange={(e) => onChange.setZone(e.target.value)}
+            required={staffPostRequiresZoneAssignment(values.post)}
             className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
           >
-            {!staffPostRequiresZoneAssignment(values.post) ? (
+            {staffPostRequiresZoneAssignment(values.post) ? (
+              <option value="" disabled>
+                {S.selectSpacePlaceholder}
+              </option>
+            ) : (
               <option value="">{S.colSpaceAll}</option>
-            ) : null}
+            )}
             {zoneGroups.map((zone) => (
               <option key={zone.id} value={zone.id}>
                 {zone.label}
@@ -618,6 +627,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         <td className="px-3 py-2 align-top">
           <select
             value={values.post}
+            required
             onChange={(e) => {
               const next = e.target.value;
               onChange.setPost(next);
@@ -636,15 +646,18 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
             ))}
           </select>
           {chipsScope ? (
-            <StaffMessagesChips
-              config={opsConfig}
-              scopeId={chipsScope}
-              langCode={langCode}
-              compact
-              emptyHint={S.messagesPreviewEmpty}
-            />
+            <>
+              <p className="mt-1 text-[10px] font-medium text-slate-500">{S.messagesScopeTablet}</p>
+              <StaffMessagesChips
+                config={opsConfig}
+                scopeId={chipsScope}
+                langCode={langCode}
+                compact
+                emptyHint={S.messagesPreviewEmpty}
+              />
+            </>
           ) : (
-            <p className="mt-1.5 text-[10px] text-slate-400">{S.messagesScopeWaiter}</p>
+            <p className="mt-1.5 text-[10px] leading-snug text-slate-400">{S.messagesScopeWaiter}</p>
           )}
         </td>
       </>
@@ -698,8 +711,8 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                       <th className="px-3 py-2.5">{S.colName}</th>
-                      <th className="px-3 py-2.5">{S.colSpace}</th>
-                      <th className="px-3 py-2.5">{S.colPost}</th>
+                      <th className="px-3 py-2.5">{S.colSpaceRequired}</th>
+                      <th className="px-3 py-2.5">{S.colPostRequired}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -720,6 +733,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                   </tbody>
                 </table>
               </div>
+              <p className="text-xs text-slate-500">{S.fieldsRequiredHint}</p>
               <p className="text-xs text-slate-500">{S.formHint}</p>
               <div className="flex justify-end">
                 <button
@@ -754,8 +768,8 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     <th className="w-[14%] px-4 py-3">{S.colName}</th>
-                    <th className="w-[12%] px-4 py-3">{S.colSpace}</th>
-                    <th className="min-w-[10rem] px-4 py-3">{S.colPost}</th>
+                    <th className="w-[12%] px-4 py-3">{S.colSpaceRequired}</th>
+                    <th className="min-w-[10rem] px-4 py-3">{S.colPostRequired}</th>
                     <th className="w-[9rem] px-4 py-3 text-center">{S.colLink}</th>
                     <th className="w-[5.5rem] px-4 py-3 text-center">{S.colActions}</th>
                   </tr>
@@ -811,6 +825,11 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
                     const primaryPost = staffPrimaryAssignment(member.stations);
                     const chipsScope = messageScopeForPost(primaryPost);
+                    const postStationSubtitle = staffPostStationSubtitle(
+                      primaryPost,
+                      langCode,
+                      venuePosts,
+                    );
 
                     return (
                       <tr key={member.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/40">
@@ -824,15 +843,27 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                           <p>
                             {staffAssignmentLabelForLang(primaryPost, langCode, venuePosts)}
                           </p>
+                          {postStationSubtitle ? (
+                            <p className="mt-0.5 text-[10px] font-medium text-slate-500">
+                              {postStationSubtitle}
+                            </p>
+                          ) : null}
                           {chipsScope ? (
-                            <StaffMessagesChips
-                              config={opsConfig}
-                              scopeId={chipsScope}
-                              langCode={langCode}
-                              compact
-                            />
+                            <>
+                              <p className="mt-1 text-[10px] font-medium text-slate-500">
+                                {S.messagesScopeTablet}
+                              </p>
+                              <StaffMessagesChips
+                                config={opsConfig}
+                                scopeId={chipsScope}
+                                langCode={langCode}
+                                compact
+                              />
+                            </>
                           ) : (
-                            <p className="mt-1 text-[10px] text-slate-400">{S.messagesScopeWaiter}</p>
+                            <p className="mt-1 text-[10px] leading-snug text-slate-400">
+                              {S.messagesScopeWaiter}
+                            </p>
                           )}
                         </td>
                         <td className="px-4 py-3 align-middle">

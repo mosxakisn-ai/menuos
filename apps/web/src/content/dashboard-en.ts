@@ -474,6 +474,7 @@ export const DASHBOARD_EN = {
     newItems: "New items",
     needVenueFirst: "Create a venue first to receive calls from customers.",
     managerViewBadge: "View: entire venue",
+    managerZoneViewBadge: (zone: string) => `View: ${zone}`,
     staffViewBadge: (name: string, zone: string | null, stations: string) =>
       zone ? `View: ${name} · ${zone} · ${stations}` : `View: ${name} · ${stations}`,
     assignedZoneHeading: "Your space",
@@ -746,9 +747,22 @@ export const DASHBOARD_EN = {
         title: "Posts",
         description:
           "Define who does what — cook, waiter, bar, etc. The name appears on staff links, push and tablets.",
-        hint: "Up to 12 posts. Tap «New post» and enter the role (e.g. Kitchen, Bar).",
+        hint: "Up to 12 posts (e.g. Kitchen, Bar). Floor waiters are set in Staff — not here.",
         postNamePlaceholder: "e.g. Kitchen, Bar",
         postTypeHint: "Tablet type — kitchen, bar, etc. (for pass routing).",
+        waiterNameWarning:
+          "This name is for floor waiters — use «Waiter — phone (floor)» in Staff, not a post here.",
+        linkedTitle: "Where posts connect",
+        linkedWaiterNote:
+          "Floor waiters (phone, guest calls) are not created here — only in the Staff tab.",
+        linkedTablet: (postName: string, stationName: string) =>
+          `«${postName}» (${stationName}) → Messages + tablet in Staff`,
+        nextMessagesLink: "Messages →",
+        nextStaffLink: "Staff →",
+        savedNextSteps:
+          "Saved. Next: add messages per post and assign employees in Staff.",
+        junkRemovedHint:
+          "Removed a waiter-named post — floor waiters are configured in Staff only.",
       },
       screensTab: {
         title: "Tablet screens",
@@ -788,11 +802,13 @@ export const DASHBOARD_EN = {
           "See every post and its messages at once. Add messages in each card, then Save at the bottom.",
         selectPostLabel: "Choose post",
         addMessage: "Add",
-        addPostLink: "New post →",
         messageCount: (n: number) => (n === 1 ? "1 message" : `${n} messages`),
         messagePlaceholder: "Type your message…",
         messageSaveHint:
-          "Each message appears in the list below. Press Enter or Save. They show on kitchen/bar tablets — not on the waiter panel.",
+          "Press Save at the bottom. To show on the tablet, assign the same post in Staff — not «Waiter».",
+        passTabletStaffHint: (postName: string) =>
+          `Pass tablet: in Staff, assign post «${postName}» (not «Waiter» — they receive alerts on phone).`,
+        assignInStaffLink: "Staff →",
         noPostsHint: "You have no active posts.",
         servicesPostTitle: "Services — Waiter",
         servicesPostHint: "What appears on the spot map (guest call, kitchen ready, etc.).",
@@ -894,8 +910,10 @@ export const DASHBOARD_EN = {
         editTitle: "Edit",
         cancelEdit: "Cancel",
         formHint:
-          "Post defines messages (Settings → Messages). Waiter = guest calls, not pass messages.",
-        messagesScopeWaiter: "Guest calls — no pass messages",
+          "Waiter = phone (guest calls, pass alerts). Kitchen/bar = tablet with quick messages — post must match Settings → Messages.",
+        messagesScopeWaiter:
+          "Floor waiter — calls & pass alerts on phone (does not send quick messages)",
+        messagesScopeTablet: "Pass tablet — sends this post's quick messages",
         colSpaceAll: "All spaces",
         managePostsLink: "Manage posts →",
         manageSpacesLink: "Manage spaces →",
@@ -908,13 +926,19 @@ export const DASHBOARD_EN = {
         colName: "Name",
         colSpace: "Space",
         colPost: "Post",
+        colSpaceRequired: "Space *",
+        colPostRequired: "Post *",
+        selectSpacePlaceholder: "Choose space",
+        selectPostPlaceholder: "Choose post",
+        fieldsRequiredHint:
+          "Name, space and post are required. Waiter = specific space (dining room, terrace). Kitchen/bar = post from Posts tab.",
         colLink: "Waiter link",
         colLinkHint:
           "Waiter: phone link (floor map). Kitchen/bar: tablet link — opens without login.",
         colActions: "Actions",
         viewLink: "Preview",
         viewLinkTablet: "Open screen",
-        missingScreen: "No screen yet — Settings → Screens.",
+        missingScreen: "No tablet screen yet — add staff with a kitchen/bar post.",
         invalidAssignment: "Post inactive — edit staff row.",
         copyLink: "Copy",
         copied: "Copied!",

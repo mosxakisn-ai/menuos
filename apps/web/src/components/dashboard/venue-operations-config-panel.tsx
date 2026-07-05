@@ -16,6 +16,7 @@ import {
   mergeTableStateLabels,
   newVenuePostId,
   PASS_STATION_INPUTS,
+  postLabelLooksLikeFloorWaiter,
   quickChipsForPost,
   syncLegacyFromPosts,
   TABLE_TILE_STATES,
@@ -23,7 +24,7 @@ import {
   zoneSourceHint,
   type SpotZoneGroup,
 } from "@menuos/shared";
-import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import { FlashMessages, resolveApiError, useFlashMessage, type FlashMessage } from "@/components/dashboard/flash-message";
 import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
 import {
   DashboardSectionTitle,
@@ -41,7 +42,7 @@ import { buttonClass } from "@/components/ui/button";
 import { confirmDestructive } from "@/lib/confirm-action";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { DashboardIconButton } from "@/components/dashboard/dashboard-action-button";
-import { Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type SpaceKind = "prefixed" | "main" | "sunbed" | "room";
@@ -195,6 +196,8 @@ export function VenueOperationsConfigPanel({
   const { config, loading, reload, setConfig } = useVenueOperationsConfig(venueId);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const [saving, setSaving] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState<FlashMessage | null>(null);
+  const saveFeedbackRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<VenueOperationsConfig | null>(null);
   const [showAddSpace, setShowAddSpace] = useState(false);
   const [newSpaceKind, setNewSpaceKind] = useState<SpaceKind>("prefixed");
@@ -204,8 +207,30 @@ export function VenueOperationsConfigPanel({
   const [zoneBusy, setZoneBusy] = useState<string | null>(null);
   const messageListRefs = useRef<Map<string, MessageChipListHandle>>(new Map());
 
-  function flushAllMessageDrafts() {
-    messageListRefs.current.forEach((handle) => handle.flushPending());
+  function applyFlushedMessageDrafts(base: VenueOperationsConfig): VenueOperationsConfig {
+    const chipsMap = { ...(base.quickChips ?? {}) };
+    let changed = false;
+
+    messageListRefs.current.forEach((handle, postId) => {
+      const chips = handle.flushPending();
+      const previous = base.quickChips?.[postId];
+      if (chips.length === 0 && previous === undefined) return;
+      if (
+        (previous ?? []).length === chips.length &&
+        (previous ?? []).every((item, index) => item === chips[index])
+      ) {
+        return;
+      }
+      if (chips.length === 0) delete chipsMap[postId];
+      else chipsMap[postId] = chips;
+      changed = true;
+    });
+
+    if (!changed) return base;
+    return {
+      ...base,
+      quickChips: Object.keys(chipsMap).length ? chipsMap : undefined,
+    };
   }
 
   function registerMessageListRef(postId: string, handle: MessageChipListHandle | null) {
@@ -224,6 +249,13 @@ export function VenueOperationsConfigPanel({
     else setDraft(null);
   }, [config]);
 
+  useEffect(() => {
+    if (!saveFeedback) return;
+    saveFeedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const timer = window.setTimeout(() => setSaveFeedback(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [saveFeedback]);
+
   const previewZones = useMemo(() => {
     if (!zoneGroups?.length || !draft) return zoneGroups ?? [];
     return applyZoneLabelOverrides(zoneGroups, draft.zoneLabels);
@@ -236,11 +268,30 @@ export function VenueOperationsConfigPanel({
 
   async function save() {
     if (!venueId || !draft) return;
-    flushAllMessageDrafts();
+    let draftToSave = applyFlushedMessageDrafts(draft);
+    const hadJunkPost = draftToSave.posts?.some((post) => postLabelLooksLikeFloorWaiter(post.label)) ?? false;
+    if (hadJunkPost && draftToSave.posts) {
+      const removedIds = new Set(
+        draftToSave.posts.filter((post) => postLabelLooksLikeFloorWaiter(post.label)).map((post) => post.id),
+      );
+      const filterPostMap = <T,>(map: Record<string, T> | undefined) => {
+        if (!map) return undefined;
+        const next = Object.fromEntries(Object.entries(map).filter(([id]) => !removedIds.has(id)));
+        return Object.keys(next).length > 0 ? (next as Record<string, T>) : undefined;
+      };
+      draftToSave = {
+        ...draftToSave,
+        posts: draftToSave.posts.filter((post) => !postLabelLooksLikeFloorWaiter(post.label)),
+        quickChips: filterPostMap(draftToSave.quickChips),
+        postColors: filterPostMap(draftToSave.postColors),
+      };
+    }
+    setDraft(draftToSave);
     const langCode = lang === "EN" ? "EN" : "GR";
-    const posts = listVenuePosts(draft, langCode);
-    const payload = { ...draft, ...syncLegacyFromPosts(posts), posts };
+    const posts = listVenuePosts(draftToSave, langCode);
+    const payload = { ...draftToSave, ...syncLegacyFromPosts(posts), posts };
     setSaving(true);
+    setSaveFeedback(null);
     try {
       const res = await fetch(`/api/venues/${venueId}/operations-config`, {
         method: "PATCH",
@@ -248,10 +299,26 @@ export function VenueOperationsConfigPanel({
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      showFromResponse(data, res.ok, res.status);
-      if (res.ok && data.config) {
-        setConfig(data.config);
-        setDraft(data.config);
+      if (res.ok) {
+        if (data.config) {
+          setConfig(data.config);
+          setDraft(data.config);
+        }
+        const successText = postsOnlyMode
+          ? hadJunkPost
+            ? `${Posts.savedNextSteps} ${Posts.junkRemovedHint}`
+            : Posts.savedNextSteps
+          : typeof data.message === "string"
+            ? data.message
+            : O.saved;
+        setSaveFeedback({
+          type: "success",
+          text: successText,
+        });
+        setFlash(null);
+      } else {
+        showFromResponse(data, false, res.status);
+        setSaveFeedback({ type: "error", text: resolveApiError(data, d.flash) });
       }
     } finally {
       setSaving(false);
@@ -634,6 +701,11 @@ export function VenueOperationsConfigPanel({
                               }
                               className={`${dashboardFieldClass} w-full min-w-[12rem] py-2.5 text-sm`}
                             />
+                            {postsOnlyMode && postLabelLooksLikeFloorWaiter(post.label) ? (
+                              <p className="mt-1.5 text-xs leading-snug text-amber-700">
+                                {Posts.waiterNameWarning}
+                              </p>
+                            ) : null}
                           </td>
                           <td className="px-4 py-3 align-middle">
                             <select
@@ -672,22 +744,47 @@ export function VenueOperationsConfigPanel({
               <p className="mt-3 text-xs leading-relaxed text-slate-500">
                 {postsOnlyMode ? Posts.postTypeHint : O.postTypeHint}
               </p>
+              {postsOnlyMode && enabledPosts.length > 0 ? (
+                <div className="mt-5 rounded-xl border border-brand-blue/20 bg-brand-blue/[0.04] p-4 sm:p-5">
+                  <p className="text-sm font-semibold text-brand-navy">{Posts.linkedTitle}</p>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                    {enabledPosts.map((post) => {
+                      const stationLabels =
+                        lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+                      return (
+                        <li key={post.id} className="flex flex-wrap items-baseline gap-x-1">
+                          <span>
+                            {Posts.linkedTablet(post.label.trim(), stationLabels[post.station])}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="mt-3 text-xs leading-relaxed text-slate-500">{Posts.linkedWaiterNote}</p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                      href="/dashboard/settings?tab=messages"
+                      className={`inline-flex items-center ${buttonClass("secondary", "sm")}`}
+                    >
+                      {Posts.nextMessagesLink}
+                    </Link>
+                    <Link
+                      href="/dashboard/settings?tab=staff"
+                      className={`inline-flex items-center ${buttonClass("secondary", "sm")}`}
+                    >
+                      {Posts.nextStaffLink}
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
             </section>
             ) : null}
 
             {show("chips") && messagesByPost ? (
             <section className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
-                  <p className="mt-1 max-w-2xl text-sm text-slate-600">{M.byPostHint}</p>
-                </div>
-                <Link
-                  href="/dashboard/settings?tab=posts"
-                  className={`inline-flex shrink-0 items-center gap-1 ${buttonClass("secondary", "sm")}`}
-                >
-                  {M.addPostLink}
-                </Link>
+              <div>
+                <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
+                <p className="mt-1 max-w-2xl text-sm text-slate-600">{M.byPostHint}</p>
               </div>
 
               {enabledPosts.length === 0 ? (
@@ -748,6 +845,15 @@ export function VenueOperationsConfigPanel({
                         {!hasCustom ? (
                           <p className="mt-2 text-sm text-slate-500">{M.previewEmpty}</p>
                         ) : null}
+                        <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                          {M.passTabletStaffHint(post.label.trim())}{" "}
+                          <Link
+                            href="/dashboard/settings?tab=staff"
+                            className="font-semibold text-brand-blue hover:underline"
+                          >
+                            {M.assignInStaffLink}
+                          </Link>
+                        </p>
                       </div>
                     );
                   })}
@@ -1066,18 +1172,63 @@ export function VenueOperationsConfigPanel({
             ) : null}
 
             <div
-              className={`flex flex-wrap gap-3 border-t border-slate-100 pt-5 ${
-                postsOnlyMode ? "justify-end" : ""
+              className={`space-y-4 border-t border-slate-100 pt-5 ${
+                postsOnlyMode ? "" : ""
               }`}
             >
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => void save()}
-                className={buttonClass("primary")}
-              >
-                {saving ? O.saving : O.save}
-              </button>
+              {saveFeedback ? (
+                <div
+                  ref={saveFeedbackRef}
+                  role="status"
+                  aria-live="polite"
+                  className={cn(
+                    "flex items-start gap-3 rounded-xl border px-4 py-4 text-sm shadow-soft",
+                    saveFeedback.type === "success" &&
+                      "border-emerald-300 bg-emerald-50 text-emerald-950",
+                    saveFeedback.type === "error" && "border-red-200 bg-red-50 text-red-900",
+                  )}
+                >
+                  {saveFeedback.type === "success" ? (
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                  ) : (
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                  )}
+                  <div className="flex-1">
+                    <p className="text-base font-semibold leading-snug">{saveFeedback.text}</p>
+                    {postsOnlyMode && saveFeedback.type === "success" ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Link
+                          href="/dashboard/settings?tab=messages"
+                          className="text-sm font-semibold text-emerald-800 underline hover:text-emerald-950"
+                        >
+                          {Posts.nextMessagesLink}
+                        </Link>
+                        <Link
+                          href="/dashboard/settings?tab=staff"
+                          className="text-sm font-semibold text-emerald-800 underline hover:text-emerald-950"
+                        >
+                          {Posts.nextStaffLink}
+                        </Link>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className={`flex flex-wrap gap-3 ${postsOnlyMode ? "justify-end" : ""}`}>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void save()}
+                  className={cn(
+                    buttonClass("primary"),
+                    saveFeedback?.type === "success" &&
+                      !saving &&
+                      "ring-2 ring-emerald-400 ring-offset-2",
+                  )}
+                >
+                  {saving ? O.saving : O.save}
+                </button>
               <button
                 type="button"
                 disabled={loading}
@@ -1086,6 +1237,7 @@ export function VenueOperationsConfigPanel({
               >
                 {O.reload}
               </button>
+              </div>
             </div>
           </div>
         )}

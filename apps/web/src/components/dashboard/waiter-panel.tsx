@@ -35,6 +35,17 @@ type WaiterCall = {
   updatedAt: string;
   orderItems?: OrderPayload | null;
 };
+type PassSignal = {
+  id: string;
+  station: string;
+  status: string;
+  stationScreenLabel?: string | null;
+  tableNumber?: string | null;
+  roomNumber?: string | null;
+  sunbedNumber?: string | null;
+  message?: string | null;
+  readyAt?: string;
+};
 
 export function WaiterPanel({
   venues,
@@ -59,9 +70,11 @@ export function WaiterPanel({
       : (venues[0]?.id ?? "");
   const [venueId, setVenueId] = useState(resolvedInitial);
   const [calls, setCalls] = useState<WaiterCall[]>([]);
+  const [passSignals, setPassSignals] = useState<PassSignal[]>([]);
   const [spots, setSpots] = useState<VenueSpot[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [updatingCallId, setUpdatingCallId] = useState<string | null>(null);
+  const [updatingPassId, setUpdatingPassId] = useState<string | null>(null);
   const [zoneFilterId, setZoneFilterId] = useState<string>("all");
   const prevPendingRef = useRef<number | null>(null);
   const prevCallsRef = useRef<WaiterCall[]>([]);
@@ -76,8 +89,12 @@ export function WaiterPanel({
     const params = new URLSearchParams({ venueId });
     if (staffKey && !staffViaCookie) params.set("staffKey", staffKey);
     const creds = staffViaCookie ? "include" : "same-origin";
-    const callsRes = await fetch(`/api/waiter-call?${params}`, { credentials: creds });
+    const [callsRes, passRes] = await Promise.all([
+      fetch(`/api/waiter-call?${params}`, { credentials: creds }),
+      fetch(`/api/pass-signals?${params}`, { credentials: creds }),
+    ]);
     const data = await callsRes.json().catch(() => ({}));
+    const passData = await passRes.json().catch(() => ({}));
 
     if (generation !== loadGenerationRef.current) return;
 
@@ -119,11 +136,18 @@ export function WaiterPanel({
         setFlash({ type: "error", text: W.loadFailed });
       }
     }
+
+    if (passRes.ok) {
+      setPassSignals((passData.signals ?? []) as PassSignal[]);
+    } else {
+      setPassSignals([]);
+    }
   }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash]);
 
   useEffect(() => {
     loadGenerationRef.current += 1;
     setCalls([]);
+    setPassSignals([]);
     setSpots([]);
     setPendingCount(0);
     prevPendingRef.current = null;
@@ -147,7 +171,7 @@ export function WaiterPanel({
   }, [load]);
 
   async function updateStatus(callId: string, status: "ACKNOWLEDGED" | "COMPLETED") {
-    if (updatingCallId) return;
+    if (updatingCallId || updatingPassId) return;
     setUpdatingCallId(callId);
     try {
       const res = await fetch(`/api/waiter-call/${callId}`, {
@@ -164,6 +188,27 @@ export function WaiterPanel({
       if (res.ok) await load();
     } finally {
       setUpdatingCallId(null);
+    }
+  }
+
+  async function updatePassStatus(signalId: string, status: "PICKED_UP" | "DELIVERED") {
+    if (updatingPassId || updatingCallId) return;
+    setUpdatingPassId(signalId);
+    try {
+      const res = await fetch(`/api/pass-signals/${signalId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: staffViaCookie ? "include" : "same-origin",
+        body: JSON.stringify({
+          status,
+          ...(staffKey && !staffViaCookie ? { staffKey } : {}),
+        }),
+      });
+      const data = await res.json();
+      showFromResponse(data, res.ok, res.status);
+      if (res.ok) await load();
+    } finally {
+      setUpdatingPassId(null);
     }
   }
 
@@ -211,9 +256,19 @@ export function WaiterPanel({
     [calls, zoneFilterId, zoneGroups],
   );
 
+  const displayPassSignals = useMemo(
+    () => filterWaiterLocationsByZone(passSignals, zoneFilterId, zoneGroups),
+    [passSignals, zoneFilterId, zoneGroups],
+  );
+
   const visiblePendingCount = useMemo(
     () => displayCalls.filter((call) => call.status === "PENDING").length,
     [displayCalls],
+  );
+
+  const visibleActiveCount = useMemo(
+    () => visiblePendingCount + displayPassSignals.length,
+    [visiblePendingCount, displayPassSignals.length],
   );
 
   const zonePendingCounts = useMemo(() => {
@@ -224,11 +279,20 @@ export function WaiterPanel({
       if (!zoneId) continue;
       counts.set(zoneId, (counts.get(zoneId) ?? 0) + 1);
     }
+    for (const pass of passSignals) {
+      const zoneId = zoneIdForWaiterLocation(pass, zoneGroups);
+      if (!zoneId) continue;
+      counts.set(zoneId, (counts.get(zoneId) ?? 0) + 1);
+    }
     return counts;
-  }, [calls, zoneGroups]);
+  }, [calls, passSignals, zoneGroups]);
 
   function zonePendingTotal(zoneId: string): number {
-    if (zoneId === "all") return pendingCount;
+    if (zoneId === "all") {
+      const pendingCalls = pendingCount;
+      const activePasses = passSignals.length;
+      return pendingCalls + activePasses;
+    }
     return zonePendingCounts.get(zoneId) ?? 0;
   }
 
@@ -301,7 +365,13 @@ export function WaiterPanel({
     );
   }
 
-  const hasActivity = displayCalls.some((call) => call.status === "PENDING");
+  const hasActivity =
+    displayCalls.some((call) => call.status === "PENDING" || call.status === "ACKNOWLEDGED") ||
+    displayPassSignals.length > 0;
+  const selectedZoneLabel =
+    zoneFilterId === "all"
+      ? null
+      : (activeZoneGroups.find((zone) => zone.id === zoneFilterId)?.label ?? null);
   const isZoneFilteredEmpty =
     zoneFilterId !== "all" && displaySpots.length === 0 && !hasActivity && spots.length > 0;
 
@@ -328,10 +398,10 @@ export function WaiterPanel({
           </select>
         </label>
       )}
-      {visiblePendingCount > 0 ? (
+      {visibleActiveCount > 0 ? (
         <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 sm:px-2.5 sm:text-xs">
           <Bell className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-          <span className="truncate">{W.pendingCount(visiblePendingCount)}</span>
+          <span className="truncate">{W.pendingCount(visibleActiveCount)}</span>
         </span>
       ) : (
         <span className="text-[10px] text-slate-500 sm:text-xs">{W.refreshHint}</span>
@@ -368,7 +438,7 @@ export function WaiterPanel({
 
       {isManagerView ? (
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
-          {W.managerViewBadge}
+          {selectedZoneLabel ? W.managerZoneViewBadge(selectedZoneLabel) : W.managerViewBadge}
         </p>
       ) : staffMember ? (
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
@@ -409,10 +479,13 @@ export function WaiterPanel({
         <WaiterTableGrid
           spots={displaySpots}
           calls={displayCalls}
+          passSignals={displayPassSignals}
           updatingCallId={updatingCallId}
+          updatingPassId={updatingPassId}
           legendEnd={venueStatusEnd}
           stateLabels={tableStateLabels}
           onUpdateCall={(callId, status) => void updateStatus(callId, status)}
+          onUpdatePass={(signalId, status) => void updatePassStatus(signalId, status)}
         />
       )}
     </div>

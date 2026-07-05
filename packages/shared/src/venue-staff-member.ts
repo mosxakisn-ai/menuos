@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { PASS_STATION_INPUTS, passStationInputToDb, type PassStationInput } from "./pass-signal";
-import type { VenuePost } from "./venue-operations-config";
+import {
+  DEFAULT_STATION_LABELS_EL,
+  DEFAULT_STATION_LABELS_EN,
+  postLabelLooksLikeFloorWaiter,
+  type VenuePost,
+} from "./venue-operations-config";
 
 export const STAFF_SPECIAL_OPTIONS = ["services", "all"] as const;
 export type StaffSpecialOption = (typeof STAFF_SPECIAL_OPTIONS)[number];
@@ -170,6 +175,44 @@ export function staffAssignmentLabelForLang(
     return staffStationLabelForLang(assignment as StaffStationOption, lang);
   }
   return assignment;
+}
+
+/** Dropdown label in Settings → Staff — distinguishes phone waiter vs tablet posts. */
+export function staffPostPickerLabel(
+  assignment: string,
+  lang: "GR" | "EN" = "GR",
+  posts?: VenuePost[],
+): string {
+  if (assignment === "services") {
+    return lang === "EN" ? "Waiter — phone (floor)" : "Σερβιτόρος — δάπεδο (κινητό)";
+  }
+  if (assignment === "all") {
+    return staffStationLabelForLang("all", lang);
+  }
+  const post = posts?.find((row) => row.id === assignment);
+  if (post) {
+    const stationLabels = lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+    const tablet = lang === "EN" ? "tablet" : "tablet";
+    return `${post.label.trim()} — ${stationLabels[post.station]} (${tablet})`;
+  }
+  if (PASS_STATION_INPUTS.includes(assignment as PassStationInput)) {
+    return staffStationLabelForLang(assignment as StaffStationOption, lang);
+  }
+  return assignment;
+}
+
+export function staffPostStationSubtitle(
+  assignment: string,
+  lang: "GR" | "EN" = "GR",
+  posts?: VenuePost[],
+): string | null {
+  if (assignment === "services" || assignment === "all") return null;
+  const post = posts?.find((row) => row.id === assignment);
+  if (!post) return null;
+  const stationLabels = lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+  return lang === "EN"
+    ? `${stationLabels[post.station]} · pass tablet`
+    : `${stationLabels[post.station]} · tablet πάσου`;
 }
 
 export function formatStaffAssignmentsForLang(
