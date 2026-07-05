@@ -201,17 +201,28 @@ export function VenueOperationsConfigPanel({
   const [newSpaceFrom, setNewSpaceFrom] = useState("1");
   const [newSpaceTo, setNewSpaceTo] = useState("");
   const [zoneBusy, setZoneBusy] = useState<string | null>(null);
+  const [selectedMessagePostId, setSelectedMessagePostId] = useState<string>("services");
 
   useEffect(() => {
     if (initialVenueId) setVenueId(initialVenueId);
   }, [initialVenueId]);
+
+  const langCode = lang === "EN" ? "EN" : "GR";
 
   useEffect(() => {
     if (config) setDraft(config);
     else setDraft(null);
   }, [config]);
 
-  const langCode = lang === "EN" ? "EN" : "GR";
+  useEffect(() => {
+    if (!messagesByPost || !draft) return;
+    if (selectedMessagePostId === "services") return;
+    const posts = enabledVenuePosts(draft, langCode);
+    if (!posts.some((post) => post.id === selectedMessagePostId)) {
+      setSelectedMessagePostId(posts[0]?.id ?? "services");
+    }
+  }, [draft, langCode, messagesByPost, selectedMessagePostId]);
+
   const previewZones = useMemo(() => {
     if (!zoneGroups?.length || !draft) return zoneGroups ?? [];
     return applyZoneLabelOverrides(zoneGroups, draft.zoneLabels);
@@ -614,13 +625,13 @@ export function VenueOperationsConfigPanel({
                 <div
                   className={`grid items-center gap-x-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 ${
                     postsOnlyMode
-                      ? "grid-cols-[2.75rem_minmax(0,1fr)_2.75rem]"
+                      ? "grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem]"
                       : "grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem]"
                   }`}
                 >
                   <span className="text-center">{O.postActiveLabel}</span>
                   <span>{O.postNameLabel}</span>
-                  {!postsOnlyMode ? <span>{O.postTypeLabel}</span> : null}
+                  <span>{O.postTypeLabel}</span>
                   <span className="sr-only">{O.removePost}</span>
                 </div>
                 {draftPosts.map((post) => {
@@ -629,11 +640,9 @@ export function VenueOperationsConfigPanel({
                   return (
                     <div
                       key={post.id}
-                      className={`grid items-center gap-x-2 border-b border-slate-50 px-3 py-2 last:border-0 ${
-                        postsOnlyMode
-                          ? "grid-cols-[2.75rem_minmax(0,1fr)_2.75rem]"
-                          : "grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem]"
-                      } ${post.enabled ? "bg-brand-blue/[0.03]" : "bg-slate-50/40 opacity-80"}`}
+                      className={`grid items-center gap-x-2 border-b border-slate-50 px-3 py-2 last:border-0 grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem] ${
+                        post.enabled ? "bg-brand-blue/[0.03]" : "bg-slate-50/40 opacity-80"
+                      }`}
                     >
                       <div className="flex justify-center">
                         <input
@@ -653,22 +662,20 @@ export function VenueOperationsConfigPanel({
                         }
                         className={`${dashboardFieldClass} w-full min-w-0 text-sm`}
                       />
-                      {!postsOnlyMode ? (
-                        <select
-                          value={post.station}
-                          onChange={(e) =>
-                            setPostStation(post.id, e.target.value as PassStationInput)
-                          }
-                          className={`${dashboardFieldClass} w-full min-w-0 text-sm`}
-                          title={O.postTypeHint}
-                        >
-                          {PASS_STATION_INPUTS.map((station) => (
-                            <option key={station} value={station}>
-                              {typeLabels[station]}
-                            </option>
-                          ))}
-                        </select>
-                      ) : null}
+                      <select
+                        value={post.station}
+                        onChange={(e) =>
+                          setPostStation(post.id, e.target.value as PassStationInput)
+                        }
+                        className={`${dashboardFieldClass} w-full min-w-0 text-sm`}
+                        title={postsOnlyMode ? Posts.postTypeHint : O.postTypeHint}
+                      >
+                        {PASS_STATION_INPUTS.map((station) => (
+                          <option key={station} value={station}>
+                            {typeLabels[station]}
+                          </option>
+                        ))}
+                      </select>
                       <div className="flex justify-center">
                         <button
                           type="button"
@@ -686,34 +693,53 @@ export function VenueOperationsConfigPanel({
                   );
                 })}
               </div>
-              {!postsOnlyMode ? (
-                <p className="mt-2 max-w-xl text-xs text-slate-500">{O.postTypeHint}</p>
-              ) : null}
+              <p className="mt-2 max-w-xl text-xs text-slate-500">
+                {postsOnlyMode ? Posts.postTypeHint : O.postTypeHint}
+              </p>
             </section>
             ) : null}
 
             {show("chips") && messagesByPost ? (
             <section className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{M.byPostHint}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" onClick={addPost} className={buttonClass("secondary", "sm")}>
-                    <Plus className="mr-1.5 inline h-4 w-4" aria-hidden />
-                    {M.addPost}
-                  </button>
-                  <Link
-                    href="/dashboard/settings?tab=posts"
-                    className="text-xs font-semibold text-brand-blue hover:underline"
-                  >
-                    {M.managePostsLink}
-                  </Link>
-                </div>
+              <div>
+                <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
+                <p className="mt-1 text-sm text-slate-600">{M.byPostHint}</p>
               </div>
 
-              {show("map") && draft ? (
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="block min-w-[min(100%,14rem)] flex-1">
+                  <span className={dashboardLabelClass}>{M.selectPostLabel}</span>
+                  <select
+                    value={selectedMessagePostId}
+                    onChange={(e) => setSelectedMessagePostId(e.target.value)}
+                    className={`${dashboardFieldClass} mt-1 text-sm`}
+                  >
+                    <option value="services">{M.servicesPostTitle}</option>
+                    {enabledPosts.map((post) => (
+                      <option key={post.id} value={post.id}>
+                        {post.label.trim()}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <Link
+                  href="/dashboard/settings?tab=posts"
+                  className="pb-2 text-xs font-semibold text-brand-blue hover:underline"
+                >
+                  {M.managePostsLink}
+                </Link>
+              </div>
+
+              {enabledPosts.length === 0 && selectedMessagePostId !== "services" ? (
+                <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  {M.noPostsHint}{" "}
+                  <Link href="/dashboard/settings?tab=posts" className="font-semibold text-brand-blue hover:underline">
+                    {M.managePostsLink}
+                  </Link>
+                </p>
+              ) : null}
+
+              {selectedMessagePostId === "services" && show("map") && draft ? (
                 (() => {
                   const mergedLabels = mergeTableStateLabels(draft, langCode);
                   const serviceStates = tableLegendStates(draft);
@@ -721,12 +747,7 @@ export function VenueOperationsConfigPanel({
                   const hiddenRestorable = restorableTableStates(draft);
                   return (
                     <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5">
-                      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-brand-navy">{M.servicesPostTitle}</p>
-                          <p className="mt-0.5 text-xs text-slate-600">{M.servicesPostHint}</p>
-                        </div>
-                      </div>
+                      <p className="text-sm text-slate-600">{M.servicesPostHint}</p>
                       <PostColorPicker
                         label={M.postColorLabel}
                         value={serviceColor}
@@ -788,58 +809,44 @@ export function VenueOperationsConfigPanel({
                 })()
               ) : null}
 
-              {enabledPosts.map((post, index) => {
-                const chips =
-                  draft?.quickChips?.[post.id] ??
-                  quickChipsForPost(draft ?? undefined, post.id, langCode);
-                const postColor = getPostMessageColor(draft ?? undefined, post.id, index + 1);
-                return (
-                  <div
-                    key={post.id}
-                    className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5"
-                  >
-                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-brand-navy">{post.label.trim()}</p>
-                        <p className="mt-0.5 text-xs text-slate-500">{M.passPostHint}</p>
+              {selectedMessagePostId !== "services" && draft
+                ? (() => {
+                    const post = enabledPosts.find((row) => row.id === selectedMessagePostId);
+                    if (!post) return null;
+                    const postIndex = enabledPosts.findIndex((row) => row.id === post.id);
+                    const chips =
+                      draft.quickChips?.[post.id] ??
+                      quickChipsForPost(draft, post.id, langCode);
+                    const postColor = getPostMessageColor(draft, post.id, postIndex + 1);
+                    return (
+                      <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5">
+                        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                          <p className="text-sm text-slate-600">{M.passPostHint}</p>
+                          <button
+                            type="button"
+                            onClick={() => resetQuickChips(post)}
+                            className="text-xs font-medium text-slate-500 hover:text-brand-blue"
+                          >
+                            {O.resetDefaults}
+                          </button>
+                        </div>
+                        <PostColorPicker
+                          label={M.postColorLabel}
+                          value={postColor}
+                          onChange={(color) => setPostColor(post.id, color)}
+                        />
+                        <div className="mt-4">
+                          <MessageChipList
+                            items={chips}
+                            onChange={(next) => setQuickChips(post.id, next)}
+                            placeholder={O.chipPlaceholder}
+                          />
+                        </div>
+                        <PostMessagePreview color={postColor} labels={chips} />
                       </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => resetQuickChips(post)}
-                          className="text-xs font-medium text-slate-500 hover:text-brand-blue"
-                        >
-                          {O.resetDefaults}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void confirmRemovePost(post.id)}
-                          disabled={draftPosts.length <= 1}
-                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
-                          aria-label={O.removePost}
-                          title={O.removePost}
-                        >
-                          <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
-                          {O.removePost}
-                        </button>
-                      </div>
-                    </div>
-                    <PostColorPicker
-                      label={M.postColorLabel}
-                      value={postColor}
-                      onChange={(color) => setPostColor(post.id, color)}
-                    />
-                    <div className="mt-4">
-                      <MessageChipList
-                        items={chips}
-                        onChange={(next) => setQuickChips(post.id, next)}
-                        placeholder={O.chipPlaceholder}
-                      />
-                    </div>
-                    <PostMessagePreview color={postColor} labels={chips} />
-                  </div>
-                );
-              })}
+                    );
+                  })()
+                : null}
             </section>
             ) : show("chips") ? (
             <section>

@@ -767,8 +767,9 @@ export const DASHBOARD_EN = {
         title: "Posts",
         description:
           "Define who does what — cook, waiter, bar, etc. The name appears on staff links, push and tablets.",
-        hint: "Up to 12 posts. Tap «New post» and enter the role (e.g. Cook, Waiter).",
-        postNamePlaceholder: "e.g. Cook, Waiter",
+        hint: "Up to 12 posts. Tap «New post» and enter the role (e.g. Kitchen, Bar).",
+        postNamePlaceholder: "e.g. Kitchen, Bar",
+        postTypeHint: "Tablet type — kitchen, bar, etc. (for pass routing).",
       },
       linksTab: {
         title: "Staff links per space",
@@ -788,12 +789,14 @@ export const DASHBOARD_EN = {
       messagesTab: {
         title: "Messages",
         description:
-          "Set messages per post here — colour, text, add or remove. In Staff you pick which set each person sees.",
+          "Pick a post (from the Posts tab) and set the messages it can send from tablet. In Staff you choose which set each person sees.",
         hint:
-          "Services = waiter spot map.\nEach post = tablet quick buttons.\nOne colour per post — all messages in that post share the same colour.",
+          "First create posts in the Posts tab (e.g. Kitchen, Bar).\nThen pick a post here and add its messages.\nServices = waiter map (separate).",
         byPostTitle: "Messages by post",
         byPostHint:
-          "Edit text, add or remove messages. New posts appear first. To delete a whole post, use Remove post on its card (not on Services).",
+          "Choose a post from the list — they come from the Posts tab. Add or remove messages for that post only.",
+        selectPostLabel: "Choose post",
+        noPostsHint: "You have no active posts.",
         servicesPostTitle: "Services — Waiter",
         servicesPostHint: "What appears on the spot map (guest call, kitchen ready, etc.).",
         passPostHint: "Quick buttons when sending a pass from tablet — for this post only.",
