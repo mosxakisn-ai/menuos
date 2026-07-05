@@ -64,9 +64,9 @@ export function PostMessagePreview({
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
       ) : null}
       {items.length === 0 ? (
-        <p className="text-center text-sm text-slate-400">{emptyHint ?? "—"}</p>
+        <p className="text-left text-sm text-slate-400">{emptyHint ?? "—"}</p>
       ) : (
-        <ul className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+        <ul className="flex flex-wrap items-center justify-start gap-2">
           {items.map((label) => (
             <li
               key={label}
@@ -113,7 +113,7 @@ export const MessageChipList = forwardRef<
     focusAdd?: boolean;
     onFocusAddHandled?: () => void;
     hideAddRow?: boolean;
-    /** Post colour — chips render centred like on the pass tablet. */
+    /** Post colour — chips styled like pass tablet, left-aligned in settings. */
     color?: string;
     listLabel?: string;
   }
@@ -137,6 +137,8 @@ export const MessageChipList = forwardRef<
   const [editDraft, setEditDraft] = useState("");
   const [addFieldOpen, setAddFieldOpen] = useState(false);
   const addInputRef = useRef<HTMLInputElement>(null);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
   useEffect(() => {
     if (!focusAdd) return;
@@ -152,18 +154,22 @@ export const MessageChipList = forwardRef<
 
   function commitEdit(index: number) {
     const value = editDraft.trim();
+    let next: string[];
     if (!value) {
-      onChange(items.filter((_, i) => i !== index));
+      next = itemsRef.current.filter((_, i) => i !== index);
     } else {
-      const next = items.map((item, i) => (i === index ? value : item));
-      onChange([...new Set(next)]);
+      next = [...new Set(itemsRef.current.map((item, i) => (i === index ? value : item)))];
     }
+    itemsRef.current = next;
+    onChange(next);
     setEditingIndex(null);
     setEditDraft("");
   }
 
   function removeAt(index: number) {
-    onChange(items.filter((_, i) => i !== index));
+    const next = itemsRef.current.filter((_, i) => i !== index);
+    itemsRef.current = next;
+    onChange(next);
     if (editingIndex === index) {
       setEditingIndex(null);
       setEditDraft("");
@@ -172,8 +178,10 @@ export const MessageChipList = forwardRef<
 
   function addItem(forceValue?: string): string[] | null {
     const value = (forceValue ?? draft).trim();
-    if (!value || items.includes(value) || items.length >= maxItems) return null;
-    const next = [...items, value];
+    const current = itemsRef.current;
+    if (!value || current.includes(value) || current.length >= maxItems) return null;
+    const next = [...current, value];
+    itemsRef.current = next;
     onChange(next);
     setDraft("");
     setAddFieldOpen(true);
@@ -182,32 +190,30 @@ export const MessageChipList = forwardRef<
 
   useImperativeHandle(ref, () => ({
     flushPending: () => {
-      let next = items;
+      let next = itemsRef.current;
       if (editingIndex !== null) {
         const value = editDraft.trim();
         if (!value) {
-          next = items.filter((_, i) => i !== editingIndex);
+          next = next.filter((_, i) => i !== editingIndex);
         } else {
-          next = items.map((item, i) => (i === editingIndex ? value : item));
-          next = [...new Set(next)];
+          next = [...new Set(next.map((item, i) => (i === editingIndex ? value : item)))];
         }
-        onChange(next);
         setEditingIndex(null);
         setEditDraft("");
       }
       const pending = draft.trim();
       if (pending && !next.includes(pending) && next.length < maxItems) {
         next = [...next, pending];
-        onChange(next);
         setDraft("");
       }
+      itemsRef.current = next;
       return next;
     },
   }));
 
   const colored = Boolean(color);
   const chipInputClass = colored
-    ? "w-full min-w-0 border-0 bg-transparent px-3 py-2.5 text-center text-sm font-semibold outline-none placeholder:font-normal placeholder:opacity-60"
+    ? "w-full min-w-0 border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold outline-none placeholder:font-normal placeholder:opacity-60"
     : `${dashboardFieldClass} min-w-0 flex-1 text-sm`;
 
   return (
@@ -217,15 +223,15 @@ export const MessageChipList = forwardRef<
       ) : null}
 
       {items.length === 0 && !hideAddRow ? (
-        <p className="text-center text-sm text-slate-400 sm:text-left">{placeholder}</p>
+        <p className="text-left text-sm text-slate-400">{placeholder}</p>
       ) : items.length > 0 ? (
-        <ul className={colored ? "mx-auto flex w-full max-w-md flex-col gap-2.5" : "space-y-3"}>
+        <ul className={colored ? "flex w-full max-w-lg flex-col gap-2.5" : "space-y-3"}>
           {items.map((item, index) => (
             <li key={`${index}-${item}`} className="flex items-stretch gap-2">
               <div
                 className={
                   colored
-                    ? "flex min-h-[2.75rem] min-w-0 flex-1 items-center justify-center rounded-xl transition"
+                    ? "flex min-h-[2.75rem] min-w-0 flex-1 items-center justify-start rounded-xl transition"
                     : "min-w-0 flex-1"
                 }
                 style={colored ? messageChipSurfaceStyle(color) : undefined}
@@ -273,14 +279,14 @@ export const MessageChipList = forwardRef<
         <div
           className={
             colored
-              ? "mx-auto flex w-full max-w-md flex-col gap-2 pt-1 sm:flex-row sm:items-stretch"
+              ? "flex w-full max-w-lg flex-col gap-2 pt-1 sm:flex-row sm:items-stretch"
               : "flex flex-wrap gap-2 pt-1"
           }
         >
           <div
             className={
               colored
-                ? "flex min-h-[2.75rem] min-w-0 flex-1 items-center justify-center rounded-xl border border-dashed"
+                ? "flex min-h-[2.75rem] min-w-0 flex-1 items-center justify-start rounded-xl border border-dashed"
                 : "min-w-0 flex-1"
             }
             style={
@@ -306,7 +312,7 @@ export const MessageChipList = forwardRef<
               maxLength={60}
               className={
                 colored
-                  ? "w-full border-0 bg-transparent px-3 py-2.5 text-center text-sm outline-none placeholder:text-slate-400"
+                  ? "w-full border-0 bg-transparent px-3 py-2.5 text-left text-sm outline-none placeholder:text-slate-400"
                   : `${dashboardFieldClass} min-w-[min(100%,14rem)] flex-1 text-sm`
               }
               style={colored ? { color } : undefined}

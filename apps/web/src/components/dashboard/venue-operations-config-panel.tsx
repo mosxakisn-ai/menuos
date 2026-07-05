@@ -209,15 +209,19 @@ export function VenueOperationsConfigPanel({
   const [newSpaceTo, setNewSpaceTo] = useState("");
   const [zoneBusy, setZoneBusy] = useState<string | null>(null);
   const messageListRefs = useRef<Map<string, MessageChipListHandle>>(new Map());
+  const quickChipsRef = useRef<VenueOperationsConfig["quickChips"]>(undefined);
+
+  useEffect(() => {
+    quickChipsRef.current = draft?.quickChips;
+  }, [draft?.quickChips]);
 
   function applyFlushedMessageDrafts(base: VenueOperationsConfig): VenueOperationsConfig {
-    const chipsMap = { ...(base.quickChips ?? {}) };
+    const chipsMap = { ...(quickChipsRef.current ?? base.quickChips ?? {}) };
     let changed = false;
 
     messageListRefs.current.forEach((handle, postId) => {
       const chips = handle.flushPending();
-      const previous = base.quickChips?.[postId];
-      if (chips.length === 0 && previous === undefined) return;
+      const previous = chipsMap[postId];
       if (
         (previous ?? []).length === chips.length &&
         (previous ?? []).every((item, index) => item === chips[index])
@@ -230,9 +234,11 @@ export function VenueOperationsConfigPanel({
     });
 
     if (!changed) return base;
+    const quickChips = Object.keys(chipsMap).length ? chipsMap : undefined;
+    quickChipsRef.current = quickChips;
     return {
       ...base,
-      quickChips: Object.keys(chipsMap).length ? chipsMap : undefined,
+      quickChips,
     };
   }
 
@@ -248,8 +254,13 @@ export function VenueOperationsConfigPanel({
   const langCode = lang === "EN" ? "EN" : "GR";
 
   useEffect(() => {
-    if (config) setDraft(config);
-    else setDraft(null);
+    if (config) {
+      setDraft(config);
+      quickChipsRef.current = config.quickChips;
+    } else {
+      setDraft(null);
+      quickChipsRef.current = undefined;
+    }
   }, [config]);
 
   useEffect(() => {
@@ -275,7 +286,12 @@ export function VenueOperationsConfigPanel({
 
   async function save() {
     if (!venueId || !draft) return;
-    let draftToSave = applyFlushedMessageDrafts(draft);
+    const baseDraft = {
+      ...draft,
+      quickChips: quickChipsRef.current ?? draft.quickChips,
+    };
+    let draftToSave = applyFlushedMessageDrafts(baseDraft);
+    quickChipsRef.current = draftToSave.quickChips;
     setDraft(draftToSave);
     const langCode = lang === "EN" ? "EN" : "GR";
     const posts = listVenuePosts(draftToSave, langCode);
@@ -293,6 +309,7 @@ export function VenueOperationsConfigPanel({
         if (data.config) {
           setConfig(data.config);
           setDraft(data.config);
+          quickChipsRef.current = data.config.quickChips;
         }
         const successText = postsOnlyMode
           ? Posts.savedNextSteps
@@ -398,10 +415,14 @@ export function VenueOperationsConfigPanel({
   }
 
   function setQuickChips(postId: string, chips: string[]) {
-    if (!draft) return;
-    setDraft({
-      ...draft,
-      quickChips: { ...(draft.quickChips ?? {}), [postId]: chips },
+    setDraft((current) => {
+      if (!current) return current;
+      const nextMap = { ...(current.quickChips ?? {}) };
+      if (chips.length === 0) delete nextMap[postId];
+      else nextMap[postId] = chips;
+      const quickChips = Object.keys(nextMap).length ? nextMap : undefined;
+      quickChipsRef.current = quickChips;
+      return { ...current, quickChips };
     });
   }
 
@@ -414,16 +435,20 @@ export function VenueOperationsConfigPanel({
   }
 
   function resetQuickChips(post: VenuePost) {
-    if (!draft) return;
-    const next = { ...(draft.quickChips ?? {}) };
-    delete next[post.id];
-    const sameStation = listVenuePosts(draft, langCode).filter(
-      (row) => row.enabled && row.station === post.station,
-    );
-    if (sameStation.length === 1 && sameStation[0]?.id === post.id) {
-      delete next[post.station];
-    }
-    setDraft({ ...draft, quickChips: Object.keys(next).length ? next : undefined });
+    setDraft((current) => {
+      if (!current) return current;
+      const next = { ...(current.quickChips ?? {}) };
+      delete next[post.id];
+      const sameStation = listVenuePosts(current, langCode).filter(
+        (row) => row.enabled && row.station === post.station,
+      );
+      if (sameStation.length === 1 && sameStation[0]?.id === post.id) {
+        delete next[post.station];
+      }
+      const quickChips = Object.keys(next).length ? next : undefined;
+      quickChipsRef.current = quickChips;
+      return { ...current, quickChips };
+    });
   }
 
   function setTableStateLabel(state: TableTileState, value: string) {
@@ -863,7 +888,7 @@ export function VenueOperationsConfigPanel({
                             />
                           </div>
                         ) : (
-                          <p className="mt-3 text-center text-sm text-slate-500 sm:text-left">{M.previewEmpty}</p>
+                          <p className="mt-3 text-left text-sm text-slate-500">{M.previewEmpty}</p>
                         )}
                         <p className="mt-3 text-xs leading-relaxed text-slate-500">
                           {M.passTabletStaffHint(post.label.trim())}{" "}
