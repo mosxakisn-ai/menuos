@@ -1088,15 +1088,6 @@ export function VenueOperationsConfigPanel({
                 ) : (
                   <p className="mt-4 text-sm text-slate-600">{Z.empty}</p>
                 )}
-
-                <p className="mt-4">
-                  <a
-                    href="/dashboard/settings?tab=tables"
-                    className="text-sm font-semibold text-brand-blue hover:underline"
-                  >
-                    {Z.tablesTabLink}
-                  </a>
-                </p>
               </section>
             ) : show("zones") && zoneGroups && zoneGroups.length > 0 ? (
               <section>

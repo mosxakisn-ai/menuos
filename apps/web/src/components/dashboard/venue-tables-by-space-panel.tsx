@@ -715,12 +715,6 @@ export function VenueTablesBySpacePanel({
           </div>
         )}
 
-        <p className="mt-5 text-xs text-slate-500">
-          {T.renameHint}{" "}
-          <Link href="/dashboard/settings?tab=spaces" className="font-semibold text-brand-blue hover:underline">
-            {T.spacesTabLink}
-          </Link>
-        </p>
       </div>
     </div>
   );
