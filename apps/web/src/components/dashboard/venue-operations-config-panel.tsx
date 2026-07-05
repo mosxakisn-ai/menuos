@@ -274,6 +274,15 @@ export function VenueOperationsConfigPanel({
     updatePosts(posts.filter((post) => post.id !== postId));
   }
 
+  async function confirmRemovePost(postId: string) {
+    if (!draft) return;
+    const posts = listVenuePosts(draft, langCode);
+    const post = posts.find((row) => row.id === postId);
+    if (!post || posts.length <= 1) return;
+    if (!(await confirmDestructive(O.removePostConfirm(post.label.trim())))) return;
+    removePost(postId);
+  }
+
   function addPost() {
     if (!draft) return;
     const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
@@ -611,7 +620,7 @@ export function VenueOperationsConfigPanel({
                       <div className="flex justify-center">
                         <button
                           type="button"
-                          onClick={() => removePost(post.id)}
+                          onClick={() => void confirmRemovePost(post.id)}
                           disabled={draftPosts.length <= 1}
                           className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
                           aria-label={O.removePost}

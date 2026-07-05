@@ -498,7 +498,12 @@ export const DASHBOARD_EL = {
     newItems: "Νέα είδη",
     needVenueFirst: "Φτιάξε πρώτα κατάστημα για να λαμβάνεις κλήσεις από πελάτες.",
     managerViewBadge: "Προβολή: όλο το κατάστημα",
-    staffViewBadge: (name: string, stations: string) => `Προβολή: ${name} · ${stations}`,
+    staffViewBadge: (name: string, zone: string | null, stations: string) =>
+      zone
+        ? `Προβολή: ${name} · ${zone} · ${stations}`
+        : `Προβολή: ${name} · ${stations}`,
+    assignedZoneHeading: "Ο χώρος σου",
+    assignedZoneHint: "Βλέπεις μόνο τον χώρο που σου έχει ανατεθεί — όχι όλο το κατάστημα.",
     monitorTabAll: "Χάρτης",
     monitorTabCalls: "Κλήσεις",
     monitorTabPass: "Πάσο",
@@ -1053,6 +1058,8 @@ export const DASHBOARD_EL = {
         postActionsLabel: "",
         addPost: "Νέο πόστο",
         removePost: "Αφαίρεση πόστου",
+        removePostConfirm: (name: string) =>
+          `Αφαίρεση πόστου «${name}»; Τα μηνύματά του θα χαθούν. Η ενέργεια δεν αναιρείται.`,
         postsMaxReached: "Μέχρι 12 πόστα.",
         quickChipsTitle: "Γρήγορα μηνύματα",
         quickChipsHint: "Κουμπιά γρήγορης επιλογής στις οθόνες κουζίνας/μπαρ (tablet).",

@@ -705,6 +705,15 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                   </p>
                   <p className="mt-1 text-xs text-slate-500">{S.colLinkHint}</p>
                   <div className="mt-3">
+                    <StaffPostMessagesPreview
+                      config={opsConfig}
+                      loading={opsLoading}
+                      postId={staffPrimaryAssignment(member.stations)}
+                      copy={messagesPreviewCopy}
+                      langCode={langCode}
+                    />
+                  </div>
+                  <div className="mt-3">
                     <StaffMemberLinkActions
                       venueId={venueId}
                       venueSlug={venue.slug}

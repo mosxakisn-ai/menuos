@@ -489,7 +489,10 @@ export const DASHBOARD_EN = {
     newItems: "New items",
     needVenueFirst: "Create a venue first to receive calls from customers.",
     managerViewBadge: "View: entire venue",
-    staffViewBadge: (name: string, stations: string) => `View: ${name} · ${stations}`,
+    staffViewBadge: (name: string, zone: string | null, stations: string) =>
+      zone ? `View: ${name} · ${zone} · ${stations}` : `View: ${name} · ${stations}`,
+    assignedZoneHeading: "Your space",
+    assignedZoneHint: "You only see the space assigned to you — not the whole venue.",
     monitorTabAll: "Map",
     monitorTabCalls: "Calls",
     monitorTabPass: "Pass",
@@ -1039,6 +1042,8 @@ export const DASHBOARD_EN = {
         postActionsLabel: "",
         addPost: "New post",
         removePost: "Remove post",
+        removePostConfirm: (name: string) =>
+          `Remove post «${name}»? Its messages will be lost. This cannot be undone.`,
         postsMaxReached: "Up to 12 posts.",
         quickChipsTitle: "Quick messages",
         quickChipsHint: "One-tap buttons on kitchen/bar tablets.",
