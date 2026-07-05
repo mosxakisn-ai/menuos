@@ -722,20 +722,11 @@ export function VenueOperationsConfigPanel({
                     ))}
                   </select>
                 </label>
-                <Link
-                  href="/dashboard/settings?tab=posts"
-                  className="pb-2 text-xs font-semibold text-brand-blue hover:underline"
-                >
-                  {M.managePostsLink}
-                </Link>
               </div>
 
               {enabledPosts.length === 0 && selectedMessagePostId !== "services" ? (
                 <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                  {M.noPostsHint}{" "}
-                  <Link href="/dashboard/settings?tab=posts" className="font-semibold text-brand-blue hover:underline">
-                    {M.managePostsLink}
-                  </Link>
+                  {M.noPostsHint}
                 </p>
               ) : null}
 
