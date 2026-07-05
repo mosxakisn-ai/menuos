@@ -499,6 +499,8 @@ export const DASHBOARD_EN = {
     passFilterAll: "All",
     zoneFilterAll: "All spaces",
     zonePickHeading: "Pick a space",
+    zoneSpotCount: (n: number) => (n === 1 ? "1 spot" : `${n} spots`),
+    zoneActiveCount: (n: number) => (n === 1 ? "1 active" : `${n} active`),
     emptyCallsTab: "No active calls right now.",
     emptyPassTab: "No active pass notifications.",
     emptyFilteredView: "No active activity with these filters.",

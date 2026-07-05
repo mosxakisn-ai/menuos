@@ -510,6 +510,8 @@ export const DASHBOARD_EL = {
     passFilterAll: "Όλα",
     zoneFilterAll: "Όλοι οι χώροι",
     zonePickHeading: "Διάλεξε χώρο",
+    zoneSpotCount: (n: number) => (n === 1 ? "1 θέση" : `${n} θέσεις`),
+    zoneActiveCount: (n: number) => (n === 1 ? "1 ενεργό" : `${n} ενεργά`),
     emptyCallsTab: "Καμία ενεργή κλήση αυτή τη στιγμή.",
     emptyPassTab: "Καμία ενεργή ειδοποίηση πάσου.",
     emptyFilteredView: "Καμία ενεργή κίνηση με αυτά τα φίλτρα.",

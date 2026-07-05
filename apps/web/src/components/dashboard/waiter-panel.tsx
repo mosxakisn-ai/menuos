@@ -257,6 +257,11 @@ export function WaiterPanel({
     return applyZoneLabelOverrides(groups, opsConfig?.zoneLabels);
   }, [spots, opsConfig?.zoneLabels]);
 
+  const activeZoneGroups = useMemo(
+    () => zoneGroups.filter((zone) => zone.spots.length > 0),
+    [zoneGroups],
+  );
+
   useEffect(() => {
     if (!initialZoneId || zoneGroups.length === 0) return;
     if (zoneGroups.some((zone) => zone.id === initialZoneId)) {
@@ -387,18 +392,24 @@ export function WaiterPanel({
   ];
 
   const showStationFilters = monitorTab === "all" || monitorTab === "pass";
-  const showZoneFilters = zoneGroups.length > 1 && !assignedZoneId;
+  const showZoneFilters = activeZoneGroups.length > 1 && !assignedZoneId;
+
+  function zoneSpotCount(zoneId: string): number {
+    if (zoneId === "all") return spots.length;
+    return activeZoneGroups.find((zone) => zone.id === zoneId)?.spots.length ?? 0;
+  }
 
   function renderZoneButton(zoneId: string, label: string) {
     const selected = zoneFilterId === zoneId;
     const activity = zoneActivityTotal(zoneId);
+    const spotCount = zoneSpotCount(zoneId);
     return (
       <button
         key={zoneId}
         type="button"
         onClick={() => setZoneFilterId(zoneId)}
         className={cn(
-          "flex min-h-[4rem] w-[calc(50%-0.25rem)] max-w-[9.5rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 px-3 py-3 text-center transition sm:min-h-[4.25rem] sm:w-[calc(33.333%-0.5rem)] sm:px-4 lg:w-[calc(25%-0.5rem)]",
+          "flex min-h-[4rem] w-[calc(50%-0.25rem)] max-w-[9.5rem] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 px-3 py-3 text-center transition sm:min-h-[4.25rem] sm:w-[calc(33.333%-0.5rem)] sm:px-4 lg:w-[calc(25%-0.5rem)]",
           selected
             ? "border-brand-blue bg-brand-blue text-white shadow-md shadow-brand-blue/20"
             : activity.total > 0
@@ -409,18 +420,27 @@ export function WaiterPanel({
         <span className={cn("text-base font-bold leading-tight sm:text-lg", selected && "text-white")}>
           {label}
         </span>
+        <span
+          className={cn(
+            "text-2xl font-extrabold tabular-nums leading-none sm:text-3xl",
+            selected ? "text-white" : "text-brand-navy",
+          )}
+        >
+          {spotCount}
+        </span>
+        <span className={cn("text-[10px] sm:text-xs", selected ? "text-white/85" : "text-slate-500")}>
+          {W.zoneSpotCount(spotCount)}
+        </span>
         {activity.total > 0 ? (
           <span
             className={cn(
-              "text-2xl font-extrabold tabular-nums leading-none sm:text-3xl",
-              selected ? "text-white" : "text-amber-700",
+              "mt-0.5 text-[10px] font-semibold sm:text-xs",
+              selected ? "text-amber-100" : "text-amber-700",
             )}
           >
-            {activity.total}
+            {W.zoneActiveCount(activity.total)}
           </span>
-        ) : (
-          <span className={cn("text-xs", selected ? "text-white/80" : "text-slate-400")}>—</span>
-        )}
+        ) : null}
       </button>
     );
   }
@@ -477,6 +497,9 @@ export function WaiterPanel({
             {W.assignedZoneHeading}
           </p>
           <p className="mt-1 text-lg font-bold text-brand-navy">{assignedZoneLabel}</p>
+          <p className="mt-0.5 text-sm text-slate-600">
+            {W.zoneSpotCount(zoneSpotCount(assignedZoneId))}
+          </p>
           <p className="mt-1 text-xs text-slate-600">{W.assignedZoneHint}</p>
         </section>
       ) : showZoneFilters ? (
@@ -486,7 +509,7 @@ export function WaiterPanel({
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             {renderZoneButton("all", W.zoneFilterAll)}
-            {zoneGroups.map((zone) => renderZoneButton(zone.id, zone.label))}
+            {activeZoneGroups.map((zone) => renderZoneButton(zone.id, zone.label))}
           </div>
         </section>
       ) : null}
