@@ -763,6 +763,8 @@ export const DASHBOARD_EL = {
           "Ορίστε ποιος κάνει τι — μάγειρας, σερβιτόρος, μπαρ, κ.λπ. Το όνομα εμφανίζεται στο προσωπικό, push και tablet.",
         hint: "Μέχρι 12 πόστα — π.χ. Κουζίνα, Bar, Services. Ο τύπος καθορίζει tablet πάσου ή σερβιτόρο.",
         postNamePlaceholder: "π.χ. Κουζίνα, Bar, Services",
+        postSpaceLabel: "Χώρος",
+        postSpaceAll: "Όλοι οι χώροι",
         postTypeHint: "Κουζίνα/Μπαρ = tablet πάσου · Σερβιτόρος = κινητό, χάρτης θέσεων.",
         waiterNameWarning:
           "Όνομα σερβιτόρου με τύπο Κουζίνα/Μπαρ — άλλαξε τύπο σε «Σερβιτόρος» ή βάλε όνομα πάστου.",
@@ -1113,6 +1115,8 @@ export const DASHBOARD_EL = {
           "Πρόσθεσε όσα πόστα χρειάζεσαι (π.χ. Grill, Κήπος, Παραλία). Το όνομα εμφανίζεται στον σερβιτόρο, push και οθόνες.",
         postActiveLabel: "Ενεργό",
         postNameLabel: "Όνομα πόστου",
+        postSpaceLabel: "Χώρος",
+        postSpaceAll: "Όλοι οι χώροι",
         postTypeLabel: "Τύπος",
         postTypeHint: "Ο τύπος καθορίζει σε ποια οθόνη tablet πηγαίνουν τα πάσο.",
         postActionsLabel: "Ενέργειες",

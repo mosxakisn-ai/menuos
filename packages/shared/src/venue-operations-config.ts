@@ -140,6 +140,7 @@ export const venuePostSchema = z.object({
     .string()
     .transform((s) => normalizeVenuePostStation(s))
     .pipe(venuePostStationSchema),
+  zoneId: z.string().trim().max(60).nullable().optional(),
 });
 
 export type VenuePost = z.infer<typeof venuePostSchema>;

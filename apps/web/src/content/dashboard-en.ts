@@ -750,6 +750,8 @@ export const DASHBOARD_EN = {
           "Define who does what — cook, waiter, bar, etc. The name appears on staff links, push and tablets.",
         hint: "Up to 12 posts — e.g. Kitchen, Bar, Services. Type sets pass tablet vs waiter.",
         postNamePlaceholder: "e.g. Kitchen, Bar, Services",
+        postSpaceLabel: "Space",
+        postSpaceAll: "All spaces",
         postTypeHint: "Kitchen/Bar = pass tablet · Waiter = phone, seat map.",
         waiterNameWarning:
           "Waiter-like name with Kitchen/Bar type — switch type to Waiter or rename the post.",
@@ -1098,6 +1100,8 @@ export const DASHBOARD_EN = {
           "Add as many posts as you need (e.g. Grill, Garden, Beach). The name appears on waiter panel, push and station screens.",
         postActiveLabel: "Active",
         postNameLabel: "Post name",
+        postSpaceLabel: "Space",
+        postSpaceAll: "All spaces",
         postTypeLabel: "Type",
         postTypeHint: "Type decides which tablet screen receives pass signals.",
         postActionsLabel: "Actions",

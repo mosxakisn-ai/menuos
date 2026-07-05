@@ -266,6 +266,10 @@ export function VenueOperationsConfigPanel({
 
   if (venues.length === 0) return null;
 
+  const postSpaceLabel = postsOnlyMode ? Posts.postSpaceLabel : O.postSpaceLabel;
+  const postSpaceAll = postsOnlyMode ? Posts.postSpaceAll : O.postSpaceAll;
+  const postZones = previewZones ?? [];
+
   const stateLabelDefaults =
     lang === "EN" ? mergeTableStateLabels(undefined, "EN") : DEFAULT_TABLE_STATE_LABELS_EL;
 
@@ -340,6 +344,16 @@ export function VenueOperationsConfigPanel({
     updatePosts(posts.map((post) => (post.id === postId ? { ...post, station } : post)));
   }
 
+  function setPostZoneId(postId: string, zoneId: string) {
+    if (!draft) return;
+    const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
+    updatePosts(
+      posts.map((post) =>
+        post.id === postId ? { ...post, zoneId: zoneId.trim() ? zoneId : null } : post,
+      ),
+    );
+  }
+
   function removePost(postId: string) {
     if (!draft) return;
     const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
@@ -378,7 +392,7 @@ export function VenueOperationsConfigPanel({
     if (posts.length >= MAX_VENUE_POSTS) return;
     const fallback = lang === "EN" ? "New post" : "Νέο πόστο";
     updatePosts([
-      { id: newVenuePostId(), label: fallback, enabled: true, station: "kitchen" },
+      { id: newVenuePostId(), label: fallback, enabled: true, station: "kitchen", zoneId: null },
       ...posts,
     ]);
   }
@@ -660,10 +674,11 @@ export function VenueOperationsConfigPanel({
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                      <th className="w-16 px-4 py-3 text-center">{O.postActiveLabel}</th>
-                      <th className="min-w-[14rem] px-4 py-3">{O.postNameLabel}</th>
-                      <th className="w-44 px-4 py-3">{O.postTypeLabel}</th>
-                      <th className="w-24 px-4 py-3 text-right">{O.postActionsLabel}</th>
+                      <th className="w-14 px-3 py-3 text-center">{O.postActiveLabel}</th>
+                      <th className="w-36 px-3 py-3">{O.postNameLabel}</th>
+                      <th className="w-36 px-3 py-3">{postSpaceLabel}</th>
+                      <th className="w-32 px-3 py-3">{O.postTypeLabel}</th>
+                      <th className="w-16 px-3 py-3 text-right">{O.postActionsLabel}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -679,7 +694,7 @@ export function VenueOperationsConfigPanel({
                             post.enabled ? "bg-brand-blue/[0.03]" : "bg-slate-50/40 opacity-80"
                           }`}
                         >
-                          <td className="px-4 py-3 text-center align-middle">
+                          <td className="px-3 py-3 text-center align-middle">
                             <input
                               type="checkbox"
                               checked={post.enabled}
@@ -688,7 +703,7 @@ export function VenueOperationsConfigPanel({
                               aria-label={O.postActiveLabel}
                             />
                           </td>
-                          <td className="px-4 py-3 align-middle">
+                          <td className="px-3 py-3 align-middle">
                             <input
                               value={post.label}
                               onChange={(e) => setPostLabel(post.id, e.target.value)}
@@ -696,16 +711,32 @@ export function VenueOperationsConfigPanel({
                               placeholder={
                                 postsOnlyMode ? Posts.postNamePlaceholder : P.kitchen
                               }
-                              className={`${dashboardFieldClass} w-full min-w-[12rem] py-2.5 text-sm`}
+                              className={`${dashboardFieldClass} w-full max-w-[9rem] py-2 text-sm`}
                             />
                           </td>
-                          <td className="px-4 py-3 align-middle">
+                          <td className="px-3 py-3 align-middle">
+                            <select
+                              value={post.zoneId ?? ""}
+                              onChange={(e) => setPostZoneId(post.id, e.target.value)}
+                              disabled={postZones.length === 0}
+                              className={`${dashboardFieldClass} w-full max-w-[9rem] py-2 text-sm`}
+                              title={postSpaceLabel}
+                            >
+                              <option value="">{postSpaceAll}</option>
+                              {postZones.map((zone) => (
+                                <option key={zone.id} value={zone.id}>
+                                  {zone.label}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-3 py-3 align-middle">
                             <select
                               value={post.station}
                               onChange={(e) =>
                                 setPostStation(post.id, e.target.value as VenuePostStationInput)
                               }
-                              className={`${dashboardFieldClass} w-full min-w-[9rem] py-2.5 text-sm`}
+                              className={`${dashboardFieldClass} w-full max-w-[8rem] py-2 text-sm`}
                               title={postsOnlyMode ? Posts.postTypeHint : O.postTypeHint}
                             >
                               {VENUE_POST_STATION_INPUTS.map((station) => (
@@ -715,7 +746,7 @@ export function VenueOperationsConfigPanel({
                               ))}
                             </select>
                           </td>
-                          <td className="px-4 py-3 text-right align-middle">
+                          <td className="px-3 py-3 text-right align-middle">
                             <div className="flex justify-end">
                               <DashboardIconButton
                                 variant="danger"
