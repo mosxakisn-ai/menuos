@@ -12,6 +12,7 @@ import {
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
+import { notifyLive360Updated } from "@/lib/live360-events";
 import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
 import { clientShareOrigin } from "@/lib/client-share-origin";
 import { stationScreenPath, type StationScreenRow } from "@/lib/station-screens";
@@ -45,12 +46,14 @@ export function StationScreensPanel({
   venueId: controlledVenueId,
   embedded = false,
   titleOverride,
+  onScreensChange,
 }: {
   station: PassStationInput;
   venues: Venue[];
   venueId?: string;
   embedded?: boolean;
   titleOverride?: string;
+  onScreensChange?: () => void;
 }) {
   const { d, lang } = useDashboardCopy();
   const S = d.pages.settings;
@@ -92,6 +95,12 @@ export function StationScreensPanel({
       if (generation === loadGenerationRef.current) setLoading(false);
     }
   }, [venueId, station]);
+
+  async function refreshScreens() {
+    await loadScreens();
+    onScreensChange?.();
+    notifyLive360Updated();
+  }
 
   useEffect(() => {
     loadGenerationRef.current += 1;
@@ -141,7 +150,7 @@ export function StationScreensPanel({
       }
       setNewLabel("");
       setNewSpotPrefix("");
-      await loadScreens();
+      await refreshScreens();
     } finally {
       setAdding(false);
     }
@@ -161,7 +170,7 @@ export function StationScreensPanel({
         window.alert(typeof data.error === "string" ? data.error : S.rotateScreenFailed);
         return;
       }
-      await loadScreens();
+      await refreshScreens();
     } finally {
       setBusyId(null);
     }
@@ -183,7 +192,7 @@ export function StationScreensPanel({
         setEditingId(null);
         setEditLabel("");
       }
-      await loadScreens();
+      await refreshScreens();
     } finally {
       setBusyId(null);
     }
@@ -222,7 +231,7 @@ export function StationScreensPanel({
       setEditingId(null);
       setEditLabel("");
       setEditSpotPrefix("");
-      await loadScreens();
+      await refreshScreens();
     } finally {
       setSavingEdit(false);
     }

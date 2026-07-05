@@ -1133,6 +1133,8 @@ export const DASHBOARD_EL = {
         save: "Αποθήκευση",
         saving: "Αποθήκευση…",
         reload: "Επαναφόρτωση",
+        reloadDiscardConfirm:
+          "Έχεις μη αποθηκευμένες αλλαγές. Να τις πετάξω και να φορτώσω ξανά από τον server;",
         saved: "Οι ρυθμίσεις αποθηκεύτηκαν.",
       },
       services: {

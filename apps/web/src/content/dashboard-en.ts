@@ -1118,6 +1118,8 @@ export const DASHBOARD_EN = {
         save: "Save",
         saving: "Saving…",
         reload: "Reload",
+        reloadDiscardConfirm:
+          "You have unsaved changes. Discard them and reload from the server?",
         saved: "Settings saved.",
       },
       services: {

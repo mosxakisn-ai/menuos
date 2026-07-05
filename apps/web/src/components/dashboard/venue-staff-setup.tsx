@@ -39,6 +39,7 @@ import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provid
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
 import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
+import { notifyLive360Updated } from "@/lib/live360-events";
 import { cn } from "@/lib/utils";
 import { buildStaffShareUrl, buildStationScreenShareUrl } from "@/lib/staff-share-url";
 import type { StaffScreensByStation } from "@/lib/staff-member-access-url";
@@ -525,6 +526,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         setPostAssignment("services");
         setZoneId("");
         await reload();
+        notifyLive360Updated();
       }
     } finally {
       setBusy(null);
@@ -563,6 +565,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
       if (res.ok) {
         setEditingId(null);
         await reload();
+        notifyLive360Updated();
       }
     } finally {
       setBusy(null);
@@ -578,7 +581,10 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
       });
       const data = await res.json();
       showFromResponse(data, res.ok, res.status);
-      if (res.ok) await reload();
+      if (res.ok) {
+        await reload();
+        notifyLive360Updated();
+      }
     } finally {
       setBusy(null);
     }
@@ -964,6 +970,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
               venues={venues}
               venueId={venueId}
               embedded
+              onScreensChange={() => void reloadScreens()}
             />
           ))}
         </div>

@@ -42,7 +42,8 @@ import {
 } from "@/components/dashboard/post-messages-editor";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
-import { confirmDestructive } from "@/lib/confirm-action";
+import { notifyLive360Updated } from "@/lib/live360-events";
+import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { DashboardIconButton } from "@/components/dashboard/dashboard-action-button";
 import { AlertTriangle, CheckCircle2, Plus, Trash2 } from "lucide-react";
@@ -319,6 +320,7 @@ export function VenueOperationsConfigPanel({
           text: successText,
         });
         setFlash(null);
+        notifyLive360Updated();
       } else {
         showFromResponse(data, false, res.status);
         setSaveFeedback({ type: "error", text: resolveApiError(data, d.flash) });
@@ -537,6 +539,7 @@ export function VenueOperationsConfigPanel({
       setNewSpaceTo("");
       setShowAddSpace(false);
       await reloadSpots();
+      notifyLive360Updated();
     } finally {
       setZoneBusy(null);
     }
@@ -582,6 +585,7 @@ export function VenueOperationsConfigPanel({
       setFlash({ type: "success", text: Z.spaceDeleted(name) });
       await reloadSpots();
       await reload();
+      notifyLive360Updated();
     } finally {
       setZoneBusy(null);
     }
@@ -1269,7 +1273,17 @@ export function VenueOperationsConfigPanel({
               <button
                 type="button"
                 disabled={loading}
-                onClick={() => void reload()}
+                onClick={async () => {
+                  if (
+                    draft &&
+                    config &&
+                    JSON.stringify(draft) !== JSON.stringify(config) &&
+                    !(await confirmWarning(O.reloadDiscardConfirm))
+                  ) {
+                    return;
+                  }
+                  void reload();
+                }}
                 className={buttonClass("secondary")}
               >
                 {O.reload}

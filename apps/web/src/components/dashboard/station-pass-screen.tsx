@@ -706,9 +706,21 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 </div>
               </>
             ) : ctx.spotPrefix ? (
-              <p className="rounded-xl border border-amber-400/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
-                {C.emptyZone}
-              </p>
+              <div className="space-y-3">
+                <p className="rounded-xl border border-amber-400/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
+                  {C.emptyZone}
+                </p>
+                <input
+                  value={manualTable}
+                  onChange={(e) => {
+                    setManualTable(e.target.value);
+                    setTable(null);
+                  }}
+                  placeholder="12"
+                  maxLength={20}
+                  className="h-16 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-2xl font-bold text-white placeholder:text-slate-500"
+                />
+              </div>
             ) : (
               <input
                 value={manualTable}

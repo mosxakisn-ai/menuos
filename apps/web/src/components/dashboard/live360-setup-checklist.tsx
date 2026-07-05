@@ -9,7 +9,6 @@ import {
   quickChipsForPost,
   staffAssignmentLinkKind,
   staffPrimaryAssignment,
-  stationScreenLabelMatchesPost,
   type PassStationInput,
 } from "@menuos/shared";
 import { dashboardCardClass } from "@/components/dashboard/dashboard-page";
@@ -17,6 +16,7 @@ import { useVenueOperationsConfig } from "@/components/dashboard/venue-operation
 import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { cn } from "@/lib/utils";
+import { LIVE360_UPDATED_EVENT } from "@/lib/live360-events";
 
 type StaffMemberRow = { id: string; stations: string[] };
 
@@ -32,8 +32,8 @@ export function Live360SetupChecklist({
   const { d, lang } = useDashboardCopy();
   const G = d.pages.settings.live360Guide;
   const langCode = lang === "EN" ? "EN" : "GR";
-  const { spots, loading: spotsLoading } = useVenueSpots(venueId);
-  const { config, loading: configLoading } = useVenueOperationsConfig(venueId);
+  const { spots, loading: spotsLoading, reload: reloadSpots } = useVenueSpots(venueId);
+  const { config, loading: configLoading, reload: reloadConfig } = useVenueOperationsConfig(venueId);
   const [members, setMembers] = useState<StaffMemberRow[]>([]);
   const [screenLabels, setScreenLabels] = useState<string[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
@@ -87,6 +87,26 @@ export function Live360SetupChecklist({
     void loadScreens();
   }, [loadMembers, loadScreens]);
 
+  useEffect(() => {
+    const refresh = () => {
+      void reloadSpots();
+      void reloadConfig();
+      void loadMembers();
+      void loadScreens();
+    };
+    window.addEventListener(LIVE360_UPDATED_EVENT, refresh);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener(LIVE360_UPDATED_EVENT, refresh);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [reloadSpots, reloadConfig, loadMembers, loadScreens]);
+
   const invalidStaff = useMemo(
     () =>
       members.filter((member) => {
@@ -104,16 +124,11 @@ export function Live360SetupChecklist({
 
   const screensReady = useMemo(() => {
     if (tabletPosts.length === 0) return false;
-    return tabletPosts.every((post) =>
-      screenLabels.some((key) => {
-        const [station, label] = key.split(":");
-        return (
-          station === post.station &&
-          stationScreenLabelMatchesPost(config ?? undefined, post.station, label, langCode)
-        );
-      }),
+    const stationsNeeded = [...new Set(tabletPosts.map((post) => post.station))];
+    return stationsNeeded.every((station) =>
+      screenLabels.some((key) => key.startsWith(`${station}:`)),
     );
-  }, [tabletPosts, screenLabels, config, langCode]);
+  }, [tabletPosts, screenLabels]);
 
   const messagesReady = useMemo(
     () =>
