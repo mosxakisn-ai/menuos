@@ -752,12 +752,11 @@ export const DASHBOARD_EN = {
     },
     settings: {
       title: "Settings",
-      description: "Posts, links, spots, messages and staff — all in one place.",
+      description: "Posts, spots, messages and staff — all in one place.",
       tabs: {
         general: "Account",
         staff: "Staff",
         posts: "Posts",
-        links: "Links",
         venue: "Venue",
         messages: "Messages",
         tables: "Tables",

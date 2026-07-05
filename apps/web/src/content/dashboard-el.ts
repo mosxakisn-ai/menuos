@@ -765,12 +765,11 @@ export const DASHBOARD_EL = {
     },
     settings: {
       title: "Ρυθμίσεις",
-      description: "Πόστα, links, θέσεις, μηνύματα και προσωπικό — όλα από εδώ.",
+      description: "Πόστα, θέσεις, μηνύματα και προσωπικό — όλα από εδώ.",
       tabs: {
         general: "Λογαριασμός",
         staff: "Προσωπικό",
         posts: "Πόστα",
-        links: "Link",
         venue: "Κατάστημα",
         messages: "Μηνύματα",
         tables: "Τραπέζια",

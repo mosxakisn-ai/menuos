@@ -6,7 +6,6 @@ import { ChangePasswordForm } from "@/components/dashboard/change-password-form"
 import { type SettingsVenue } from "@/components/dashboard/settings-form";
 import {
   SettingsGeneralExtrasPanel,
-  SettingsLinksPanel,
   SettingsMessagesPanel,
   SettingsPersonnelPanel,
   SettingsPostsPanel,
@@ -121,18 +120,6 @@ function SettingsPageBody({
         break;
       case "posts":
         content = <SettingsPostsPanel venues={spotVenues} />;
-        break;
-      case "links":
-        content = (
-          <SettingsLinksPanel
-            venues={venues.map((v) => ({
-              id: v.id,
-              name: v.name,
-              slug: v.slug,
-              staffToken: v.staffToken,
-            }))}
-          />
-        );
         break;
       case "venue":
         content = <SettingsVenuePanel venues={venues} />;
