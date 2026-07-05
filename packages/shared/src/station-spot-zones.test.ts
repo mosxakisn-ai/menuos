@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   filterSpotsByZone,
   filterWaiterLocationsByZone,
+  filterWaiterLocationsForZoneView,
   findZoneIdForSpot,
   groupVenueSpotsByZone,
   pickDefaultZoneId,
@@ -78,5 +79,20 @@ describe("zone filters for waiter", () => {
     const patioCalls = filterWaiterLocationsByZone(calls, "prefix:αυλή", groups);
     expect(patioCalls).toHaveLength(1);
     expect(zoneIdForWaiterLocation({ tableNumber: "Αυλή-1" }, groups)).toBe("prefix:αυλή");
+  });
+
+  it("includes unmapped locations when a zone is selected", () => {
+    const groups = groupVenueSpotsByZone([
+      { type: "TABLE", label: "5" },
+      { type: "TABLE", label: "Αυλή-1" },
+    ]);
+    const items = [
+      { id: "c1", tableNumber: "5" },
+      { id: "c2", tableNumber: "99" },
+    ];
+    const patio = filterWaiterLocationsForZoneView(items, "prefix:αυλή", groups);
+    expect(patio.map((row) => row.id)).toEqual(["c2"]);
+    const sala = filterWaiterLocationsForZoneView(items, groups[0]!.id, groups);
+    expect(sala.map((row) => row.id)).toEqual(["c1", "c2"]);
   });
 });

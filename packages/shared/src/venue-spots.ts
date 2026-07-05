@@ -100,6 +100,13 @@ export function countMenuLocationFields(loc: {
   return [loc.tableNumber, loc.roomNumber, loc.sunbedNumber].filter((v) => v?.trim()).length;
 }
 
+/** Pure numeric table labels: "05" and "5" match (KDS manual entry vs configured spots). */
+function normalizeTableNumberLabel(value: string): string {
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) return String(Number.parseInt(trimmed, 10));
+  return trimmed;
+}
+
 /** One active location per call — sunbed wins over room over table if multiple are sent. */
 export function normalizeWaiterCallLocation(input: {
   tableNumber?: string | null;
@@ -111,7 +118,7 @@ export function normalizeWaiterCallLocation(input: {
   const room = input.roomNumber?.trim();
   if (room) return { roomNumber: room };
   const table = input.tableNumber?.trim();
-  if (table) return { tableNumber: table };
+  if (table) return { tableNumber: normalizeTableNumberLabel(table) };
   return {};
 }
 

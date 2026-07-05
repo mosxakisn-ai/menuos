@@ -171,3 +171,18 @@ export function filterWaiterLocationsByZone<T extends WaiterLocationLike>(
   if (zoneId === "all") return items;
   return items.filter((item) => zoneIdForWaiterLocation(item, groups) === zoneId);
 }
+
+/** Zone filter plus unknown-location rows (unconfigured table numbers). */
+export function filterWaiterLocationsForZoneView<T extends WaiterLocationLike & { id?: string }>(
+  items: T[],
+  zoneId: string,
+  groups: SpotZoneGroup[],
+): T[] {
+  if (zoneId === "all") return items;
+  const inZone = filterWaiterLocationsByZone(items, zoneId, groups);
+  const unmapped = items.filter((item) => zoneIdForWaiterLocation(item, groups) === null);
+  if (unmapped.length === 0) return inZone;
+  const seen = new Set(inZone.map((item) => item.id).filter(Boolean));
+  const extra = unmapped.filter((item) => !item.id || !seen.has(item.id));
+  return extra.length > 0 ? [...inZone, ...extra] : inZone;
+}

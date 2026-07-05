@@ -57,6 +57,11 @@ describe("waiterCallLocationMatches", () => {
     expect(waiterCallLocationMatches({ tableNumber: "12" }, { tableNumber: "12" })).toBe(true);
     expect(waiterCallLocationMatches({ tableNumber: "12" }, { tableNumber: "13" })).toBe(false);
   });
+
+  it("matches numeric tables with or without leading zeros", () => {
+    expect(waiterCallLocationMatches({ tableNumber: "5" }, { tableNumber: "05" })).toBe(true);
+    expect(waiterCallLocationMatches({ tableNumber: "012" }, { tableNumber: "12" })).toBe(true);
+  });
 });
 
 describe("formatWaiterCallLocation", () => {

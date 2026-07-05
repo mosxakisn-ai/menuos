@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   applyZoneLabelOverrides,
   filterSpotsByZone,
-  filterWaiterLocationsByZone,
+  filterWaiterLocationsForZoneView,
   formatStaffAssignmentsForLang,
   listVenuePosts,
   groupVenueSpotsByZone,
@@ -78,7 +78,9 @@ export function WaiterPanel({
   const [zoneFilterId, setZoneFilterId] = useState<string>("all");
   const prevPendingRef = useRef<number | null>(null);
   const prevCallsRef = useRef<WaiterCall[]>([]);
+  const prevPassIdsRef = useRef<Set<string>>(new Set());
   const pendingBaselineSetRef = useRef(false);
+  const passBaselineSetRef = useRef(false);
   const loadGenerationRef = useRef(0);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const { config: opsConfig } = useVenueOperationsConfig(venueId);
@@ -138,9 +140,21 @@ export function WaiterPanel({
     }
 
     if (passRes.ok) {
-      setPassSignals((passData.signals ?? []) as PassSignal[]);
+      const newSignals = (passData.signals ?? []) as PassSignal[];
+      if (passBaselineSetRef.current) {
+        const hasNewPass = newSignals.some((signal) => !prevPassIdsRef.current.has(signal.id));
+        if (hasNewPass) alertNewWaiterCall();
+      }
+      prevPassIdsRef.current = new Set(newSignals.map((signal) => signal.id));
+      passBaselineSetRef.current = true;
+      setPassSignals(newSignals);
     } else {
       setPassSignals([]);
+      prevPassIdsRef.current = new Set();
+      if (callsRes.ok && passRes.status >= 400) {
+        const passError = typeof passData.error === "string" ? passData.error : null;
+        if (passError) setFlash({ type: "error", text: passError });
+      }
     }
   }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash]);
 
@@ -152,7 +166,9 @@ export function WaiterPanel({
     setPendingCount(0);
     prevPendingRef.current = null;
     prevCallsRef.current = [];
+    prevPassIdsRef.current = new Set();
     pendingBaselineSetRef.current = false;
+    passBaselineSetRef.current = false;
     setZoneFilterId("all");
   }, [venueId]);
 
@@ -252,24 +268,21 @@ export function WaiterPanel({
   );
 
   const displayCalls = useMemo(
-    () => filterWaiterLocationsByZone(calls, zoneFilterId, zoneGroups),
+    () => filterWaiterLocationsForZoneView(calls, zoneFilterId, zoneGroups),
     [calls, zoneFilterId, zoneGroups],
   );
 
   const displayPassSignals = useMemo(
-    () => filterWaiterLocationsByZone(passSignals, zoneFilterId, zoneGroups),
+    () => filterWaiterLocationsForZoneView(passSignals, zoneFilterId, zoneGroups),
     [passSignals, zoneFilterId, zoneGroups],
   );
 
-  const visiblePendingCount = useMemo(
-    () => displayCalls.filter((call) => call.status === "PENDING").length,
-    [displayCalls],
-  );
-
-  const visibleActiveCount = useMemo(
-    () => visiblePendingCount + displayPassSignals.length,
-    [visiblePendingCount, displayPassSignals.length],
-  );
+  const visibleActiveCount = useMemo(() => {
+    const activeCalls = displayCalls.filter(
+      (call) => call.status === "PENDING" || call.status === "ACKNOWLEDGED",
+    ).length;
+    return activeCalls + displayPassSignals.length;
+  }, [displayCalls, displayPassSignals.length]);
 
   const zonePendingCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -401,7 +414,7 @@ export function WaiterPanel({
       {visibleActiveCount > 0 ? (
         <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 sm:px-2.5 sm:text-xs">
           <Bell className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-          <span className="truncate">{W.pendingCount(visibleActiveCount)}</span>
+          <span className="truncate">{W.activeCount(visibleActiveCount)}</span>
         </span>
       ) : (
         <span className="text-[10px] text-slate-500 sm:text-xs">{W.refreshHint}</span>

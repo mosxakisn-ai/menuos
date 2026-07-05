@@ -18,6 +18,9 @@ fi
 source "$ROOT/scripts/load-env.sh"
 load_env "$ROOT"
 
+# shellcheck source=scripts/lib/caddy-reload.sh
+source "$ROOT/scripts/lib/caddy-reload.sh"
+
 PG_USER="${POSTGRES_USER:-menuos}"
 PG_DB="${POSTGRES_DB:-menuos}"
 RUN_DB_PUSH="${RUN_DB_PUSH:-1}"

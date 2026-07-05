@@ -38,6 +38,7 @@ import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
+import { cn } from "@/lib/utils";
 import { buildStaffShareUrl, buildStationScreenShareUrl } from "@/lib/staff-share-url";
 import type { StaffScreensByStation } from "@/lib/staff-member-access-url";
 
@@ -66,6 +67,7 @@ function memberAccessLink(
   posts: VenuePost[],
   screensByStation: StaffScreensByStation,
 ): StaffAccessLink {
+  if (member.stations.length === 0) return { kind: "invalid-assignment" };
   const assignment = staffPrimaryAssignment(member.stations);
   const linkKind = staffAssignmentLinkKind(assignment, posts);
   if (linkKind === "invalid") return { kind: "invalid-assignment" };
@@ -832,7 +834,13 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                     );
 
                     return (
-                      <tr key={member.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/40">
+                      <tr
+                        key={member.id}
+                        className={cn(
+                          "border-b border-slate-50 last:border-0 hover:bg-slate-50/40",
+                          member.stations.length === 0 && "bg-amber-50/80",
+                        )}
+                      >
                         <td className="px-4 py-3 align-middle font-medium text-brand-navy">
                           {member.name}
                         </td>

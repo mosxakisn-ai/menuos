@@ -147,8 +147,9 @@ export function resolveStaffAssignmentToPassInput(
 
 export function staffPrimaryAssignment(stations: string[]): string {
   const normalized = normalizeLegacyStaffStations(stations);
+  if (normalized.length === 0) return "";
   if (normalized.includes("services")) return "services";
-  return normalized[0] ?? "services";
+  return normalized[0] ?? "";
 }
 
 /** Legacy «all» → services (floor staff with guest calls). */

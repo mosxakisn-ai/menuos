@@ -199,6 +199,10 @@ describe("staffAssignmentLinkKind", () => {
     expect(staffPrimaryAssignment(["all"])).toBe("services");
   });
 
+  it("returns empty primary when no stations assigned", () => {
+    expect(staffPrimaryAssignment([])).toBe("");
+  });
+
   it("classifies waiter and pass", () => {
     expect(staffAssignmentLinkKind("services", posts)).toBe("waiter");
     expect(staffAssignmentLinkKind("kitchen", posts)).toBe("pass");
