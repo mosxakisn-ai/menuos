@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   PASS_STATION_INPUTS,
+  passStationDbToInput,
   passStationInputSchema,
   type PassStationInput,
 } from "./pass-signal";
@@ -418,6 +419,46 @@ export function mergeTableStateLabels(
     bar_ready: readyFromPosts(["bar", "dessert"]),
   };
   return { ...defaults, ...fromPosts, ...(config?.tableStateLabels ?? {}) };
+}
+
+/** Pass badge labels on the waiter map — same text as configured map states. */
+export function passReadyLabelsFromConfig(
+  config: VenueOperationsConfig | undefined,
+  lang: "GR" | "EN" = "GR",
+): Record<PassStationInput, string> {
+  const merged = mergeTableStateLabels(config, lang);
+  return {
+    kitchen: merged.kitchen_ready,
+    bar: merged.bar_ready,
+    cold: merged.cold_ready,
+    dessert: merged.bar_ready,
+  };
+}
+
+export function passReadyLabelForSignal(
+  config: VenueOperationsConfig | undefined,
+  pass: { station: string; stationScreenLabel?: string | null },
+  lang: "GR" | "EN" = "GR",
+): string {
+  const station = passStationDbToInput(pass.station);
+  const merged = mergeTableStateLabels(config, lang);
+  const stateKey: TableTileState =
+    station === "kitchen" ? "kitchen_ready" : station === "cold" ? "cold_ready" : "bar_ready";
+  const custom = config?.tableStateLabels?.[stateKey]?.trim();
+  if (custom) return custom;
+
+  if (config) {
+    const postId = resolvePostIdForStationScreen(config, station, pass.stationScreenLabel, lang);
+    if (postId) {
+      const post = listVenuePosts(config, lang).find((row) => row.id === postId);
+      if (post?.label.trim()) {
+        const prefix = lang === "EN" ? "Ready — " : "Έτοιμο — ";
+        return prefix + post.label.trim();
+      }
+    }
+  }
+
+  return merged[stateKey];
 }
 
 export function tableLegendStates(

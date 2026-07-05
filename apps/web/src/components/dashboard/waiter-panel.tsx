@@ -11,12 +11,14 @@ import {
   listVenuePosts,
   groupVenueSpotsByZone,
   mergeTableStateLabels,
+  passReadyLabelForSignal,
+  passReadyLabelsFromConfig,
   passSignalsVisibleToStaffMember,
   passStationInputToDb,
   stationDisplayLabel,
-  tableLegendStates,
   zoneIdForWaiterLocation,
   type OrderPayload,
+  type TableGridPassSignal,
   type VenueSpotType,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -358,21 +360,16 @@ export function WaiterPanel({
     [opsConfig, lang],
   );
 
-  const tableLegendStatesList = useMemo(
-    () => tableLegendStates(opsConfig ?? undefined),
-    [opsConfig],
+  const passReadyLabels = useMemo(
+    () => passReadyLabelsFromConfig(opsConfig ?? undefined, lang === "EN" ? "EN" : "GR"),
+    [opsConfig, lang],
   );
 
-  const passReadyLabels = useMemo(() => {
-    const langCode = lang === "EN" ? "EN" : "GR";
-    const prefix = langCode === "EN" ? "Ready — " : "Έτοιμο — ";
-    return {
-      kitchen: prefix + stationDisplayLabel(opsConfig ?? undefined, "kitchen", langCode),
-      bar: prefix + stationDisplayLabel(opsConfig ?? undefined, "bar", langCode),
-      cold: prefix + stationDisplayLabel(opsConfig ?? undefined, "cold", langCode),
-      dessert: prefix + stationDisplayLabel(opsConfig ?? undefined, "dessert", langCode),
-    };
-  }, [opsConfig, lang]);
+  const resolvePassReadyLabel = useCallback(
+    (pass: TableGridPassSignal) =>
+      passReadyLabelForSignal(opsConfig ?? undefined, pass, lang === "EN" ? "EN" : "GR"),
+    [opsConfig, lang],
+  );
 
   if (venues.length === 0) {
     return (
@@ -605,8 +602,8 @@ export function WaiterPanel({
           updatingPassId={updatingPassId}
           legendEnd={venueStatusEnd}
           stateLabels={tableStateLabels}
-          legendStates={tableLegendStatesList}
           passReadyLabels={passReadyLabels}
+          getPassReadyLabel={resolvePassReadyLabel}
           onUpdateCall={(callId, status) => void updateStatus(callId, status)}
           onUpdatePass={(signalId, status) => void updatePassStatus(signalId, status)}
         />

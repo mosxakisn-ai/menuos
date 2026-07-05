@@ -27,6 +27,7 @@ import { playfair } from "@/lib/fonts";
 import { ONBOARDING_CONFIRMED_COOKIE, ONBOARDING_QR_COOKIE, isOnboardingWizardOverlayPath } from "@/lib/onboarding-constants";
 import { APP_URL } from "@/lib/config";
 import { resolveOnboardingCookies } from "@/lib/onboarding-cookies";
+import { countOrganizationMonitorActive } from "@/lib/monitor-active-count";
 import {
   getOnboardingStatus,
   getStarterCatalogPreview,
@@ -144,21 +145,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const planId = org?.subscription?.plan ?? "TRIAL";
   const live360Enabled = await organizationHasLive360(session.organizationId);
 
-  const [pendingWaiterCount, passSignalCount] = await Promise.all([
-    prisma.waiterCall.count({
-      where: {
-        venue: { organizationId: session.organizationId },
-        status: "PENDING",
-      },
-    }),
-    prisma.passSignal.count({
-      where: {
-        venue: { organizationId: session.organizationId },
-        status: { in: ["READY", "PICKED_UP"] },
-      },
-    }),
-  ]);
-  const initialMonitorCount = live360Enabled ? pendingWaiterCount + passSignalCount : 0;
+  const monitorCounts = live360Enabled
+    ? await countOrganizationMonitorActive(session.organizationId)
+    : { pendingCount: 0, passCount: 0, activeCount: 0 };
+  const initialMonitorCount = monitorCounts.activeCount;
 
   const business = org
     ? resolveBusinessDisplay({ organizationName: org.name, venues: org.venues })

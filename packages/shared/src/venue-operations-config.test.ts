@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   isReservedVenuePostId,
   normalizeVenueOperationsConfig,
+  passReadyLabelForSignal,
+  passReadyLabelsFromConfig,
   quickChipsForPost,
   resolvePostIdForStationScreen,
   tableLegendStates,
@@ -72,6 +74,34 @@ describe("visibleMessagesForStaffAssignment", () => {
     const result = visibleMessagesForStaffAssignment(config, "bar");
     expect(result.kind).toBe("pass_quick");
     expect(result.labels).toEqual(["No ice"]);
+  });
+});
+
+describe("passReadyLabelsFromConfig", () => {
+  it("uses custom table state labels from settings", () => {
+    const config = {
+      enabledStations: ["kitchen" as const, "bar" as const],
+      tableStateLabels: {
+        kitchen_ready: "Έτοιμο — Κουζίνα · Σερβιτόροι",
+        bar_ready: "Έτοιμο — BarMan",
+      },
+    };
+    const labels = passReadyLabelsFromConfig(config, "GR");
+    expect(labels.kitchen).toBe("Έτοιμο — Κουζίνα · Σερβιτόροι");
+    expect(labels.bar).toBe("Έτοιμο — BarMan");
+  });
+});
+
+describe("passReadyLabelForSignal", () => {
+  it("prefers custom map label over post name", () => {
+    const config = {
+      enabledStations: ["kitchen" as const],
+      posts: [{ id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const }],
+      tableStateLabels: { kitchen_ready: "Custom kitchen label" },
+    };
+    expect(
+      passReadyLabelForSignal(config, { station: "KITCHEN", stationScreenLabel: "Κουζίνα" }, "GR"),
+    ).toBe("Custom kitchen label");
   });
 });
 

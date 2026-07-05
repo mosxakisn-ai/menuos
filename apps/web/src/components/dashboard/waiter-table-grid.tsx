@@ -19,7 +19,6 @@ import {
   PASS_STATION_BADGE_STYLES,
   TABLE_TILE_BADGE_STYLES,
   TABLE_TILE_STYLES,
-  TableGridLegend,
 } from "@/components/dashboard/table-grid-preview";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
@@ -90,6 +89,7 @@ function WaiterSpotTile({
   passStationFilter,
   callTypeLabels,
   passReadyLabels,
+  getPassReadyLabel,
   callStatusLabels,
   stateLabels,
   labels,
@@ -104,6 +104,7 @@ function WaiterSpotTile({
   passStationFilter: PassStationFilter;
   callTypeLabels: Record<string, string>;
   passReadyLabels: Record<string, string>;
+  getPassReadyLabel?: (pass: TableGridPassSignal) => string;
   callStatusLabels: Record<string, string>;
   stateLabels: Record<TableTileState, string>;
   labels: {
@@ -217,6 +218,7 @@ function WaiterSpotTile({
           {visiblePasses.map((pass, index) => {
             const stationKey = passStationDbToInput(pass.station);
             const readyLabel =
+              getPassReadyLabel?.(pass) ??
               passReadyLabels[stationKey as keyof typeof passReadyLabels] ??
               passReadyLabels.kitchen;
             const badgeStyle =
@@ -315,8 +317,8 @@ export function WaiterTableGrid({
   onUpdatePass,
   legendEnd,
   stateLabels: stateLabelsProp,
-  legendStates,
   passReadyLabels: passReadyLabelsProp,
+  getPassReadyLabel,
 }: {
   spots: TableGridSpot[];
   calls: TableGridCall[];
@@ -329,8 +331,8 @@ export function WaiterTableGrid({
   onUpdatePass: (signalId: string, status: "PICKED_UP" | "DELIVERED") => void;
   legendEnd?: ReactNode;
   stateLabels?: Record<TableTileState, string>;
-  legendStates?: readonly TableTileState[];
   passReadyLabels?: Record<string, string>;
+  getPassReadyLabel?: (pass: TableGridPassSignal) => string;
 }) {
   const { d, lang } = useDashboardCopy();
   const W = d.waiter;
@@ -361,25 +363,11 @@ export function WaiterTableGrid({
 
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold text-brand-navy">{W.tableGridTitle}</h2>
-      {hasConfiguredSpots ? (
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <TableGridLegend
-            stateLabels={stateLabels}
-            states={legendStates}
-            compact
-            className="min-w-0 flex-1"
-          />
-          {legendEnd ? (
-            <div className="ml-auto flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-x-2 gap-y-1 text-right">
-              {legendEnd}
-            </div>
-          ) : null}
+      {legendEnd ? (
+        <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-right">
+          {legendEnd}
         </div>
       ) : null}
-      <p className={cn("text-xs leading-relaxed text-slate-500", !hasConfiguredSpots && "hidden")}>
-        {W.tableGridLegendHint} {W.tableGridLegendAutoNote}
-      </p>
       {tiles.length === 0 && emptyMessage ? (
         <p className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
           {emptyMessage}
@@ -394,6 +382,7 @@ export function WaiterTableGrid({
               passStationFilter={passStationFilter}
               callTypeLabels={W.callType}
               passReadyLabels={passReadyLabels}
+              getPassReadyLabel={getPassReadyLabel}
               callStatusLabels={W.callStatus}
               stateLabels={stateLabels}
               labels={{

@@ -6,12 +6,15 @@ import {
   formatVenueSpotLabelForLang,
   groupVenueSpotsByZone,
   isValidVenueSpotLabel,
+  mergeTableStateLabels,
   spotToQueryParams,
+  tableLegendStates,
   type VenueSpotType,
   VENUE_SPOT_TYPES,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { TableGridLegend, TableGridPreview } from "@/components/dashboard/table-grid-preview";
+import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
 import {
   DashboardSectionTitle,
@@ -25,7 +28,6 @@ import { buttonClass } from "@/components/ui/button";
 import { DashboardIconButton } from "@/components/dashboard/dashboard-action-button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { confirmDestructive } from "@/lib/confirm-action";
-import { getSettingsDemo } from "@/content/settings-demo";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
 type Venue = { id: string; name: string; slug: string };
@@ -55,8 +57,8 @@ export function VenueSpotsSetup({
   const { d, lang } = useDashboardCopy();
   const Q = d.pages.qr;
   const S = d.pages.settings;
-  const demo = getSettingsDemo(lang);
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
+  const { config: opsConfig } = useVenueOperationsConfig(venueId);
   const { spots, loading, reload } = useVenueSpots(venueId);
   const [spotType, setSpotType] = useState<VenueSpotType>("TABLE");
   const [label, setLabel] = useState("");
@@ -67,6 +69,16 @@ export function VenueSpotsSetup({
   const { flash, setFlash, showFromResponse } = useFlashMessage();
 
   const venue = venues.find((v) => v.id === venueId);
+
+  const langCode = lang === "EN" ? "EN" : "GR";
+  const tableStateLabels = useMemo(
+    () => mergeTableStateLabels(opsConfig ?? undefined, langCode),
+    [opsConfig, langCode],
+  );
+  const tableLegendStatesList = useMemo(
+    () => tableLegendStates(opsConfig ?? undefined),
+    [opsConfig],
+  );
 
   const zoneGroups = useMemo(() => groupVenueSpotsByZone(spots), [spots]);
 
@@ -516,14 +528,17 @@ export function VenueSpotsSetup({
         <p className="mt-2 text-sm text-slate-600">{S.tables.gridHint}</p>
         <p className="mt-2 text-xs leading-relaxed text-slate-500">{S.tables.legendAutoNote}</p>
         <div className="mt-4">
-          <TableGridLegend stateLabels={demo.tableStateLabels} />
+          <TableGridLegend
+            stateLabels={tableStateLabels}
+            states={tableLegendStatesList}
+          />
         </div>
         {realTiles.length > 0 ? (
           <div className="mt-6 border-t border-slate-100 pt-5">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
               {S.tables.yourVenueSpots(venue?.name ?? "", spots.length)}
             </p>
-            <TableGridPreview tiles={realTiles} stateLabels={demo.tableStateLabels} />
+            <TableGridPreview tiles={realTiles} stateLabels={tableStateLabels} />
           </div>
         ) : null}
       </div>
