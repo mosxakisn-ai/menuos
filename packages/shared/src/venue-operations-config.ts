@@ -328,6 +328,7 @@ export function quickChipsForPost(
         return legacyStation;
       }
     }
+    return DEFAULT_PASS_QUICK_CHIPS[post.station];
   }
 
   return [];
@@ -387,7 +388,7 @@ export function quickChipsForStation(
 
   const custom = config.quickChips?.[station];
   if (custom !== undefined) return custom;
-  return [];
+  return DEFAULT_PASS_QUICK_CHIPS[station];
 }
 
 export function mergeTableStateLabels(

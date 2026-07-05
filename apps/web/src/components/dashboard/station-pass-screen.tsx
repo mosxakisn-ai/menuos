@@ -200,7 +200,8 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   useScreenWakeLock();
 
-  const quickComments = ctx?.quickComments ?? [];
+  const quickComments =
+    ctx?.quickComments?.length ? ctx.quickComments : C.quickComments;
   const displayStationTitle = ctx?.stationLabel?.trim() || C.title;
 
   const load = useCallback(async () => {

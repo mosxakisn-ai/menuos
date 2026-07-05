@@ -23,7 +23,7 @@ describe("quickChipsForPost", () => {
       quickChips: { grill: ["Custom grill msg"] },
     };
     expect(quickChipsForPost(config, "grill")).toEqual(["Custom grill msg"]);
-    expect(quickChipsForPost(config, "kitchen", "EN")).toEqual([]);
+    expect(quickChipsForPost(config, "kitchen", "EN")[0]).toBeTruthy();
   });
 
   it("falls back to legacy station key for single post", () => {
