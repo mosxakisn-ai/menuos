@@ -790,15 +790,15 @@ export const DASHBOARD_EN = {
         description:
           "Pick a post (from the Posts tab) and set the messages it can send from tablet. In Staff you choose which set each person sees.",
         hint:
-          "First create posts in the Posts tab (e.g. Kitchen, Bar).\nThen pick a post here and add its messages.\nServices = waiter map (separate).",
+          "First create posts in the Posts tab (e.g. Kitchen, Bar).\nThen pick a post here and add your own messages — one by one, manually.",
         byPostTitle: "Messages by post",
         byPostHint:
-          "Choose a post from the list — they come from the Posts tab. Add or remove messages for that post only.",
+          "Pick a post and tap Add for each message. No suggested defaults — you create them.",
         selectPostLabel: "Choose post",
         noPostsHint: "You have no active posts.",
         servicesPostTitle: "Services — Waiter",
         servicesPostHint: "What appears on the spot map (guest call, kitchen ready, etc.).",
-        passPostHint: "Quick buttons when sending a pass from tablet — for this post only.",
+        passPostHint: "Add the messages you want for this post — one at a time.",
         postColorLabel: "Post colour",
         addPost: "New post",
         addMapMessage: "Add message",
