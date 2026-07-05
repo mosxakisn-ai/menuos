@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
-import { venueStaffMemberCreateSchema, listVenuePosts, normalizeStaffMemberZoneId, staffPostRequiresZoneAssignment, staffPrimaryAssignment, validateStaffAssignments, validateStaffMessageScope, zodFirstErrorMessage } from "@menuos/shared";
+import { venueStaffMemberCreateSchema, listVenuePosts, normalizeLegacyStaffStations, normalizeStaffMemberZoneId, staffPostRequiresZoneAssignment, staffPrimaryAssignment, validateStaffAssignments, validateStaffMessageScope, zodFirstErrorMessage } from "@menuos/shared";
 import { requireLive360Plan } from "@/lib/api-auth";
 import { canManageVenueSecrets } from "@/lib/dashboard-roles";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
@@ -41,21 +41,28 @@ export async function GET(_req: Request, { params }: Params) {
         }),
   });
 
-  const zoneFixes: Promise<unknown>[] = [];
+  const memberFixes: Promise<unknown>[] = [];
   const normalizedMembers = members.map((member) => {
+    const stations = normalizeLegacyStaffStations(member.stations);
     const zoneId = normalizeStaffMemberZoneId(
-      staffPrimaryAssignment(member.stations),
+      staffPrimaryAssignment(stations),
       member.zoneId,
     );
-    if (zoneId !== member.zoneId) {
-      zoneFixes.push(
-        prisma.venueStaffMember.update({ where: { id: member.id }, data: { zoneId } }),
+    const stationsChanged =
+      stations.length !== member.stations.length ||
+      stations.some((station, index) => station !== member.stations[index]);
+    if (stationsChanged || zoneId !== member.zoneId) {
+      memberFixes.push(
+        prisma.venueStaffMember.update({
+          where: { id: member.id },
+          data: { ...(stationsChanged ? { stations } : {}), zoneId },
+        }),
       );
-      return { ...member, zoneId };
+      return { ...member, stations, zoneId };
     }
     return member;
   });
-  if (zoneFixes.length > 0) await Promise.all(zoneFixes);
+  if (memberFixes.length > 0) await Promise.all(memberFixes);
 
   return NextResponse.json({ members: normalizedMembers });
 }

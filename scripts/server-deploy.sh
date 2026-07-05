@@ -87,13 +87,8 @@ else
   docker compose -f docker-compose.prod.yml logs menuos-web --tail 20 || true
 fi
 
-if ! grep -q "$MARKER" "$CADDY_FILE" 2>/dev/null; then
-  echo "==> Adding MenuOS to Caddy..."
-  cat docker/Caddyfile.snippet >> "$CADDY_FILE"
-fi
-
-echo "==> Reload Caddy (MatchWork container)..."
-docker exec matchwork-caddy-1 caddy reload --config /etc/caddy/Caddyfile
+CADDY_STATE="$ROOT/data/.menuos-caddy-active"
+ensure_menuos_caddy_routing "$ROOT" "$CADDY_FILE" "$MARKER" "$CADDY_STATE"
 
 echo "==> Done."
 docker compose -f docker-compose.prod.yml ps

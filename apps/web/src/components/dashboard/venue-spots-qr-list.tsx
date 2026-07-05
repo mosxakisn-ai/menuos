@@ -253,7 +253,7 @@ export function VenueSpotsQrList({
     setQrCache({});
     qrCacheRef.current = {};
     setExpandedZones({});
-  }, [venueId]);
+  }, [venueId, spots]);
 
   const venue = venues.find((v) => v.id === venueId);
   const itemCount = itemCountByVenue[venueId] ?? 0;
@@ -288,8 +288,13 @@ export function VenueSpotsQrList({
     return params;
   }
 
+  function qrCacheKey(spot: Spot): string {
+    return `${spot.type}:${spot.label}`;
+  }
+
   async function fetchQr(spot: Spot): Promise<QrData | null> {
-    const cached = qrCacheRef.current[spot.id];
+    const key = qrCacheKey(spot);
+    const cached = qrCacheRef.current[key];
     if (cached) return cached;
     if (!venueId) return null;
     const generation = venueGenerationRef.current;
@@ -301,17 +306,18 @@ export function VenueSpotsQrList({
       return null;
     }
     const qr: QrData = { pngDataUrl: data.pngDataUrl, menuUrl: data.menuUrl };
-    qrCacheRef.current = { ...qrCacheRef.current, [spot.id]: qr };
+    qrCacheRef.current = { ...qrCacheRef.current, [key]: qr };
     setQrCache(qrCacheRef.current);
     return qr;
   }
 
   async function toggleQrPreview(spot: Spot) {
+    const key = qrCacheKey(spot);
     if (qrExpandedId === spot.id) {
       setQrExpandedId(null);
       return;
     }
-    if (qrCacheRef.current[spot.id]) {
+    if (qrCacheRef.current[key]) {
       setQrExpandedId(spot.id);
       return;
     }

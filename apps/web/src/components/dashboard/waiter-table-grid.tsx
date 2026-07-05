@@ -17,8 +17,6 @@ import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provid
 import { buttonClass } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type MonitorViewTab = "all" | "calls";
-
 function isOrderUpdated(call: TableGridCall): boolean {
   if (call.type !== "ORDER" || !call.createdAt || !call.updatedAt) return false;
   return new Date(call.updatedAt).getTime() - new Date(call.createdAt).getTime() > 1500;
@@ -193,15 +191,9 @@ function WaiterSpotTile({
   );
 }
 
-function tileMatchesView(tile: TableGridTile, viewTab: MonitorViewTab): boolean {
-  if (viewTab === "calls") return tile.activeCalls.length > 0;
-  return true;
-}
-
 export function WaiterTableGrid({
   spots,
   calls,
-  viewTab,
   updatingCallId,
   onUpdateCall,
   legendEnd,
@@ -209,7 +201,6 @@ export function WaiterTableGrid({
 }: {
   spots: TableGridSpot[];
   calls: TableGridCall[];
-  viewTab: MonitorViewTab;
   updatingCallId: string | null;
   onUpdateCall: (callId: string, status: "ACKNOWLEDGED" | "COMPLETED") => void;
   legendEnd?: ReactNode;
@@ -218,21 +209,14 @@ export function WaiterTableGrid({
   const { d, lang } = useDashboardCopy();
   const W = d.waiter;
 
-  const tiles = useMemo(() => {
-    const built = buildTableGridTiles(spots, calls, []);
-    return built.filter((tile) => tileMatchesView(tile, viewTab));
-  }, [spots, calls, viewTab]);
+  const tiles = useMemo(() => buildTableGridTiles(spots, calls, []), [spots, calls]);
 
   const hasConfiguredSpots = spots.length > 0;
-  const hasAnyTiles = useMemo(
-    () => buildTableGridTiles(spots, calls, []).length > 0,
-    [spots, calls],
-  );
+  const hasAnyTiles = tiles.length > 0;
 
   if (!hasConfiguredSpots && !hasAnyTiles) return null;
 
   const stateLabels = stateLabelsProp ?? (W.tableStateLabels as Record<TableTileState, string>);
-  const emptyMessage = viewTab === "calls" ? W.emptyCallsTab : null;
 
   return (
     <div className="space-y-3">
@@ -241,33 +225,27 @@ export function WaiterTableGrid({
           {legendEnd}
         </div>
       ) : null}
-      {tiles.length === 0 && emptyMessage ? (
-        <p className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
-          {emptyMessage}
-        </p>
-      ) : (
-        <div className="grid grid-cols-2 items-stretch gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-          {tiles.map((tile) => (
-            <WaiterSpotTile
-              key={tile.spotId}
-              tile={tile}
-              callTypeLabels={W.callType}
-              callStatusLabels={W.callStatus}
-              stateLabels={stateLabels}
-              labels={{
-                goButton: W.goButton,
-                completeButton: W.completeButton,
-                newItems: W.newItems,
-                guestCall: stateLabels.guest_call,
-                unmappedSpotBadge: W.unmappedSpotBadge,
-              }}
-              lang={lang}
-              updatingCallId={updatingCallId}
-              onUpdateCall={onUpdateCall}
-            />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-2 items-stretch gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+        {tiles.map((tile) => (
+          <WaiterSpotTile
+            key={tile.spotId}
+            tile={tile}
+            callTypeLabels={W.callType}
+            callStatusLabels={W.callStatus}
+            stateLabels={stateLabels}
+            labels={{
+              goButton: W.goButton,
+              completeButton: W.completeButton,
+              newItems: W.newItems,
+              guestCall: stateLabels.guest_call,
+              unmappedSpotBadge: W.unmappedSpotBadge,
+            }}
+            lang={lang}
+            updatingCallId={updatingCallId}
+            onUpdateCall={onUpdateCall}
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   sanitizeStaffAssignments,
   sanitizeStaffMessageScope,
   staffAssignmentLinkKind,
+  staffPrimaryAssignment,
   validateStaffMessageScope,
   waiterCallsVisibleToStaffMember,
 } from "./venue-staff-member";
@@ -193,6 +194,10 @@ describe("staffAssignmentLinkKind", () => {
     { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
     { id: "old", label: "Old", enabled: false, station: "bar" as const },
   ];
+
+  it("maps legacy all assignment to services primary", () => {
+    expect(staffPrimaryAssignment(["all"])).toBe("services");
+  });
 
   it("classifies waiter and pass", () => {
     expect(staffAssignmentLinkKind("services", posts)).toBe("waiter");

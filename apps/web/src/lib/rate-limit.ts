@@ -86,12 +86,6 @@ export async function checkRateLimitOutcome(
   }
 }
 
-/** @deprecated Prefer checkRateLimitOutcome when callers need to distinguish store failures. */
-export async function checkRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
-  const outcome = await checkRateLimitOutcome(key, limit, windowMs);
-  return outcome === "ok";
-}
-
 export const RATE_LIMIT_SERVER_ERROR = {
   error: "Πρόβλημα διακομιστή. Δοκίμασε σε λίγο.",
   code: "server_error",

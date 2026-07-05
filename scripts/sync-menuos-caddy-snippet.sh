@@ -32,5 +32,14 @@ caddy.write_text(new_text)
 print(f"Updated MenuOS block in {caddy}")
 PY
 
-docker exec matchwork-caddy-1 caddy reload --config /etc/caddy/Caddyfile
+# shellcheck source=scripts/lib/caddy-reload.sh
+source "$ROOT/scripts/lib/caddy-reload.sh"
+CADDY_STATE="$ROOT/data/.menuos-caddy-active"
+if reload_matchwork_caddy_safe "MenuOS Caddy snippet updated"; then
+  mkdir -p "$(dirname "$CADDY_STATE")"
+  date -Iseconds > "$CADDY_STATE"
+else
+  rm -f "$CADDY_STATE"
+  exit 1
+fi
 echo "Caddy reloaded."

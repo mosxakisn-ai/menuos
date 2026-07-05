@@ -139,10 +139,12 @@ services:
 
 ### Production server rules
 
-- **Server:** Hetzner VPS (same machine as MatchWork during early stage).
-- **Isolation:** `/opt/menuos` only — separate docker-compose, separate PostgreSQL database, separate Caddy route block.
-- **Never modify:** `/opt/matchwork`, MatchWork containers, MatchWork Caddy config without explicit user approval.
-- **Domain:** `menuos.gr` → Caddy → `menuos-web:3000`
+- **Server:** Hetzner VPS (same machine as [MatchWork](https://matchwork.gr/) during early stage).
+- **Isolation:** `/opt/menuos` only — separate docker-compose, separate PostgreSQL volume, separate app container.
+- **Shared (read-only):** MatchWork Caddy reverse-proxies `menuos.gr` → `menuos-web:3000` on Docker network `matchwork_default`. MenuOS deploy **must not reload Caddy** unless the Caddyfile block changed (see `scripts/lib/caddy-reload.sh`).
+- **Never modify:** `/opt/matchwork` app containers, MatchWork `.env`, or MatchWork Caddy blocks for other domains without explicit user approval.
+- **Deploy impact:** Routine MenuOS deploy rebuilds/restarts **only** `menuos-web` + `menuos-postgres`. MatchWork (`matchwork.gr`) must stay up.
+- **Domain:** `menuos.gr` → MatchWork Caddy → `menuos-web:3000`
 - **Photos:** Cloudflare R2 (not on VPS disk).
 
 ## Development Workflow

@@ -16,7 +16,6 @@ export const STAFF_STATION_OPTIONS = [
 ] as const;
 export type StaffStationOption = (typeof STAFF_STATION_OPTIONS)[number];
 
-export const staffStationOptionSchema = z.enum(STAFF_STATION_OPTIONS);
 const staffAssignmentSchema = z.string().trim().min(1).max(40);
 
 const staffMemberNameSchema = z.string().trim().min(1).max(60);
@@ -142,9 +141,15 @@ export function resolveStaffAssignmentToPassInput(
 }
 
 export function staffPrimaryAssignment(stations: string[]): string {
-  if (stations.includes("all")) return "all";
-  if (stations.includes("services")) return "services";
-  return stations[0] ?? "services";
+  const normalized = normalizeLegacyStaffStations(stations);
+  if (normalized.includes("services")) return "services";
+  return normalized[0] ?? "services";
+}
+
+/** Legacy «all» → services (floor staff with guest calls). */
+export function normalizeLegacyStaffStations(stations: string[]): string[] {
+  if (stations.length === 1 && stations[0] === "all") return ["services"];
+  return stations.filter((s) => s !== "all");
 }
 
 export function staffAssignmentsFromPrimary(assignment: string): string[] {
@@ -165,12 +170,6 @@ export function staffAssignmentLabelForLang(
     return staffStationLabelForLang(assignment as StaffStationOption, lang);
   }
   return assignment;
-}
-
-export function formatStaffStationsForLang(stations: string[], lang: "GR" | "EN" = "GR"): string {
-  return stations
-    .map((s) => staffStationLabelForLang(s as StaffStationOption, lang))
-    .join(", ");
 }
 
 export function formatStaffAssignmentsForLang(
@@ -333,7 +332,8 @@ export function staffAssignmentLinkKind(
   assignment: string,
   posts: VenuePost[],
 ): StaffAssignmentLinkKind {
-  if (assignment === "services" || assignment === "all") return "waiter";
+  if (assignment === "services") return "waiter";
+  if (assignment === "all") return "waiter";
   const post = posts.find((row) => row.id === assignment);
   if (post) return post.enabled ? "pass" : "invalid";
   if (PASS_STATION_INPUTS.includes(assignment as PassStationInput)) return "pass";

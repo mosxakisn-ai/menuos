@@ -409,7 +409,6 @@ export function WaiterPanel({
         <WaiterTableGrid
           spots={displaySpots}
           calls={displayCalls}
-          viewTab="all"
           updatingCallId={updatingCallId}
           legendEnd={venueStatusEnd}
           stateLabels={tableStateLabels}

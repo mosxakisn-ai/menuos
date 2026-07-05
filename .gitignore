@@ -10,3 +10,7 @@ dist/
 coverage/
 *.tsbuildinfo
 data/uploads/
+data/.menuos-caddy-active
+.tmp-*
+.tmp-*.js
+.tmp-*.html

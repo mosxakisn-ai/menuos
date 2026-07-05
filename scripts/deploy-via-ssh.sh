@@ -14,7 +14,7 @@ cd "$APP_DIR"
 git fetch origin main
 git reset --hard origin/main
 echo "Deployed commit: $(git rev-parse --short HEAD)"
-chmod +x scripts/*.sh 2>/dev/null || true
+chmod +x scripts/*.sh scripts/lib/*.sh 2>/dev/null || true
 APP_DIR="$APP_DIR" RUN_DB_PUSH=1 STRICT=0 bash scripts/fix-production.sh
 REMOTE
 echo "==> Deploy finished."

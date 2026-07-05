@@ -473,7 +473,10 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   async function addMember(e: React.FormEvent) {
     e.preventDefault();
     if (!venueId || !name.trim()) return;
-    if (staffPostRequiresZoneAssignment(postAssignment) && !zoneId) return;
+    if (staffPostRequiresZoneAssignment(postAssignment) && !zoneId) {
+      setFlash({ type: "error", text: S.zoneRequired });
+      return;
+    }
     setBusy("add");
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members`, {
@@ -509,7 +512,11 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   }
 
   async function saveEdit(memberId: string) {
-    if (!venueId || !editZoneId && staffPostRequiresZoneAssignment(editPostAssignment)) return;
+    if (!venueId) return;
+    if (!editZoneId && staffPostRequiresZoneAssignment(editPostAssignment)) {
+      setFlash({ type: "error", text: S.zoneRequired });
+      return;
+    }
     setBusy(`edit-${memberId}`);
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members/${memberId}`, {

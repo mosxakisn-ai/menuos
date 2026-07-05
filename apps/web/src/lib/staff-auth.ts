@@ -117,24 +117,6 @@ export async function resolveStaffAuthBySlug(
   };
 }
 
-/** @deprecated Use resolveStaffAuthByKey */
-export async function resolveVenueByStaffKey(
-  venueId: string,
-  staffKey: string,
-): Promise<StaffVenueContext | null> {
-  const ctx = await resolveStaffAuthByKey(venueId, staffKey);
-  return ctx?.venue ?? null;
-}
-
-/** @deprecated Use resolveStaffAuthBySlug */
-export async function resolveVenueByStaffSlug(
-  venueSlug: string,
-  staffKey: string,
-): Promise<StaffVenueContext | null> {
-  const ctx = await resolveStaffAuthBySlug(venueSlug, staffKey);
-  return ctx?.venue ?? null;
-}
-
 async function organizationIsActive(organizationId: string): Promise<boolean> {
   const ctx = await getOrganizationPlanContext(organizationId);
   return Boolean(ctx?.active);

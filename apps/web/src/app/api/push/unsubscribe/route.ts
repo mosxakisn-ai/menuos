@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { pushUnsubscribeSchema } from "@menuos/shared";
 import { requireSession } from "@/lib/api-auth";
-import { resolveVenueByStaffKey, resolveStaffKey } from "@/lib/staff-auth";
+import { resolveStaffAuthByKey, resolveStaffKey } from "@/lib/staff-auth";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -22,14 +22,14 @@ export async function POST(request: Request) {
     if (!staffKey) {
       return NextResponse.json({ error: "Μη έγκυρο link σερβιτόρου." }, { status: 401 });
     }
-    const venue = await resolveVenueByStaffKey(parsed.data.venueId, staffKey);
-    if (!venue) {
+    const auth = await resolveStaffAuthByKey(parsed.data.venueId, staffKey);
+    if (!auth) {
       return NextResponse.json({ error: "Μη έγκυρο link σερβιτόρου." }, { status: 401 });
     }
     await prisma.pushSubscription.deleteMany({
       where: {
         endpoint: parsed.data.endpoint,
-        organizationId: venue.organizationId,
+        organizationId: auth.venue.organizationId,
       },
     });
     return NextResponse.json({ ok: true });
