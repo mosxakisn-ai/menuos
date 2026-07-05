@@ -14,6 +14,7 @@ import {
   staffAssignmentLinkKind,
   staffAssignmentLabelForLang,
   staffAssignmentsFromPrimary,
+  staffAssignableVenuePosts,
   staffPostPickerLabel,
   staffPostRequiresZoneAssignment,
   staffPostStationSubtitle,
@@ -32,6 +33,7 @@ import {
 } from "@/components/dashboard/dashboard-page";
 import {
   DashboardIconButton,
+  dashboardIconButtonClass,
   dashboardTextActionClass,
 } from "@/components/dashboard/dashboard-action-button";
 import { buttonClass } from "@/components/ui/button";
@@ -133,7 +135,7 @@ function StaffMemberLinkActions({
 
   if (access.kind === "invalid-assignment") {
     return (
-      <p className="text-center text-[10px] leading-snug text-amber-700" title={labels.invalidAssignment}>
+      <p className="mx-auto max-w-[7.25rem] text-center text-[10px] leading-snug text-amber-700" title={labels.invalidAssignment}>
         {labels.invalidAssignment}
       </p>
     );
@@ -141,7 +143,7 @@ function StaffMemberLinkActions({
 
   if (access.kind === "missing-screen") {
     return (
-      <p className="text-center text-[10px] leading-snug text-amber-700">
+      <p className="mx-auto max-w-[7.25rem] text-center text-[10px] leading-snug text-amber-700">
         {labels.missingScreen}{" "}
         <Link href="/dashboard/settings?tab=staff" className="font-semibold underline">
           →
@@ -153,16 +155,23 @@ function StaffMemberLinkActions({
   const url = access.url;
 
   async function copy() {
+    let copied = false;
     try {
       await navigator.clipboard.writeText(url);
+      copied = true;
     } catch {
-      const ta = document.createElement("textarea");
-      ta.value = url;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        copied = document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {
+        copied = false;
+      }
     }
+    if (!copied) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -186,39 +195,40 @@ function StaffMemberLinkActions({
   }
 
   return compact ? (
-    <div className="flex items-center justify-center gap-1">
+    <div className="mx-auto flex w-[7.25rem] items-center justify-center gap-1">
       <a
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
+        className={cn(
+          dashboardIconButtonClass("neutral"),
+          "border-transparent btn-gradient text-white shadow-sm hover:opacity-95 hover:text-white",
+        )}
         title={viewLabel}
       >
-        <ExternalLink className="h-3.5 w-3.5" />
+        <ExternalLink className="h-4 w-4" />
         <span className="sr-only">{viewLabel}</span>
       </a>
-      <button
-        type="button"
+      <DashboardIconButton
+        variant="neutral"
         disabled={busy}
         onClick={() => void copy()}
-        className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
-        title={copied ? labels.copied : labels.copyLink}
+        label={copied ? labels.copied : labels.copyLink}
       >
-        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-        <span className="sr-only">{copied ? labels.copied : labels.copyLink}</span>
-      </button>
+        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+      </DashboardIconButton>
       {access.kind === "waiter" ? (
-        <button
-          type="button"
+        <DashboardIconButton
+          variant="warning"
           disabled={busy || rotating}
           onClick={() => void rotate()}
-          className={dashboardTextActionClass("warning")}
-          title={labels.rotateLink}
+          label={labels.rotateLink}
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${rotating ? "animate-spin" : ""}`} />
-          <span className="sr-only">{labels.rotateLink}</span>
-        </button>
-      ) : null}
+          <RefreshCw className={cn("h-4 w-4", rotating && "animate-spin")} />
+        </DashboardIconButton>
+      ) : (
+        <span className="inline-flex min-h-9 min-w-9 shrink-0" aria-hidden />
+      )}
     </div>
   ) : (
     <div className="space-y-2">
@@ -341,17 +351,21 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     () => enabledVenuePosts(opsConfig ?? undefined, langCode),
     [opsConfig, langCode],
   );
+  const assignablePosts = useMemo(
+    () => staffAssignableVenuePosts(opsConfig ?? undefined, langCode),
+    [opsConfig, langCode],
+  );
   const tabletStations = useMemo(() => {
     const seen = new Set<PassStationInput>();
     const stations: PassStationInput[] = [];
-    for (const post of enabledPosts) {
+    for (const post of assignablePosts) {
       if (post.station && !seen.has(post.station)) {
         seen.add(post.station);
         stations.push(post.station);
       }
     }
     return stations;
-  }, [enabledPosts]);
+  }, [assignablePosts]);
   const zoneGroups = useMemo(() => {
     const groups = groupVenueSpotsByZone(spots);
     return applyZoneLabelOverrides(groups, opsConfig?.zoneLabels);
@@ -412,10 +426,10 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
   function postOptions(): Array<{ id: string; label: string }> {
     return [
-      { id: "services", label: staffPostPickerLabel("services", langCode, venuePosts) },
-      ...enabledPosts.map((post) => ({
+      { id: "services", label: staffPostPickerLabel("services", langCode, assignablePosts) },
+      ...assignablePosts.map((post) => ({
         id: post.id,
-        label: staffPostPickerLabel(post.id, langCode, venuePosts),
+        label: staffPostPickerLabel(post.id, langCode, assignablePosts),
       })),
     ];
   }
@@ -806,7 +820,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                     <th className="w-[14%] px-4 py-3">{S.colName}</th>
                     <th className="w-[12%] px-4 py-3">{S.colSpaceRequired}</th>
                     <th className="min-w-[10rem] px-4 py-3">{S.colPostRequired}</th>
-                    <th className="w-[9rem] px-4 py-3 text-center">{S.colLink}</th>
+                    <th className="w-[7.25rem] px-4 py-3 text-center">{S.colLink}</th>
                     <th className="w-[5.5rem] px-4 py-3 text-center">{S.colActions}</th>
                   </tr>
                 </thead>
@@ -911,7 +925,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                             </p>
                           )}
                         </td>
-                        <td className="px-4 py-3 align-middle">
+                        <td className="px-4 py-3 align-middle text-center">
                           {venue?.slug ? (
                             <StaffMemberLinkActions
                               venueId={venueId}
@@ -928,8 +942,8 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                             <span className="block text-center text-xs text-slate-400">—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 align-middle">
-                          <div className="flex items-center justify-center gap-1">
+                        <td className="px-4 py-3 align-middle text-center">
+                          <div className="mx-auto inline-flex w-[4.75rem] items-center justify-center gap-1">
                             <DashboardIconButton
                               variant="neutral"
                               disabled={isBusy}

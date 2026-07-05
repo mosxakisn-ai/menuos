@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { DashboardPage, DashboardPageHeader, dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
+import { Suspense } from "react";
+import { DashboardPage, DashboardPageHeader, dashboardCardClass } from "@/components/dashboard/dashboard-page";
 import { ChangePasswordForm } from "@/components/dashboard/change-password-form";
 import { type SettingsVenue } from "@/components/dashboard/settings-form";
 import {
@@ -14,7 +14,6 @@ import {
   SettingsVenuePanel,
 } from "@/components/dashboard/settings-staff-panels";
 import { Live360FeatureGate } from "@/components/dashboard/live360-feature-gate";
-import { Live360SetupChecklist } from "@/components/dashboard/live360-setup-checklist";
 import { SettingsTabs, type SettingsTabId, SETTINGS_TAB_IDS, isSettingsTabLocked } from "@/components/dashboard/settings-tabs";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
@@ -92,17 +91,6 @@ function SettingsPageBody({
   const { d } = useDashboardCopy();
   const spotVenues = venues.map((v) => ({ id: v.id, name: v.name, slug: v.slug }));
   const allowedTabs: SettingsTabId[] = canManageVenue ? [...SETTINGS_TAB_IDS] : ["general"];
-  const [checklistVenueId, setChecklistVenueId] = useState(spotVenues[0]?.id ?? "");
-
-  useEffect(() => {
-    if (spotVenues.length === 0) {
-      setChecklistVenueId("");
-      return;
-    }
-    if (!spotVenues.some((v) => v.id === checklistVenueId)) {
-      setChecklistVenueId(spotVenues[0]!.id);
-    }
-  }, [spotVenues, checklistVenueId]);
 
   function renderTab(tab: SettingsTabId) {
     let content: React.ReactNode;
@@ -171,27 +159,6 @@ function SettingsPageBody({
   return (
     <DashboardPage wide className="space-y-5">
       <DashboardPageHeader title={d.pages.settings.title} description={d.pages.settings.description} />
-      {live360Enabled && canManageVenue && checklistVenueId ? (
-        <div className="space-y-3">
-          {spotVenues.length > 1 ? (
-            <label className="block max-w-md">
-              <span className={dashboardLabelClass}>{d.venue}</span>
-              <select
-                value={checklistVenueId}
-                onChange={(e) => setChecklistVenueId(e.target.value)}
-                className={dashboardFieldClass}
-              >
-                {spotVenues.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          <Live360SetupChecklist venueId={checklistVenueId} venues={spotVenues} />
-        </div>
-      ) : null}
       <SettingsTabs allowedTabs={allowedTabs} live360Enabled={live360Enabled}>
         {(tab) => renderTab(tab)}
       </SettingsTabs>

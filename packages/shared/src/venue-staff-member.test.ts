@@ -10,6 +10,7 @@ import {
   sanitizeStaffAssignments,
   sanitizeStaffMessageScope,
   staffAssignmentLinkKind,
+  staffPostPickerLabel,
   staffPrimaryAssignment,
   validateStaffMessageScope,
   waiterCallsVisibleToStaffMember,
@@ -211,5 +212,25 @@ describe("staffAssignmentLinkKind", () => {
   it("marks disabled or unknown posts invalid", () => {
     expect(staffAssignmentLinkKind("old", posts)).toBe("invalid");
     expect(staffAssignmentLinkKind("missing", posts)).toBe("invalid");
+  });
+});
+
+describe("staffPostPickerLabel", () => {
+  const posts = [
+    { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+    { id: "bar", label: "Bar", enabled: true, station: "bar" as const },
+  ];
+
+  it("uses the post name from settings", () => {
+    expect(staffPostPickerLabel("kitchen", "GR", posts)).toBe("Κουζίνα");
+    expect(staffPostPickerLabel("bar", "GR", posts)).toBe("Bar");
+  });
+
+  it("lists each post by its configured label", () => {
+    const multi = [
+      { id: "k1", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+      { id: "k2", label: "Grill", enabled: true, station: "kitchen" as const },
+    ];
+    expect(staffPostPickerLabel("k2", "GR", multi)).toBe("Grill");
   });
 });

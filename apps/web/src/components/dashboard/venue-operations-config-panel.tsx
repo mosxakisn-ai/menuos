@@ -17,6 +17,8 @@ import {
   newVenuePostId,
   PASS_STATION_INPUTS,
   postLabelLooksLikeFloorWaiter,
+  isPlaceholderVenuePostLabel,
+  isExcludedStaffVenuePost,
   getPostMessageColor,
   quickChipsForPost,
   syncLegacyFromPosts,
@@ -274,9 +276,11 @@ export function VenueOperationsConfigPanel({
     if (!venueId || !draft) return;
     let draftToSave = applyFlushedMessageDrafts(draft);
     const hadJunkPost = draftToSave.posts?.some((post) => postLabelLooksLikeFloorWaiter(post.label)) ?? false;
-    if (hadJunkPost && draftToSave.posts) {
+    const hadPlaceholderPost =
+      draftToSave.posts?.some((post) => isPlaceholderVenuePostLabel(post.label)) ?? false;
+    if ((hadJunkPost || hadPlaceholderPost) && draftToSave.posts) {
       const removedIds = new Set(
-        draftToSave.posts.filter((post) => postLabelLooksLikeFloorWaiter(post.label)).map((post) => post.id),
+        draftToSave.posts.filter((post) => isExcludedStaffVenuePost(post)).map((post) => post.id),
       );
       const filterPostMap = <T,>(map: Record<string, T> | undefined) => {
         if (!map) return undefined;
@@ -285,7 +289,7 @@ export function VenueOperationsConfigPanel({
       };
       draftToSave = {
         ...draftToSave,
-        posts: draftToSave.posts.filter((post) => !postLabelLooksLikeFloorWaiter(post.label)),
+        posts: draftToSave.posts.filter((post) => !isExcludedStaffVenuePost(post)),
         quickChips: filterPostMap(draftToSave.quickChips),
         postColors: filterPostMap(draftToSave.postColors),
       };
@@ -311,7 +315,9 @@ export function VenueOperationsConfigPanel({
         const successText = postsOnlyMode
           ? hadJunkPost
             ? `${Posts.savedNextSteps} ${Posts.junkRemovedHint}`
-            : Posts.savedNextSteps
+            : hadPlaceholderPost
+              ? `${Posts.savedNextSteps} ${Posts.placeholderRemovedHint}`
+              : Posts.savedNextSteps
           : typeof data.message === "string"
             ? data.message
             : O.saved;
@@ -721,6 +727,11 @@ export function VenueOperationsConfigPanel({
                                 {Posts.waiterNameWarning}
                               </p>
                             ) : null}
+                            {postsOnlyMode && isPlaceholderVenuePostLabel(post.label) ? (
+                              <p className="mt-1.5 text-xs leading-snug text-amber-700">
+                                {Posts.placeholderNameWarning}
+                              </p>
+                            ) : null}
                           </td>
                           <td className="px-4 py-3 align-middle">
                             <select
@@ -759,39 +770,6 @@ export function VenueOperationsConfigPanel({
               <p className="mt-3 text-xs leading-relaxed text-slate-500">
                 {postsOnlyMode ? Posts.postTypeHint : O.postTypeHint}
               </p>
-              {postsOnlyMode && enabledPosts.length > 0 ? (
-                <div className="mt-5 rounded-xl border border-brand-blue/20 bg-brand-blue/[0.04] p-4 sm:p-5">
-                  <p className="text-sm font-semibold text-brand-navy">{Posts.linkedTitle}</p>
-                  <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                    {enabledPosts.map((post) => {
-                      const stationLabels =
-                        lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
-                      return (
-                        <li key={post.id} className="flex flex-wrap items-baseline gap-x-1">
-                          <span>
-                            {Posts.linkedTablet(post.label.trim(), stationLabels[post.station])}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  <p className="mt-3 text-xs leading-relaxed text-slate-500">{Posts.linkedWaiterNote}</p>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Link
-                      href="/dashboard/settings?tab=messages"
-                      className={`inline-flex items-center ${buttonClass("secondary", "sm")}`}
-                    >
-                      {Posts.nextMessagesLink}
-                    </Link>
-                    <Link
-                      href="/dashboard/settings?tab=staff"
-                      className={`inline-flex items-center ${buttonClass("secondary", "sm")}`}
-                    >
-                      {Posts.nextStaffLink}
-                    </Link>
-                  </div>
-                </div>
-              ) : null}
             </section>
             ) : null}
 

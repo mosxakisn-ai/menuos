@@ -277,22 +277,29 @@ export function WaiterPanel({
     [passSignals, zoneFilterId, zoneGroups],
   );
 
+  const readyPassSignals = useMemo(
+    () => passSignals.filter((pass) => pass.status === "READY"),
+    [passSignals],
+  );
+
   const visibleActiveCount = useMemo(() => {
     const activeCalls = displayCalls.filter(
       (call) => call.status === "PENDING" || call.status === "ACKNOWLEDGED",
     ).length;
-    return activeCalls + displayPassSignals.length;
-  }, [displayCalls, displayPassSignals.length]);
+    const readyPasses = displayPassSignals.filter((pass) => pass.status === "READY").length;
+    return activeCalls + readyPasses;
+  }, [displayCalls, displayPassSignals]);
 
   const zonePendingCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const call of calls) {
-      if (call.status !== "PENDING") continue;
+      if (call.status !== "PENDING" && call.status !== "ACKNOWLEDGED") continue;
       const zoneId = zoneIdForWaiterLocation(call, zoneGroups);
       if (!zoneId) continue;
       counts.set(zoneId, (counts.get(zoneId) ?? 0) + 1);
     }
     for (const pass of passSignals) {
+      if (pass.status !== "READY") continue;
       const zoneId = zoneIdForWaiterLocation(pass, zoneGroups);
       if (!zoneId) continue;
       counts.set(zoneId, (counts.get(zoneId) ?? 0) + 1);
@@ -302,9 +309,11 @@ export function WaiterPanel({
 
   function zonePendingTotal(zoneId: string): number {
     if (zoneId === "all") {
-      const pendingCalls = pendingCount;
-      const activePasses = passSignals.length;
-      return pendingCalls + activePasses;
+      const activeCalls = calls.filter(
+        (call) => call.status === "PENDING" || call.status === "ACKNOWLEDGED",
+      ).length;
+      const readyPasses = readyPassSignals.length;
+      return activeCalls + readyPasses;
     }
     return zonePendingCounts.get(zoneId) ?? 0;
   }

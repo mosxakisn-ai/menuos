@@ -79,14 +79,19 @@ export default async function DashboardPage({ searchParams }: Props) {
         venueId: { in: venueIds },
         status: "DELIVERED",
         deliveredAt: { gte: weekAgo, not: null },
+        readyAt: { gte: weekAgo },
       },
-      select: { readyAt: true, deliveredAt: true },
+      select: { readyAt: true, pickedUpAt: true, deliveredAt: true },
       orderBy: { deliveredAt: "desc" },
       take: 500,
     });
     const durations = delivered
       .filter((row) => row.deliveredAt)
-      .map((row) => (row.deliveredAt!.getTime() - row.readyAt.getTime()) / 60_000);
+      .map((row) => {
+        const end = row.pickedUpAt ?? row.deliveredAt!;
+        return (end.getTime() - row.readyAt.getTime()) / 60_000;
+      })
+      .filter((minutes) => minutes >= 0 && minutes <= 180);
     if (durations.length > 0) {
       passAvgDeliveryMin = Math.round(
         durations.reduce((sum, minutes) => sum + minutes, 0) / durations.length,

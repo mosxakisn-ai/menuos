@@ -195,9 +195,7 @@ export function staffPostPickerLabel(
   }
   const post = posts?.find((row) => row.id === assignment);
   if (post) {
-    const stationLabels = lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
-    const tablet = lang === "EN" ? "tablet" : "tablet";
-    return `${post.label.trim()} — ${stationLabels[post.station]} (${tablet})`;
+    return post.label.trim();
   }
   if (PASS_STATION_INPUTS.includes(assignment as PassStationInput)) {
     return staffStationLabelForLang(assignment as StaffStationOption, lang);

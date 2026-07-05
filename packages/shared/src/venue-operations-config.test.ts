@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isPlaceholderVenuePostLabel,
   isReservedVenuePostId,
   normalizeVenueOperationsConfig,
   passReadyLabelForSignal,
   passReadyLabelsFromConfig,
   quickChipsForPost,
   resolvePostIdForStationScreen,
+  staffAssignableVenuePosts,
   stationScreenLabelMatchesPost,
   tableLegendStates,
   venueOperationsConfigSchema,
@@ -175,5 +177,27 @@ describe("venueOperationsConfigSchema", () => {
     });
     expect(config.posts?.map((post) => post.id)).toEqual(["kitchen", "bar"]);
     expect(config.posts?.[0]?.label).toBe("A");
+  });
+});
+
+describe("staffAssignableVenuePosts", () => {
+  it("excludes placeholder and waiter junk posts", () => {
+    const config = {
+      enabledStations: ["kitchen" as const, "bar" as const],
+      posts: [
+        { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+        { id: "p-new", label: "Νέο πόστο", enabled: true, station: "kitchen" as const },
+        { id: "waiter", label: "Σερβιτόρος", enabled: true, station: "bar" as const },
+        { id: "bar", label: "Bar", enabled: true, station: "bar" as const },
+      ],
+    };
+    const assignable = staffAssignableVenuePosts(config, "GR");
+    expect(assignable.map((post) => post.id)).toEqual(["kitchen", "bar"]);
+  });
+
+  it("detects placeholder labels", () => {
+    expect(isPlaceholderVenuePostLabel("Νέο πόστο")).toBe(true);
+    expect(isPlaceholderVenuePostLabel("New post")).toBe(true);
+    expect(isPlaceholderVenuePostLabel("Κουζίνα")).toBe(false);
   });
 });

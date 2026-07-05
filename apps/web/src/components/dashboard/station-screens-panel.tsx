@@ -11,6 +11,7 @@ import {
 } from "@/components/dashboard/dashboard-action-button";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { notifyLive360Updated } from "@/lib/live360-events";
 import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
@@ -57,6 +58,7 @@ export function StationScreensPanel({
 }) {
   const { d, lang } = useDashboardCopy();
   const S = d.pages.settings;
+  const { flash, setFlash, show, showFromResponse } = useFlashMessage();
   const langCode = lang === "EN" ? "EN" : "GR";
   const copy = stationCopy(station, S);
 
@@ -121,13 +123,28 @@ export function StationScreensPanel({
   async function copyLink(screen: StationScreenRow) {
     if (!venue) return;
     const url = buildScreenUrl(station, venue.slug, screen.screenToken);
+    let copied = false;
     try {
       await navigator.clipboard.writeText(url);
+      copied = true;
     } catch {
-      /* ignore */
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        copied = document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {
+        copied = false;
+      }
     }
-    setCopiedId(screen.id);
-    setTimeout(() => setCopiedId(null), 2000);
+    if (copied) {
+      setCopiedId(screen.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } else {
+      show("error", S.copyLinkFailed);
+    }
   }
 
   async function addScreen() {
@@ -145,7 +162,7 @@ export function StationScreensPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        window.alert(typeof data.error === "string" ? data.error : S.addScreenFailed);
+        showFromResponse(data, false, res.status);
         return;
       }
       setNewLabel("");
@@ -167,7 +184,7 @@ export function StationScreensPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        window.alert(typeof data.error === "string" ? data.error : S.rotateScreenFailed);
+        showFromResponse(data, false, res.status);
         return;
       }
       await refreshScreens();
@@ -185,7 +202,7 @@ export function StationScreensPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        window.alert(typeof data.error === "string" ? data.error : S.deleteScreenFailed);
+        showFromResponse(data, false, res.status);
         return;
       }
       if (editingId === screen.id) {
@@ -225,7 +242,7 @@ export function StationScreensPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        window.alert(typeof data.error === "string" ? data.error : S.renameScreenFailed);
+        showFromResponse(data, false, res.status);
         return;
       }
       setEditingId(null);
@@ -251,6 +268,7 @@ export function StationScreensPanel({
 
   return (
     <section className={shellClass}>
+      <FlashMessages initial={flash} onClear={() => setFlash(null)} />
       <div className="flex flex-wrap items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
           <Monitor className="h-4 w-4" aria-hidden />

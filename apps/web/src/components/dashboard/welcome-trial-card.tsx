@@ -24,8 +24,9 @@ export function WelcomeTrialCard({
   const endsLabel = trialEndsAt ? formatDashboardDate(lang, new Date(trialEndsAt)) : null;
 
   return (
-    <Card className="border-brand-blue/25 bg-gradient-to-br from-brand-blue/5 to-brand-cyan/5 p-5 sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <Card className="relative overflow-hidden border-brand-blue/20 bg-gradient-to-br from-white via-white to-brand-blue/[0.04] p-5 shadow-card sm:p-6">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_100%_0%,rgba(6,182,212,0.08),transparent_50%)]" aria-hidden />
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-brand-blue">
             <Sparkles className="h-4 w-4" aria-hidden />

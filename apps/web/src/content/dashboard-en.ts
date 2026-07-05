@@ -764,6 +764,10 @@ export const DASHBOARD_EN = {
           "Saved. Next: add messages per post and assign employees in Staff.",
         junkRemovedHint:
           "Removed a waiter-named post — floor waiters are configured in Staff only.",
+        placeholderNameWarning:
+          "Enter a name (e.g. Kitchen) — «New post» does not appear in Staff.",
+        placeholderRemovedHint:
+          "Removed an unnamed post — rename it before saving or delete the row.",
       },
       screensTab: {
         title: "Tablet screens",
@@ -1027,6 +1031,7 @@ export const DASHBOARD_EN = {
       rotatingScreen: "Rotating...",
       rotateScreenConfirm: "Rotate the screen code? The current link will stop working.",
       rotateScreenFailed: "Could not rotate screen code.",
+      copyLinkFailed: "Could not copy the link — try selecting it manually.",
       multiScreenHint:
         "You can add multiple screens per department (e.g. beach bar and main bar) — each with its own link.",
       loadingScreens: "Loading screens…",
@@ -1296,6 +1301,7 @@ export const DASHBOARD_EN = {
     actionBilling: "Plan & subscription",
     quickStartEmpty: "Start by adding categories and items — then generate QR codes for your tables.",
     quickStartReady: "Your catalog is online! Generate QR codes or view customer calls.",
+    catalogLiveStatus: "Online",
     callsWaiterSuffix: "waiter",
     renewalUntil: "Renews until",
     planField: "Plan",

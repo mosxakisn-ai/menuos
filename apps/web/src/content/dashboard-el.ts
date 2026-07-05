@@ -777,6 +777,10 @@ export const DASHBOARD_EL = {
           "Αποθηκεύτηκαν. Επόμενα: πρόσθεσε μηνύματα ανά πόστο και ανάθεσε εργαζόμενους στο Προσωπικό.",
         junkRemovedHint:
           "Αφαιρέθηκε πόστο με όνομα σερβιτόρου — οι σερβιτόροι δάπεδου ρυθμίζονται μόνο από Προσωπικό.",
+        placeholderNameWarning:
+          "Βάλε όνομα (π.χ. Κουζίνα) — το «Νέο πόστο» δεν εμφανίζεται στο Προσωπικό.",
+        placeholderRemovedHint:
+          "Αφαιρέθηκε πόστο χωρίς όνομα — μετονόμασέ το πριν την αποθήκευση ή διέγραψέ το.",
       },
       screensTab: {
         title: "Οθόνες tablet",
@@ -1042,6 +1046,7 @@ export const DASHBOARD_EL = {
       rotateScreenConfirm:
         "Να αλλάξει ο κωδικός; Το τρέχον link θα σταματήσει να λειτουργεί.",
       rotateScreenFailed: "Αποτυχία αλλαγής κωδικού οθόνης.",
+      copyLinkFailed: "Δεν αντιγράφηκε το link — δοκίμασε χειροκίνητα.",
       multiScreenHint:
         "Μπορείς να έχεις πολλές οθόνες ανά τμήμα (π.χ. μπαρ παραλίας και μπαρ καταστήματος) — κάθε μία με δικό της link.",
       loadingScreens: "Φόρτωση οθονών…",
@@ -1312,6 +1317,7 @@ export const DASHBOARD_EL = {
     quickStartEmpty:
       "Ξεκίνα προσθέτοντας κατηγορίες και είδη — μετά βγάλε QR για τα τραπέζια σου.",
     quickStartReady: "Ο κατάλογος σου είναι online! Βγάλε QR ή δες τις κλήσεις από πελάτες.",
+    catalogLiveStatus: "Online",
     callsWaiterSuffix: "σερβιτόρου",
     renewalUntil: "Ανανέωση έως",
     planField: "Πλάνο",

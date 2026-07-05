@@ -2,11 +2,14 @@ import { SEO_BLOG_POSTS, SEO_BLOG_INDEX } from "@/content/seo-blog";
 import { SEO_PAGES, SEO_SITE } from "@/content/seo-el";
 import { formatPlanPriceDisplay, getTrialDaysFromCatalog, listPlanCatalogEntriesSafe } from "@/lib/plan-catalog-service";
 import { getAllSeoLandingPaths } from "@/lib/seo-landing";
-import { absoluteUrl } from "@/lib/seo";
 import { trialDayLabels } from "@/lib/trial-marketing";
 
+function publicSiteUrl(path = "/"): string {
+  return new URL(path, SEO_SITE.url).toString();
+}
+
 function mdLink(label: string, path: string): string {
-  return `- [${label}](${absoluteUrl(path)})`;
+  return `- [${label}](${publicSiteUrl(path)})`;
 }
 
 export async function GET() {
@@ -35,7 +38,7 @@ export async function GET() {
     "- Online διαχείριση για ενημέρωση τιμών και πιάτων",
     "- Κλήση σερβιτόρου / room service από το menu",
     `- Δωρεάν δοκιμή ${trialDaysGen}`,
-    `- Τιμές: [Basic ${basicPrice}/μήνα](https://menuos.gr/pricing), [Pro ${proPrice}/μήνα](https://menuos.gr/pricing)`,
+    `- Τιμές: [Basic ${basicPrice}/μήνα](${publicSiteUrl("/pricing")}), [Pro ${proPrice}/μήνα](${publicSiteUrl("/pricing")})`,
     "",
     "## Κύριες σελίδες",
     ...staticPages.map((p) => mdLink(p.breadcrumbLabel, p.path)),
@@ -43,7 +46,7 @@ export async function GET() {
     `## SEO landings (${landings.length})`,
     ...landings.slice(0, 40).map((path) => mdLink(path.replace(/^\//, ""), path)),
     ...(landings.length > 40
-      ? [`- [Full sitemap](${absoluteUrl("/sitemap.xml")}) — ${landings.length} landing URLs`]
+      ? [`- [Full sitemap](${publicSiteUrl("/sitemap.xml")}) — ${landings.length} landing URLs`]
       : []),
     "",
     "## Blog",
@@ -51,10 +54,10 @@ export async function GET() {
     ...blogPosts.map((post) => mdLink(post.title, `/blog/${post.slug}`)),
     "",
     "## SEO & discovery",
-    `- [Sitemap](${absoluteUrl("/sitemap.xml")})`,
-    `- [Image sitemap](${absoluteUrl("/sitemap-images.xml")})`,
-    `- [RSS feed](${absoluteUrl("/feed.xml")})`,
-    `- [Demo QR menu](${absoluteUrl("/m/demo-taverna?table=12")})`,
+    `- [Sitemap](${publicSiteUrl("/sitemap.xml")})`,
+    `- [Image sitemap](${publicSiteUrl("/sitemap-images.xml")})`,
+    `- [RSS feed](${publicSiteUrl("/feed.xml")})`,
+    `- [Demo QR menu](${publicSiteUrl("/m/demo-taverna?table=12")})`,
     "- English UI: append ?lang=en to any marketing URL",
     "",
     "## Επικοινωνία",

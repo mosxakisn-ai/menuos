@@ -221,6 +221,30 @@ export function isJunkVenuePost(post: VenuePost): boolean {
   return postLabelLooksLikeFloorWaiter(post.label);
 }
 
+/** Unsaved placeholder from «Προσθήκη πόστου» — not shown in staff assignment. */
+export function isPlaceholderVenuePostLabel(label: string): boolean {
+  const normalized = label
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  return normalized === "νεο ποστο" || normalized === "new post";
+}
+
+/** Enabled posts that can receive staff (excludes waiter junk + unnamed placeholders). */
+export function staffAssignableVenuePosts(
+  config: VenueOperationsConfig | undefined,
+  lang: "GR" | "EN" = "GR",
+): VenuePost[] {
+  return enabledVenuePosts(config, lang).filter(
+    (post) => !isJunkVenuePost(post) && !isPlaceholderVenuePostLabel(post.label),
+  );
+}
+
+export function isExcludedStaffVenuePost(post: Pick<VenuePost, "label">): boolean {
+  return isJunkVenuePost(post as VenuePost) || isPlaceholderVenuePostLabel(post.label);
+}
+
 function stripJunkVenuePosts(posts: VenuePost[]): VenuePost[] {
   return posts.filter((post) => !isJunkVenuePost(post));
 }
