@@ -236,6 +236,32 @@ function dedupeVenuePosts(posts: VenuePost[]): VenuePost[] {
   return out;
 }
 
+function migrateLegacyQuickChipsToPostIds(
+  posts: VenuePost[],
+  quickChips?: Record<string, string[]>,
+): Record<string, string[]> | undefined {
+  if (!quickChips) return undefined;
+  const next = { ...quickChips };
+  let changed = false;
+  for (const station of PASS_STATION_INPUTS) {
+    const legacy = next[station];
+    if (!legacy) continue;
+    const stationPosts = posts.filter((post) => post.enabled && post.station === station);
+    for (const post of stationPosts) {
+      if (next[post.id] === undefined) {
+        next[post.id] = [...legacy];
+        changed = true;
+      }
+    }
+    if (stationPosts.length > 0) {
+      delete next[station];
+      changed = true;
+    }
+  }
+  if (Object.keys(next).length === 0) return undefined;
+  return changed ? next : quickChips;
+}
+
 function finalizeVenueOperationsConfig(
   data: Omit<VenueOperationsConfig, "posts"> & { posts?: VenuePost[] },
 ): VenueOperationsConfig {
@@ -249,7 +275,7 @@ function finalizeVenueOperationsConfig(
     posts = posts.map((post, index) => ({ ...post, enabled: index === 0 }));
   }
   const legacy = syncLegacyFromPosts(posts);
-  let quickChips = data.quickChips;
+  let quickChips = migrateLegacyQuickChipsToPostIds(posts, data.quickChips);
   let postColors = data.postColors;
   if (removedIds.size > 0) {
     if (quickChips) {
@@ -367,7 +393,7 @@ export function quickChipsForPost(
         return legacyStation;
       }
     }
-    return DEFAULT_PASS_QUICK_CHIPS[post.station];
+    return [];
   }
 
   return [];
@@ -386,6 +412,21 @@ export function resolvePostIdForStationScreen(
     if (match) return match.id;
   }
   return posts[0]?.id ?? null;
+}
+
+/** True when screen label equals an enabled post name for this station (recommended 1:1 link). */
+export function stationScreenLabelMatchesPost(
+  config: VenueOperationsConfig | undefined,
+  station: PassStationInput,
+  screenLabel: string,
+  lang: "GR" | "EN" = "GR",
+): boolean {
+  if (!config) return true;
+  const label = screenLabel.trim();
+  if (!label) return false;
+  return enabledVenuePosts(config, lang).some(
+    (post) => post.station === station && post.label.trim() === label,
+  );
 }
 
 export type StaffVisibleMessages =
@@ -427,7 +468,7 @@ export function quickChipsForStation(
 
   const custom = config.quickChips?.[station];
   if (custom !== undefined) return custom;
-  return DEFAULT_PASS_QUICK_CHIPS[station];
+  return [];
 }
 
 export function mergeTableStateLabels(

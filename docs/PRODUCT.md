@@ -29,12 +29,33 @@ menuos.gr → pricing → signup → onboarding wizard (venue, first menu, QR do
 Scan QR → menuos.gr/m/{venue}?table=12 → language → menu → category → product → [Call Waiter]
 ```
 
-### C — Staff
+### C — Staff (Pro / Live 360°)
 ```
-Login → dashboard → real-time waiter panel → mark handled / toggle availability
+Owner configures spaces → tables → posts → messages → staff links
+Waiter phone link (/s/...) → spot map + guest calls + pass alerts
+Kitchen/bar tablet (/kds, /bar, …) → pass signals + quick message chips
+Manager screens (/dashboard/waiter) → live map for all zones
 ```
 
-## Feature Scope (from spec)
+## Live 360° (Pro only)
+
+Setup order in **Settings**:
+
+1. **Spaces** — zones derived from table labels (Σάλα, Αυλή, …)
+2. **Tables** — spots bound to QR (`?table=12`)
+3. **Posts** — tablet stations (Kitchen, Bar) — not floor waiter names
+4. **Messages** — quick chips per post for KDS/bar tablets (manual, no defaults)
+5. **Staff** — people: waiter + zone (phone) OR tablet post + screen link
+
+| Concept | UI (GR) | Code id | Device |
+|---------|---------|---------|--------|
+| Floor waiter | Σερβιτόρος — δάπεδο | `services` | Phone `/s/...` |
+| Tablet post | Κουζίνα, Bar, … | `post-*` | Tablet `/kds` etc. |
+| Spot map (manager) | Οθόνες | — | `/dashboard/waiter` |
+
+Real-time updates: **HTTP polling (~5s) + Web Push** (not Socket.io).
+
+## Pricing
 
 ### Customer QR frontend
 - Mobile-first, responsive
@@ -53,13 +74,13 @@ Login → dashboard → real-time waiter panel → mark handled / toggle availab
 - Multi-language fields per product
 - Availability toggle (in stock / out of stock)
 - QR Manager (PNG/SVG, custom colors)
-- Waiter notifications panel (real-time)
+- Waiter notifications panel (polling + Web Push)
 - Opening hours manager
 - Multi-menu (Breakfast, Pool Bar, Restaurant, Room Service, Spa, Activities)
 
 ### Backend
 - REST API: products, categories, menu, photos, waiter-call, opening-hours, languages, auth
-- WebSocket gateway for notifications
+- Live 360: polling + Web Push for waiter/pass updates (no Socket.io in production yet)
 - JWT, RBAC, rate limiting, input validation (Zod)
 
 ### OCR / PDF import
@@ -105,7 +126,7 @@ Stripe Billing in Phase 2.
 Landing, signup/login, org+venue setup, menu CRUD, photo upload, public QR menu, QR generator, basic branding, GR+EN. **No Stripe, OCR, push yet.**
 
 ### Phase 2 — Monetization + real-time (weeks 5–6)
-Stripe subscriptions, call waiter, WebSocket dashboard, Web Push PWA, table param, opening hours, roles.
+Stripe subscriptions, call waiter, waiter/pass polling + Web Push, table param, opening hours, roles.
 
 ### Phase 3 — Power features (weeks 7–8)
 PDF OCR pipeline, drag-drop, DE+FR, multi-menu, offers, offline cache, custom QR colors.

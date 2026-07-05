@@ -26,8 +26,8 @@ export type DemoTableTile = {
 const DEMO_EL = {
   badge: "Δείγμα — για δοκιμές UI",
   staff: [
-    { id: "1", name: "Μαρία Π.", role: "Σερβιτόρος", stations: ["Services"] },
-    { id: "2", name: "Γιώργος Κ.", role: "Σερβιτόρος", stations: ["Services"] },
+    { id: "1", name: "Μαρία Π.", role: "Σερβιτόρος", stations: ["services"] },
+    { id: "2", name: "Γιώργος Κ.", role: "Σερβιτόρος", stations: ["services"] },
     { id: "3", name: "Νίκος Α.", role: "Μάγειρας", stations: ["Κουζίνα"] },
     { id: "4", name: "Ελένη Μ.", role: "Μπαρ", stations: ["Μπαρ"] },
     { id: "5", name: "Κώστας Δ.", role: "Manager", stations: ["Όλα"] },
@@ -82,8 +82,8 @@ const DEMO_EL = {
 const DEMO_EN = {
   badge: "Sample — UI preview",
   staff: [
-    { id: "1", name: "Maria P.", role: "Waiter", stations: ["Services"] },
-    { id: "2", name: "George K.", role: "Waiter", stations: ["Services"] },
+    { id: "1", name: "Maria P.", role: "Waiter", stations: ["services"] },
+    { id: "2", name: "George K.", role: "Waiter", stations: ["services"] },
     { id: "3", name: "Nikos A.", role: "Chef", stations: ["Kitchen"] },
     { id: "4", name: "Eleni M.", role: "Bar", stations: ["Bar"] },
     { id: "5", name: "Kostas D.", role: "Manager", stations: ["All"] },

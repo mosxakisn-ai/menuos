@@ -34,7 +34,7 @@ menuos/
 | UI | Tailwind CSS, shadcn/ui | Custom theme tokens |
 | Database | PostgreSQL 16, Prisma | Multi-tenant with organizationId |
 | Auth | NextAuth.js v5, JWT, bcrypt | Roles: ADMIN, MANAGER, STAFF |
-| Real-time | Socket.io | Waiter call events to dashboard |
+| Real-time | HTTP polling (~5s) + Web Push | Waiter/pass updates; no Socket.io in production yet |
 | Push | Web Push (VAPID) + Service Worker | Staff PWA notifications |
 | Storage | Cloudflare R2 | Photos, logos — S3-compatible |
 | Payments | Stripe Billing | Phase 2 — subscriptions |
@@ -80,10 +80,11 @@ menuos/
 
 ```
 Guest → POST /api/waiter-call → DB
-                              → Socket.io emit to org room
-                              → Dashboard receives event
-                              → Web Push to subscribed staff devices
+Staff/manager panels → poll /api/waiter-call + /api/pass-signals (~5s)
+                              → Web Push to subscribed staff/tablet devices
 ```
+
+Staff links: `/s/{venueSlug}?key=…` (waiter phone), `/kds?venueSlug=…&key=…` (kitchen tablet).
 
 ## Photo Pipeline
 

@@ -2,13 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import type { PassStationInput } from "@menuos/shared";
 import {
+  enabledVenuePosts,
   filterVenueSpotsForScreen,
+  getPostMessageColor,
   isPrimaryStationScreen,
   passLocationMatchesScreenSpotPrefix,
   passSignalStationScreenWhere,
   passStationInputSchema,
   passStationInputToDb,
   quickChipsForStation,
+  resolvePostIdForStationScreen,
   stationDisplayLabel,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
@@ -120,6 +123,24 @@ export async function GET(request: Request) {
     ),
   ).length;
 
+  const enabledPosts = enabledVenuePosts(opsConfig, "GR");
+  const postId = resolvePostIdForStationScreen(
+    opsConfig,
+    station,
+    auth.stationScreen?.label,
+    "GR",
+  );
+  const postIndex = postId ? enabledPosts.findIndex((post) => post.id === postId) : 0;
+  const colorPostId = postId ?? enabledPosts[0]?.id ?? "";
+  const messageColor = colorPostId
+    ? getPostMessageColor(opsConfig, colorPostId, postIndex >= 0 ? postIndex : 0)
+    : null;
+  const quickComments = quickChipsForStation(opsConfig, station, {
+    screenLabel: auth.stationScreen?.label,
+    postId,
+    lang: "GR",
+  });
+
   return NextResponse.json({
     venueId: auth.venue.id,
     venueName: auth.venue.name,
@@ -128,13 +149,8 @@ export async function GET(request: Request) {
     stationLabel: stationDisplayLabel(opsConfig, station),
     screenLabel: auth.stationScreen?.label ?? null,
     spotPrefix: auth.stationScreen?.spotPrefix ?? null,
-    quickComments:
-      auth.stationScreen?.quickChips?.length
-        ? auth.stationScreen.quickChips
-        : quickChipsForStation(opsConfig, station, {
-            screenLabel: auth.stationScreen?.label,
-            lang: "GR",
-          }),
+    quickComments,
+    messageColor,
     spots: filtered,
     activeSignals,
     todayCount,

@@ -84,17 +84,9 @@ export const ONBOARDING_STARTER_CATEGORIES = [
   },
 ];
 
-export const ONBOARDING_STARTER_SPOTS = [
-  ...Array.from({ length: 8 }, (_, i) => ({ type: "TABLE", label: String(i + 1) })),
-  { type: "TABLE", label: "Αυλή-1" },
-  { type: "TABLE", label: "Αυλή-2" },
-  { type: "SUNBED", label: "paralia-1" },
-  { type: "SUNBED", label: "paralia-2" },
-  { type: "ROOM", label: "101" },
-  { type: "ROOM", label: "102" },
-];
+export const ONBOARDING_STARTER_SPOTS: { type: "TABLE" | "SUNBED" | "ROOM"; label: string }[] = [];
 
-export const ONBOARDING_STARTER_STAFF = [
+export const ONBOARDING_STARTER_STAFF: {
   { name: "Μαρία Π.", roleLabel: "Σερβιτόρος", stations: ["services"] },
   { name: "Γιώργος Κ.", roleLabel: "Σερβιτόρος", stations: ["services"] },
   { name: "Νίκος Α.", roleLabel: "Μάγειρας", stations: ["kitchen"] },

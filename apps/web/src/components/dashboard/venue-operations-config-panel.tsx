@@ -17,6 +17,7 @@ import {
   newVenuePostId,
   PASS_STATION_INPUTS,
   postLabelLooksLikeFloorWaiter,
+  getPostMessageColor,
   quickChipsForPost,
   syncLegacyFromPosts,
   TABLE_TILE_STATES,
@@ -35,6 +36,8 @@ import {
 import { TableGridLegend } from "@/components/dashboard/table-grid-preview";
 import {
   MessageChipList,
+  PostColorPicker,
+  PostMessagePreview,
   type MessageChipListHandle,
 } from "@/components/dashboard/post-messages-editor";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
@@ -403,6 +406,14 @@ export function VenueOperationsConfigPanel({
     setDraft({
       ...draft,
       quickChips: { ...(draft.quickChips ?? {}), [postId]: chips },
+    });
+  }
+
+  function setPostColor(postId: string, hex: string) {
+    if (!draft) return;
+    setDraft({
+      ...draft,
+      postColors: { ...(draft.postColors ?? {}), [postId]: hex },
     });
   }
 
@@ -796,9 +807,10 @@ export function VenueOperationsConfigPanel({
                 </p>
               ) : draft ? (
                 <div className="space-y-4">
-                  {enabledPosts.map((post) => {
+                  {enabledPosts.map((post, postIndex) => {
                     const items = draft.quickChips?.[post.id] ?? [];
                     const hasCustom = items.length > 0;
+                    const postColor = getPostMessageColor(draft, post.id, postIndex);
                     const stationLabels =
                       lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
                     return (
@@ -807,8 +819,15 @@ export function VenueOperationsConfigPanel({
                         className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5"
                       >
                         <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-                          <div>
-                            <h4 className="text-base font-semibold text-brand-navy">{post.label.trim()}</h4>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="h-3 w-3 shrink-0 rounded-full ring-1 ring-slate-200/80"
+                                style={{ backgroundColor: postColor }}
+                                aria-hidden
+                              />
+                              <h4 className="text-base font-semibold text-brand-navy">{post.label.trim()}</h4>
+                            </div>
                             <p className="mt-0.5 text-xs text-slate-500">
                               {stationLabels[post.station]}
                             </p>
@@ -835,16 +854,36 @@ export function VenueOperationsConfigPanel({
                             ) : null}
                           </div>
                         </div>
-                        <MessageChipList
-                          ref={(handle) => registerMessageListRef(post.id, handle)}
-                          items={items}
-                          onChange={(next) => setQuickChips(post.id, next)}
-                          placeholder={M.messagePlaceholder}
-                          addLabel={M.addMessage}
+
+                        <PostColorPicker
+                          label={M.postColorLabel}
+                          value={postColor}
+                          onChange={(hex) => setPostColor(post.id, hex)}
                         />
-                        {!hasCustom ? (
-                          <p className="mt-2 text-sm text-slate-500">{M.previewEmpty}</p>
-                        ) : null}
+
+                        <div className="mt-5">
+                          <MessageChipList
+                            ref={(handle) => registerMessageListRef(post.id, handle)}
+                            items={items}
+                            onChange={(next) => setQuickChips(post.id, next)}
+                            placeholder={M.messagePlaceholder}
+                            addLabel={M.addMessage}
+                            color={postColor}
+                            listLabel={M.messagesListLabel}
+                          />
+                        </div>
+
+                        {hasCustom ? (
+                          <div className="mt-4">
+                            <PostMessagePreview
+                              title={M.previewLabel}
+                              labels={items}
+                              color={postColor}
+                            />
+                          </div>
+                        ) : (
+                          <p className="mt-3 text-center text-sm text-slate-500 sm:text-left">{M.previewEmpty}</p>
+                        )}
                         <p className="mt-3 text-xs leading-relaxed text-slate-500">
                           {M.passTabletStaffHint(post.label.trim())}{" "}
                           <Link
@@ -867,9 +906,7 @@ export function VenueOperationsConfigPanel({
               <p className="mt-1 text-sm text-slate-600">{O.quickChipsHint}</p>
               <div className="mt-4 space-y-5">
                 {enabledPosts.map((post) => {
-                  const chips =
-                    draft.quickChips?.[post.id] ??
-                    quickChipsForPost(draft, post.id, langCode);
+                  const chips = draft.quickChips?.[post.id] ?? [];
                   return (
                     <div
                       key={post.id}

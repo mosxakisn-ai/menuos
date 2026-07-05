@@ -18,7 +18,9 @@ describe("parseVisionMenuJson", () => {
 
     expect(sections).toHaveLength(1);
     expect(sections[0]?.title).toBe("ΜΕΖΕΔΕΣ");
-    expect(sections[0]?.items).toHaveLength(1);
+    expect(sections[0]?.items).toHaveLength(2);
     expect(sections[0]?.items[0]?.price).toBe(7.4);
+    expect(sections[0]?.items[1]?.name).toBe("Invalid");
+    expect(sections[0]?.items[1]?.price).toBeNull();
   });
 });

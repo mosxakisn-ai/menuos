@@ -37,6 +37,7 @@ import {
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
+import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
 import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
 import { cn } from "@/lib/utils";
 import { buildStaffShareUrl, buildStationScreenShareUrl } from "@/lib/staff-share-url";
@@ -339,6 +340,17 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     () => enabledVenuePosts(opsConfig ?? undefined, langCode),
     [opsConfig, langCode],
   );
+  const tabletStations = useMemo(() => {
+    const seen = new Set<PassStationInput>();
+    const stations: PassStationInput[] = [];
+    for (const post of enabledPosts) {
+      if (post.station && !seen.has(post.station)) {
+        seen.add(post.station);
+        stations.push(post.station);
+      }
+    }
+    return stations;
+  }, [enabledPosts]);
   const zoneGroups = useMemo(() => {
     const groups = groupVenueSpotsByZone(spots);
     return applyZoneLabelOverrides(groups, opsConfig?.zoneLabels);
@@ -358,6 +370,16 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const loadGenerationRef = useRef(0);
   const screenLoadGenerationRef = useRef(0);
+
+  const invalidMembers = useMemo(
+    () =>
+      members.filter((member) => {
+        if (member.stations.length === 0) return true;
+        const primary = staffPrimaryAssignment(member.stations);
+        return staffAssignmentLinkKind(primary, venuePosts) === "invalid";
+      }),
+    [members, venuePosts],
+  );
 
   const venue = venues.find((v) => v.id === venueId);
   const zonesReady = !spotsLoading && zoneGroups.length > 0;
@@ -670,6 +692,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     <div className="space-y-5">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
+      {invalidMembers.length > 0 ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {S.invalidStaffBanner(invalidMembers.length)}
+        </div>
+      ) : null}
+
       <div className={dashboardCardClass}>
         <h2 className="text-base font-semibold text-brand-navy">{S.title}</h2>
         <p className="mt-2 text-sm text-slate-600">{S.description}</p>
@@ -832,13 +860,16 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       langCode,
                       venuePosts,
                     );
+                    const assignmentInvalid =
+                      member.stations.length === 0 ||
+                      staffAssignmentLinkKind(primaryPost, venuePosts) === "invalid";
 
                     return (
                       <tr
                         key={member.id}
                         className={cn(
                           "border-b border-slate-50 last:border-0 hover:bg-slate-50/40",
-                          member.stations.length === 0 && "bg-amber-50/80",
+                          assignmentInvalid && "bg-amber-50/80",
                         )}
                       >
                         <td className="px-4 py-3 align-middle font-medium text-brand-navy">
@@ -919,6 +950,24 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
             </div>
         )}
       </div>
+
+      {tabletStations.length > 0 ? (
+        <div className="space-y-4">
+          <div className={dashboardCardClass}>
+            <h3 className="text-base font-semibold text-brand-navy">{S.tabletScreensTitle}</h3>
+            <p className="mt-2 text-sm text-slate-600">{S.tabletScreensHint}</p>
+          </div>
+          {tabletStations.map((station) => (
+            <StationScreensPanel
+              key={station}
+              station={station}
+              venues={venues}
+              venueId={venueId}
+              embedded
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

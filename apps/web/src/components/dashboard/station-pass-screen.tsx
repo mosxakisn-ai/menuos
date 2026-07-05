@@ -36,6 +36,7 @@ type ScreenContext = {
   screenLabel?: string | null;
   spotPrefix?: string | null;
   quickComments?: string[];
+  messageColor?: string | null;
   spots: ScreenSpot[];
   activeSignals?: ActiveSignal[];
   todayCount?: number;
@@ -133,31 +134,43 @@ function QuickMessagesPanel({
   selectedMessage,
   disabled,
   onSelect,
+  layout = "horizontal",
+  accentColor,
 }: {
   title: string;
   messages: string[];
   selectedMessage?: string | null;
   disabled: boolean;
   onSelect: (message: string) => void;
+  layout?: "horizontal" | "vertical";
+  accentColor?: string | null;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
-  const [canScrollUp, setCanScrollUp] = useState(false);
-  const [canScrollDown, setCanScrollDown] = useState(false);
+  const [canScrollBack, setCanScrollBack] = useState(false);
+  const [canScrollForward, setCanScrollForward] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
+  const horizontal = layout === "horizontal";
 
   const updateScrollState = useCallback(() => {
     const el = listRef.current;
     if (!el) {
-      setCanScrollUp(false);
-      setCanScrollDown(false);
+      setCanScrollBack(false);
+      setCanScrollForward(false);
       setHasOverflow(false);
       return;
     }
-    const overflow = el.scrollHeight > el.clientHeight + 4;
+    const overflow = horizontal
+      ? el.scrollWidth > el.clientWidth + 4
+      : el.scrollHeight > el.clientHeight + 4;
     setHasOverflow(overflow);
-    setCanScrollUp(el.scrollTop > 4);
-    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
-  }, []);
+    if (horizontal) {
+      setCanScrollBack(el.scrollLeft > 4);
+      setCanScrollForward(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    } else {
+      setCanScrollBack(el.scrollTop > 4);
+      setCanScrollForward(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
+    }
+  }, [horizontal]);
 
   useEffect(() => {
     updateScrollState();
@@ -166,11 +179,21 @@ function QuickMessagesPanel({
     const observer = new ResizeObserver(() => updateScrollState());
     observer.observe(el);
     return () => observer.disconnect();
-  }, [messages, updateScrollState]);
+  }, [messages, updateScrollState, horizontal]);
 
-  function scrollMessages(direction: "up" | "down") {
-    listRef.current?.scrollBy({
-      top: direction === "up" ? -QUICK_MESSAGE_ROW_PX * 2 : QUICK_MESSAGE_ROW_PX * 2,
+  function scrollMessages(direction: "back" | "forward") {
+    const el = listRef.current;
+    if (!el) return;
+    const delta = horizontal
+      ? direction === "back"
+        ? -180
+        : 180
+      : direction === "back"
+        ? -QUICK_MESSAGE_ROW_PX * 2
+        : QUICK_MESSAGE_ROW_PX * 2;
+    el.scrollBy({
+      left: horizontal ? delta : 0,
+      top: horizontal ? 0 : delta,
       behavior: "smooth",
     });
     window.setTimeout(updateScrollState, 320);
@@ -178,47 +201,108 @@ function QuickMessagesPanel({
 
   if (messages.length === 0) return null;
 
-  const showArrows = hasOverflow || messages.length > 4;
+  const showArrows = hasOverflow || (horizontal ? messages.length > 3 : messages.length > 4);
+
+  const chipClass = (selected: boolean) =>
+    cn(
+      "shrink-0 rounded-xl border px-3 py-2.5 text-center text-sm font-semibold leading-snug transition active:scale-[0.98] disabled:opacity-40",
+      horizontal ? "min-h-[2.75rem] max-w-[10rem] truncate" : "min-h-[3.25rem]",
+      !accentColor &&
+        (selected
+          ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
+          : "border-white/20 bg-white/10 text-slate-100 hover:border-cyan-400/50 hover:bg-cyan-500/15"),
+    );
+
+  const chipStyle = (selected: boolean) => {
+    if (!accentColor) return undefined;
+    return {
+      backgroundColor: selected ? `${accentColor}44` : `${accentColor}28`,
+      color: "#f8fafc",
+      borderColor: selected ? accentColor : `${accentColor}99`,
+      boxShadow: selected ? `0 0 0 1px ${accentColor}55, inset 3px 0 0 ${accentColor}` : `inset 3px 0 0 ${accentColor}`,
+    } as const;
+  };
+
+  const list = (
+    <div
+      ref={listRef}
+      onScroll={updateScrollState}
+      className={cn(
+        "scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        horizontal
+          ? "flex max-w-[min(100%,28rem)] gap-2 overflow-x-auto sm:max-w-[min(100%,36rem)]"
+          : "flex w-[11.5rem] flex-col gap-2 overflow-y-auto sm:w-[13rem]",
+      )}
+      style={horizontal ? undefined : { maxHeight: QUICK_MESSAGES_MAX_HEIGHT_PX }}
+    >
+      {messages.map((chip, index) => {
+        const selected = selectedMessage?.trim() === chip;
+        return (
+          <button
+            key={`${index}-${chip}`}
+            type="button"
+            disabled={disabled}
+            title={chip}
+            onClick={() => onSelect(chip)}
+            className={chipClass(selected)}
+            style={chipStyle(selected)}
+          >
+            {chip}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  if (horizontal) {
+    return (
+      <div className="flex min-w-0 max-w-[62%] flex-col items-end gap-1.5 sm:max-w-[70%]">
+        <p className="text-right text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+          {title}
+        </p>
+        <div className="flex items-center justify-end gap-1.5">
+          {showArrows ? (
+            <button
+              type="button"
+              aria-label="Προηγούμενα μηνύματα"
+              disabled={!canScrollBack}
+              onClick={() => scrollMessages("back")}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white transition hover:bg-white/10 disabled:opacity-30"
+            >
+              <ChevronUp className="h-5 w-5 -rotate-90" />
+            </button>
+          ) : null}
+          {list}
+          {showArrows ? (
+            <button
+              type="button"
+              aria-label="Επόμενα μηνύματα"
+              disabled={!canScrollForward}
+              onClick={() => scrollMessages("forward")}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white transition hover:bg-white/10 disabled:opacity-30"
+            >
+              <ChevronDown className="h-5 w-5 -rotate-90" />
+            </button>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4 flex justify-end">
       <div className="flex gap-2">
         <div className="flex min-w-0 flex-col items-stretch gap-2">
           <p className="text-right text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</p>
-          <div
-            ref={listRef}
-            onScroll={updateScrollState}
-            className="flex w-[11.5rem] flex-col gap-2 overflow-y-auto scroll-smooth sm:w-[13rem] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            style={{ maxHeight: QUICK_MESSAGES_MAX_HEIGHT_PX }}
-          >
-            {messages.map((chip, index) => {
-              const selected = selectedMessage?.trim() === chip;
-              return (
-              <button
-                key={`${index}-${chip}`}
-                type="button"
-                disabled={disabled}
-                onClick={() => onSelect(chip)}
-                className={cn(
-                  "min-h-[3.25rem] shrink-0 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold leading-snug transition active:scale-[0.98] disabled:opacity-40",
-                  selected
-                    ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
-                    : "border-white/20 bg-white/10 text-slate-100 hover:border-cyan-400/50 hover:bg-cyan-500/15",
-                )}
-              >
-                {chip}
-              </button>
-            );
-            })}
-          </div>
+          {list}
         </div>
         {showArrows ? (
           <div className="flex flex-col justify-end gap-2 pb-0.5">
             <button
               type="button"
               aria-label="Προηγούμενα μηνύματα"
-              disabled={!canScrollUp}
-              onClick={() => scrollMessages("up")}
+              disabled={!canScrollBack}
+              onClick={() => scrollMessages("back")}
               className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 disabled:opacity-30"
             >
               <ChevronUp className="h-6 w-6" />
@@ -226,8 +310,8 @@ function QuickMessagesPanel({
             <button
               type="button"
               aria-label="Επόμενα μηνύματα"
-              disabled={!canScrollDown}
-              onClick={() => scrollMessages("down")}
+              disabled={!canScrollForward}
+              onClick={() => scrollMessages("forward")}
               className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 disabled:opacity-30"
             >
               <ChevronDown className="h-6 w-6" />
@@ -318,8 +402,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   useScreenWakeLock();
 
-  const quickComments =
-    ctx?.quickComments?.length ? ctx.quickComments : C.quickComments;
+  const quickComments = ctx?.quickComments ?? [];
   const displayStationTitle = ctx?.stationLabel?.trim() || C.title;
 
   const load = useCallback(async () => {
@@ -465,30 +548,23 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-slate-900 text-white">
       <header className="shrink-0 border-b border-white/10 px-4 py-4 sm:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-cyan-400">MenuOS</p>
-            <h1 className="font-serif text-2xl font-bold sm:text-3xl">
-              {ctx?.screenLabel ? `${displayStationTitle} · ${ctx.screenLabel}` : displayStationTitle}
+            <h1 className="font-serif text-2xl font-bold leading-tight sm:text-3xl">
+              {ctx?.screenLabel?.trim() &&
+              displayStationTitle &&
+              ctx.screenLabel.trim() !== displayStationTitle
+                ? `${displayStationTitle} · ${ctx.screenLabel.trim()}`
+                : displayStationTitle}
             </h1>
             {ctx ? <p className="mt-1 text-sm text-slate-400 sm:text-base">{ctx.venueName}</p> : null}
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-0">
-            {ctx && typeof ctx.todayCount === "number" ? (
-              <p className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-300">
-                {C.todayCount(ctx.todayCount)}
-              </p>
-            ) : null}
-            {ctx && quickComments.length > 0 ? (
-              <QuickMessagesPanel
-                title={C.messagesTitle}
-                messages={quickComments}
-                selectedMessage={comment}
-                disabled={sending}
-                onSelect={setComment}
-              />
-            ) : null}
-          </div>
+          {ctx && typeof ctx.todayCount === "number" ? (
+            <p className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-300">
+              {C.todayCount(ctx.todayCount)}
+            </p>
+          ) : null}
         </div>
       </header>
 
@@ -556,8 +632,21 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
         ) : null}
 
         {ctx ? (
-          <div className="mx-auto max-w-2xl space-y-4">
-            <p className="text-base font-medium text-slate-300">{C.pickTable}</p>
+          <div className="mx-auto w-full max-w-4xl space-y-4">
+            <div className="flex items-start justify-between gap-3 sm:gap-4">
+              <p className="shrink-0 pt-1 text-base font-semibold text-white sm:text-lg">{C.pickTable}</p>
+              {quickComments.length > 0 ? (
+                <QuickMessagesPanel
+                  title={C.messagesTitle}
+                  messages={quickComments}
+                  selectedMessage={comment}
+                  disabled={sending}
+                  onSelect={setComment}
+                  layout="horizontal"
+                  accentColor={ctx.messageColor}
+                />
+              ) : null}
+            </div>
 
             {spots.length > 0 ? (
               <>
@@ -588,7 +677,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                   </div>
                 ) : null}
 
-                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
                   {visibleSpots.map(({ spot, displayLabel }) => {
                     const selected = spotSelected(table, spot);
                     return (
@@ -640,27 +729,47 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
       {ctx ? (
         <footer className="shrink-0 border-t border-white/10 bg-slate-950/95 px-4 py-4 backdrop-blur-sm sm:px-6">
-          <div className="mx-auto w-full max-w-2xl space-y-3">
+          <div className="mx-auto w-full max-w-4xl space-y-3">
               <div
                 className={cn(
-                  "flex items-center gap-2 rounded-xl border px-4 py-3",
+                  "flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3",
                   hasSelection ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5",
                 )}
               >
                 <MapPin className={cn("h-5 w-5 shrink-0", hasSelection ? "text-cyan-300" : "text-slate-500")} />
-                <p className={cn("text-sm font-semibold", hasSelection ? "text-cyan-100" : "text-slate-400")}>
+                <p className={cn("min-w-0 flex-1 text-sm font-semibold sm:text-base", hasSelection ? "text-cyan-100" : "text-slate-400")}>
                   {selectedLabel ?? C.noTable}
                 </p>
+                {comment.trim() ? (
+                  <span
+                    className={cn(
+                      "max-w-[12rem] truncate rounded-lg px-2.5 py-1 text-center text-xs font-semibold sm:max-w-xs sm:text-sm",
+                      !ctx.messageColor && "bg-white/10 text-slate-200",
+                    )}
+                    style={
+                      ctx.messageColor
+                        ? {
+                            backgroundColor: `${ctx.messageColor}33`,
+                            color: "#f8fafc",
+                            border: `1px solid ${ctx.messageColor}`,
+                            boxShadow: `inset 3px 0 0 ${ctx.messageColor}`,
+                          }
+                        : undefined
+                    }
+                  >
+                    {comment.trim()}
+                  </span>
+                ) : null}
               </div>
 
               <label className="block">
-                <span className="text-sm text-slate-400">{C.comment}</span>
+                <span className="text-xs text-slate-500">{C.comment}</span>
                 <input
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder={C.commentPh}
                   maxLength={80}
-                  className="mt-2 h-12 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-base text-white placeholder:text-slate-500"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-white/15 bg-white/5 px-4 text-base text-white placeholder:text-slate-600"
                 />
               </label>
 

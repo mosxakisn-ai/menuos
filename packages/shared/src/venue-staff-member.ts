@@ -112,7 +112,7 @@ export const STAFF_STATION_LABELS_EL: Record<StaffStationOption, string> = {
 };
 
 export const STAFF_STATION_LABELS_EN: Record<StaffStationOption, string> = {
-  services: "Services",
+  services: "Waiter",
   kitchen: "Kitchen",
   bar: "Bar",
   cold: "Cold",
@@ -167,6 +167,9 @@ export function staffAssignmentLabelForLang(
   lang: "GR" | "EN" = "GR",
   posts?: VenuePost[],
 ): string {
+  if (assignment === "services") {
+    return staffPostPickerLabel("services", lang, posts);
+  }
   if (isStaffSpecialOption(assignment)) {
     return staffStationLabelForLang(assignment, lang);
   }

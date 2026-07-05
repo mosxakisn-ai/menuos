@@ -29,9 +29,9 @@ export type OnboardingSeedScope = {
 
 const DEFAULT_CREATE_SEED: Required<OnboardingSeedScope> = {
   menu: true,
-  spots: true,
-  staff: true,
-  paraliaScreen: true,
+  spots: false,
+  staff: false,
+  paraliaScreen: false,
   hours: true,
 };
 

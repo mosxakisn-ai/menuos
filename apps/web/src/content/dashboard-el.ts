@@ -824,8 +824,8 @@ export const DASHBOARD_EL = {
           `Tablet πάσου: στο Προσωπικό διάλεξε πόστο «${postName}» (όχι «Σερβιτόρος» — αυτός λαμβάνει ειδοποιήσεις στο κινητό).`,
         assignInStaffLink: "Προσωπικό →",
         noPostsHint: "Δεν έχεις ενεργά πόστα.",
-        servicesPostTitle: "Services — Σερβιτόρος",
-        servicesPostHint: "Τι βλέπει στον χάρτη θέσεων (κλήση πελάτη, έτοιμο κουζίνας κ.λπ.).",
+        servicesPostTitle: "Σερβιτόρος — χάρτης θέσεων",
+        servicesPostHint: "Τι βλέπει στον χάρτη (κλήση πελάτη, έτοιμο κουζίνας κ.λπ.) — όχι tablet πάσου.",
         passPostHint: "Πρόσθεσε τα μηνύματα που θέλεις για αυτό το πόστο — ένα-ένα.",
         messagesForPost: (postName: string) =>
           `Τα μηνύματα που στέλνει το πόστο «${postName}» από tablet (π.χ. μάγειρας, μπαρ).`,
@@ -954,6 +954,14 @@ export const DASHBOARD_EL = {
         viewLinkTablet: "Άνοιγμα οθόνης",
         missingScreen: "Δεν υπάρχει οθόνη tablet — πρόσθεσε εργαζόμενο με πόστο κουζίνας/μπαρ.",
         invalidAssignment: "Χωρίς έγκυρο πόστο — διάλεξε ξανά πόστο και χώρο.",
+        invalidStaffBanner: (n: number) =>
+          n === 1
+            ? "1 άτομο χωρίς έγκυρο πόστο — επεξεργάσου τη γραμμή παρακάτω."
+            : `${n} άτομα χωρίς έγκυρο πόστο — επεξεργάσου τις γραμμές παρακάτω.`,
+        screenPostMismatch: "Το όνομα οθόνης δεν ταιριάζει με πόστο — βάλε ίδιο όνομα (π.χ. «Κουζίνα»).",
+        tabletScreensTitle: "Οθόνες tablet",
+        tabletScreensHint:
+          "Links για KDS/Bar — άνοιγμα χωρίς login. Όνομα οθόνης = όνομα πόστου.",
         copyLink: "Αντιγραφή",
         copied: "Αντιγράφηκε!",
         rotateLink: "Νέο link",
@@ -1045,6 +1053,7 @@ export const DASHBOARD_EL = {
       addScreenTitle: "Προσθήκη οθόνης",
       addScreenHint: "Όνομα για να ξεχωρίζει (π.χ. Παραλία, Σαλόνι).",
       screenNameLabel: "Όνομα οθόνης",
+      screenPostMismatch: "Το όνομα οθόνης δεν ταιριάζει με πόστο — βάλε ίδιο όνομα (π.χ. «Κουζίνα»).",
       screenNamePlaceholder: "π.χ. Παραλία",
       screenSpotPrefixLabel: "Χώρος (προαιρετικό)",
       screenSpotPrefixPlaceholder: "π.χ. Αυλή",
@@ -1155,6 +1164,39 @@ export const DASHBOARD_EL = {
         historyColMessage: "Σχόλιο",
         historyColReady: "Έτοιμο",
         historyColDuration: "Διάρκεια",
+      },
+      live360Guide: {
+        title: "Ρύθμιση Live 360°",
+        subtitle: "5 βήματα — μετά δοκίμασε από Οθόνες",
+        progress: (done: number, total: number) => `${done}/${total} έτοιμα`,
+        allDone: "Η ρύθμιση Live 360° ολοκληρώθηκε.",
+        openScreens: "Άνοιγμα Οθονών →",
+        invalidStaff: (n: number) =>
+          n === 1
+            ? "1 άτομο χωρίς έγκυρο πόστο — διόρθωσέ το στο Προσωπικό."
+            : `${n} άτομα χωρίς έγκυρο πόστο — διόρθωσέ τα στο Προσωπικό.`,
+        steps: {
+          spaces: {
+            label: "1. Χώροι & θέσεις",
+            hint: "Τραπέζια, δωμάτια — Σάλα, Αυλή κ.λπ.",
+          },
+          posts: {
+            label: "2. Πόστα",
+            hint: "Κουζίνα, Bar — όχι ονόματα σερβιτόρων.",
+          },
+          messages: {
+            label: "3. Μηνύματα",
+            hint: "Chips ανά πόστο για tablet (π.χ. «Έλα πάσο»).",
+          },
+          screens: {
+            label: "4. Οθόνες tablet",
+            hint: "Ίδιο όνομα με το πόστο — links KDS/Bar.",
+          },
+          staff: {
+            label: "5. Προσωπικό",
+            hint: "Σερβιτόρος + χώρος ή πόστο tablet + link.",
+          },
+        },
       },
       nameLabel: "Όνομα",
       roleLabel: "Ρόλος",

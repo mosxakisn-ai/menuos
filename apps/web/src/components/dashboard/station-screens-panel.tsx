@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Copy, ExternalLink, Monitor, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import type { PassStationInput } from "@menuos/shared";
+import { stationScreenLabelMatchesPost } from "@menuos/shared";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import {
   dashboardTextActionClass,
@@ -10,6 +11,7 @@ import {
 } from "@/components/dashboard/dashboard-action-button";
 import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
 import { clientShareOrigin } from "@/lib/client-share-origin";
 import { stationScreenPath, type StationScreenRow } from "@/lib/station-screens";
@@ -50,12 +52,14 @@ export function StationScreensPanel({
   embedded?: boolean;
   titleOverride?: string;
 }) {
-  const { d } = useDashboardCopy();
+  const { d, lang } = useDashboardCopy();
   const S = d.pages.settings;
+  const langCode = lang === "EN" ? "EN" : "GR";
   const copy = stationCopy(station, S);
 
   const [internalVenueId, setInternalVenueId] = useState(venues[0]?.id ?? "");
   const venueId = controlledVenueId ?? internalVenueId;
+  const { config: opsConfig } = useVenueOperationsConfig(venueId);
   const [screens, setScreens] = useState<StationScreenRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -280,6 +284,9 @@ export function StationScreensPanel({
             const busy = busyId === screen.id;
             const editing = editingId === screen.id;
             const showUrl = expandedUrlId === screen.id;
+            const labelMismatch =
+              opsConfig != null &&
+              !stationScreenLabelMatchesPost(opsConfig, station, screen.label, langCode);
 
             return (
               <div
@@ -337,6 +344,9 @@ export function StationScreensPanel({
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-semibold text-brand-navy">{screen.label}</p>
+                        {labelMismatch ? (
+                          <p className="mt-1 text-xs font-medium text-amber-700">{S.screenPostMismatch}</p>
+                        ) : null}
                         <p className="mt-1 text-xs text-slate-500">
                           {screen.spotPrefix
                             ? S.screenSpotPrefixActive(screen.spotPrefix)

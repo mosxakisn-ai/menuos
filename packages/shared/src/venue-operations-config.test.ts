@@ -7,6 +7,7 @@ import {
   passReadyLabelsFromConfig,
   quickChipsForPost,
   resolvePostIdForStationScreen,
+  stationScreenLabelMatchesPost,
   tableLegendStates,
   venueOperationsConfigSchema,
   visibleMessagesForStaffAssignment,
@@ -23,7 +24,7 @@ describe("quickChipsForPost", () => {
       quickChips: { grill: ["Custom grill msg"] },
     };
     expect(quickChipsForPost(config, "grill")).toEqual(["Custom grill msg"]);
-    expect(quickChipsForPost(config, "kitchen", "EN")[0]).toBeTruthy();
+    expect(quickChipsForPost(config, "kitchen", "EN")).toEqual([]);
   });
 
   it("falls back to legacy station key for single post", () => {
@@ -45,6 +46,46 @@ describe("resolvePostIdForStationScreen", () => {
       ],
     };
     expect(resolvePostIdForStationScreen(config, "kitchen", "Grill")).toBe("grill");
+  });
+});
+
+describe("migrateLegacyQuickChipsToPostIds", () => {
+  it("copies station keys to post ids on normalize", () => {
+    const config = normalizeVenueOperationsConfig({
+      enabledStations: ["kitchen" as const, "bar" as const],
+      posts: [
+        { id: "k1", label: "Kitchen", enabled: true, station: "kitchen" as const },
+        { id: "b1", label: "Bar", enabled: true, station: "bar" as const },
+      ],
+      quickChips: { kitchen: ["Pass ready"], bar: ["No ice"] },
+    });
+    expect(config.quickChips?.k1).toEqual(["Pass ready"]);
+    expect(config.quickChips?.b1).toEqual(["No ice"]);
+    expect(config.quickChips?.kitchen).toBeUndefined();
+  });
+});
+
+describe("stationScreenLabelMatchesPost", () => {
+  const config = {
+    enabledStations: ["kitchen" as const, "bar" as const],
+    posts: [
+      { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+      { id: "bar", label: "Bar", enabled: true, station: "bar" as const },
+    ],
+  };
+
+  it("returns true when label matches enabled post for station", () => {
+    expect(stationScreenLabelMatchesPost(config, "kitchen", "Κουζίνα")).toBe(true);
+    expect(stationScreenLabelMatchesPost(config, "bar", "Bar")).toBe(true);
+  });
+
+  it("returns false for mismatched or empty labels", () => {
+    expect(stationScreenLabelMatchesPost(config, "kitchen", "Bar")).toBe(false);
+    expect(stationScreenLabelMatchesPost(config, "kitchen", "  ")).toBe(false);
+  });
+
+  it("returns true when config is undefined (no check yet)", () => {
+    expect(stationScreenLabelMatchesPost(undefined, "kitchen", "Anything")).toBe(true);
   });
 });
 

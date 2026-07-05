@@ -64,13 +64,13 @@ export function PostMessagePreview({
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
       ) : null}
       {items.length === 0 ? (
-        <p className="text-sm text-slate-400">{emptyHint ?? "—"}</p>
+        <p className="text-center text-sm text-slate-400">{emptyHint ?? "—"}</p>
       ) : (
-        <ul className="flex flex-wrap gap-2">
+        <ul className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
           {items.map((label) => (
             <li
               key={label}
-              className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+              className="rounded-full px-3 py-1 text-center text-[11px] font-semibold leading-snug"
               style={{
                 backgroundColor: `${color}18`,
                 color,
@@ -92,6 +92,16 @@ export type MessageChipListHandle = {
   flushPending: () => string[];
 };
 
+function messageChipSurfaceStyle(color: string | undefined, selected = false) {
+  if (!color) return undefined;
+  return {
+    backgroundColor: selected ? `${color}28` : `${color}14`,
+    color,
+    border: `1px solid ${selected ? color : `${color}55`}`,
+    boxShadow: selected ? `0 0 0 1px ${color}40` : undefined,
+  } as const;
+}
+
 export const MessageChipList = forwardRef<
   MessageChipListHandle,
   {
@@ -103,6 +113,9 @@ export const MessageChipList = forwardRef<
     focusAdd?: boolean;
     onFocusAddHandled?: () => void;
     hideAddRow?: boolean;
+    /** Post colour — chips render centred like on the pass tablet. */
+    color?: string;
+    listLabel?: string;
   }
 >(function MessageChipList(
   {
@@ -114,6 +127,8 @@ export const MessageChipList = forwardRef<
     focusAdd = false,
     onFocusAddHandled,
     hideAddRow = false,
+    color,
+    listLabel,
   },
   ref,
 ) {
@@ -190,69 +205,120 @@ export const MessageChipList = forwardRef<
     },
   }));
 
+  const colored = Boolean(color);
+  const chipInputClass = colored
+    ? "w-full min-w-0 border-0 bg-transparent px-3 py-2.5 text-center text-sm font-semibold outline-none placeholder:font-normal placeholder:opacity-60"
+    : `${dashboardFieldClass} min-w-0 flex-1 text-sm`;
+
   return (
     <div className="space-y-3">
+      {listLabel ? (
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{listLabel}</p>
+      ) : null}
+
       {items.length === 0 && !hideAddRow ? (
-        <p className="text-sm text-slate-400">{placeholder}</p>
+        <p className="text-center text-sm text-slate-400 sm:text-left">{placeholder}</p>
       ) : items.length > 0 ? (
-        items.map((item, index) => (
-          <div key={`${index}-${item}`} className="flex gap-2">
-            <input
-              value={editingIndex === index ? editDraft : item}
-              onFocus={() => beginEdit(index)}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (editingIndex !== index) {
-                  setEditingIndex(index);
-                  setEditDraft(value);
-                  return;
+        <ul className={colored ? "mx-auto flex w-full max-w-md flex-col gap-2.5" : "space-y-3"}>
+          {items.map((item, index) => (
+            <li key={`${index}-${item}`} className="flex items-stretch gap-2">
+              <div
+                className={
+                  colored
+                    ? "flex min-h-[2.75rem] min-w-0 flex-1 items-center justify-center rounded-xl transition"
+                    : "min-w-0 flex-1"
                 }
-                setEditDraft(value);
-              }}
-              onBlur={() => {
-                if (editingIndex === index) commitEdit(index);
-              }}
+                style={colored ? messageChipSurfaceStyle(color) : undefined}
+              >
+                <input
+                  value={editingIndex === index ? editDraft : item}
+                  onFocus={() => beginEdit(index)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (editingIndex !== index) {
+                      setEditingIndex(index);
+                      setEditDraft(value);
+                      return;
+                    }
+                    setEditDraft(value);
+                  }}
+                  onBlur={() => {
+                    if (editingIndex === index) commitEdit(index);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      commitEdit(index);
+                    }
+                  }}
+                  maxLength={60}
+                  className={chipInputClass}
+                  style={colored ? { color } : undefined}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => removeAt(index)}
+                className="inline-flex shrink-0 items-center justify-center self-center rounded-lg border border-slate-200 p-2 text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                aria-label={`Remove ${item}`}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {!hideAddRow && items.length < maxItems ? (
+        <div
+          className={
+            colored
+              ? "mx-auto flex w-full max-w-md flex-col gap-2 pt-1 sm:flex-row sm:items-stretch"
+              : "flex flex-wrap gap-2 pt-1"
+          }
+        >
+          <div
+            className={
+              colored
+                ? "flex min-h-[2.75rem] min-w-0 flex-1 items-center justify-center rounded-xl border border-dashed"
+                : "min-w-0 flex-1"
+            }
+            style={
+              colored
+                ? {
+                    borderColor: `${color}55`,
+                    backgroundColor: `${color}08`,
+                  }
+                : undefined
+            }
+          >
+            <input
+              ref={addInputRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  commitEdit(index);
+                  addItem();
                 }
               }}
+              placeholder={placeholder}
               maxLength={60}
-              className={`${dashboardFieldClass} min-w-0 flex-1 text-sm`}
-            />
-            <button
-              type="button"
-              onClick={() => removeAt(index)}
-              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-              aria-label={`Remove ${item}`}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        ))
-      ) : null}
-      {!hideAddRow && items.length < maxItems ? (
-        <div className="flex flex-wrap gap-2 pt-1">
-          <input
-            ref={addInputRef}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addItem();
+              className={
+                colored
+                  ? "w-full border-0 bg-transparent px-3 py-2.5 text-center text-sm outline-none placeholder:text-slate-400"
+                  : `${dashboardFieldClass} min-w-[min(100%,14rem)] flex-1 text-sm`
               }
-            }}
-            placeholder={placeholder}
-            maxLength={60}
-            className={`${dashboardFieldClass} min-w-[min(100%,14rem)] flex-1 text-sm`}
-          />
+              style={colored ? { color } : undefined}
+            />
+          </div>
           <button
             type="button"
             onClick={() => addItem()}
             disabled={!draft.trim()}
-            className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
+            className={`inline-flex shrink-0 items-center justify-center gap-1.5 ${buttonClass("primary", "sm")} ${
+              colored ? "min-h-[2.75rem] px-4" : ""
+            }`}
           >
             <Plus className="h-4 w-4" />
             {addLabel ?? "Add"}

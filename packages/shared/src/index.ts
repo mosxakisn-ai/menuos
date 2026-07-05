@@ -28,6 +28,7 @@ export * from "./menu-pdf-parser";
 export * from "./menu-import-document";
 export * from "./menu-pdf-parse-quality";
 export * from "./demo-venue";
+export * from "./showcase-junk";
 export * from "./onboarding-starter-data";
 export * from "./menu-cart";
 export * from "./venue-spots";

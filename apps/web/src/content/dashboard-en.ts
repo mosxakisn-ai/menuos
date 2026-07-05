@@ -811,8 +811,8 @@ export const DASHBOARD_EN = {
           `Pass tablet: in Staff, assign post «${postName}» (not «Waiter» — they receive alerts on phone).`,
         assignInStaffLink: "Staff →",
         noPostsHint: "You have no active posts.",
-        servicesPostTitle: "Services — Waiter",
-        servicesPostHint: "What appears on the spot map (guest call, kitchen ready, etc.).",
+        servicesPostTitle: "Waiter — spot map",
+        servicesPostHint: "Map labels (guest call, kitchen ready, etc.) — not a pass tablet.",
         passPostHint: "Add the messages you want for this post — one at a time.",
         messagesForPost: (postName: string) =>
           `Messages the «${postName}» post can send from tablet (e.g. cook, bar).`,
@@ -941,6 +941,14 @@ export const DASHBOARD_EN = {
         viewLinkTablet: "Open screen",
         missingScreen: "No tablet screen yet — add staff with a kitchen/bar post.",
         invalidAssignment: "No valid post — reassign post and space.",
+        invalidStaffBanner: (n: number) =>
+          n === 1
+            ? "1 staff member has no valid post — edit the row below."
+            : `${n} staff members have no valid post — edit the rows below.`,
+        screenPostMismatch: "Screen name does not match a post — use the same name (e.g. «Kitchen»).",
+        tabletScreensTitle: "Tablet screens",
+        tabletScreensHint:
+          "Links for KDS/Bar — opens without login. Screen name = post name.",
         copyLink: "Copy",
         copied: "Copied!",
         rotateLink: "New link",
@@ -1030,6 +1038,7 @@ export const DASHBOARD_EN = {
       addScreenTitle: "Add screen",
       addScreenHint: "A name to tell them apart (e.g. Beach, Main room).",
       screenNameLabel: "Screen name",
+      screenPostMismatch: "Screen name does not match a post — use the same name (e.g. «Kitchen»).",
       screenNamePlaceholder: "e.g. Beach",
       screenSpotPrefixLabel: "Space (optional)",
       screenSpotPrefixPlaceholder: "e.g. Beach",
@@ -1140,6 +1149,39 @@ export const DASHBOARD_EN = {
         historyColMessage: "Comment",
         historyColReady: "Ready",
         historyColDuration: "Duration",
+      },
+      live360Guide: {
+        title: "Live 360° setup",
+        subtitle: "5 steps — then test from Screens",
+        progress: (done: number, total: number) => `${done}/${total} done`,
+        allDone: "Live 360° setup is complete.",
+        openScreens: "Open Screens →",
+        invalidStaff: (n: number) =>
+          n === 1
+            ? "1 staff member has no valid post — fix in Staff tab."
+            : `${n} staff members have no valid post — fix in Staff tab.`,
+        steps: {
+          spaces: {
+            label: "1. Spaces & spots",
+            hint: "Tables, rooms — hall, patio, etc.",
+          },
+          posts: {
+            label: "2. Posts",
+            hint: "Kitchen, Bar — not waiter names.",
+          },
+          messages: {
+            label: "3. Messages",
+            hint: "Quick chips per post for tablets.",
+          },
+          screens: {
+            label: "4. Tablet screens",
+            hint: "Same name as the post — KDS/Bar links.",
+          },
+          staff: {
+            label: "5. Staff",
+            hint: "Waiter + zone or tablet post + link.",
+          },
+        },
       },
       nameLabel: "Name",
       roleLabel: "Role",
