@@ -595,6 +595,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
       <div className={dashboardCardClass}>
         <h3 className="text-sm font-semibold text-brand-navy">{S.listTitle}</h3>
+        <p className="mt-1 text-xs text-slate-500">{S.colLinkHint}</p>
 
         {loading ? (
           <p className="mt-4 text-sm text-slate-500">{S.loading}</p>
@@ -611,6 +612,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                     <th className="px-3 py-2.5">{S.colSpace}</th>
                     <th className="px-3 py-2.5">{S.colPost}</th>
                     <th className="px-3 py-2.5">{S.colMessages}</th>
+                    <th className="px-3 py-2.5">{S.colLink}</th>
                     <th className="px-3 py-2.5 text-right">{S.colActions}</th>
                   </tr>
                 </thead>
@@ -639,7 +641,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                             },
                             staffRoleOptionsWithLegacy(langCode, editRole),
                           )}
-                          <td className="px-3 py-2 align-top text-right">
+                          <td className="px-3 py-2 align-top text-right" colSpan={2}>
                             <div className="flex flex-wrap justify-end gap-2">
                               <button
                                 type="button"
@@ -685,7 +687,21 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                             langCode={langCode}
                           />
                         </td>
-                        <td className="px-3 py-2.5 text-right">
+                        <td className="px-3 py-2.5 align-top">
+                          {venue?.slug ? (
+                            <StaffMemberLinkActions
+                              venueId={venueId}
+                              venueSlug={venue.slug}
+                              member={member}
+                              labels={linkLabels}
+                              busy={busy !== null}
+                              onTokenRotated={onMemberTokenRotated}
+                            />
+                          ) : (
+                            <span className="text-xs text-slate-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5 text-right align-top">
                           <div className="inline-flex items-center gap-1">
                             <DashboardIconButton
                               variant="neutral"
@@ -711,41 +727,6 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                 </tbody>
               </table>
             </div>
-
-            {members.map((member) =>
-              venue?.slug ? (
-                <div key={`link-${member.id}`} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-                  <p className="text-sm font-semibold text-brand-navy">{member.name}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {S.colLink} · {zoneLabel(member.zoneId)} ·{" "}
-                    {staffAssignmentLabelForLang(
-                      staffPrimaryAssignment(member.stations),
-                      langCode,
-                      venuePosts,
-                    )}{" "}
-                    · {messageScopeLabel(resolveStaffMessageScope(member, venuePosts))}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">{S.colLinkHint}</p>
-                  <div className="mt-2">
-                    <StaffMessagesChips
-                      config={opsConfig}
-                      scopeId={resolveStaffMessageScope(member, venuePosts)}
-                      langCode={langCode}
-                    />
-                  </div>
-                  <div className="mt-3">
-                    <StaffMemberLinkActions
-                      venueId={venueId}
-                      venueSlug={venue.slug}
-                      member={member}
-                      labels={linkLabels}
-                      busy={busy !== null}
-                      onTokenRotated={onMemberTokenRotated}
-                    />
-                  </div>
-                </div>
-              ) : null,
-            )}
           </div>
         )}
       </div>

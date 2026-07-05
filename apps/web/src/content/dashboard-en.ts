@@ -886,7 +886,7 @@ export const DASHBOARD_EN = {
           "Add an employee: name, role, space, post and messages. Each person gets their own link.",
         addTitle: "New employee",
         addStaff: "Add",
-        listTitle: "Team",
+        listTitle: "Staff members",
         editTitle: "Edit",
         cancelEdit: "Cancel",
         formHint:
