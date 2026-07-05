@@ -44,7 +44,7 @@ type ScreenContext = {
 const COPY = {
   kitchen: {
     title: "Κουζίνα",
-    send: "Έτοιμο στο πάσο",
+    send: "Αποστολή",
     comment: "Σχόλιο (προαιρετικό)",
     commentPh: "π.χ. ξέχασες τον πάγο",
     sent: "Στάλθηκε στον σερβιτόρο!",
@@ -62,7 +62,7 @@ const COPY = {
   },
   bar: {
     title: "Μπαρ",
-    send: "Έτοιμο το ποτό",
+    send: "Αποστολή",
     comment: "Σχόλιο (προαιρετικό)",
     commentPh: "π.χ. χωρίς πάγο",
     sent: "Στάλθηκε στον σερβιτόρο!",
@@ -80,7 +80,7 @@ const COPY = {
   },
   cold: {
     title: "Κρύα κουζίνα",
-    send: "Έτοιμο — κρύα",
+    send: "Αποστολή",
     comment: "Σχόλιο (προαιρετικό)",
     commentPh: "π.χ. σαλάτα",
     sent: "Στάλθηκε στον σερβιτόρο!",
@@ -98,7 +98,7 @@ const COPY = {
   },
   dessert: {
     title: "Γλυκά",
-    send: "Έτοιμο το γλυκό",
+    send: "Αποστολή",
     comment: "Σχόλιο (προαιρετικό)",
     commentPh: "π.χ. με παγωτό",
     sent: "Στάλθηκε στον σερβιτόρο!",
@@ -200,7 +200,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   useScreenWakeLock();
 
-  const quickComments = ctx?.quickComments?.length ? ctx.quickComments : C.quickComments;
+  const quickComments = ctx?.quickComments ?? [];
   const displayStationTitle = ctx?.stationLabel?.trim() || C.title;
 
   const load = useCallback(async () => {
@@ -288,9 +288,10 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     }
   }
 
-  async function send() {
+  async function send(messageOverride?: string) {
     const manual = manualTable.trim();
     if ((!table && !manual) || !ctx) return;
+    const messageText = (messageOverride ?? comment).trim();
     setSending(true);
     setFlash(null);
     try {
@@ -310,7 +311,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
           station,
           stationKey,
           ...location,
-          message: comment.trim() || undefined,
+          message: messageText || undefined,
         }),
       });
       const data = await res.json();
@@ -371,7 +372,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               const spot = signalToSpot(signal);
               const location = formatWaiterCallLocation(signal);
               const picked = signal.status === "PICKED_UP";
-              const canCancel = signal.status === "READY";
+              const canCancel = signal.status === "READY" || signal.status === "PICKED_UP";
               return (
                 <div
                   key={signal.id}
@@ -509,71 +510,74 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
       {ctx ? (
         <footer className="shrink-0 border-t border-white/10 bg-slate-950/95 px-4 py-4 backdrop-blur-sm sm:px-6">
-          <div className="mx-auto max-w-2xl space-y-3">
-            <div
-              className={cn(
-                "flex items-center gap-2 rounded-xl border px-4 py-3",
-                hasSelection ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5",
-              )}
-            >
-              <MapPin className={cn("h-5 w-5 shrink-0", hasSelection ? "text-cyan-300" : "text-slate-500")} />
-              <p className={cn("text-sm font-semibold", hasSelection ? "text-cyan-100" : "text-slate-400")}>
-                {selectedLabel ?? C.noTable}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {quickComments.map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => setComment(chip)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                    comment === chip
-                      ? "border-cyan-400 bg-cyan-500/20 text-cyan-100"
-                      : "border-white/15 bg-white/5 text-slate-300 hover:border-white/30",
-                  )}
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
-
-            <label className="block">
-              <span className="text-sm text-slate-400">{C.comment}</span>
-              <input
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder={C.commentPh}
-                maxLength={80}
-                className="mt-2 h-12 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-base text-white placeholder:text-slate-500"
-              />
-            </label>
-
-            {flash ? (
-              <p
+          <div className="mx-auto flex w-full max-w-5xl gap-3 sm:gap-4">
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <div
                 className={cn(
-                  "rounded-xl px-4 py-2.5 text-center text-sm font-semibold",
-                  flash === C.sent ? "bg-emerald-500/20 text-emerald-200" : "bg-red-500/20 text-red-200",
+                  "flex items-center gap-2 rounded-xl border px-4 py-3",
+                  hasSelection ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5",
                 )}
               >
-                {flash}
-              </p>
-            ) : null}
+                <MapPin className={cn("h-5 w-5 shrink-0", hasSelection ? "text-cyan-300" : "text-slate-500")} />
+                <p className={cn("text-sm font-semibold", hasSelection ? "text-cyan-100" : "text-slate-400")}>
+                  {selectedLabel ?? C.noTable}
+                </p>
+              </div>
 
-            <button
-              type="button"
-              disabled={sending || !hasSelection}
-              onClick={() => void send()}
-              className={cn(
-                "h-16 w-full text-lg font-bold sm:h-[4.5rem] sm:text-xl",
-                buttonClass("primary", "lg"),
-                "rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50",
-              )}
-            >
-              {sending ? "…" : C.send}
-            </button>
+              <label className="block">
+                <span className="text-sm text-slate-400">{C.comment}</span>
+                <input
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder={C.commentPh}
+                  maxLength={80}
+                  className="mt-2 h-12 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-base text-white placeholder:text-slate-500"
+                />
+              </label>
+
+              {flash ? (
+                <p
+                  className={cn(
+                    "rounded-xl px-4 py-2.5 text-center text-sm font-semibold",
+                    flash === C.sent ? "bg-emerald-500/20 text-emerald-200" : "bg-red-500/20 text-red-200",
+                  )}
+                >
+                  {flash}
+                </p>
+              ) : null}
+
+              <button
+                type="button"
+                disabled={sending || !hasSelection}
+                onClick={() => void send()}
+                className={cn(
+                  "h-16 w-full text-lg font-bold sm:h-[4.5rem] sm:text-xl",
+                  buttonClass("primary", "lg"),
+                  "rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50",
+                )}
+              >
+                {sending ? "…" : C.send}
+              </button>
+            </div>
+
+            {quickComments.length > 0 ? (
+              <div className="flex w-[10.5rem] shrink-0 flex-col justify-end gap-2 sm:w-[12.5rem]">
+                {quickComments.map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    disabled={sending || !hasSelection}
+                    onClick={() => void send(chip)}
+                    className={cn(
+                      "min-h-[3.25rem] rounded-xl border px-3 py-2.5 text-left text-sm font-semibold leading-snug transition active:scale-[0.98] disabled:opacity-40",
+                      "border-white/20 bg-white/10 text-slate-100 hover:border-cyan-400/50 hover:bg-cyan-500/15",
+                    )}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         </footer>
       ) : null}

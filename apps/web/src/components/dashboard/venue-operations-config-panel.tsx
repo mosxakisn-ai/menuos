@@ -9,7 +9,6 @@ import {
   DEFAULT_TABLE_STATE_LABELS_EL,
   applyZoneLabelOverrides,
   enabledVenuePosts,
-  getPostMessageColor,
   groupVenueSpotsByZone,
   isValidVenueSpotLabel,
   listVenuePosts,
@@ -35,8 +34,6 @@ import {
 import { TableGridLegend } from "@/components/dashboard/table-grid-preview";
 import {
   MessageChipList,
-  PostColorPicker,
-  PostMessagePreview,
 } from "@/components/dashboard/post-messages-editor";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
@@ -204,6 +201,7 @@ export function VenueOperationsConfigPanel({
   const [newSpaceTo, setNewSpaceTo] = useState("");
   const [zoneBusy, setZoneBusy] = useState<string | null>(null);
   const [selectedMessagePostId, setSelectedMessagePostId] = useState<string>("");
+  const [messageAddPending, setMessageAddPending] = useState(false);
 
   useEffect(() => {
     if (initialVenueId) setVenueId(initialVenueId);
@@ -368,23 +366,6 @@ export function VenueOperationsConfigPanel({
     setDraft({
       ...draft,
       tableStateLabels: Object.keys(next).length ? next : undefined,
-    });
-  }
-
-  function setPostColor(postId: string, color: string) {
-    if (!draft) return;
-    const posts = enabledVenuePosts(draft, langCode);
-    const index = postId === "services" ? 0 : posts.findIndex((p) => p.id === postId) + 1;
-    const fallback = getPostMessageColor(draft, postId, index);
-    const next = { ...(draft.postColors ?? {}) };
-    if (color === fallback) {
-      delete next[postId];
-    } else {
-      next[postId] = color;
-    }
-    setDraft({
-      ...draft,
-      postColors: Object.keys(next).length ? next : undefined,
     });
   }
 
@@ -696,106 +677,92 @@ export function VenueOperationsConfigPanel({
             ) : null}
 
             {show("chips") && messagesByPost ? (
-            <section className="space-y-5">
+            <section className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
                 <p className="mt-1 text-sm text-slate-600">{M.byPostHint}</p>
               </div>
 
-              <label className="block max-w-md">
-                <span className={dashboardLabelClass}>{M.selectPostLabel}</span>
-                <select
-                  value={selectedMessagePostId}
-                  onChange={(e) => setSelectedMessagePostId(e.target.value)}
-                  disabled={enabledPosts.length === 0}
-                  className={`${dashboardFieldClass} mt-1.5 text-sm`}
+              <div className="flex max-w-2xl flex-wrap items-end gap-3">
+                <label className="min-w-[12rem] flex-1">
+                  <span className={dashboardLabelClass}>{M.selectPostLabel}</span>
+                  <select
+                    value={selectedMessagePostId}
+                    onChange={(e) => {
+                      setSelectedMessagePostId(e.target.value);
+                      setMessageAddPending(false);
+                    }}
+                    disabled={enabledPosts.length === 0}
+                    className={`${dashboardFieldClass} mt-1.5 w-full text-sm`}
+                  >
+                    {enabledPosts.length === 0 ? (
+                      <option value="">{M.noPostsHint}</option>
+                    ) : (
+                      enabledPosts.map((post) => (
+                        <option key={post.id} value={post.id}>
+                          {post.label.trim()}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  disabled={!selectedMessagePostId || enabledPosts.length === 0}
+                  onClick={() => setMessageAddPending(true)}
+                  className={`inline-flex shrink-0 items-center gap-1.5 ${buttonClass("primary", "sm")}`}
                 >
-                  {enabledPosts.length === 0 ? (
-                    <option value="">{M.noPostsHint}</option>
-                  ) : (
-                    enabledPosts.map((post) => (
-                      <option key={post.id} value={post.id}>
-                        {post.label.trim()}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </label>
+                  <Plus className="h-4 w-4" aria-hidden />
+                  {M.addMessage}
+                </button>
+              </div>
 
               {enabledPosts.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                  {M.noPostsHint}
+                  {M.noPostsHint}{" "}
+                  <Link href="/dashboard/settings?tab=posts" className="font-semibold text-brand-blue hover:underline">
+                    {M.managePostsLink}
+                  </Link>
                 </p>
               ) : null}
 
-              {selectedMessagePostId && draft
-                ? (() => {
-                    const post = enabledPosts.find((row) => row.id === selectedMessagePostId);
-                    if (!post) return null;
-                    const postIndex = enabledPosts.findIndex((row) => row.id === post.id);
-                    const postLabel = post.label.trim();
-                    const hasCustom = Boolean(draft.quickChips?.[post.id]?.length);
-                    const chips =
-                      draft.quickChips?.[post.id] ??
-                      quickChipsForPost(draft, post.id, langCode);
-                    const postColor = getPostMessageColor(draft, post.id, postIndex + 1);
-                    return (
-                      <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
-                        <div className="border-b border-slate-100 bg-gradient-to-r from-brand-blue/[0.06] to-cyan-400/[0.05] px-5 py-4">
-                          <div className="flex flex-wrap items-center gap-3">
-                            <span
-                              className="h-3.5 w-3.5 shrink-0 rounded-full ring-2 ring-white"
-                              style={{ backgroundColor: postColor }}
-                              aria-hidden
-                            />
-                            <h4 className="text-lg font-semibold text-brand-navy">{postLabel}</h4>
-                          </div>
-                          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
-                            {M.messagesForPost(postLabel)}
-                          </p>
-                        </div>
-
-                        <div className="space-y-6 px-5 py-5">
-                          <PostColorPicker
-                            label={M.postColorLabel}
-                            value={postColor}
-                            onChange={(color) => setPostColor(post.id, color)}
-                          />
-
-                          <div>
-                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                              <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                {M.messagesListLabel}
-                              </h5>
-                              {hasCustom ? (
-                                <button
-                                  type="button"
-                                  onClick={() => resetQuickChips(post)}
-                                  className="text-xs font-medium text-slate-500 hover:text-brand-blue"
-                                >
-                                  {M.resetPostMessages}
-                                </button>
-                              ) : null}
-                            </div>
-                            <MessageChipList
-                              items={chips}
-                              onChange={(next) => setQuickChips(post.id, next)}
-                              placeholder={O.chipPlaceholder}
-                              addLabel={M.addMapMessage}
-                            />
-                          </div>
-
-                          <PostMessagePreview
-                            title={M.previewLabel}
-                            color={postColor}
-                            labels={chips}
-                            emptyHint={M.previewEmpty}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })()
-                : null}
+              {selectedMessagePostId && draft ? (
+                <div className="max-w-2xl space-y-3">
+                  {(draft.quickChips?.[selectedMessagePostId]?.length ?? 0) > 0 ? (
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {M.messagesListLabel}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const post = enabledPosts.find((row) => row.id === selectedMessagePostId);
+                          if (post) resetQuickChips(post);
+                        }}
+                        className="text-xs font-medium text-slate-500 hover:text-brand-blue"
+                      >
+                        {M.resetPostMessages}
+                      </button>
+                    </div>
+                  ) : null}
+                  <MessageChipList
+                    key={selectedMessagePostId}
+                    items={draft.quickChips?.[selectedMessagePostId] ?? []}
+                    onChange={(next) => {
+                      setQuickChips(selectedMessagePostId, next);
+                      if (next.length > 0) setMessageAddPending(false);
+                    }}
+                    placeholder={M.messagePlaceholder}
+                    hideAddRow
+                    focusAdd={messageAddPending}
+                    onFocusAddHandled={() => setMessageAddPending(false)}
+                  />
+                  {!messageAddPending &&
+                  (draft.quickChips?.[selectedMessagePostId]?.length ?? 0) === 0 ? (
+                    <p className="text-sm text-slate-500">{M.previewEmpty}</p>
+                  ) : null}
+                </div>
+              ) : null}
             </section>
             ) : show("chips") ? (
             <section>

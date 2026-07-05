@@ -138,7 +138,7 @@ function StaffMemberLinkActions({
     return (
       <p className="text-center text-[10px] leading-snug text-amber-700">
         {labels.missingScreen}{" "}
-        <Link href="/dashboard/settings?tab=screens" className="font-semibold underline">
+        <Link href="/dashboard/settings?tab=staff" className="font-semibold underline">
           →
         </Link>
       </p>

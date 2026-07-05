@@ -401,17 +401,9 @@ export function VenueSpotsQrList({
           </select>
         </label>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-6">
-          <div>
-            <h2 className="font-semibold text-brand-navy">{T.listTitle}</h2>
-            <p className="mt-1 text-sm text-slate-600">{Q.zonesDesc}</p>
-          </div>
-          <a
-            href="/dashboard/settings?tab=tables"
-            className="text-sm font-semibold text-brand-blue hover:underline"
-          >
-            {Q.configureSpotsLink}
-          </a>
+        <div className="mt-6 border-t border-slate-100 pt-6">
+          <h2 className="font-semibold text-brand-navy">{T.listTitle}</h2>
+          <p className="mt-1 text-sm text-slate-600">{Q.zonesDesc}</p>
         </div>
 
         {loading || configLoading ? (

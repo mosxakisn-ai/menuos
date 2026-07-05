@@ -157,9 +157,9 @@ export async function DELETE(request: Request, { params }: Props) {
   if (!existing) {
     return NextResponse.json({ error: "Η ειδοποίηση δεν βρέθηκε." }, { status: 404 });
   }
-  if (existing.status !== "READY") {
+  if (existing.status !== "READY" && existing.status !== "PICKED_UP") {
     return NextResponse.json(
-      { error: "Δεν μπορείς να ακυρώσεις — ο σερβιτόρος το έχει ήδη πάρει.", code: "not_cancelable" },
+      { error: "Δεν μπορείς να ακυρώσεις — η ειδοποίηση έχει ήδη ολοκληρωθεί.", code: "not_cancelable" },
       { status: 409 },
     );
   }

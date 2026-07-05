@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { dashboardFieldClass } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
 import { DEFAULT_POST_MESSAGE_COLORS } from "@menuos/shared";
@@ -93,16 +93,33 @@ export function MessageChipList({
   placeholder,
   addLabel,
   maxItems = 12,
+  focusAdd = false,
+  onFocusAddHandled,
+  hideAddRow = false,
 }: {
   items: string[];
   onChange: (next: string[]) => void;
   placeholder: string;
   addLabel?: string;
   maxItems?: number;
+  /** Focus the blank add field (e.g. after «Προσθήκη» next to post picker). */
+  focusAdd?: boolean;
+  onFocusAddHandled?: () => void;
+  /** Hide built-in add row when parent provides its own «Προσθήκη» button. */
+  hideAddRow?: boolean;
 }) {
   const [draft, setDraft] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [addFieldOpen, setAddFieldOpen] = useState(false);
+  const addInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!focusAdd) return;
+    setAddFieldOpen(true);
+    queueMicrotask(() => addInputRef.current?.focus());
+    onFocusAddHandled?.();
+  }, [focusAdd, onFocusAddHandled]);
 
   function beginEdit(index: number) {
     setEditingIndex(index);
@@ -138,9 +155,9 @@ export function MessageChipList({
 
   return (
     <div className="space-y-3">
-      {items.length === 0 ? (
+      {items.length === 0 && !hideAddRow ? (
         <p className="text-sm text-slate-400">{placeholder}</p>
-      ) : (
+      ) : items.length > 0 ? (
         items.map((item, index) => (
           <div key={`${index}-${item}`} className="flex gap-2">
             <input
@@ -177,10 +194,11 @@ export function MessageChipList({
             </button>
           </div>
         ))
-      )}
-      {items.length < maxItems ? (
+      ) : null}
+      {!hideAddRow && items.length < maxItems ? (
         <div className="flex flex-wrap gap-2 pt-1">
           <input
+            ref={addInputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
@@ -203,6 +221,26 @@ export function MessageChipList({
             {addLabel ?? "Add"}
           </button>
         </div>
+      ) : hideAddRow && items.length < maxItems ? (
+        addFieldOpen || items.length > 0 || draft.trim() ? (
+          <input
+            ref={addInputRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={() => {
+              if (!draft.trim() && items.length === 0) setAddFieldOpen(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addItem();
+              }
+            }}
+            placeholder={placeholder}
+            maxLength={60}
+            className={`${dashboardFieldClass} w-full text-sm`}
+          />
+        ) : null
       ) : null}
     </div>
   );

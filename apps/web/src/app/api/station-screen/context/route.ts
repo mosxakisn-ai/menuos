@@ -12,6 +12,7 @@ import {
   stationDisplayLabel,
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
+import { expireStaleActivePassSignals } from "@/lib/pass-signal-cleanup";
 import { resolvePrimaryStationScreen } from "@/lib/station-screens";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import { startOfTodayAthens } from "@/lib/athens-day";
@@ -38,6 +39,8 @@ export async function GET(request: Request) {
     stationKey,
   });
   if (auth.response) return auth.response;
+
+  await expireStaleActivePassSignals({ venueId: auth.venue.id });
 
   const opsConfig = await getVenueOperationsConfig(auth.venue.id);
   if (!opsConfig.enabledStations.includes(station)) {

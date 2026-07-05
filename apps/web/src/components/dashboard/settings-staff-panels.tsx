@@ -7,11 +7,6 @@ import { SpaceZoneQrPanel } from "@/components/dashboard/space-zone-qr-panel";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
 import { VenueTablesBySpacePanel } from "@/components/dashboard/venue-tables-by-space-panel";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
-import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
-import type { PassStationInput } from "@menuos/shared";
-import { PASS_STATION_INPUTS } from "@menuos/shared";
-import { buttonClass } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
   VenueOperationsConfigPanel,
 } from "@/components/dashboard/venue-operations-config-panel";
@@ -155,45 +150,6 @@ export function SettingsTablesPanel({ venues }: { venues: VenueSpotVenue[] }) {
         onVenueChange={setVenueId}
       />
       <VenueTablesBySpacePanel venues={venues} venueId={venueId} />
-    </div>
-  );
-}
-
-export function SettingsScreensPanel({ venues }: { venues: VenueSpotVenue[] }) {
-  const { d } = useDashboardCopy();
-  const T = d.pages.settings.screensTab;
-  const { venueId, setVenueId } = useVenuePicker(venues);
-  const [station, setStation] = useState<PassStationInput>("kitchen");
-
-  return (
-    <div className="space-y-5">
-      <TabIntro
-        title={T.title}
-        description={T.description}
-        hint={T.hint}
-        venues={venues}
-        venueId={venueId}
-        onVenueChange={setVenueId}
-      />
-      <div className="flex flex-wrap gap-2">
-        {PASS_STATION_INPUTS.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setStation(s)}
-            className={cn(buttonClass(station === s ? "primary" : "secondary", "sm"))}
-          >
-            {T.stationLabels[s]}
-          </button>
-        ))}
-      </div>
-      <StationScreensPanel
-        station={station}
-        venues={venues}
-        venueId={venueId}
-        embedded
-        titleOverride={T.stationLabels[station]}
-      />
     </div>
   );
 }

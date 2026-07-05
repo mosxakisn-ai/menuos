@@ -14,6 +14,7 @@ import {
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import { pushStaffPassSignal } from "@/lib/pass-signal-push";
+import { expireStaleActivePassSignals } from "@/lib/pass-signal-cleanup";
 import { logPassSignalCreated } from "@/lib/push-diagnostics";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
@@ -28,6 +29,8 @@ export async function GET(request: Request) {
   if (auth.response) return auth.response;
 
   try {
+    await expireStaleActivePassSignals({ venueId });
+
     const member = auth.access.staffMember;
     const opsConfig = await getVenueOperationsConfig(venueId);
     const venueEnabledStations = opsConfig.enabledStations.map(passStationInputToDb);

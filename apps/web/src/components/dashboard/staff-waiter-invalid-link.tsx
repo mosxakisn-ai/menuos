@@ -16,7 +16,6 @@ export function StaffWaiterInvalidLink({
   invalidAssignment?: boolean;
 }) {
   const settingsStaff = "/dashboard/settings?tab=staff";
-  const settingsScreens = "/dashboard/settings?tab=screens";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-brand-surface/40 px-4">
@@ -38,8 +37,8 @@ export function StaffWaiterInvalidLink({
             </>
           ) : missingTabletScreen ? (
             <>
-              Δεν υπάρχει οθόνη tablet για αυτό το πόστο. Ο υπεύθυνος πρέπει να προσθέσει οθόνη από{" "}
-              <strong>Ρυθμίσεις → Οθόνες</strong> και να σου στείλει το σωστό link.
+              Δεν υπάρχει link tablet για αυτό το πόστο. Ο υπεύθυνος πρέπει να ελέγξει το{" "}
+              <strong>Προσωπικό</strong> και τα <strong>Πόστα</strong> και να σου στείλει το σωστό link.
             </>
           ) : invalidAssignment ? (
             <>
@@ -63,13 +62,13 @@ export function StaffWaiterInvalidLink({
           <code className="text-xs">0.0.0.0</code>). Στο κινητό χρησιμοποίησε την IP του PC στο Wi‑Fi.
         </p>
         <Link
-          href={missingTabletScreen ? settingsScreens : settingsStaff}
+          href={settingsStaff}
           className="mt-5 inline-block text-sm font-semibold text-brand-blue hover:underline"
         >
-          {missingTabletScreen ? "Ρυθμίσεις → Οθόνες" : "Ρυθμίσεις → Προσωπικό"}
+          Ρυθμίσεις → Προσωπικό
         </Link>
         <Link
-          href={`/login?callbackUrl=${encodeURIComponent(missingTabletScreen ? settingsScreens : settingsStaff)}`}
+          href={`/login?callbackUrl=${encodeURIComponent(settingsStaff)}`}
           className="mt-3 block text-xs text-slate-500 hover:text-brand-blue hover:underline"
         >
           Σύνδεση διαχειριστή

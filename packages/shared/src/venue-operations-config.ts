@@ -318,17 +318,16 @@ export function quickChipsForPost(
   const posts = listVenuePosts(config, lang);
   const post = posts.find((row) => row.id === postId);
   const byId = config?.quickChips?.[postId];
-  if (byId && byId.length > 0) return byId;
+  if (byId !== undefined) return byId;
 
   if (post) {
     const legacyStation = config?.quickChips?.[post.station];
-    if (legacyStation && legacyStation.length > 0) {
+    if (legacyStation !== undefined) {
       const sameStation = posts.filter((row) => row.enabled && row.station === post.station);
       if (sameStation.length === 1 || sameStation[0]?.id === postId) {
         return legacyStation;
       }
     }
-    return DEFAULT_PASS_QUICK_CHIPS[post.station];
   }
 
   return [];
@@ -387,8 +386,8 @@ export function quickChipsForStation(
   if (postId) return quickChipsForPost(config, postId, lang);
 
   const custom = config.quickChips?.[station];
-  if (custom && custom.length > 0) return custom;
-  return DEFAULT_PASS_QUICK_CHIPS[station];
+  if (custom !== undefined) return custom;
+  return [];
 }
 
 export function mergeTableStateLabels(
