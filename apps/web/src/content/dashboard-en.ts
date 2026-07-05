@@ -720,7 +720,7 @@ export const DASHBOARD_EN = {
     waiter: {
       title: "Screens",
       description:
-        "Live spot map, calls and pass — updates automatically. Staff links are set in Settings → Staff.",
+        "Live spot map and guest calls — updates automatically. Staff links are set in Settings → Staff.",
       setupLink: "Settings → Staff",
     },
     billing: {

@@ -147,8 +147,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const monitorCounts = live360Enabled
     ? await countOrganizationMonitorActive(session.organizationId)
-    : { pendingCount: 0, passCount: 0, activeCount: 0 };
-  const initialMonitorCount = monitorCounts.activeCount;
+    : { pendingCount: 0, activeCount: 0 };
+  const initialMonitorCount = monitorCounts.pendingCount;
 
   const business = org
     ? resolveBusinessDisplay({ organizationName: org.name, venues: org.venues })

@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 
 const POLL_MS = 5_000;
 
-/** Sidebar badge: pending waiter calls + active pass signals. */
+/** Sidebar badge: pending waiter calls only. */
 export function usePendingWaiterCount(initialCount: number, enabled = true) {
-  const [activeCount, setActiveCount] = useState(initialCount);
+  const [pendingCount, setPendingCount] = useState(initialCount);
 
   useEffect(() => {
-    setActiveCount(initialCount);
+    setPendingCount(initialCount);
   }, [initialCount]);
 
   useEffect(() => {
@@ -21,10 +21,14 @@ export function usePendingWaiterCount(initialCount: number, enabled = true) {
       try {
         const res = await fetch("/api/dashboard/pending-calls", { cache: "no-store" });
         if (!res.ok || cancelled) return;
-        const data = (await res.json()) as { activeCount?: number };
-        if (typeof data.activeCount === "number") {
-          setActiveCount(data.activeCount);
-        }
+        const data = (await res.json()) as { pendingCount?: number; activeCount?: number };
+        const next =
+          typeof data.pendingCount === "number"
+            ? data.pendingCount
+            : typeof data.activeCount === "number"
+              ? data.activeCount
+              : null;
+        if (next !== null) setPendingCount(next);
       } catch {
         /* ignore transient network errors */
       }
@@ -38,5 +42,5 @@ export function usePendingWaiterCount(initialCount: number, enabled = true) {
     };
   }, [enabled]);
 
-  return enabled ? activeCount : 0;
+  return enabled ? pendingCount : 0;
 }
