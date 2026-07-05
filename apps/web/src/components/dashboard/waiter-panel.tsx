@@ -271,11 +271,13 @@ export function WaiterPanel({
     }
   }, [initialZoneId, zoneGroups]);
 
+  /** Locked when staff has a zone or the share link/QR includes ?zone= (not manager panel). */
   const assignedZoneId = useMemo(() => {
-    if (!staffMember || !initialZoneId?.trim()) return null;
+    if (!initialZoneId?.trim()) return null;
+    if (!staffMember && !staffViaCookie && !staffKey) return null;
     const id = initialZoneId.trim();
     return zoneGroups.some((zone) => zone.id === id) ? id : null;
-  }, [staffMember, initialZoneId, zoneGroups]);
+  }, [staffMember, staffViaCookie, staffKey, initialZoneId, zoneGroups]);
 
   useEffect(() => {
     if (assignedZoneId) setZoneFilterId(assignedZoneId);
@@ -304,6 +306,18 @@ export function WaiterPanel({
     }
     return rows;
   }, [passSignals, zoneFilterId, zoneGroups, monitorTab, passStationFilter]);
+
+  const visiblePendingCount = useMemo(
+    () => displayCalls.filter((call) => call.status === "PENDING").length,
+    [displayCalls],
+  );
+  const visiblePassCount = useMemo(
+    () =>
+      displayPassSignals.filter(
+        (pass) => pass.status === "READY" || pass.status === "PICKED_UP",
+      ).length,
+    [displayPassSignals],
+  );
 
   const zoneActivityCounts = useMemo(() => {
     const counts = new Map<string, { pending: number; pass: number }>();
@@ -469,13 +483,13 @@ export function WaiterPanel({
           </select>
         </label>
       )}
-      {pendingCount > 0 || passCount > 0 ? (
+      {visiblePendingCount > 0 || visiblePassCount > 0 ? (
         <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 sm:px-2.5 sm:text-xs">
           <Bell className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
           <span className="truncate">
-            {pendingCount > 0 ? W.pendingCount(pendingCount) : null}
-            {pendingCount > 0 && passCount > 0 ? " · " : null}
-            {passCount > 0 ? W.passCount(passCount) : null}
+            {visiblePendingCount > 0 ? W.pendingCount(visiblePendingCount) : null}
+            {visiblePendingCount > 0 && visiblePassCount > 0 ? " · " : null}
+            {visiblePassCount > 0 ? W.passCount(visiblePassCount) : null}
           </span>
         </span>
       ) : (
