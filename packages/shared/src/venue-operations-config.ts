@@ -274,11 +274,15 @@ export function postLabelMisplacedForStation(post: Pick<VenuePost, "label" | "st
   return postLabelLooksLikeFloorWaiter(post.label);
 }
 
-export function isJunkVenuePost(post: VenuePost): boolean {
-  return postLabelMisplacedForStation(post);
+export function isJunkVenuePost(_post: VenuePost): boolean {
+  return false;
 }
 
-/** Unsaved placeholder from «Προσθήκη πόστου» — not shown in staff assignment. */
+export function isExcludedStaffVenuePost(post: Pick<VenuePost, "label" | "station">): boolean {
+  return isPlaceholderVenuePostLabel(post.label);
+}
+
+/** Unsaved placeholder from «Προσθήκη πόστου» — hidden from staff picker until renamed. */
 export function isPlaceholderVenuePostLabel(label: string): boolean {
   const normalized = label
     .trim()
@@ -288,18 +292,14 @@ export function isPlaceholderVenuePostLabel(label: string): boolean {
   return normalized === "νεο ποστο" || normalized === "new post";
 }
 
-/** Enabled posts that can receive staff (excludes waiter junk + unnamed placeholders). */
+/** Enabled posts assignable in Staff (excludes unsaved placeholder label only). */
 export function staffAssignableVenuePosts(
   config: VenueOperationsConfig | undefined,
   lang: "GR" | "EN" = "GR",
 ): VenuePost[] {
   return enabledVenuePosts(config, lang).filter(
-    (post) => !isJunkVenuePost(post) && !isPlaceholderVenuePostLabel(post.label),
+    (post) => !isPlaceholderVenuePostLabel(post.label),
   );
-}
-
-export function isExcludedStaffVenuePost(post: Pick<VenuePost, "label" | "station">): boolean {
-  return isJunkVenuePost(post as VenuePost) || isPlaceholderVenuePostLabel(post.label);
 }
 
 function stripJunkVenuePosts(posts: VenuePost[]): VenuePost[] {
@@ -348,8 +348,7 @@ function finalizeVenueOperationsConfig(
 ): VenueOperationsConfig {
   let posts = dedupeVenuePosts(data.posts?.length ? data.posts : postsFromLegacy(data));
   posts = migrateVenuePostStations(posts);
-  const removedIds = new Set(posts.filter(isJunkVenuePost).map((post) => post.id));
-  posts = stripJunkVenuePosts(posts);
+  const removedIds = new Set<string>();
   if (posts.length === 0) {
     posts = defaultVenuePosts("GR");
   }

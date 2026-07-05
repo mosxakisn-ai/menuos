@@ -196,18 +196,18 @@ describe("venueOperationsConfigSchema", () => {
 });
 
 describe("staffAssignableVenuePosts", () => {
-  it("excludes placeholder and waiter junk posts", () => {
+  it("excludes placeholder posts only", () => {
     const config = {
       enabledStations: ["kitchen" as const, "bar" as const],
       posts: [
         { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
         { id: "p-new", label: "Νέο πόστο", enabled: true, station: "kitchen" as const },
-        { id: "waiter", label: "Σερβιτόρος", enabled: true, station: "bar" as const },
+        { id: "waiter", label: "Σερβιτόρος", enabled: true, station: "services" as const },
         { id: "bar", label: "Bar", enabled: true, station: "bar" as const },
       ],
     };
     const assignable = staffAssignableVenuePosts(config, "GR");
-    expect(assignable.map((post) => post.id)).toEqual(["kitchen", "bar"]);
+    expect(assignable.map((post) => post.id)).toEqual(["kitchen", "waiter", "bar"]);
   });
 
   it("detects placeholder labels", () => {

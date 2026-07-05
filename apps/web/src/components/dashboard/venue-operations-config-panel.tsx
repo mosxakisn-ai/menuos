@@ -16,10 +16,6 @@ import {
   mergeTableStateLabels,
   newVenuePostId,
   VENUE_POST_STATION_INPUTS,
-  isJunkVenuePost,
-  postLabelMisplacedForStation,
-  isPlaceholderVenuePostLabel,
-  isExcludedStaffVenuePost,
   getPostMessageColor,
   quickChipsForPost,
   syncLegacyFromPosts,
@@ -276,25 +272,6 @@ export function VenueOperationsConfigPanel({
   async function save() {
     if (!venueId || !draft) return;
     let draftToSave = applyFlushedMessageDrafts(draft);
-    const hadJunkPost = draftToSave.posts?.some((post) => isJunkVenuePost(post)) ?? false;
-    const hadPlaceholderPost =
-      draftToSave.posts?.some((post) => isPlaceholderVenuePostLabel(post.label)) ?? false;
-    if ((hadJunkPost || hadPlaceholderPost) && draftToSave.posts) {
-      const removedIds = new Set(
-        draftToSave.posts.filter((post) => isExcludedStaffVenuePost(post)).map((post) => post.id),
-      );
-      const filterPostMap = <T,>(map: Record<string, T> | undefined) => {
-        if (!map) return undefined;
-        const next = Object.fromEntries(Object.entries(map).filter(([id]) => !removedIds.has(id)));
-        return Object.keys(next).length > 0 ? (next as Record<string, T>) : undefined;
-      };
-      draftToSave = {
-        ...draftToSave,
-        posts: draftToSave.posts.filter((post) => !isExcludedStaffVenuePost(post)),
-        quickChips: filterPostMap(draftToSave.quickChips),
-        postColors: filterPostMap(draftToSave.postColors),
-      };
-    }
     setDraft(draftToSave);
     const langCode = lang === "EN" ? "EN" : "GR";
     const posts = listVenuePosts(draftToSave, langCode);
@@ -314,11 +291,7 @@ export function VenueOperationsConfigPanel({
           setDraft(data.config);
         }
         const successText = postsOnlyMode
-          ? hadJunkPost
-            ? `${Posts.savedNextSteps} ${Posts.junkRemovedHint}`
-            : hadPlaceholderPost
-              ? `${Posts.savedNextSteps} ${Posts.placeholderRemovedHint}`
-              : Posts.savedNextSteps
+          ? Posts.savedNextSteps
           : typeof data.message === "string"
             ? data.message
             : O.saved;
@@ -725,16 +698,6 @@ export function VenueOperationsConfigPanel({
                               }
                               className={`${dashboardFieldClass} w-full min-w-[12rem] py-2.5 text-sm`}
                             />
-                            {postsOnlyMode && postLabelMisplacedForStation(post) ? (
-                              <p className="mt-1.5 text-xs leading-snug text-amber-700">
-                                {Posts.waiterNameWarning}
-                              </p>
-                            ) : null}
-                            {postsOnlyMode && isPlaceholderVenuePostLabel(post.label) ? (
-                              <p className="mt-1.5 text-xs leading-snug text-amber-700">
-                                {Posts.placeholderNameWarning}
-                              </p>
-                            ) : null}
                           </td>
                           <td className="px-4 py-3 align-middle">
                             <select
