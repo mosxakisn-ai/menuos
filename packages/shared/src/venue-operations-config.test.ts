@@ -6,6 +6,7 @@ import {
   normalizeVenueOperationsConfig,
   passReadyLabelForSignal,
   passReadyLabelsFromConfig,
+  postLabelMisplacedForStation,
   quickChipsForPost,
   resolvePostIdForStationScreen,
   staffAssignableVenuePosts,
@@ -145,6 +146,20 @@ describe("passReadyLabelForSignal", () => {
     expect(
       passReadyLabelForSignal(config, { station: "KITCHEN", stationScreenLabel: "Κουζίνα" }, "GR"),
     ).toBe("Custom kitchen label");
+  });
+});
+
+describe("postLabelMisplacedForStation", () => {
+  it("allows Services name on waiter post type", () => {
+    expect(
+      postLabelMisplacedForStation({ label: "Services", station: "services" }),
+    ).toBe(false);
+  });
+
+  it("flags Services name on kitchen type", () => {
+    expect(
+      postLabelMisplacedForStation({ label: "Services", station: "kitchen" }),
+    ).toBe(true);
   });
 });
 

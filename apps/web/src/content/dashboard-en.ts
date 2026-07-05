@@ -748,11 +748,11 @@ export const DASHBOARD_EN = {
         title: "Posts",
         description:
           "Define who does what — cook, waiter, bar, etc. The name appears on staff links, push and tablets.",
-        hint: "Up to 12 posts (e.g. Kitchen, Bar). Floor waiters are set in Staff — not here.",
-        postNamePlaceholder: "e.g. Kitchen, Bar",
-        postTypeHint: "Tablet type — kitchen, bar, etc. (for pass routing).",
+        hint: "Up to 12 posts — e.g. Kitchen, Bar, Services. Type sets pass tablet vs waiter.",
+        postNamePlaceholder: "e.g. Kitchen, Bar, Services",
+        postTypeHint: "Kitchen/Bar = pass tablet · Waiter = phone, seat map.",
         waiterNameWarning:
-          "This name is for floor waiters — use «Waiter — phone (floor)» in Staff, not a post here.",
+          "Waiter-like name with Kitchen/Bar type — switch type to Waiter or rename the post.",
         linkedTitle: "Where posts connect",
         linkedWaiterNote:
           "Floor waiters (phone, guest calls) are not created here — only in the Staff tab.",
@@ -763,7 +763,7 @@ export const DASHBOARD_EN = {
         savedNextSteps:
           "Saved. Next: add messages per post and assign employees in Staff.",
         junkRemovedHint:
-          "Removed a waiter-named post — floor waiters are configured in Staff only.",
+          "Removed a post with wrong type — for waiters choose type Waiter.",
         placeholderNameWarning:
           "Enter a name (e.g. Kitchen) — «New post» does not appear in Staff.",
         placeholderRemovedHint:

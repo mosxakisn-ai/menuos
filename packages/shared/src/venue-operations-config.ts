@@ -258,7 +258,7 @@ export function newVenuePostId(): string {
   return `post-${Date.now().toString(36)}`;
 }
 
-/** Post names like «Σερβιτόρος/Σερβιτοροi» — floor role is «Σερβιτόρος» in Staff, not a tablet post. */
+/** Label looks like a waiter/services post name (Services, Σερβιτόρος, waiter…). */
 export function postLabelLooksLikeFloorWaiter(label: string): boolean {
   const normalized = label
     .trim()
@@ -268,9 +268,14 @@ export function postLabelLooksLikeFloorWaiter(label: string): boolean {
   return /(^|[^a-z])waiter|(^|[^a-z])services|σερβιτορ|servitor/i.test(normalized);
 }
 
-export function isJunkVenuePost(post: VenuePost): boolean {
+/** Waiter-like name on a kitchen/bar post — invalid; use type Σερβιτόρος instead. */
+export function postLabelMisplacedForStation(post: Pick<VenuePost, "label" | "station">): boolean {
   if (post.station === "services") return false;
   return postLabelLooksLikeFloorWaiter(post.label);
+}
+
+export function isJunkVenuePost(post: VenuePost): boolean {
+  return postLabelMisplacedForStation(post);
 }
 
 /** Unsaved placeholder from «Προσθήκη πόστου» — not shown in staff assignment. */
@@ -293,7 +298,7 @@ export function staffAssignableVenuePosts(
   );
 }
 
-export function isExcludedStaffVenuePost(post: Pick<VenuePost, "label">): boolean {
+export function isExcludedStaffVenuePost(post: Pick<VenuePost, "label" | "station">): boolean {
   return isJunkVenuePost(post as VenuePost) || isPlaceholderVenuePostLabel(post.label);
 }
 

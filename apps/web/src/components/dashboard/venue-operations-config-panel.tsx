@@ -16,7 +16,8 @@ import {
   mergeTableStateLabels,
   newVenuePostId,
   VENUE_POST_STATION_INPUTS,
-  postLabelLooksLikeFloorWaiter,
+  isJunkVenuePost,
+  postLabelMisplacedForStation,
   isPlaceholderVenuePostLabel,
   isExcludedStaffVenuePost,
   getPostMessageColor,
@@ -275,7 +276,7 @@ export function VenueOperationsConfigPanel({
   async function save() {
     if (!venueId || !draft) return;
     let draftToSave = applyFlushedMessageDrafts(draft);
-    const hadJunkPost = draftToSave.posts?.some((post) => postLabelLooksLikeFloorWaiter(post.label)) ?? false;
+    const hadJunkPost = draftToSave.posts?.some((post) => isJunkVenuePost(post)) ?? false;
     const hadPlaceholderPost =
       draftToSave.posts?.some((post) => isPlaceholderVenuePostLabel(post.label)) ?? false;
     if ((hadJunkPost || hadPlaceholderPost) && draftToSave.posts) {
@@ -724,7 +725,7 @@ export function VenueOperationsConfigPanel({
                               }
                               className={`${dashboardFieldClass} w-full min-w-[12rem] py-2.5 text-sm`}
                             />
-                            {postsOnlyMode && postLabelLooksLikeFloorWaiter(post.label) ? (
+                            {postsOnlyMode && postLabelMisplacedForStation(post) ? (
                               <p className="mt-1.5 text-xs leading-snug text-amber-700">
                                 {Posts.waiterNameWarning}
                               </p>
