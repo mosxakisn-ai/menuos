@@ -943,7 +943,7 @@ export const DASHBOARD_EN = {
         colActions: "Actions",
         viewLink: "Preview",
         viewLinkTablet: "Open screen",
-        missingScreen: "No tablet screen yet — add staff with a kitchen/bar post.",
+        missingScreen: "No tablet link yet — save your posts in the Posts tab.",
         invalidAssignment: "No valid post — reassign post and space.",
         invalidStaffBanner: (n: number) =>
           n === 1

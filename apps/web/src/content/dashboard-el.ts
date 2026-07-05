@@ -956,7 +956,7 @@ export const DASHBOARD_EL = {
         colActions: "Ενέργειες",
         viewLink: "Προβολή",
         viewLinkTablet: "Άνοιγμα οθόνης",
-        missingScreen: "Δεν υπάρχει οθόνη tablet — πρόσθεσε εργαζόμενο με πόστο κουζίνας/μπαρ.",
+        missingScreen: "Δεν υπάρχει link tablet — αποθήκευσε τα πόστα στο tab «Πόστα».",
         invalidAssignment: "Χωρίς έγκυρο πόστο — διάλεξε ξανά πόστο και χώρο.",
         invalidStaffBanner: (n: number) =>
           n === 1

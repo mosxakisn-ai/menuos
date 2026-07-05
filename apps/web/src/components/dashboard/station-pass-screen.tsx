@@ -256,7 +256,7 @@ function QuickMessagesPanel({
 
   if (horizontal) {
     return (
-      <div className="flex min-w-0 max-w-[62%] flex-col items-end gap-1.5 sm:max-w-[70%]">
+      <div className="flex shrink-0 flex-col items-end gap-1.5 max-w-[min(100%,20rem)] sm:max-w-[min(100%,28rem)]">
         <p className="text-right text-[10px] font-semibold uppercase tracking-wide text-slate-500">
           {title}
         </p>
@@ -633,78 +633,80 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
         {ctx ? (
           <div className="mx-auto w-full max-w-4xl space-y-4">
-            <div className="flex items-start justify-between gap-3 sm:gap-4">
-              <p className="shrink-0 pt-1 text-base font-semibold text-white sm:text-lg">{C.pickTable}</p>
-              {quickComments.length > 0 ? (
-                <QuickMessagesPanel
-                  title={C.messagesTitle}
-                  messages={quickComments}
-                  selectedMessage={comment}
-                  disabled={sending}
-                  onSelect={setComment}
-                  layout="horizontal"
-                  accentColor={ctx.messageColor}
-                />
-              ) : null}
-            </div>
+            <p className="text-base font-semibold text-white sm:text-lg">{C.pickTable}</p>
+
+            {zoneGroups.length > 1 || quickComments.length > 0 ? (
+              <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-3 sm:gap-4">
+                <div className="min-w-0 flex-1">
+                  {zoneGroups.length > 1 ? (
+                    <div
+                      className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                      role="tablist"
+                      aria-label="Ζώνες"
+                    >
+                      {zoneGroups.map((zone) => (
+                        <button
+                          key={zone.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={activeZone?.id === zone.id}
+                          onClick={() => selectZone(zone.id)}
+                          className={cn(
+                            "shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
+                            activeZone?.id === zone.id
+                              ? "bg-cyan-500 text-slate-950"
+                              : "bg-white/10 text-slate-300 hover:bg-white/15",
+                          )}
+                        >
+                          {zone.label}
+                          <span className="ml-1.5 text-xs font-normal opacity-80">({zone.spots.length})</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                {quickComments.length > 0 ? (
+                  <QuickMessagesPanel
+                    title={C.messagesTitle}
+                    messages={quickComments}
+                    selectedMessage={comment}
+                    disabled={sending}
+                    onSelect={setComment}
+                    layout="horizontal"
+                    accentColor={ctx.messageColor}
+                  />
+                ) : null}
+              </div>
+            ) : null}
 
             {spots.length > 0 ? (
-              <>
-                {zoneGroups.length > 1 ? (
-                  <div
-                    className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                    role="tablist"
-                    aria-label="Ζώνες"
-                  >
-                    {zoneGroups.map((zone) => (
-                      <button
-                        key={zone.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={activeZone?.id === zone.id}
-                        onClick={() => selectZone(zone.id)}
-                        className={cn(
-                          "shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
-                          activeZone?.id === zone.id
-                            ? "bg-cyan-500 text-slate-950"
-                            : "bg-white/10 text-slate-300 hover:bg-white/15",
-                        )}
-                      >
-                        {zone.label}
-                        <span className="ml-1.5 text-xs font-normal opacity-80">({zone.spots.length})</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-
-                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-                  {visibleSpots.map(({ spot, displayLabel }) => {
-                    const selected = spotSelected(table, spot);
-                    return (
-                      <button
-                        key={`${spot.type}-${spot.label}`}
-                        type="button"
-                        onClick={() => selectSpot(spot)}
-                        className={cn(
-                          "flex min-h-[5.25rem] flex-col items-center justify-center rounded-2xl border-2 px-2 py-3 transition sm:min-h-[6rem]",
-                          selected
-                            ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
-                            : "border-white/15 bg-white/5 text-slate-100 hover:border-white/30 active:scale-[0.98]",
-                        )}
-                      >
-                        <span className="text-2xl font-bold tabular-nums leading-none sm:text-3xl">
-                          {displayLabel}
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                {visibleSpots.map(({ spot, displayLabel }) => {
+                  const selected = spotSelected(table, spot);
+                  return (
+                    <button
+                      key={`${spot.type}-${spot.label}`}
+                      type="button"
+                      onClick={() => selectSpot(spot)}
+                      className={cn(
+                        "flex min-h-[5.25rem] flex-col items-center justify-center rounded-2xl border-2 px-2 py-3 transition sm:min-h-[6rem]",
+                        selected
+                          ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
+                          : "border-white/15 bg-white/5 text-slate-100 hover:border-white/30 active:scale-[0.98]",
+                      )}
+                    >
+                      <span className="text-2xl font-bold tabular-nums leading-none sm:text-3xl">
+                        {displayLabel}
+                      </span>
+                      {zoneGroups.length <= 1 && spot.label !== displayLabel ? (
+                        <span className="mt-1 max-w-full truncate text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                          {spot.label}
                         </span>
-                        {zoneGroups.length <= 1 && spot.label !== displayLabel ? (
-                          <span className="mt-1 max-w-full truncate text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                            {spot.label}
-                          </span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
             ) : ctx.spotPrefix ? (
               <div className="space-y-3">
                 <p className="rounded-xl border border-amber-400/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">

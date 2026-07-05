@@ -12,6 +12,7 @@ import {
   type VenueOperationsConfig,
   type VenueOperationsConfigPatch,
 } from "@menuos/shared";
+import { syncStationScreensFromPosts } from "@/lib/station-screens";
 
 export async function getVenueOperationsConfig(venueId: string): Promise<VenueOperationsConfig> {
   const row = await prisma.venueSetting.findUnique({
@@ -40,6 +41,7 @@ export async function saveVenueOperationsConfig(
   });
 
   await sanitizeVenueStaffAssignments(venueId, normalized);
+  await syncStationScreensFromPosts(venueId, normalized);
 
   return normalized;
 }

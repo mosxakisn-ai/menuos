@@ -1,9 +1,13 @@
 import type { PassStation } from "@menuos/db";
 import { prisma } from "@menuos/db";
+import { randomUUID } from "crypto";
 import {
   DEFAULT_STATION_SCREEN_LABELS_EL,
+  PASS_STATION_INPUTS,
   passStationInputToDb,
+  staffAssignableVenuePosts,
   type PassStationInput,
+  type VenueOperationsConfig,
 } from "@menuos/shared";
 
 export type StationScreenRow = {
@@ -142,4 +146,101 @@ export async function isStationScreenLabelTaken(
     select: { label: true },
   });
   return rows.some((row) => row.label.trim().toLowerCase() === normalized);
+}
+
+/** One tablet screen per pass post — label matches post name from Πόστα tab. */
+export async function syncStationScreensFromPosts(
+  venueId: string,
+  config: VenueOperationsConfig,
+): Promise<void> {
+  const posts = staffAssignableVenuePosts(config, "GR");
+  const postsByStation = new Map<PassStationInput, typeof posts>();
+  for (const post of posts) {
+    const list = postsByStation.get(post.station) ?? [];
+    list.push(post);
+    postsByStation.set(post.station, list);
+  }
+
+  const venueRow = await prisma.venue.findUnique({
+    where: { id: venueId },
+    select: {
+      kitchenScreenToken: true,
+      barScreenToken: true,
+      coldScreenToken: true,
+      dessertScreenToken: true,
+    },
+  });
+  if (!venueRow) return;
+
+  for (const station of PASS_STATION_INPUTS) {
+    const dbStation = passStationInputToDb(station);
+    const postsForStation = postsByStation.get(station) ?? [];
+    let existing = await prisma.venueStationScreen.findMany({
+      where: { venueId, station: dbStation },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+
+    if (
+      postsForStation.length > 0 &&
+      postsForStation.length === existing.length
+    ) {
+      for (let i = 0; i < postsForStation.length; i++) {
+        const desiredLabel = postsForStation[i]!.label.trim();
+        const screen = existing[i]!;
+        if (screen.label.trim() !== desiredLabel) {
+          await prisma.venueStationScreen.update({
+            where: { id: screen.id },
+            data: { label: desiredLabel },
+          });
+        }
+      }
+      existing = await prisma.venueStationScreen.findMany({
+        where: { venueId, station: dbStation },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      });
+    }
+
+    const desiredLabels = new Set(postsForStation.map((post) => post.label.trim()));
+    for (const screen of existing) {
+      if (!desiredLabels.has(screen.label.trim())) {
+        await prisma.venueStationScreen.delete({ where: { id: screen.id } });
+      }
+    }
+
+    existing = await prisma.venueStationScreen.findMany({
+      where: { venueId, station: dbStation },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+    const existingLabels = new Set(existing.map((row) => row.label.trim()));
+    let screenCount = existing.length;
+
+    for (const post of postsForStation) {
+      const label = post.label.trim();
+      if (existingLabels.has(label)) continue;
+
+      const screenToken =
+        screenCount === 0
+          ? legacyVenueScreenToken(venueRow, station)
+          : randomUUID();
+      const sortOrder = await nextStationScreenSortOrder(venueId, dbStation);
+
+      await prisma.venueStationScreen.create({
+        data: {
+          venueId,
+          station: dbStation,
+          label,
+          spotPrefix: null,
+          screenToken,
+          sortOrder,
+        },
+      });
+
+      if (screenCount === 0) {
+        await syncLegacyVenueToken(venueId, station, screenToken);
+      }
+
+      existingLabels.add(label);
+      screenCount += 1;
+    }
+  }
 }

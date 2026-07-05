@@ -160,19 +160,26 @@ export function SettingsSpacesPanel({
   venues: (VenueSpotVenue & { staffToken?: string })[];
 }) {
   const { d } = useDashboardCopy();
-  const Z = d.pages.settings.spacesTab;
   const { venueId, setVenueId } = useVenuePicker(venues);
 
   return (
     <div className="space-y-5">
-      <TabIntro
-        title={Z.title}
-        description={Z.description}
-        hint={Z.hint}
-        venues={venues}
-        venueId={venueId}
-        onVenueChange={setVenueId}
-      />
+      {venues.length > 1 ? (
+        <label className="block max-w-md">
+          <span className={dashboardLabelClass}>{d.venue}</span>
+          <select
+            value={venueId}
+            onChange={(e) => setVenueId(e.target.value)}
+            className={dashboardFieldClass}
+          >
+            {venues.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
 
       <VenueOperationsConfigPanel
         venues={venues}
