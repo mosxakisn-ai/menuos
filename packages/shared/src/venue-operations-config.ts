@@ -58,6 +58,28 @@ const stationLabelSchema = z.string().trim().min(1).max(40);
 
 export const MAX_VENUE_POSTS = 12;
 
+/** Default chip color per post card (Services + enabled posts). */
+export const DEFAULT_POST_MESSAGE_COLORS = [
+  "#475569",
+  "#2563EB",
+  "#EA580C",
+  "#059669",
+  "#7C3AED",
+  "#DB2777",
+  "#0891B2",
+  "#CA8A04",
+] as const;
+
+export function getPostMessageColor(
+  config: VenueOperationsConfig | undefined,
+  postId: string,
+  index = 0,
+): string {
+  const custom = config?.postColors?.[postId];
+  if (custom) return custom;
+  return DEFAULT_POST_MESSAGE_COLORS[index % DEFAULT_POST_MESSAGE_COLORS.length]!;
+}
+
 /** Reserved for staff assignment tokens — not valid custom post ids. */
 export const RESERVED_VENUE_POST_IDS = ["services", "all"] as const;
 
@@ -97,6 +119,10 @@ export const venueOperationsConfigSchema = z.object({
     .record(z.string().trim().min(1).max(40), z.array(quickChipSchema).max(12))
     .optional(),
   tableStateLabels: z.record(tableTileStateSchema, zoneLabelSchema).optional(),
+  hiddenTableStates: z.array(tableTileStateSchema).max(6).optional(),
+  postColors: z
+    .record(z.string().trim().min(1).max(40), z.string().regex(/^#[0-9A-Fa-f]{6}$/))
+    .optional(),
   zoneLabels: z.record(z.string().trim().max(60), zoneLabelSchema).optional(),
 });
 
@@ -229,6 +255,9 @@ export function mergeVenueOperationsConfig(
     quickChips: patch.quickChips !== undefined ? patch.quickChips : current.quickChips,
     tableStateLabels:
       patch.tableStateLabels !== undefined ? patch.tableStateLabels : current.tableStateLabels,
+    hiddenTableStates:
+      patch.hiddenTableStates !== undefined ? patch.hiddenTableStates : current.hiddenTableStates,
+    postColors: patch.postColors !== undefined ? patch.postColors : current.postColors,
     zoneLabels: patch.zoneLabels !== undefined ? patch.zoneLabels : current.zoneLabels,
   };
   return normalizeVenueOperationsConfig(merged);
@@ -323,7 +352,15 @@ export type StaffVisibleMessages =
   | { kind: "waiter_map"; labels: string[] }
   | { kind: "pass_quick"; labels: string[] };
 
-/** Messages a staff member sees based on their post assignment (services = map labels). */
+/** Message scope ids from Ρυθμίσεις → Μηνύματα (Services map + enabled posts). */
+export function listStaffMessageScopeIds(
+  config: VenueOperationsConfig | undefined,
+  lang: "GR" | "EN" = "GR",
+): string[] {
+  return ["services", ...enabledVenuePosts(config, lang).map((post) => post.id)];
+}
+
+/** Messages a staff member sees for a scope (services = map labels; post = pass quick chips). */
 export function visibleMessagesForStaffAssignment(
   config: VenueOperationsConfig | undefined,
   assignment: string,
@@ -386,17 +423,48 @@ export function mergeTableStateLabels(
 export function tableLegendStates(
   config: VenueOperationsConfig | undefined,
 ): TableTileState[] {
+  const hidden = new Set(config?.hiddenTableStates ?? []);
   const states: TableTileState[] = ["idle", "guest_call"];
   if (!config) {
-    return ["idle", "guest_call", "kitchen_ready", "cold_ready", "bar_ready", "both"];
+    return TABLE_TILE_STATES.filter((state) => !hidden.has(state));
   }
-  if (isPassStationEnabled(config, "kitchen")) states.push("kitchen_ready");
-  if (isPassStationEnabled(config, "cold")) states.push("cold_ready");
-  if (isPassStationEnabled(config, "bar") || isPassStationEnabled(config, "dessert")) {
+  if (isPassStationEnabled(config, "kitchen") && !hidden.has("kitchen_ready")) {
+    states.push("kitchen_ready");
+  }
+  if (isPassStationEnabled(config, "cold") && !hidden.has("cold_ready")) {
+    states.push("cold_ready");
+  }
+  if (
+    (isPassStationEnabled(config, "bar") || isPassStationEnabled(config, "dessert")) &&
+    !hidden.has("bar_ready")
+  ) {
     states.push("bar_ready");
   }
-  states.push("both");
+  if (!hidden.has("both")) states.push("both");
   return states;
+}
+
+/** Optional map states the venue can re-enable in settings. */
+export function restorableTableStates(
+  config: VenueOperationsConfig | undefined,
+): TableTileState[] {
+  const hidden = new Set(config?.hiddenTableStates ?? []);
+  const optional: TableTileState[] = [];
+  if (!config) return [];
+  if (isPassStationEnabled(config, "kitchen") && hidden.has("kitchen_ready")) {
+    optional.push("kitchen_ready");
+  }
+  if (isPassStationEnabled(config, "cold") && hidden.has("cold_ready")) {
+    optional.push("cold_ready");
+  }
+  if (
+    (isPassStationEnabled(config, "bar") || isPassStationEnabled(config, "dessert")) &&
+    hidden.has("bar_ready")
+  ) {
+    optional.push("bar_ready");
+  }
+  if (hidden.has("both")) optional.push("both");
+  return optional;
 }
 
 export function applyZoneLabelOverrides(

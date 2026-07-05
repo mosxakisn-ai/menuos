@@ -4,7 +4,10 @@ import {
   passDbStationsForStaffMember,
   passSignalVisibleToStaffMember,
   passSignalsVisibleToStaffMember,
+  resolveStaffMessageScope,
   sanitizeStaffAssignments,
+  sanitizeStaffMessageScope,
+  validateStaffMessageScope,
   waiterCallsVisibleToStaffMember,
 } from "./venue-staff-member";
 
@@ -88,5 +91,56 @@ describe("sanitizeStaffAssignments", () => {
     expect(sanitizeStaffAssignments(["grill", "missing"], posts)).toEqual([]);
     expect(passSignalsVisibleToStaffMember([])).toBe(false);
     expect(waiterCallsVisibleToStaffMember([])).toBe(false);
+  });
+});
+
+describe("validateStaffMessageScope", () => {
+  const posts = [
+    { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+    { id: "grill", label: "Grill", enabled: false, station: "kitchen" as const },
+  ];
+
+  it("accepts services and enabled posts only", () => {
+    expect(validateStaffMessageScope("services", posts)).toBe(true);
+    expect(validateStaffMessageScope("kitchen", posts)).toBe(true);
+    expect(validateStaffMessageScope("all", posts)).toBe(false);
+    expect(validateStaffMessageScope("grill", posts)).toBe(false);
+  });
+});
+
+describe("resolveStaffMessageScope", () => {
+  it("uses persisted scope when set", () => {
+    expect(resolveStaffMessageScope({ messageScope: "kitchen", stations: ["services"] })).toBe(
+      "kitchen",
+    );
+  });
+
+  it("falls back to post assignment", () => {
+    expect(resolveStaffMessageScope({ messageScope: null, stations: ["bar"] })).toBe("bar");
+    expect(resolveStaffMessageScope({ messageScope: null, stations: ["all"] })).toBe("services");
+  });
+
+  it("falls back when persisted scope is invalid", () => {
+    const posts = [
+      { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+    ];
+    expect(
+      resolveStaffMessageScope({ messageScope: "deleted-post", stations: ["services"] }, posts),
+    ).toBe("services");
+  });
+});
+
+describe("sanitizeStaffMessageScope", () => {
+  const posts = [
+    { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+    { id: "grill", label: "Grill", enabled: false, station: "kitchen" as const },
+  ];
+
+  it("keeps valid scope", () => {
+    expect(sanitizeStaffMessageScope("kitchen", ["services"], posts)).toBe("kitchen");
+  });
+
+  it("clears invalid scope to fallback", () => {
+    expect(sanitizeStaffMessageScope("grill", ["kitchen"], posts)).toBe("kitchen");
   });
 });

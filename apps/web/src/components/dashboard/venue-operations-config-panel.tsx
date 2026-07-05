@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PassStationInput, TableTileState, VenueOperationsConfig, VenuePost, VenueSpotType } from "@menuos/shared";
 import {
@@ -8,6 +9,7 @@ import {
   DEFAULT_TABLE_STATE_LABELS_EL,
   applyZoneLabelOverrides,
   enabledVenuePosts,
+  getPostMessageColor,
   groupVenueSpotsByZone,
   isValidVenueSpotLabel,
   listVenuePosts,
@@ -16,6 +18,7 @@ import {
   newVenuePostId,
   PASS_STATION_INPUTS,
   quickChipsForPost,
+  restorableTableStates,
   syncLegacyFromPosts,
   TABLE_TILE_STATES,
   tableLegendStates,
@@ -31,6 +34,11 @@ import {
   dashboardLabelClass,
 } from "@/components/dashboard/dashboard-page";
 import { TableGridLegend } from "@/components/dashboard/table-grid-preview";
+import {
+  MessageChipList,
+  PostColorPicker,
+  PostMessagePreview,
+} from "@/components/dashboard/post-messages-editor";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
 import { confirmDestructive } from "@/lib/confirm-action";
@@ -271,7 +279,18 @@ export function VenueOperationsConfigPanel({
     if (!draft) return;
     const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
     if (posts.length <= 1) return;
-    updatePosts(posts.filter((post) => post.id !== postId));
+    const nextChips = { ...(draft.quickChips ?? {}) };
+    delete nextChips[postId];
+    const nextColors = { ...(draft.postColors ?? {}) };
+    delete nextColors[postId];
+    const legacy = syncLegacyFromPosts(posts.filter((post) => post.id !== postId));
+    setDraft({
+      ...draft,
+      ...legacy,
+      posts: posts.filter((post) => post.id !== postId),
+      quickChips: Object.keys(nextChips).length ? nextChips : undefined,
+      postColors: Object.keys(nextColors).length ? nextColors : undefined,
+    });
   }
 
   async function confirmRemovePost(postId: string) {
@@ -317,9 +336,10 @@ export function VenueOperationsConfigPanel({
 
   function setTableStateLabel(state: TableTileState, value: string) {
     if (!draft) return;
+    const merged = mergeTableStateLabels(draft, langCode);
     const trimmed = value.trim();
     const next = { ...(draft.tableStateLabels ?? {}) };
-    if (!trimmed || trimmed === stateLabelDefaults[state]) {
+    if (!trimmed || trimmed === merged[state]) {
       delete next[state];
     } else {
       next[state] = trimmed;
@@ -327,6 +347,38 @@ export function VenueOperationsConfigPanel({
     setDraft({
       ...draft,
       tableStateLabels: Object.keys(next).length ? next : undefined,
+    });
+  }
+
+  function hideTableState(state: TableTileState) {
+    if (!draft || state === "idle" || state === "guest_call") return;
+    const hidden = [...(draft.hiddenTableStates ?? [])];
+    if (!hidden.includes(state)) hidden.push(state);
+    setDraft({ ...draft, hiddenTableStates: hidden });
+  }
+
+  function restoreTableState(state: TableTileState) {
+    if (!draft) return;
+    setDraft({
+      ...draft,
+      hiddenTableStates: (draft.hiddenTableStates ?? []).filter((row) => row !== state),
+    });
+  }
+
+  function setPostColor(postId: string, color: string) {
+    if (!draft) return;
+    const posts = enabledVenuePosts(draft, langCode);
+    const index = postId === "services" ? 0 : posts.findIndex((p) => p.id === postId) + 1;
+    const fallback = getPostMessageColor(draft, postId, index);
+    const next = { ...(draft.postColors ?? {}) };
+    if (color === fallback) {
+      delete next[postId];
+    } else {
+      next[postId] = color;
+    }
+    setDraft({
+      ...draft,
+      postColors: Object.keys(next).length ? next : undefined,
     });
   }
 
@@ -641,70 +693,148 @@ export function VenueOperationsConfigPanel({
 
             {show("chips") && messagesByPost ? (
             <section className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
-                <p className="mt-1 text-sm text-slate-600">{M.byPostHint}</p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
+                  <p className="mt-1 text-sm text-slate-600">{M.byPostHint}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={addPost} className={buttonClass("secondary", "sm")}>
+                    <Plus className="mr-1.5 inline h-4 w-4" aria-hidden />
+                    {M.addPost}
+                  </button>
+                  <Link
+                    href="/dashboard/settings?tab=posts"
+                    className="text-xs font-semibold text-brand-blue hover:underline"
+                  >
+                    {M.managePostsLink}
+                  </Link>
+                </div>
               </div>
 
-              {show("map") ? (
-                <div className="rounded-2xl border border-brand-blue/20 bg-gradient-to-br from-brand-blue/[0.04] to-cyan-400/[0.06] p-4 sm:p-5">
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-brand-navy">{M.servicesPostTitle}</p>
-                      <p className="mt-0.5 text-xs text-slate-600">{M.servicesPostHint}</p>
+              {show("map") && draft ? (
+                (() => {
+                  const mergedLabels = mergeTableStateLabels(draft, langCode);
+                  const serviceStates = tableLegendStates(draft);
+                  const serviceColor = getPostMessageColor(draft, "services", 0);
+                  const hiddenRestorable = restorableTableStates(draft);
+                  return (
+                    <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5">
+                      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-brand-navy">{M.servicesPostTitle}</p>
+                          <p className="mt-0.5 text-xs text-slate-600">{M.servicesPostHint}</p>
+                        </div>
+                      </div>
+                      <PostColorPicker
+                        label={M.postColorLabel}
+                        value={serviceColor}
+                        onChange={(color) => setPostColor("services", color)}
+                      />
+                      <div className="mt-4 space-y-2">
+                        {serviceStates.map((state) => (
+                          <div key={state} className="flex gap-2">
+                            <input
+                              value={draft.tableStateLabels?.[state] ?? mergedLabels[state]}
+                              onChange={(e) => setTableStateLabel(state, e.target.value)}
+                              maxLength={40}
+                              className={`${dashboardFieldClass} min-w-0 flex-1 text-sm`}
+                            />
+                            {state !== "idle" && state !== "guest_call" ? (
+                              <button
+                                type="button"
+                                onClick={() => hideTableState(state)}
+                                className="inline-flex shrink-0 items-center justify-center rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                                aria-label={M.removeMessage}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <span className="w-10 shrink-0" aria-hidden />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {hiddenRestorable.length > 0 ? (
+                        <label className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                          <span>{M.addMapMessage}</span>
+                          <select
+                            defaultValue=""
+                            onChange={(e) => {
+                              const state = e.target.value as TableTileState;
+                              if (state) restoreTableState(state);
+                              e.target.value = "";
+                            }}
+                            className={`${dashboardFieldClass} text-sm`}
+                          >
+                            <option value="">{M.addMapMessagePlaceholder}</option>
+                            {hiddenRestorable.map((state) => (
+                              <option key={state} value={state}>
+                                {mergedLabels[state]}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
+                      <PostMessagePreview
+                        color={serviceColor}
+                        labels={serviceStates.map(
+                          (state) => draft.tableStateLabels?.[state] ?? mergedLabels[state],
+                        )}
+                      />
                     </div>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {(draft ? tableLegendStates(draft) : TABLE_TILE_STATES).map((state) => (
-                      <label key={state} className="block">
-                        <span className="text-xs font-medium text-slate-500">
-                          {stateLabelDefaults[state]}
-                        </span>
-                        <input
-                          value={draft.tableStateLabels?.[state] ?? stateLabelDefaults[state]}
-                          onChange={(e) => setTableStateLabel(state, e.target.value)}
-                          maxLength={40}
-                          className={`${dashboardFieldClass} mt-1 text-sm`}
-                        />
-                      </label>
-                    ))}
-                  </div>
-                  <div className="mt-4">
-                    <TableGridLegend
-                      stateLabels={previewLabels}
-                      states={draft ? tableLegendStates(draft) : undefined}
-                    />
-                  </div>
-                </div>
+                  );
+                })()
               ) : null}
 
-              {enabledPosts.map((post) => {
+              {enabledPosts.map((post, index) => {
                 const chips =
-                  draft.quickChips?.[post.id] ??
-                  quickChipsForPost(draft, post.id, langCode);
+                  draft?.quickChips?.[post.id] ??
+                  quickChipsForPost(draft ?? undefined, post.id, langCode);
+                const postColor = getPostMessageColor(draft ?? undefined, post.id, index + 1);
                 return (
                   <div
                     key={post.id}
                     className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5"
                   >
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-brand-navy">{post.label.trim()}</p>
                         <p className="mt-0.5 text-xs text-slate-500">{M.passPostHint}</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => resetQuickChips(post)}
-                        className="text-xs font-medium text-slate-500 hover:text-brand-blue"
-                      >
-                        {O.resetDefaults}
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => resetQuickChips(post)}
+                          className="text-xs font-medium text-slate-500 hover:text-brand-blue"
+                        >
+                          {O.resetDefaults}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void confirmRemovePost(post.id)}
+                          disabled={draftPosts.length <= 1}
+                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
+                          aria-label={O.removePost}
+                          title={O.removePost}
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden />
+                        </button>
+                      </div>
                     </div>
-                    <ChipEditor
-                      chips={chips}
-                      onChange={(next) => setQuickChips(post.id, next)}
-                      placeholder={O.chipPlaceholder}
+                    <PostColorPicker
+                      label={M.postColorLabel}
+                      value={postColor}
+                      onChange={(color) => setPostColor(post.id, color)}
                     />
+                    <div className="mt-4">
+                      <MessageChipList
+                        items={chips}
+                        onChange={(next) => setQuickChips(post.id, next)}
+                        placeholder={O.chipPlaceholder}
+                      />
+                    </div>
+                    <PostMessagePreview color={postColor} labels={chips} />
                   </div>
                 );
               })}

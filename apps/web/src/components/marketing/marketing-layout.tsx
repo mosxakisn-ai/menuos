@@ -114,3 +114,34 @@ export function MarketingProse({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+const legalProseClass =
+  "prose prose-slate mx-auto max-w-none prose-p:text-base prose-p:leading-[1.8] prose-p:text-slate-600 prose-li:text-slate-600 prose-li:leading-relaxed prose-headings:scroll-mt-24 prose-headings:font-extrabold prose-headings:tracking-tight prose-headings:text-brand-navy prose-h2:mb-4 prose-h2:mt-10 prose-h2:border-b prose-h2:border-slate-100 prose-h2:pb-3 prose-h2:text-xl prose-h2:first:mt-0 prose-a:font-medium prose-a:text-brand-blue prose-a:no-underline hover:prose-a:underline prose-ul:my-4 prose-ul:space-y-2 prose-ul:pl-0";
+
+/** Centered legal page — hero + card body (terms, privacy). */
+export function MarketingLegalDocument({
+  title,
+  updated,
+  badge,
+  children,
+}: {
+  title: string;
+  updated: string;
+  badge?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <>
+      <MarketingPageHero title={title} subtitle={updated} badge={badge} />
+      <section className="relative px-4 pb-20 pt-2 sm:px-6 sm:pb-28 sm:pt-4">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-50/90 to-transparent sm:h-32"
+          aria-hidden
+        />
+        <article className="relative mx-auto max-w-3xl rounded-2xl border border-slate-200/80 bg-white p-8 shadow-card sm:p-10 lg:p-12">
+          <div className={legalProseClass}>{children}</div>
+        </article>
+      </section>
+    </>
+  );
+}

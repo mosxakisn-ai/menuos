@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
-import { venueStaffMemberCreateSchema, listVenuePosts, validateStaffAssignments, zodFirstErrorMessage } from "@menuos/shared";
+import { venueStaffMemberCreateSchema, listVenuePosts, validateStaffAssignments, validateStaffMessageScope, zodFirstErrorMessage } from "@menuos/shared";
 import { requireLive360Plan } from "@/lib/api-auth";
 import { canManageVenueSecrets } from "@/lib/dashboard-roles";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
@@ -32,6 +32,7 @@ export async function GET(_req: Request, { params }: Params) {
             roleLabel: true,
             stations: true,
             zoneId: true,
+            messageScope: true,
             sortOrder: true,
             venueId: true,
             createdAt: true,
@@ -73,6 +74,12 @@ export async function POST(request: Request, { params }: Params) {
       { status: 400 },
     );
   }
+  if (!validateStaffMessageScope(parsed.data.messageScope, posts)) {
+    return NextResponse.json(
+      { error: "Επίλεξε έγκυρα μηνύματα από Ρυθμίσεις → Μηνύματα." },
+      { status: 400 },
+    );
+  }
 
   const count = await prisma.venueStaffMember.count({ where: { venueId } });
   if (count >= 80) {
@@ -90,6 +97,7 @@ export async function POST(request: Request, { params }: Params) {
       name: parsed.data.name,
       roleLabel: parsed.data.roleLabel,
       zoneId: parsed.data.zoneId,
+      messageScope: parsed.data.messageScope,
       stations: parsed.data.stations,
       memberToken: randomUUID(),
       sortOrder: (maxSort._max.sortOrder ?? -1) + 1,

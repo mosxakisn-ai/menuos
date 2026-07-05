@@ -109,8 +109,10 @@ export function buildTableGridTiles(
   spots: TableGridSpot[],
   calls: TableGridCall[],
   passSignals: TableGridPassSignal[],
+  options?: { includeUnmapped?: boolean },
 ): TableGridTile[] {
   const activeCalls = calls.filter((c) => ACTIVE_CALL_STATUSES.has(c.status));
+  const includeUnmapped = options?.includeUnmapped ?? spots.length === 0;
 
   const tiles = spots.map((spot) => {
     const spotCalls = activeCalls.filter((c) => matchesSpot(spot, c));
@@ -128,6 +130,8 @@ export function buildTableGridTiles(
       activePasses: spotPasses.map((p) => ({ ...p, message: p.message ?? null })),
     };
   });
+
+  if (!includeUnmapped) return tiles;
 
   const unmappedCalls = activeCalls.filter((c) => !isMatchedByAnySpot(spots, c));
   const unmappedPasses = passSignals.filter((p) => !isMatchedByAnySpot(spots, p));

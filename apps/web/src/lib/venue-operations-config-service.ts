@@ -4,6 +4,7 @@ import {
   mergeVenueOperationsConfig,
   normalizeVenueOperationsConfig,
   sanitizeStaffAssignments,
+  sanitizeStaffMessageScope,
   venueOperationsConfigPatchSchema,
   venueOperationsConfigSchema,
   type VenueOperationsConfig,
@@ -59,26 +60,30 @@ export async function resanitizeAllVenueStaffAssignments(options?: {
     const posts = listVenuePosts(config);
     const members = await prisma.venueStaffMember.findMany({
       where: { venueId: row.venueId },
-      select: { id: true, stations: true },
+      select: { id: true, stations: true, messageScope: true },
     });
     for (const member of members) {
-      const sanitized = sanitizeStaffAssignments(member.stations, posts);
-      if (
-        sanitized.length === member.stations.length &&
-        sanitized.every((station, index) => station === member.stations[index])
-      ) {
-        continue;
-      }
+      const sanitizedStations = sanitizeStaffAssignments(member.stations, posts);
+      const sanitizedScope = sanitizeStaffMessageScope(
+        member.messageScope,
+        sanitizedStations,
+        posts,
+      );
+      const stationsChanged =
+        sanitizedStations.length !== member.stations.length ||
+        !sanitizedStations.every((station, index) => station === member.stations[index]);
+      const scopeChanged = sanitizedScope !== (member.messageScope?.trim() || null);
+      if (!stationsChanged && !scopeChanged) continue;
       changes.push({
         venueId: row.venueId,
         memberId: member.id,
         from: [...member.stations],
-        to: sanitized,
+        to: sanitizedStations,
       });
       if (!options?.dryRun) {
         await prisma.venueStaffMember.update({
           where: { id: member.id },
-          data: { stations: sanitized },
+          data: { stations: sanitizedStations, messageScope: sanitizedScope },
         });
       }
       updated += 1;
@@ -94,22 +99,28 @@ async function sanitizeVenueStaffAssignments(
   const posts = listVenuePosts(config);
   const members = await prisma.venueStaffMember.findMany({
     where: { venueId },
-    select: { id: true, stations: true },
+    select: { id: true, stations: true, messageScope: true },
   });
   if (members.length === 0) return;
 
   await Promise.all(
     members.map((member) => {
-      const sanitized = sanitizeStaffAssignments(member.stations, posts);
-      if (
-        sanitized.length === member.stations.length &&
-        sanitized.every((station, index) => station === member.stations[index])
-      ) {
+      const sanitizedStations = sanitizeStaffAssignments(member.stations, posts);
+      const sanitizedScope = sanitizeStaffMessageScope(
+        member.messageScope,
+        sanitizedStations,
+        posts,
+      );
+      const stationsChanged =
+        sanitizedStations.length !== member.stations.length ||
+        !sanitizedStations.every((station, index) => station === member.stations[index]);
+      const scopeChanged = sanitizedScope !== (member.messageScope?.trim() || null);
+      if (!stationsChanged && !scopeChanged) {
         return Promise.resolve();
       }
       return prisma.venueStaffMember.update({
         where: { id: member.id },
-        data: { stations: sanitized },
+        data: { stations: sanitizedStations, messageScope: sanitizedScope },
       });
     }),
   );

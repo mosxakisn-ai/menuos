@@ -788,15 +788,19 @@ export const DASHBOARD_EN = {
       messagesTab: {
         title: "Messages",
         description:
-          "Configure messages per post — waiters see theirs, kitchen/bar see theirs.",
+          "Set messages per post here — colour, text, add or remove. In Staff you pick which set each person sees.",
         hint:
-          "Services = labels on the waiter spot map.\nEach post (Cook, Bar…) = quick buttons on the tablet screen.\nIn Staff, the post assignment decides which messages each person sees.",
+          "Services = waiter spot map.\nEach post = tablet quick buttons.\nOne colour per post — all messages in that post share the same colour.",
         byPostTitle: "Messages by post",
-        byPostHint:
-          "Each employee only sees messages for the post you assign in the Staff tab.",
+        byPostHint: "Edit text, add or remove messages. Add or delete posts here or in the Posts tab.",
         servicesPostTitle: "Services — Waiter",
         servicesPostHint: "What appears on the spot map (guest call, kitchen ready, etc.).",
         passPostHint: "Quick buttons when sending a pass from tablet — for this post only.",
+        postColorLabel: "Post colour",
+        addPost: "New post",
+        addMapMessage: "Add message",
+        addMapMessagePlaceholder: "Choose…",
+        removeMessage: "Remove message",
         managePostsLink: "Manage posts →",
       },
       venueTab: {
@@ -865,7 +869,7 @@ export const DASHBOARD_EN = {
       personnel: {
         title: "Staff",
         description:
-          "Add an employee: name, role, space and post. The post also decides which messages they see — each person gets their own link.",
+          "Add an employee: name, role, space, post and messages. Each person gets their own link.",
         addTitle: "New employee",
         addStaff: "Add",
         listTitle: "Team",
@@ -888,6 +892,8 @@ export const DASHBOARD_EN = {
         colRole: "Role",
         colSpace: "Space",
         colPost: "Post",
+        colMessages: "Messages",
+        messagesScopeServices: "Services — spot map",
         colStations: "Post",
         colLink: "Waiter link",
         colLinkHint: "Send to their phone — opens without login.",

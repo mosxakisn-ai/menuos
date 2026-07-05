@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { venueStaffMemberUpdateSchema, listVenuePosts, validateStaffAssignments, zodFirstErrorMessage } from "@menuos/shared";
+import { venueStaffMemberUpdateSchema, listVenuePosts, validateStaffAssignments, validateStaffMessageScope, zodFirstErrorMessage } from "@menuos/shared";
 import { requireLive360Plan } from "@/lib/api-auth";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import { getVenueForOrganization } from "@/lib/venue-access";
@@ -37,6 +37,12 @@ export async function PATCH(request: Request, { params }: Params) {
       { status: 400 },
     );
   }
+  if (!validateStaffMessageScope(parsed.data.messageScope, posts)) {
+    return NextResponse.json(
+      { error: "Επίλεξε έγκυρα μηνύματα από Ρυθμίσεις → Μηνύματα." },
+      { status: 400 },
+    );
+  }
 
   const existing = await prisma.venueStaffMember.findFirst({
     where: { id: memberId, venueId },
@@ -51,6 +57,7 @@ export async function PATCH(request: Request, { params }: Params) {
       name: parsed.data.name,
       roleLabel: parsed.data.roleLabel,
       zoneId: parsed.data.zoneId,
+      messageScope: parsed.data.messageScope,
       stations: parsed.data.stations,
     },
   });

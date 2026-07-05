@@ -263,8 +263,9 @@ model VenueStaffMember {
   venueId     String
   name        String   @db.VarChar(60)
   roleLabel   String   @db.VarChar(40)
-  zoneId      String?  @db.VarChar(60)
-  stations    String[]
+  zoneId        String?  @db.VarChar(60)
+  messageScope  String?  @db.VarChar(40)
+  stations      String[]
   memberToken String   @unique
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())

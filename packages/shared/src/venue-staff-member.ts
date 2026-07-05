@@ -77,11 +77,14 @@ export function staffRoleOptionsWithLegacy(
 
 const staffMemberRoleSchema = z.string().trim().min(1).max(40);
 
+export const staffMessageScopeSchema = staffAssignmentSchema;
+
 export const venueStaffMemberCreateSchema = z.object({
   name: staffMemberNameSchema,
   roleLabel: staffMemberRoleSchema,
   zoneId: z.string().trim().min(1).max(60),
   stations: z.array(staffAssignmentSchema).min(1).max(1),
+  messageScope: staffMessageScopeSchema,
 });
 
 export const venueStaffMemberUpdateSchema = venueStaffMemberCreateSchema;
@@ -180,6 +183,43 @@ export function validateStaffAssignments(
   return assignments.every(
     (assignment) => isStaffSpecialOption(assignment) || enabledIds.has(assignment),
   );
+}
+
+/** Services or an enabled post id — not «all». */
+export function validateStaffMessageScope(scope: string, posts: VenuePost[]): boolean {
+  if (scope === "services") return true;
+  if (scope === "all") return false;
+  return enabledVenuePostIds(posts).has(scope);
+}
+
+/** Persisted scope or legacy fallback from post assignment. Invalid scopes fall back. */
+export function resolveStaffMessageScope(
+  member: {
+    messageScope?: string | null;
+    stations: string[];
+  },
+  posts?: VenuePost[],
+): string {
+  const scope = member.messageScope?.trim();
+  if (scope && scope !== "all") {
+    if (!posts || validateStaffMessageScope(scope, posts)) return scope;
+  }
+  const primary = staffPrimaryAssignment(member.stations);
+  if (posts && !validateStaffMessageScope(primary === "all" ? "services" : primary, posts)) {
+    return "services";
+  }
+  return primary === "all" ? "services" : primary;
+}
+
+export function sanitizeStaffMessageScope(
+  messageScope: string | null | undefined,
+  stations: string[],
+  posts: VenuePost[],
+): string | null {
+  const scope = messageScope?.trim();
+  if (scope && validateStaffMessageScope(scope, posts)) return scope;
+  const fallback = resolveStaffMessageScope({ messageScope: null, stations }, posts);
+  return fallback === "services" && !scope ? null : fallback;
 }
 
 function enabledVenuePostIds(posts: VenuePost[]): Set<string> {

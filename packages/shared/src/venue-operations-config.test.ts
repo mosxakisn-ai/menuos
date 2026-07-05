@@ -5,6 +5,7 @@ import {
   normalizeVenueOperationsConfig,
   quickChipsForPost,
   resolvePostIdForStationScreen,
+  tableLegendStates,
   venueOperationsConfigSchema,
   visibleMessagesForStaffAssignment,
 } from "./venue-operations-config";
@@ -42,6 +43,16 @@ describe("resolvePostIdForStationScreen", () => {
       ],
     };
     expect(resolvePostIdForStationScreen(config, "kitchen", "Grill")).toBe("grill");
+  });
+});
+
+describe("tableLegendStates", () => {
+  it("hides optional states when listed in hiddenTableStates", () => {
+    const config = {
+      enabledStations: ["kitchen" as const, "bar" as const],
+      hiddenTableStates: ["kitchen_ready" as const, "both" as const],
+    };
+    expect(tableLegendStates(config)).toEqual(["idle", "guest_call", "bar_ready"]);
   });
 });
 
