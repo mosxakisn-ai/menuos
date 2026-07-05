@@ -47,11 +47,11 @@ export async function resolveStationScreenByToken(
   venueId: string,
   station: PassStationInput,
   screenToken: string,
-): Promise<{ id: string; label: string; spotPrefix: string | null } | null> {
+): Promise<{ id: string; label: string; spotPrefix: string | null; quickChips: string[] } | null> {
   const dbStation = passStationInputToDb(station);
   return prisma.venueStationScreen.findFirst({
     where: { venueId, station: dbStation, screenToken },
-    select: { id: true, label: true, spotPrefix: true },
+    select: { id: true, label: true, spotPrefix: true, quickChips: true },
   });
 }
 

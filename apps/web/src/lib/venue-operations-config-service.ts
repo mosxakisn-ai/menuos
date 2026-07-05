@@ -2,9 +2,11 @@ import { prisma } from "@menuos/db";
 import {
   listVenuePosts,
   mergeVenueOperationsConfig,
+  normalizeStaffMemberZoneId,
   normalizeVenueOperationsConfig,
   sanitizeStaffAssignments,
   sanitizeStaffMessageScope,
+  staffPrimaryAssignment,
   venueOperationsConfigPatchSchema,
   venueOperationsConfigSchema,
   type VenueOperationsConfig,
@@ -60,7 +62,7 @@ export async function resanitizeAllVenueStaffAssignments(options?: {
     const posts = listVenuePosts(config);
     const members = await prisma.venueStaffMember.findMany({
       where: { venueId: row.venueId },
-      select: { id: true, stations: true, messageScope: true },
+      select: { id: true, stations: true, messageScope: true, zoneId: true },
     });
     for (const member of members) {
       const sanitizedStations = sanitizeStaffAssignments(member.stations, posts);
@@ -69,11 +71,16 @@ export async function resanitizeAllVenueStaffAssignments(options?: {
         sanitizedStations,
         posts,
       );
+      const sanitizedZone = normalizeStaffMemberZoneId(
+        staffPrimaryAssignment(sanitizedStations),
+        member.zoneId,
+      );
       const stationsChanged =
         sanitizedStations.length !== member.stations.length ||
         !sanitizedStations.every((station, index) => station === member.stations[index]);
       const scopeChanged = sanitizedScope !== (member.messageScope?.trim() || null);
-      if (!stationsChanged && !scopeChanged) continue;
+      const zoneChanged = sanitizedZone !== member.zoneId;
+      if (!stationsChanged && !scopeChanged && !zoneChanged) continue;
       changes.push({
         venueId: row.venueId,
         memberId: member.id,
@@ -83,7 +90,11 @@ export async function resanitizeAllVenueStaffAssignments(options?: {
       if (!options?.dryRun) {
         await prisma.venueStaffMember.update({
           where: { id: member.id },
-          data: { stations: sanitizedStations, messageScope: sanitizedScope },
+          data: {
+            stations: sanitizedStations,
+            messageScope: sanitizedScope,
+            zoneId: sanitizedZone,
+          },
         });
       }
       updated += 1;
@@ -99,7 +110,7 @@ async function sanitizeVenueStaffAssignments(
   const posts = listVenuePosts(config);
   const members = await prisma.venueStaffMember.findMany({
     where: { venueId },
-    select: { id: true, stations: true, messageScope: true },
+    select: { id: true, stations: true, messageScope: true, zoneId: true },
   });
   if (members.length === 0) return;
 
@@ -111,16 +122,25 @@ async function sanitizeVenueStaffAssignments(
         sanitizedStations,
         posts,
       );
+      const sanitizedZone = normalizeStaffMemberZoneId(
+        staffPrimaryAssignment(sanitizedStations),
+        member.zoneId,
+      );
       const stationsChanged =
         sanitizedStations.length !== member.stations.length ||
         !sanitizedStations.every((station, index) => station === member.stations[index]);
       const scopeChanged = sanitizedScope !== (member.messageScope?.trim() || null);
-      if (!stationsChanged && !scopeChanged) {
+      const zoneChanged = sanitizedZone !== member.zoneId;
+      if (!stationsChanged && !scopeChanged && !zoneChanged) {
         return Promise.resolve();
       }
       return prisma.venueStaffMember.update({
         where: { id: member.id },
-        data: { stations: sanitizedStations, messageScope: sanitizedScope },
+        data: {
+          stations: sanitizedStations,
+          messageScope: sanitizedScope,
+          zoneId: sanitizedZone,
+        },
       });
     }),
   );

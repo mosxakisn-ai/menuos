@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  normalizeStaffMemberZoneId,
   passDbStationsForStaffMember,
   passSignalVisibleToStaffMember,
   passSignalsVisibleToStaffMember,
+  pickStationScreenForStaffAssignment,
   resolveStaffMessageScope,
   sanitizeStaffAssignments,
   sanitizeStaffMessageScope,
+  staffAssignmentLinkKind,
   validateStaffMessageScope,
   waiterCallsVisibleToStaffMember,
 } from "./venue-staff-member";
@@ -142,5 +145,62 @@ describe("sanitizeStaffMessageScope", () => {
 
   it("clears invalid scope to fallback", () => {
     expect(sanitizeStaffMessageScope("grill", ["kitchen"], posts)).toBe("kitchen");
+  });
+});
+
+describe("normalizeStaffMemberZoneId", () => {
+  it("clears zone for pass posts", () => {
+    expect(normalizeStaffMemberZoneId("kitchen", "prefix:main")).toBeNull();
+    expect(normalizeStaffMemberZoneId("post-1", "prefix:main")).toBeNull();
+  });
+
+  it("keeps zone for waiters", () => {
+    expect(normalizeStaffMemberZoneId("services", "prefix:main")).toBe("prefix:main");
+    expect(normalizeStaffMemberZoneId("services", "")).toBeNull();
+  });
+});
+
+describe("pickStationScreenForStaffAssignment", () => {
+  const posts = [
+    { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+    { id: "grill", label: "Grill", enabled: true, station: "kitchen" as const },
+    { id: "bar", label: "Μπαρ", enabled: true, station: "bar" as const },
+  ];
+  const screens = [
+    { label: "Κουζίνα", screenToken: "tok-main" },
+    { label: "Grill", screenToken: "tok-grill" },
+  ];
+
+  it("matches screen label to post label", () => {
+    expect(pickStationScreenForStaffAssignment("grill", posts, screens)?.screenToken).toBe(
+      "tok-grill",
+    );
+  });
+
+  it("falls back to first screen", () => {
+    expect(pickStationScreenForStaffAssignment("kitchen", posts, screens)?.screenToken).toBe(
+      "tok-main",
+    );
+  });
+
+  it("returns null for floor staff", () => {
+    expect(pickStationScreenForStaffAssignment("services", posts, screens)).toBeNull();
+  });
+});
+
+describe("staffAssignmentLinkKind", () => {
+  const posts = [
+    { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+    { id: "old", label: "Old", enabled: false, station: "bar" as const },
+  ];
+
+  it("classifies waiter and pass", () => {
+    expect(staffAssignmentLinkKind("services", posts)).toBe("waiter");
+    expect(staffAssignmentLinkKind("kitchen", posts)).toBe("pass");
+  });
+
+  it("marks disabled or unknown posts invalid", () => {
+    expect(staffAssignmentLinkKind("old", posts)).toBe("invalid");
+    expect(staffAssignmentLinkKind("missing", posts)).toBe("invalid");
   });
 });

@@ -677,6 +677,8 @@ export const DASHBOARD_EN = {
       openCatalog: "Open catalog",
       generatedSuccess: "QR created! Download or print it.",
       spotsTitle: "Tables, rooms & sunbeds",
+      zonesDesc:
+        "Expand each space to see QR per table — view, download or test the link.",
       spotsDesc:
         "Add each spot once. Each QR binds the number — the waiter sees exactly where calls come from.",
       spotTypeLabel: "Type",
@@ -757,6 +759,7 @@ export const DASHBOARD_EN = {
         general: "Account",
         staff: "Staff",
         posts: "Posts",
+        screens: "Screens",
         venue: "Venue",
         messages: "Messages",
         tables: "Tables",
@@ -769,6 +772,18 @@ export const DASHBOARD_EN = {
         hint: "Up to 12 posts. Tap «New post» and enter the role (e.g. Kitchen, Bar).",
         postNamePlaceholder: "e.g. Kitchen, Bar",
         postTypeHint: "Tablet type — kitchen, bar, etc. (for pass routing).",
+      },
+      screensTab: {
+        title: "Tablet screens",
+        description:
+          "Links for kitchen/bar tablets — opens without login. Staff tab links point here.",
+        hint: "Screen name should match the post name (e.g. «Grill»).\nFor a second kitchen line: add a screen named like the post.",
+        stationLabels: {
+          kitchen: "Kitchen",
+          bar: "Bar",
+          cold: "Cold",
+          dessert: "Dessert",
+        },
       },
       linksTab: {
         title: "Staff links per space",
@@ -799,6 +814,12 @@ export const DASHBOARD_EN = {
         servicesPostTitle: "Services — Waiter",
         servicesPostHint: "What appears on the spot map (guest call, kitchen ready, etc.).",
         passPostHint: "Add the messages you want for this post — one at a time.",
+        messagesForPost: (postName: string) =>
+          `Messages the «${postName}» post can send from tablet (e.g. cook, bar).`,
+        messagesListLabel: "Messages",
+        previewLabel: "Preview",
+        previewEmpty: "No messages added yet.",
+        resetPostMessages: "Clear messages",
         postColorLabel: "Post colour",
         addPost: "New post",
         addMapMessage: "Add message",
@@ -883,14 +904,16 @@ export const DASHBOARD_EN = {
       personnel: {
         title: "Staff",
         description:
-          "Add an employee: name, role, space, post and messages. Each person gets their own link.",
+          "Add an employee: name, space and post. Waiter → phone link. Kitchen/bar → tablet pass screen link.",
         addTitle: "New employee",
         addStaff: "Add",
         listTitle: "Staff members",
         editTitle: "Edit",
         cancelEdit: "Cancel",
         formHint:
-          "Services = guest calls from QR. Other posts = pass alerts from kitchen/bar.",
+          "Post defines messages (Settings → Messages). Waiter = guest calls, not pass messages.",
+        messagesScopeWaiter: "Guest calls — no pass messages",
+        colSpaceAll: "All spaces",
         stationsHint: "Services = guest calls. Post = which pass alerts they see.",
         managePostsLink: "Manage posts →",
         manageSpacesLink: "Manage spaces →",
@@ -907,12 +930,15 @@ export const DASHBOARD_EN = {
         colSpace: "Space",
         colPost: "Post",
         colMessages: "Messages",
-        messagesScopeServices: "Services — spot map",
         colStations: "Post",
         colLink: "Waiter link",
-        colLinkHint: "Send to their phone — opens without login.",
+        colLinkHint:
+          "Waiter: phone link (floor map). Kitchen/bar: tablet link — opens without login.",
         colActions: "Actions",
         viewLink: "Preview",
+        viewLinkTablet: "Open screen",
+        missingScreen: "No screen yet — Settings → Screens.",
+        invalidAssignment: "Post inactive — edit staff row.",
         copyLink: "Copy",
         copied: "Copied!",
         rotateLink: "New link",

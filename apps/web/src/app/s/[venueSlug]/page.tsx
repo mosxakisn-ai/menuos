@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { listVenuePosts } from "@menuos/shared";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { StaffWaiterInvalidLink } from "@/components/dashboard/staff-waiter-invalid-link";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { getOrganizationPlanContext, organizationCanUseLive360 } from "@/lib/billing";
-import { resolveStaffAuthByKey, resolveStaffAuthBySlug } from "@/lib/staff-auth";
+import { resolveStaffAuthByKey, resolveStaffAuthBySlug, type StaffMemberContext } from "@/lib/staff-auth";
 import { clearStaffSessionCookie, readStaffSessionFromCookies } from "@/lib/staff-session";
+import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
+import {
+  resolvePassStaffAccessResult,
+  type StaffPassStaffAccessResult,
+} from "@/lib/staff-member-access-url";
 
 export const metadata: Metadata = {
   title: "Σερβιτόρος — MenuOS",
@@ -17,6 +23,32 @@ type Props = {
   searchParams: Promise<{ key?: string; zone?: string }>;
 };
 
+async function resolvePassStaffAccess(
+  venueId: string,
+  venueSlug: string,
+  staffMember: StaffMemberContext | null,
+): Promise<StaffPassStaffAccessResult> {
+  if (!staffMember) return { kind: "waiter" };
+  const opsConfig = await getVenueOperationsConfig(venueId);
+  const posts = listVenuePosts(opsConfig);
+  return resolvePassStaffAccessResult({
+    venueId,
+    venueSlug,
+    stations: staffMember.stations,
+    posts,
+  });
+}
+
+function passStaffInvalidLink(venueSlug: string, access: StaffPassStaffAccessResult) {
+  if (access.kind === "missing-screen") {
+    return <StaffWaiterInvalidLink venueSlug={venueSlug} missingTabletScreen />;
+  }
+  if (access.kind === "invalid-assignment") {
+    return <StaffWaiterInvalidLink venueSlug={venueSlug} invalidAssignment />;
+  }
+  return null;
+}
+
 export default async function StaffWaiterPage({ params, searchParams }: Props) {
   const { venueSlug } = await params;
   const { key, zone } = await searchParams;
@@ -26,6 +58,10 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   if (incomingKey) {
     const auth = await resolveStaffAuthBySlug(venueSlug, incomingKey);
     if (!auth) return <StaffWaiterInvalidLink venueSlug={venueSlug} invalidKey />;
+    const passAccess = await resolvePassStaffAccess(auth.venue.id, venueSlug, auth.staffMember);
+    if (passAccess.kind === "tablet") redirect(passAccess.url);
+    const invalid = passStaffInvalidLink(venueSlug, passAccess);
+    if (invalid) return invalid;
     const sessionParams = new URLSearchParams({ venueSlug, key: incomingKey });
     if (initialZoneId) sessionParams.set("zone", initialZoneId);
     redirect(`/api/staff/session?${sessionParams.toString()}`);
@@ -52,6 +88,11 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   }
 
   const { venue, staffMember } = auth;
+
+  const passAccess = await resolvePassStaffAccess(venue.id, venue.slug, staffMember);
+  if (passAccess.kind === "tablet") redirect(passAccess.url);
+  const invalid = passStaffInvalidLink(venue.slug, passAccess);
+  if (invalid) return invalid;
 
   return (
     <div className="min-h-screen bg-brand-surface/40">

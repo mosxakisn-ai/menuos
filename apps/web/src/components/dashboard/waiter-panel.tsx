@@ -15,7 +15,7 @@ import {
   type VenueSpotType,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
-import { WaiterTableGrid, type MonitorViewTab } from "@/components/dashboard/waiter-table-grid";
+import { WaiterTableGrid } from "@/components/dashboard/waiter-table-grid";
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
@@ -62,7 +62,6 @@ export function WaiterPanel({
   const [spots, setSpots] = useState<VenueSpot[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [updatingCallId, setUpdatingCallId] = useState<string | null>(null);
-  const [monitorTab, setMonitorTab] = useState<MonitorViewTab>("all");
   const [zoneFilterId, setZoneFilterId] = useState<string>("all");
   const prevPendingRef = useRef<number | null>(null);
   const prevCallsRef = useRef<WaiterCall[]>([]);
@@ -249,11 +248,6 @@ export function WaiterPanel({
   const activeVenue = venues.find((v) => v.id === venueId);
   const isManagerView = !staffViaCookie && !staffKey;
 
-  const monitorTabs: { id: MonitorViewTab; label: string }[] = [
-    { id: "all", label: W.monitorTabAll },
-    { id: "calls", label: W.monitorTabCalls },
-  ];
-
   const showZoneFilters = activeZoneGroups.length > 1 && !assignedZoneId;
 
   function zoneSpotCount(zoneId: string): number {
@@ -390,24 +384,6 @@ export function WaiterPanel({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap gap-1.5">
-        {monitorTabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setMonitorTab(tab.id)}
-            className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-medium transition sm:px-3 sm:py-1.5 sm:text-sm",
-              monitorTab === tab.id
-                ? "bg-brand-navy text-white shadow-sm"
-                : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       {displaySpots.length === 0 && hasActivity ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           {W.emptySpotsActiveHint}
@@ -433,7 +409,7 @@ export function WaiterPanel({
         <WaiterTableGrid
           spots={displaySpots}
           calls={displayCalls}
-          viewTab={monitorTab}
+          viewTab="all"
           updatingCallId={updatingCallId}
           legendEnd={venueStatusEnd}
           stateLabels={tableStateLabels}

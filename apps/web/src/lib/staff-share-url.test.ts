@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { buildStaffShareUrl } from "./staff-share-url";
+import { buildStaffShareUrl, buildStationScreenShareUrl } from "./staff-share-url";
 
 describe("buildStaffShareUrl", () => {
   beforeEach(() => {
@@ -19,6 +19,18 @@ describe("buildStaffShareUrl", () => {
     });
     expect(buildStaffShareUrl("demo-taverna", "abc-123")).toBe(
       "http://localhost:3000/s/demo-taverna?key=abc-123",
+    );
+  });
+});
+
+describe("buildStationScreenShareUrl", () => {
+  beforeEach(() => {
+    vi.stubGlobal("window", { location: { origin: "https://menuos.gr", hostname: "menuos.gr", port: "" } });
+  });
+
+  it("builds kitchen tablet URL", () => {
+    expect(buildStationScreenShareUrl("kitchen", "hellas-taverna", "screen-token-1")).toBe(
+      "https://menuos.gr/kds?venueSlug=hellas-taverna&key=screen-token-1",
     );
   });
 });

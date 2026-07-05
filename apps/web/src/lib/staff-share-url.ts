@@ -1,4 +1,18 @@
+import type { PassStationInput } from "@menuos/shared";
 import { clientShareOrigin } from "@/lib/client-share-origin";
+import { stationScreenPath } from "@/lib/station-screens";
+
+/** Kitchen/bar/cold/dessert tablet — opens /kds, /bds, etc. without dashboard login. */
+export function buildStationScreenShareUrl(
+  station: PassStationInput,
+  venueSlug: string,
+  screenToken: string,
+): string {
+  const u = new URL(stationScreenPath(station), clientShareOrigin());
+  u.searchParams.set("venueSlug", venueSlug);
+  u.searchParams.set("key", screenToken);
+  return u.toString();
+}
 
 /** Shareable waiter link — opens /s/{slug} which sets session cookie and loads the panel. */
 export function buildStaffShareUrl(

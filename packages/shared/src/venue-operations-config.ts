@@ -353,12 +353,12 @@ export type StaffVisibleMessages =
   | { kind: "waiter_map"; labels: string[] }
   | { kind: "pass_quick"; labels: string[] };
 
-/** Message scope ids from Ρυθμίσεις → Μηνύματα (Services map + enabled posts). */
+/** Message scope ids from Ρυθμίσεις → Μηνύματα (enabled posts only). */
 export function listStaffMessageScopeIds(
   config: VenueOperationsConfig | undefined,
   lang: "GR" | "EN" = "GR",
 ): string[] {
-  return ["services", ...enabledVenuePosts(config, lang).map((post) => post.id)];
+  return enabledVenuePosts(config, lang).map((post) => post.id);
 }
 
 /** Messages a staff member sees for a scope (services = map labels; post = pass quick chips). */

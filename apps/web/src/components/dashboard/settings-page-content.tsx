@@ -9,6 +9,7 @@ import {
   SettingsMessagesPanel,
   SettingsPersonnelPanel,
   SettingsPostsPanel,
+  SettingsScreensPanel,
   SettingsSpacesPanel,
   SettingsTablesPanel,
   SettingsVenuePanel,
@@ -119,6 +120,9 @@ function SettingsPageBody({
         break;
       case "posts":
         content = <SettingsPostsPanel venues={spotVenues} />;
+        break;
+      case "screens":
+        content = <SettingsScreensPanel venues={spotVenues} />;
         break;
       case "venue":
         content = <SettingsVenuePanel venues={venues} />;

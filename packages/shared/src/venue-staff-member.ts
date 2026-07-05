@@ -82,15 +82,24 @@ export const staffMessageScopeSchema = staffAssignmentSchema;
 export const venueStaffMemberCreateSchema = z.object({
   name: staffMemberNameSchema,
   roleLabel: staffMemberRoleSchema,
-  zoneId: z.string().trim().min(1).max(60),
+  zoneId: z
+    .string()
+    .trim()
+    .max(60)
+    .optional()
+    .nullable()
+    .transform((v) => (v && v.length > 0 ? v : null)),
   stations: z.array(staffAssignmentSchema).min(1).max(1),
-  messageScope: staffMessageScopeSchema,
+  messageScope: z
+    .union([staffMessageScopeSchema, z.literal(""), z.null()])
+    .optional()
+    .transform((v) => (typeof v === "string" && v.trim() ? v.trim() : null)),
 });
 
 export const venueStaffMemberUpdateSchema = venueStaffMemberCreateSchema;
 
 export const STAFF_STATION_LABELS_EL: Record<StaffStationOption, string> = {
-  services: "Services",
+  services: "Σερβιτόρος",
   kitchen: "Κουζίνα",
   bar: "Μπαρ",
   cold: "Κρύα",
@@ -281,6 +290,54 @@ export function passSignalVisibleToStaffMember(
 /** Waiter calls (table buzz) only for floor/service staff. */
 export function waiterCallsVisibleToStaffMember(memberStations: string[]): boolean {
   return memberStations.includes("all") || memberStations.includes("services");
+}
+
+/** Floor waiters need one space; kitchen/bar pass posts work across all spaces. */
+export function staffPostRequiresZoneAssignment(assignment: string): boolean {
+  return assignment === "services";
+}
+
+/** Pass posts ignore zone; waiters require a zone id when set. */
+export function normalizeStaffMemberZoneId(
+  assignment: string,
+  zoneId: string | null | undefined,
+): string | null {
+  if (!staffPostRequiresZoneAssignment(assignment)) return null;
+  const trimmed = zoneId?.trim();
+  return trimmed || null;
+}
+
+export type StationScreenLinkPick = { label: string; screenToken: string };
+
+/** Match tablet screen to staff post (label) or fall back to first screen for the station. */
+export function pickStationScreenForStaffAssignment(
+  assignment: string,
+  posts: VenuePost[],
+  screens: ReadonlyArray<StationScreenLinkPick>,
+): { station: PassStationInput; screenToken: string } | null {
+  const station = resolveStaffAssignmentToPassInput(assignment, posts);
+  if (!station || screens.length === 0) return null;
+  const post = posts.find((row) => row.id === assignment);
+  if (post) {
+    const byLabel = screens.find((row) => row.label.trim() === post.label.trim());
+    if (byLabel) return { station, screenToken: byLabel.screenToken };
+  }
+  const first = screens[0];
+  return first ? { station, screenToken: first.screenToken } : null;
+}
+
+export type StaffAssignmentLinkKind = "waiter" | "pass" | "invalid";
+
+/** What link type this assignment expects (waiter / tablet / invalid removed post). */
+export function staffAssignmentLinkKind(
+  assignment: string,
+  posts: VenuePost[],
+): StaffAssignmentLinkKind {
+  if (assignment === "services" || assignment === "all") return "waiter";
+  const post = posts.find((row) => row.id === assignment);
+  if (post) return post.enabled ? "pass" : "invalid";
+  if (PASS_STATION_INPUTS.includes(assignment as PassStationInput)) return "pass";
+  return "invalid";
 }
 
 /** Whether this staff member should poll or receive pass signals. */

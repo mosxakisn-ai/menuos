@@ -18,24 +18,29 @@ export function PostColorPicker({
   label: string;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">{label}</span>
-      <div className="flex flex-wrap gap-1.5">
-        {COLOR_PRESETS.map((color) => (
-          <button
-            key={color}
-            type="button"
-            onClick={() => onChange(color)}
-            className="h-6 w-6 rounded-full ring-2 ring-offset-1 transition hover:scale-105"
-            style={{
-              backgroundColor: color,
-              outline: value === color ? `2px solid ${color}` : undefined,
-              outlineOffset: value === color ? 2 : undefined,
-            }}
-            aria-label={color}
-            aria-pressed={value === color}
-          />
-        ))}
+    <div className="space-y-3">
+      <span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-2.5">
+        {COLOR_PRESETS.map((color) => {
+          const selected = value === color;
+          return (
+            <button
+              key={color}
+              type="button"
+              onClick={() => onChange(color)}
+              className={`h-7 w-7 shrink-0 rounded-full transition hover:scale-105 ${
+                selected
+                  ? "ring-2 ring-brand-blue ring-offset-2"
+                  : "ring-1 ring-slate-200/90 ring-offset-1"
+              }`}
+              style={{ backgroundColor: color }}
+              aria-label={color}
+              aria-pressed={selected}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -44,28 +49,40 @@ export function PostColorPicker({
 export function PostMessagePreview({
   labels,
   color,
+  title,
+  emptyHint,
 }: {
   labels: string[];
   color: string;
+  title?: string;
+  emptyHint?: string;
 }) {
   const items = [...new Set(labels.filter(Boolean))];
-  if (items.length === 0) return null;
   return (
-    <ul className="mt-3 flex flex-wrap gap-1.5">
-      {items.map((label) => (
-        <li
-          key={label}
-          className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-          style={{
-            backgroundColor: `${color}18`,
-            color,
-            border: `1px solid ${color}40`,
-          }}
-        >
-          {label}
-        </li>
-      ))}
-    </ul>
+    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-3">
+      {title ? (
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+      ) : null}
+      {items.length === 0 ? (
+        <p className="text-sm text-slate-400">{emptyHint ?? "—"}</p>
+      ) : (
+        <ul className="flex flex-wrap gap-2">
+          {items.map((label) => (
+            <li
+              key={label}
+              className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+              style={{
+                backgroundColor: `${color}18`,
+                color,
+                border: `1px solid ${color}40`,
+              }}
+            >
+              {label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -74,11 +91,13 @@ export function MessageChipList({
   items,
   onChange,
   placeholder,
+  addLabel,
   maxItems = 12,
 }: {
   items: string[];
   onChange: (next: string[]) => void;
   placeholder: string;
+  addLabel?: string;
   maxItems?: number;
 }) {
   const [draft, setDraft] = useState("");
@@ -118,45 +137,49 @@ export function MessageChipList({
   }
 
   return (
-    <div className="space-y-2">
-      {items.map((item, index) => (
-        <div key={`${index}-${item}`} className="flex gap-2">
-          <input
-            value={editingIndex === index ? editDraft : item}
-            onFocus={() => beginEdit(index)}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (editingIndex !== index) {
-                setEditingIndex(index);
+    <div className="space-y-3">
+      {items.length === 0 ? (
+        <p className="text-sm text-slate-400">{placeholder}</p>
+      ) : (
+        items.map((item, index) => (
+          <div key={`${index}-${item}`} className="flex gap-2">
+            <input
+              value={editingIndex === index ? editDraft : item}
+              onFocus={() => beginEdit(index)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (editingIndex !== index) {
+                  setEditingIndex(index);
+                  setEditDraft(value);
+                  return;
+                }
                 setEditDraft(value);
-                return;
-              }
-              setEditDraft(value);
-            }}
-            onBlur={() => {
-              if (editingIndex === index) commitEdit(index);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                commitEdit(index);
-              }
-            }}
-            maxLength={60}
-            className={`${dashboardFieldClass} min-w-0 flex-1 text-sm`}
-          />
-          <button
-            type="button"
-            onClick={() => removeAt(index)}
-            className="inline-flex shrink-0 items-center justify-center rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-            aria-label={`Remove ${item}`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
-      ))}
+              }}
+              onBlur={() => {
+                if (editingIndex === index) commitEdit(index);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitEdit(index);
+                }
+              }}
+              maxLength={60}
+              className={`${dashboardFieldClass} min-w-0 flex-1 text-sm`}
+            />
+            <button
+              type="button"
+              onClick={() => removeAt(index)}
+              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+              aria-label={`Remove ${item}`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ))
+      )}
       {items.length < maxItems ? (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 pt-1">
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -168,10 +191,16 @@ export function MessageChipList({
             }}
             placeholder={placeholder}
             maxLength={60}
-            className={`${dashboardFieldClass} min-w-0 flex-1 text-sm`}
+            className={`${dashboardFieldClass} min-w-[min(100%,14rem)] flex-1 text-sm`}
           />
-          <button type="button" onClick={addItem} className={buttonClass("secondary", "sm")}>
+          <button
+            type="button"
+            onClick={addItem}
+            disabled={!draft.trim()}
+            className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
+          >
             <Plus className="h-4 w-4" />
+            {addLabel ?? "Add"}
           </button>
         </div>
       ) : null}

@@ -9,15 +9,18 @@ import {
   getPostMessageColor,
   groupVenueSpotsByZone,
   listVenuePosts,
-  resolveStaffMessageScope,
+  pickStationScreenForStaffAssignment,
+  resolveStaffAssignmentToPassInput,
+  staffAssignmentLinkKind,
   staffAssignmentLabelForLang,
   staffAssignmentsFromPrimary,
+  staffPostRequiresZoneAssignment,
   staffPrimaryAssignment,
-  staffRoleOptionsForLang,
-  staffRoleOptionsWithLegacy,
   staffStationLabelForLang,
   visibleMessagesForStaffAssignment,
+  type PassStationInput,
   type VenueOperationsConfig,
+  type VenuePost,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
@@ -34,7 +37,8 @@ import { buttonClass } from "@/components/ui/button";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
-import { buildStaffShareUrl } from "@/lib/staff-share-url";
+import { buildStaffShareUrl, buildStationScreenShareUrl } from "@/lib/staff-share-url";
+import type { StaffScreensByStation } from "@/lib/staff-member-access-url";
 
 type Venue = { id: string; name: string; slug: string };
 type StaffMember = {
@@ -47,37 +51,101 @@ type StaffMember = {
   memberToken: string;
 };
 
-function memberWaiterUrl(venueSlug: string, memberToken: string, zoneId?: string | null) {
-  return buildStaffShareUrl(venueSlug, memberToken, zoneId);
+const PASS_STATIONS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
+
+type StaffAccessLink =
+  | { kind: "waiter"; url: string }
+  | { kind: "pass"; url: string; station: PassStationInput }
+  | { kind: "missing-screen"; station: PassStationInput }
+  | { kind: "invalid-assignment" };
+
+function memberAccessLink(
+  venueSlug: string,
+  member: StaffMember,
+  posts: VenuePost[],
+  screensByStation: StaffScreensByStation,
+): StaffAccessLink {
+  const assignment = staffPrimaryAssignment(member.stations);
+  const linkKind = staffAssignmentLinkKind(assignment, posts);
+  if (linkKind === "invalid") return { kind: "invalid-assignment" };
+  const station = resolveStaffAssignmentToPassInput(assignment, posts);
+  if (station) {
+    const screens = screensByStation[station] ?? [];
+    const picked = pickStationScreenForStaffAssignment(assignment, posts, screens);
+    if (picked) {
+      return {
+        kind: "pass",
+        url: buildStationScreenShareUrl(picked.station, venueSlug, picked.screenToken),
+        station: picked.station,
+      };
+    }
+    return { kind: "missing-screen", station };
+  }
+  return {
+    kind: "waiter",
+    url: buildStaffShareUrl(venueSlug, member.memberToken, member.zoneId),
+  };
 }
 
 function StaffMemberLinkActions({
   venueId,
   venueSlug,
   member,
+  posts,
+  screensByStation,
   labels,
   busy,
   onTokenRotated,
+  compact = false,
 }: {
   venueId: string;
   venueSlug: string;
   member: StaffMember;
+  posts: VenuePost[];
+  screensByStation: StaffScreensByStation;
   labels: {
     viewLink: string;
+    viewLinkTablet: string;
     copyLink: string;
     copied: string;
     rotateLink: string;
     rotateConfirm: (name: string) => string;
+    missingScreen: string;
+    invalidAssignment: string;
   };
   busy: boolean;
   onTokenRotated: (memberId: string, memberToken: string) => void;
+  compact?: boolean;
 }) {
-  const url = useMemo(
-    () => memberWaiterUrl(venueSlug, member.memberToken, member.zoneId),
-    [venueSlug, member.memberToken, member.zoneId],
+  const access = useMemo(
+    () => memberAccessLink(venueSlug, member, posts, screensByStation),
+    [venueSlug, member, posts, screensByStation],
   );
+  const viewLabel =
+    access.kind === "pass" ? labels.viewLinkTablet : labels.viewLink;
   const [copied, setCopied] = useState(false);
   const [rotating, setRotating] = useState(false);
+
+  if (access.kind === "invalid-assignment") {
+    return (
+      <p className="text-center text-[10px] leading-snug text-amber-700" title={labels.invalidAssignment}>
+        {labels.invalidAssignment}
+      </p>
+    );
+  }
+
+  if (access.kind === "missing-screen") {
+    return (
+      <p className="text-center text-[10px] leading-snug text-amber-700">
+        {labels.missingScreen}{" "}
+        <Link href="/dashboard/settings?tab=screens" className="font-semibold underline">
+          →
+        </Link>
+      </p>
+    );
+  }
+
+  const url = access.url;
 
   async function copy() {
     try {
@@ -112,7 +180,42 @@ function StaffMemberLinkActions({
     }
   }
 
-  return (
+  return compact ? (
+    <div className="flex items-center justify-center gap-1">
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
+        title={viewLabel}
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+        <span className="sr-only">{viewLabel}</span>
+      </a>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => void copy()}
+        className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+        title={copied ? labels.copied : labels.copyLink}
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        <span className="sr-only">{copied ? labels.copied : labels.copyLink}</span>
+      </button>
+      {access.kind === "waiter" ? (
+        <button
+          type="button"
+          disabled={busy || rotating}
+          onClick={() => void rotate()}
+          className={dashboardTextActionClass("warning")}
+          title={labels.rotateLink}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${rotating ? "animate-spin" : ""}`} />
+          <span className="sr-only">{labels.rotateLink}</span>
+        </button>
+      ) : null}
+    </div>
+  ) : (
     <div className="space-y-2">
       <input
         type="text"
@@ -130,7 +233,7 @@ function StaffMemberLinkActions({
           className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
         >
           <ExternalLink className="h-3.5 w-3.5" />
-          {labels.viewLink}
+          {viewLabel}
         </a>
         <button
           type="button"
@@ -141,16 +244,18 @@ function StaffMemberLinkActions({
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? labels.copied : labels.copyLink}
         </button>
-        <button
-          type="button"
-          disabled={busy || rotating}
-          onClick={() => void rotate()}
-          className={dashboardTextActionClass("warning")}
-          title={labels.rotateLink}
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${rotating ? "animate-spin" : ""}`} />
-          {labels.rotateLink}
-        </button>
+        {access.kind === "waiter" ? (
+          <button
+            type="button"
+            disabled={busy || rotating}
+            onClick={() => void rotate()}
+            className={dashboardTextActionClass("warning")}
+            title={labels.rotateLink}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${rotating ? "animate-spin" : ""}`} />
+            {labels.rotateLink}
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -161,11 +266,13 @@ function StaffMessagesChips({
   scopeId,
   langCode,
   emptyHint,
+  compact = false,
 }: {
   config: VenueOperationsConfig | null;
   scopeId: string;
   langCode: "GR" | "EN";
   emptyHint?: string;
+  compact?: boolean;
 }) {
   const enabledPosts = useMemo(
     () => enabledVenuePosts(config ?? undefined, langCode),
@@ -180,25 +287,35 @@ function StaffMessagesChips({
   );
   const items = [...new Set(visible.labels.filter(Boolean))];
   if (items.length === 0) {
-    return emptyHint ? <p className="mt-1.5 text-[11px] text-slate-400">{emptyHint}</p> : null;
+    return emptyHint ? (
+      <p className={`text-slate-400 ${compact ? "text-[10px]" : "mt-1.5 text-[11px]"}`}>
+        {emptyHint}
+      </p>
+    ) : null;
   }
+  const maxItems = compact ? 4 : 5;
   return (
-    <ul className="mt-1.5 flex flex-wrap gap-1">
-      {items.slice(0, 5).map((item, index) => (
+    <ul className={`flex flex-wrap ${compact ? "gap-0.5" : "mt-1.5 gap-1"}`}>
+      {items.slice(0, maxItems).map((item, index) => (
         <li
           key={`${item}-${index}`}
-          className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+          className={`max-w-[7.5rem] truncate rounded-full font-medium ${
+            compact ? "px-1.5 py-px text-[9px] leading-4" : "px-2 py-0.5 text-[10px] font-semibold"
+          }`}
           style={{
             backgroundColor: `${color}18`,
             color,
             border: `1px solid ${color}40`,
           }}
+          title={item}
         >
           {item}
         </li>
       ))}
-      {items.length > 5 ? (
-        <li className="self-center text-[10px] text-slate-400">+{items.length - 5}</li>
+      {items.length > maxItems ? (
+        <li className={`self-center text-slate-400 ${compact ? "text-[9px]" : "text-[10px]"}`}>
+          +{items.length - maxItems}
+        </li>
       ) : null}
     </ul>
   );
@@ -227,33 +344,44 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const [members, setMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
-  const [roleLabel, setRoleLabel] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [postAssignment, setPostAssignment] = useState("services");
-  const [messageScope, setMessageScope] = useState("services");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [editRole, setEditRole] = useState("");
   const [editZoneId, setEditZoneId] = useState("");
   const [editPostAssignment, setEditPostAssignment] = useState("services");
-  const [editMessageScope, setEditMessageScope] = useState("services");
   const [busy, setBusy] = useState<string | null>(null);
+  const [screensByStation, setScreensByStation] = useState<StaffScreensByStation>({});
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const loadGenerationRef = useRef(0);
+  const screenLoadGenerationRef = useRef(0);
 
   const venue = venues.find((v) => v.id === venueId);
   const zonesReady = !spotsLoading && zoneGroups.length > 0;
   const postsReady = !opsLoading;
 
   useEffect(() => {
-    if (zoneGroups.length > 0 && !zoneId) {
+    if (zoneGroups.length === 0) return;
+    if (staffPostRequiresZoneAssignment(postAssignment) && !zoneId) {
       setZoneId(zoneGroups[0]!.id);
     }
-  }, [zoneGroups, zoneId]);
+  }, [zoneGroups, postAssignment, zoneId]);
 
   function zoneLabel(id: string | null | undefined): string {
-    if (!id) return "—";
+    if (!id) return S.colSpaceAll;
     return zoneGroups.find((z) => z.id === id)?.label ?? id;
+  }
+
+  function zoneLabelForMember(member: StaffMember): string {
+    const assignment = staffPrimaryAssignment(member.stations);
+    if (!staffPostRequiresZoneAssignment(assignment)) return S.colSpaceAll;
+    return zoneLabel(member.zoneId);
+  }
+
+  function messageScopeForPost(post: string): string | null {
+    if (post === "services" || post === "all") return null;
+    if (enabledPosts.some((row) => row.id === post)) return post;
+    return null;
   }
 
   function postOptions(): Array<{ id: string; label: string }> {
@@ -263,15 +391,8 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     ];
   }
 
-  function messageScopeOptions(): Array<{ id: string; label: string }> {
-    return [
-      { id: "services", label: S.messagesScopeServices },
-      ...enabledPosts.map((post) => ({ id: post.id, label: post.label.trim() })),
-    ];
-  }
-
-  function messageScopeLabel(scopeId: string): string {
-    return messageScopeOptions().find((option) => option.id === scopeId)?.label ?? scopeId;
+  function roleLabelFromPost(assignment: string): string {
+    return staffAssignmentLabelForLang(assignment, langCode, venuePosts);
   }
 
   function onMemberTokenRotated(memberId: string, memberToken: string) {
@@ -310,9 +431,49 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     void reload();
   }, [reload]);
 
+  const reloadScreens = useCallback(async () => {
+    if (!venueId) {
+      setScreensByStation({});
+      return;
+    }
+    const generation = ++screenLoadGenerationRef.current;
+    const next: StaffScreensByStation = {};
+    await Promise.all(
+      PASS_STATIONS.map(async (station) => {
+        const res = await fetch(`/api/venues/${venueId}/station-screens?station=${station}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          screens?: Array<{ label: string; screenToken: string }>;
+        };
+        if (data.screens?.length) next[station] = data.screens;
+      }),
+    );
+    if (generation === screenLoadGenerationRef.current) {
+      setScreensByStation(next);
+    }
+  }, [venueId]);
+
+  useEffect(() => {
+    void reloadScreens();
+  }, [reloadScreens]);
+
+  useEffect(() => {
+    const refresh = () => void reloadScreens();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [reloadScreens]);
+
   async function addMember(e: React.FormEvent) {
     e.preventDefault();
-    if (!venueId || !name.trim() || !roleLabel.trim() || !zoneId) return;
+    if (!venueId || !name.trim()) return;
+    if (staffPostRequiresZoneAssignment(postAssignment) && !zoneId) return;
     setBusy("add");
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members`, {
@@ -320,19 +481,18 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          roleLabel: roleLabel.trim(),
-          zoneId,
+          roleLabel: roleLabelFromPost(postAssignment),
+          zoneId: zoneId || null,
           stations: staffAssignmentsFromPrimary(postAssignment),
-          messageScope,
+          messageScope: messageScopeForPost(postAssignment),
         }),
       });
       const data = await res.json();
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setName("");
-        setRoleLabel("");
         setPostAssignment("services");
-        setMessageScope("services");
+        setZoneId("");
         await reload();
       }
     } finally {
@@ -341,16 +501,15 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   }
 
   function startEdit(member: StaffMember) {
+    const assignment = staffPrimaryAssignment(member.stations);
     setEditingId(member.id);
     setEditName(member.name);
-    setEditRole(member.roleLabel);
-    setEditZoneId(member.zoneId ?? zoneGroups[0]?.id ?? "");
-    setEditPostAssignment(staffPrimaryAssignment(member.stations));
-    setEditMessageScope(resolveStaffMessageScope(member, venuePosts));
+    setEditZoneId(staffPostRequiresZoneAssignment(assignment) ? (member.zoneId ?? "") : "");
+    setEditPostAssignment(assignment);
   }
 
   async function saveEdit(memberId: string) {
-    if (!venueId || !editZoneId) return;
+    if (!venueId || !editZoneId && staffPostRequiresZoneAssignment(editPostAssignment)) return;
     setBusy(`edit-${memberId}`);
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members/${memberId}`, {
@@ -358,10 +517,10 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: editName.trim(),
-          roleLabel: editRole.trim(),
-          zoneId: editZoneId,
+          roleLabel: roleLabelFromPost(editPostAssignment),
+          zoneId: editZoneId || null,
           stations: staffAssignmentsFromPrimary(editPostAssignment),
-          messageScope: editMessageScope,
+          messageScope: messageScopeForPost(editPostAssignment),
         }),
       });
       const data = await res.json();
@@ -400,31 +559,28 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
   const linkLabels = {
     viewLink: S.viewLink,
+    viewLinkTablet: S.viewLinkTablet,
     copyLink: S.copyLink,
     copied: S.copied,
     rotateLink: S.rotateLink,
     rotateConfirm: S.rotateConfirm,
+    missingScreen: S.missingScreen,
+    invalidAssignment: S.invalidAssignment,
   };
-
-  const roleListId = "staff-role-suggestions";
 
   function renderAssignmentFields(
     values: {
       name: string;
-      role: string;
       zone: string;
       post: string;
-      messages: string;
     },
     onChange: {
       setName: (v: string) => void;
-      setRole: (v: string) => void;
       setZone: (v: string) => void;
       setPost: (v: string) => void;
-      setMessages: (v: string) => void;
     },
-    roleOptions: readonly string[],
   ) {
+    const chipsScope = messageScopeForPost(values.post);
     return (
       <>
         <td className="px-3 py-2 align-top">
@@ -437,21 +593,14 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           />
         </td>
         <td className="px-3 py-2 align-top">
-          <input
-            value={values.role}
-            onChange={(e) => onChange.setRole(e.target.value)}
-            list={roleListId}
-            maxLength={40}
-            placeholder={S.rolePlaceholder}
-            className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
-          />
-        </td>
-        <td className="px-3 py-2 align-top">
           <select
             value={values.zone}
             onChange={(e) => onChange.setZone(e.target.value)}
             className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
           >
+            {!staffPostRequiresZoneAssignment(values.post) ? (
+              <option value="">{S.colSpaceAll}</option>
+            ) : null}
             {zoneGroups.map((zone) => (
               <option key={zone.id} value={zone.id}>
                 {zone.label}
@@ -462,7 +611,15 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         <td className="px-3 py-2 align-top">
           <select
             value={values.post}
-            onChange={(e) => onChange.setPost(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              onChange.setPost(next);
+              if (staffPostRequiresZoneAssignment(next)) {
+                if (!values.zone && zoneGroups[0]) onChange.setZone(zoneGroups[0]!.id);
+              } else {
+                onChange.setZone("");
+              }
+            }}
             className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
           >
             {postOptions().map((option) => (
@@ -471,25 +628,17 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
               </option>
             ))}
           </select>
-        </td>
-        <td className="px-3 py-2 align-top">
-          <select
-            value={values.messages}
-            onChange={(e) => onChange.setMessages(e.target.value)}
-            className={`${dashboardFieldClass} w-full min-w-[9rem] text-sm`}
-          >
-            {messageScopeOptions().map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <StaffMessagesChips
-            config={opsConfig}
-            scopeId={values.messages}
-            langCode={langCode}
-            emptyHint={S.messagesPreviewEmpty}
-          />
+          {chipsScope ? (
+            <StaffMessagesChips
+              config={opsConfig}
+              scopeId={chipsScope}
+              langCode={langCode}
+              compact
+              emptyHint={S.messagesPreviewEmpty}
+            />
+          ) : (
+            <p className="mt-1.5 text-[10px] text-slate-400">{S.messagesScopeWaiter}</p>
+          )}
         </td>
       </>
     );
@@ -497,12 +646,6 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
   return (
     <div className="space-y-5">
-      <datalist id={roleListId}>
-        {staffRoleOptionsForLang(langCode).map((role) => (
-          <option key={role} value={role} />
-        ))}
-      </datalist>
-
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       <div className={dashboardCardClass}>
@@ -532,15 +675,15 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
         <form onSubmit={(e) => void addMember(e)} className="mt-6 space-y-4">
           <p className="text-sm font-semibold text-brand-navy">{S.addTitle}</p>
-          {!zonesReady ? (
+          {!postsReady ? (
+            <p className="text-sm text-slate-600">{S.loading}</p>
+          ) : staffPostRequiresZoneAssignment(postAssignment) && !zonesReady ? (
             <p className="text-sm text-slate-600">
               {S.noSpaces}{" "}
               <Link href="/dashboard/settings?tab=spaces" className="font-medium text-brand-blue hover:underline">
                 {S.manageSpacesLink}
               </Link>
             </p>
-          ) : !postsReady ? (
-            <p className="text-sm text-slate-600">{S.loading}</p>
           ) : (
             <>
               <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -548,10 +691,8 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                       <th className="px-3 py-2.5">{S.colName}</th>
-                      <th className="px-3 py-2.5">{S.colRole}</th>
                       <th className="px-3 py-2.5">{S.colSpace}</th>
                       <th className="px-3 py-2.5">{S.colPost}</th>
-                      <th className="px-3 py-2.5">{S.colMessages}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -559,19 +700,14 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       {renderAssignmentFields(
                         {
                           name,
-                          role: roleLabel,
                           zone: zoneId,
                           post: postAssignment,
-                          messages: messageScope,
                         },
                         {
                           setName,
-                          setRole: setRoleLabel,
                           setZone: setZoneId,
                           setPost: setPostAssignment,
-                          setMessages: setMessageScope,
                         },
-                        staffRoleOptionsForLang(langCode),
                       )}
                     </tr>
                   </tbody>
@@ -581,7 +717,11 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={busy !== null || !name.trim() || !roleLabel.trim() || !zoneId}
+                  disabled={
+                    busy !== null ||
+                    !name.trim() ||
+                    (staffPostRequiresZoneAssignment(postAssignment) && !zoneId)
+                  }
                   className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "md")}`}
                 >
                   <Plus className="h-4 w-4" />
@@ -602,18 +742,15 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         ) : members.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500">{S.empty}</p>
         ) : (
-          <div className="mt-4 space-y-4">
-            <div className="overflow-x-auto rounded-xl border border-slate-100">
-              <table className="min-w-full text-sm">
+          <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200/90">
+              <table className="w-full min-w-[52rem] text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    <th className="px-3 py-2.5">{S.colName}</th>
-                    <th className="px-3 py-2.5">{S.colRole}</th>
-                    <th className="px-3 py-2.5">{S.colSpace}</th>
-                    <th className="px-3 py-2.5">{S.colPost}</th>
-                    <th className="px-3 py-2.5">{S.colMessages}</th>
-                    <th className="px-3 py-2.5">{S.colLink}</th>
-                    <th className="px-3 py-2.5 text-right">{S.colActions}</th>
+                    <th className="w-[14%] px-4 py-3">{S.colName}</th>
+                    <th className="w-[12%] px-4 py-3">{S.colSpace}</th>
+                    <th className="min-w-[10rem] px-4 py-3">{S.colPost}</th>
+                    <th className="w-[9rem] px-4 py-3 text-center">{S.colLink}</th>
+                    <th className="w-[5.5rem] px-4 py-3 text-center">{S.colActions}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -627,21 +764,16 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                           {renderAssignmentFields(
                             {
                               name: editName,
-                              role: editRole,
                               zone: editZoneId,
                               post: editPostAssignment,
-                              messages: editMessageScope,
                             },
                             {
                               setName: setEditName,
-                              setRole: setEditRole,
                               setZone: setEditZoneId,
                               setPost: setEditPostAssignment,
-                              setMessages: setEditMessageScope,
                             },
-                            staffRoleOptionsWithLegacy(langCode, editRole),
                           )}
-                          <td className="px-3 py-2 align-top text-right" colSpan={2}>
+                          <td className="px-4 py-3 align-top text-right" colSpan={2}>
                             <div className="flex flex-wrap justify-end gap-2">
                               <button
                                 type="button"
@@ -653,7 +785,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                               </button>
                               <button
                                 type="button"
-                                disabled={isBusy || !editName.trim() || !editRole.trim() || !editZoneId}
+                                disabled={
+                                  isBusy ||
+                                  !editName.trim() ||
+                                  (staffPostRequiresZoneAssignment(editPostAssignment) &&
+                                    !editZoneId)
+                                }
                                 onClick={() => void saveEdit(member.id)}
                                 className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
                               >
@@ -665,44 +802,51 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       );
                     }
 
-                    const memberMessageScope = resolveStaffMessageScope(member, venuePosts);
+                    const primaryPost = staffPrimaryAssignment(member.stations);
+                    const chipsScope = messageScopeForPost(primaryPost);
 
                     return (
-                      <tr key={member.id} className="border-b border-slate-50 last:border-0">
-                        <td className="px-3 py-2.5 font-medium text-brand-navy">{member.name}</td>
-                        <td className="px-3 py-2.5 text-slate-600">{member.roleLabel}</td>
-                        <td className="px-3 py-2.5 text-slate-600">{zoneLabel(member.zoneId)}</td>
-                        <td className="px-3 py-2.5 text-slate-600">
-                          {staffAssignmentLabelForLang(
-                            staffPrimaryAssignment(member.stations),
-                            langCode,
-                            venuePosts,
+                      <tr key={member.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/40">
+                        <td className="px-4 py-3 align-middle font-medium text-brand-navy">
+                          {member.name}
+                        </td>
+                        <td className="px-4 py-3 align-middle text-slate-600">
+                          {zoneLabelForMember(member)}
+                        </td>
+                        <td className="px-4 py-3 align-middle text-slate-600">
+                          <p>
+                            {staffAssignmentLabelForLang(primaryPost, langCode, venuePosts)}
+                          </p>
+                          {chipsScope ? (
+                            <StaffMessagesChips
+                              config={opsConfig}
+                              scopeId={chipsScope}
+                              langCode={langCode}
+                              compact
+                            />
+                          ) : (
+                            <p className="mt-1 text-[10px] text-slate-400">{S.messagesScopeWaiter}</p>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-slate-600">
-                          <p className="text-sm">{messageScopeLabel(memberMessageScope)}</p>
-                          <StaffMessagesChips
-                            config={opsConfig}
-                            scopeId={memberMessageScope}
-                            langCode={langCode}
-                          />
-                        </td>
-                        <td className="px-3 py-2.5 align-top">
+                        <td className="px-4 py-3 align-middle">
                           {venue?.slug ? (
                             <StaffMemberLinkActions
                               venueId={venueId}
                               venueSlug={venue.slug}
                               member={member}
+                              posts={venuePosts}
+                              screensByStation={screensByStation}
                               labels={linkLabels}
                               busy={busy !== null}
                               onTokenRotated={onMemberTokenRotated}
+                              compact
                             />
                           ) : (
-                            <span className="text-xs text-slate-400">—</span>
+                            <span className="block text-center text-xs text-slate-400">—</span>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-right align-top">
-                          <div className="inline-flex items-center gap-1">
+                        <td className="px-4 py-3 align-middle">
+                          <div className="flex items-center justify-center gap-1">
                             <DashboardIconButton
                               variant="neutral"
                               disabled={isBusy}
@@ -727,7 +871,6 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                 </tbody>
               </table>
             </div>
-          </div>
         )}
       </div>
     </div>

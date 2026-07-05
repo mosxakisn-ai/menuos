@@ -6,6 +6,11 @@ import { configureWebPush, isPushEnabled } from "@/lib/push-config";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import { buildStaffWaiterUrl } from "@/lib/staff-auth";
 import {
+  loadStaffScreensByStation,
+  staffMemberAccessUrlFromScreens,
+  type StaffScreensByStation,
+} from "@/lib/staff-member-access-url";
+import {
   logPushDispatchDiagnostic,
   logPushDispatchError,
   type PushDispatchResult,
@@ -25,6 +30,7 @@ type StaffMemberPushRow = {
   venueId: string;
   memberToken: string;
   stations: string[];
+  zoneId: string | null;
 };
 
 function pushUrlForSub(
@@ -32,13 +38,24 @@ function pushUrlForSub(
   venueStaffToken: string,
   sub: PushSubRow,
   membersById: Map<string, StaffMemberPushRow>,
+  posts: ReturnType<typeof listVenuePosts>,
+  screensByStation: StaffScreensByStation,
 ): string {
   if (!sub.staffMemberId && sub.venueId === null) {
     return "/dashboard/waiter";
   }
   if (sub.staffMemberId) {
     const member = membersById.get(sub.staffMemberId);
-    if (member) return buildStaffWaiterUrl(venueSlug, member.memberToken);
+    if (member) {
+      return staffMemberAccessUrlFromScreens({
+        venueSlug,
+        memberToken: member.memberToken,
+        zoneId: member.zoneId,
+        stations: member.stations,
+        posts,
+        screensByStation,
+      });
+    }
   }
   return buildStaffWaiterUrl(venueSlug, venueStaffToken);
 }
@@ -51,6 +68,7 @@ function filterSubsForPassSignal(
   venueSlug: string,
   venueStaffToken: string,
   posts: ReturnType<typeof listVenuePosts>,
+  screensByStation: StaffScreensByStation,
 ): Array<PushSubRow & { url: string }> {
   return subs
     .filter((sub) => {
@@ -63,7 +81,7 @@ function filterSubsForPassSignal(
     })
     .map((sub) => ({
       ...sub,
-      url: pushUrlForSub(venueSlug, venueStaffToken, sub, membersById),
+      url: pushUrlForSub(venueSlug, venueStaffToken, sub, membersById, posts, screensByStation),
     }));
 }
 
@@ -73,6 +91,8 @@ function filterSubsForWaiterCall(
   venueId: string,
   venueSlug: string,
   venueStaffToken: string,
+  posts: ReturnType<typeof listVenuePosts>,
+  screensByStation: StaffScreensByStation,
 ): Array<PushSubRow & { url: string }> {
   return subs
     .filter((sub) => {
@@ -85,7 +105,7 @@ function filterSubsForWaiterCall(
     })
     .map((sub) => ({
       ...sub,
-      url: pushUrlForSub(venueSlug, venueStaffToken, sub, membersById),
+      url: pushUrlForSub(venueSlug, venueStaffToken, sub, membersById, posts, screensByStation),
     }));
 }
 
@@ -93,7 +113,7 @@ async function loadMembersById(staffMemberIds: string[]): Promise<Map<string, St
   if (staffMemberIds.length === 0) return new Map();
   const rows = await prisma.venueStaffMember.findMany({
     where: { id: { in: staffMemberIds } },
-    select: { id: true, venueId: true, memberToken: true, stations: true },
+    select: { id: true, venueId: true, memberToken: true, stations: true, zoneId: true },
   });
   return new Map(rows.map((row) => [row.id, row]));
 }
@@ -221,6 +241,7 @@ export async function pushPassSignalToStaff(input: {
   const membersById = await loadMembersById([...new Set(memberIds)]);
   const opsConfig = await getVenueOperationsConfig(input.venueId);
   const posts = listVenuePosts(opsConfig);
+  const screensByStation = await loadStaffScreensByStation(input.venueId);
 
   await dispatchPushWithDiagnostics(
     {
@@ -242,6 +263,7 @@ export async function pushPassSignalToStaff(input: {
         input.venue.slug,
         input.venue.staffToken,
         posts,
+        screensByStation,
       ),
     subscriptions.length,
   );
@@ -268,6 +290,9 @@ export async function pushWaiterCallToStaff(input: {
     .map((s) => s.staffMemberId)
     .filter((id): id is string => Boolean(id));
   const membersById = await loadMembersById([...new Set(memberIds)]);
+  const opsConfig = await getVenueOperationsConfig(input.venueId);
+  const posts = listVenuePosts(opsConfig);
+  const screensByStation = await loadStaffScreensByStation(input.venueId);
 
   await dispatchPushWithDiagnostics(
     {
@@ -287,6 +312,8 @@ export async function pushWaiterCallToStaff(input: {
         input.venueId,
         input.venue.slug,
         input.venue.staffToken,
+        posts,
+        screensByStation,
       ),
     subscriptions.length,
   );

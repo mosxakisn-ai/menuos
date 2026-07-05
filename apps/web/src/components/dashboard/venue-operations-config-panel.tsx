@@ -160,6 +160,7 @@ export function VenueOperationsConfigPanel({
   showHeader = true,
   intro,
   messagesByPost = false,
+  hideVenuePicker = false,
 }: {
   venues: Venue[];
   initialVenueId?: string;
@@ -168,6 +169,7 @@ export function VenueOperationsConfigPanel({
   intro?: PanelIntro;
   /** Messages tab: one editor per post; Services = map labels for waiters. */
   messagesByPost?: boolean;
+  hideVenuePicker?: boolean;
 }) {
   const { d, lang } = useDashboardCopy();
   const O = d.pages.settings.operations;
@@ -293,8 +295,13 @@ export function VenueOperationsConfigPanel({
     if (!draft) return;
     const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
     if (posts.length <= 1) return;
+    const removed = posts.find((post) => post.id === postId);
+    const remaining = posts.filter((post) => post.id !== postId);
     const nextChips = { ...(draft.quickChips ?? {}) };
     delete nextChips[postId];
+    if (removed && !remaining.some((post) => post.enabled && post.station === removed.station)) {
+      delete nextChips[removed.station];
+    }
     const nextColors = { ...(draft.postColors ?? {}) };
     delete nextColors[postId];
     const legacy = syncLegacyFromPosts(posts.filter((post) => post.id !== postId));
@@ -562,7 +569,7 @@ export function VenueOperationsConfigPanel({
           <DashboardSectionTitle title={O.title} description={O.description} />
         ) : null}
 
-        {venues.length > 1 ? (
+        {!hideVenuePicker && venues.length > 1 ? (
           <label className={intro || showHeader ? "mt-4 block max-w-md" : "block max-w-md"}>
             <span className={dashboardLabelClass}>{d.venue}</span>
             <select
@@ -689,33 +696,31 @@ export function VenueOperationsConfigPanel({
             ) : null}
 
             {show("chips") && messagesByPost ? (
-            <section className="space-y-4">
+            <section className="space-y-5">
               <div>
                 <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
                 <p className="mt-1 text-sm text-slate-600">{M.byPostHint}</p>
               </div>
 
-              <div className="flex flex-wrap items-end gap-3">
-                <label className="block min-w-[min(100%,14rem)] flex-1">
-                  <span className={dashboardLabelClass}>{M.selectPostLabel}</span>
-                  <select
-                    value={selectedMessagePostId}
-                    onChange={(e) => setSelectedMessagePostId(e.target.value)}
-                    disabled={enabledPosts.length === 0}
-                    className={`${dashboardFieldClass} mt-1 text-sm`}
-                  >
-                    {enabledPosts.length === 0 ? (
-                      <option value="">{M.noPostsHint}</option>
-                    ) : (
-                      enabledPosts.map((post) => (
-                        <option key={post.id} value={post.id}>
-                          {post.label.trim()}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </label>
-              </div>
+              <label className="block max-w-md">
+                <span className={dashboardLabelClass}>{M.selectPostLabel}</span>
+                <select
+                  value={selectedMessagePostId}
+                  onChange={(e) => setSelectedMessagePostId(e.target.value)}
+                  disabled={enabledPosts.length === 0}
+                  className={`${dashboardFieldClass} mt-1.5 text-sm`}
+                >
+                  {enabledPosts.length === 0 ? (
+                    <option value="">{M.noPostsHint}</option>
+                  ) : (
+                    enabledPosts.map((post) => (
+                      <option key={post.id} value={post.id}>
+                        {post.label.trim()}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </label>
 
               {enabledPosts.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
@@ -728,24 +733,65 @@ export function VenueOperationsConfigPanel({
                     const post = enabledPosts.find((row) => row.id === selectedMessagePostId);
                     if (!post) return null;
                     const postIndex = enabledPosts.findIndex((row) => row.id === post.id);
-                    const chips = draft.quickChips?.[post.id] ?? [];
+                    const postLabel = post.label.trim();
+                    const hasCustom = Boolean(draft.quickChips?.[post.id]?.length);
+                    const chips =
+                      draft.quickChips?.[post.id] ??
+                      quickChipsForPost(draft, post.id, langCode);
                     const postColor = getPostMessageColor(draft, post.id, postIndex + 1);
                     return (
-                      <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5">
-                        <p className="text-sm text-slate-600">{M.passPostHint}</p>
-                        <PostColorPicker
-                          label={M.postColorLabel}
-                          value={postColor}
-                          onChange={(color) => setPostColor(post.id, color)}
-                        />
-                        <div className="mt-4">
-                          <MessageChipList
-                            items={chips}
-                            onChange={(next) => setQuickChips(post.id, next)}
-                            placeholder={O.chipPlaceholder}
+                      <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
+                        <div className="border-b border-slate-100 bg-gradient-to-r from-brand-blue/[0.06] to-cyan-400/[0.05] px-5 py-4">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span
+                              className="h-3.5 w-3.5 shrink-0 rounded-full ring-2 ring-white"
+                              style={{ backgroundColor: postColor }}
+                              aria-hidden
+                            />
+                            <h4 className="text-lg font-semibold text-brand-navy">{postLabel}</h4>
+                          </div>
+                          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                            {M.messagesForPost(postLabel)}
+                          </p>
+                        </div>
+
+                        <div className="space-y-6 px-5 py-5">
+                          <PostColorPicker
+                            label={M.postColorLabel}
+                            value={postColor}
+                            onChange={(color) => setPostColor(post.id, color)}
+                          />
+
+                          <div>
+                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                              <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                {M.messagesListLabel}
+                              </h5>
+                              {hasCustom ? (
+                                <button
+                                  type="button"
+                                  onClick={() => resetQuickChips(post)}
+                                  className="text-xs font-medium text-slate-500 hover:text-brand-blue"
+                                >
+                                  {M.resetPostMessages}
+                                </button>
+                              ) : null}
+                            </div>
+                            <MessageChipList
+                              items={chips}
+                              onChange={(next) => setQuickChips(post.id, next)}
+                              placeholder={O.chipPlaceholder}
+                              addLabel={M.addMapMessage}
+                            />
+                          </div>
+
+                          <PostMessagePreview
+                            title={M.previewLabel}
+                            color={postColor}
+                            labels={chips}
+                            emptyHint={M.previewEmpty}
                           />
                         </div>
-                        <PostMessagePreview color={postColor} labels={chips} />
                       </div>
                     );
                   })()
@@ -843,8 +889,8 @@ export function VenueOperationsConfigPanel({
                       <p className="text-sm font-semibold text-brand-navy">{Z.addSpaceTitle}</p>
                       <p className="mt-1 text-sm text-slate-600">{Z.addSpaceDesc}</p>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                      <label className="block sm:col-span-2 lg:col-span-1">
+                    <div className="flex flex-wrap items-end gap-x-3 gap-y-3">
+                      <label className="block min-w-[min(100%,11rem)] flex-1 basis-44">
                         <span className={dashboardLabelClass}>{Z.spaceKindLabel}</span>
                         <select
                           value={newSpaceKind}
@@ -858,7 +904,7 @@ export function VenueOperationsConfigPanel({
                         </select>
                       </label>
                       {newSpaceKind === "prefixed" ? (
-                        <label className="block sm:col-span-2">
+                        <label className="block min-w-[min(100%,9rem)] flex-[1.5] basis-36">
                           <span className={dashboardLabelClass}>{Z.spaceNameLabel}</span>
                           <input
                             value={newSpaceName}
@@ -868,10 +914,8 @@ export function VenueOperationsConfigPanel({
                             className={dashboardFieldClass}
                           />
                         </label>
-                      ) : (
-                        <div className="hidden sm:col-span-2 sm:block" aria-hidden />
-                      )}
-                      <label className="block">
+                      ) : null}
+                      <label className="block w-[4.25rem] shrink-0">
                         <span className={dashboardLabelClass}>{Z.fromLabel}</span>
                         <input
                           type="number"
@@ -879,10 +923,10 @@ export function VenueOperationsConfigPanel({
                           max={999}
                           value={newSpaceFrom}
                           onChange={(e) => setNewSpaceFrom(e.target.value)}
-                          className={dashboardFieldClass}
+                          className={`${dashboardFieldClass} w-full px-1.5 text-center tabular-nums`}
                         />
                       </label>
-                      <label className="block">
+                      <label className="block w-[4.25rem] shrink-0">
                         <span className={dashboardLabelClass}>{Z.toLabel}</span>
                         <input
                           type="number"
@@ -891,25 +935,25 @@ export function VenueOperationsConfigPanel({
                           value={newSpaceTo}
                           onChange={(e) => setNewSpaceTo(e.target.value)}
                           placeholder={FORM_PLACEHOLDERS.spotBulkTo}
-                          className={dashboardFieldClass}
+                          className={`${dashboardFieldClass} w-full px-1.5 text-center tabular-nums`}
                         />
                       </label>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="submit"
-                        disabled={zoneBusy !== null}
-                        className={buttonClass("primary", "sm")}
-                      >
-                        {zoneBusy === "create" ? Z.creatingSpace : Z.createSpace}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowAddSpace(false)}
-                        className={buttonClass("secondary", "sm")}
-                      >
-                        {d.pages.settings.personnel.cancelEdit}
-                      </button>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <button
+                          type="submit"
+                          disabled={zoneBusy !== null}
+                          className={buttonClass("primary", "sm")}
+                        >
+                          {zoneBusy === "create" ? Z.creatingSpace : Z.createSpace}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddSpace(false)}
+                          className={buttonClass("secondary", "sm")}
+                        >
+                          {d.pages.settings.personnel.cancelEdit}
+                        </button>
+                      </div>
                     </div>
                   </form>
                 ) : null}

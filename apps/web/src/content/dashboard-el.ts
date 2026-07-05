@@ -689,6 +689,8 @@ export const DASHBOARD_EL = {
       openCatalog: "Άνοιγμα καταλόγου",
       generatedSuccess: "Το QR δημιουργήθηκε! Κατέβασέ το ή εκτύπωσέ το.",
       spotsTitle: "Τραπέζια, δωμάτια & ξαπλώστρες",
+      zonesDesc:
+        "Άνοιξε κάθε χώρο για να δεις QR ανά τραπέζι — προβολή, κατέβασμα ή δοκιμή link.",
       spotsDesc:
         "Πρόσθεσε κάθε θέση μία φορά. Κάθε QR «δένει» τον αριθμό — ο σερβιτόρος βλέπει ακριβώς από πού καλούν.",
       spotTypeLabel: "Τύπος",
@@ -770,6 +772,7 @@ export const DASHBOARD_EL = {
         general: "Λογαριασμός",
         staff: "Προσωπικό",
         posts: "Πόστα",
+        screens: "Οθόνες",
         venue: "Κατάστημα",
         messages: "Μηνύματα",
         tables: "Τραπέζια",
@@ -782,6 +785,18 @@ export const DASHBOARD_EL = {
         hint: "Μέχρι 12 πόστα. Πάτα «Νέο πόστο» και γράψε τον ρόλο (π.χ. Κουζίνα, Bar).",
         postNamePlaceholder: "π.χ. Κουζίνα, Bar",
         postTypeHint: "Τύπος tablet — κουζίνα, μπαρ κ.λπ. (για routing πάσου).",
+      },
+      screensTab: {
+        title: "Οθόνες tablet",
+        description:
+          "Links για tablet κουζίνας, μπαρ κ.λπ. — άνοιγμα χωρίς login. Το link στο Προσωπικό δείχνει εδώ.",
+        hint: "Όνομα οθόνης = ίδιο με το πόστο για να δέσει σωστά (π.χ. «Grill»).\nΓια 2η κουζίνα: πρόσθεσε νέα οθόνη με όνομα του πόστου.",
+        stationLabels: {
+          kitchen: "Κουζίνα",
+          bar: "Μπαρ",
+          cold: "Κρύα",
+          dessert: "Γλυκά",
+        },
       },
       linksTab: {
         title: "Links προσωπικού ανά χώρο",
@@ -812,6 +827,12 @@ export const DASHBOARD_EL = {
         servicesPostTitle: "Services — Σερβιτόρος",
         servicesPostHint: "Τι βλέπει στον χάρτη θέσεων (κλήση πελάτη, έτοιμο κουζίνας κ.λπ.).",
         passPostHint: "Πρόσθεσε τα μηνύματα που θέλεις για αυτό το πόστο — ένα-ένα.",
+        messagesForPost: (postName: string) =>
+          `Τα μηνύματα που στέλνει το πόστο «${postName}» από tablet (π.χ. μάγειρας, μπαρ).`,
+        messagesListLabel: "Τα μηνύματα",
+        previewLabel: "Προεπισκόπηση",
+        previewEmpty: "Δεν έχεις προσθέσει μηνύματα ακόμα.",
+        resetPostMessages: "Καθαρισμός μηνυμάτων",
         postColorLabel: "Χρώμα πόστου",
         addPost: "Νέο πόστο",
         addMapMessage: "Πρόσθεσε μήνυμα",
@@ -896,14 +917,16 @@ export const DASHBOARD_EL = {
       personnel: {
         title: "Προσωπικό",
         description:
-          "Φτιάξε εργαζόμενο: όνομα, ρόλος, χώρος, πόστο και μηνύματα. Κάθε άτομο παίρνει δικό του link.",
+          "Φτιάξε εργαζόμενο: όνομα, χώρος και πόστο. Σερβιτόρος → link κινητού. Κουζίνα/μπαρ → link tablet (οθόνη πάσου).",
         addTitle: "Νέος εργαζόμενος",
         addStaff: "Προσθήκη",
         listTitle: "Εργαζόμενοι",
         editTitle: "Επεξεργασία",
         cancelEdit: "Άκυρο",
         formHint:
-          "Services = κλήσεις πελάτη από QR. Τα υπόλοιπα πόστα = ειδοποιήσεις πάσου από κουζίνα/μπαρ.",
+          "Το πόστο ορίζει τα μηνύματα (Ρυθμίσεις → Μηνύματα). Σερβιτόρος = κλήσεις πελάτη, όχι μηνύματα πάσου.",
+        messagesScopeWaiter: "Κλήσεις πελάτη — χωρίς μηνύματα πάσου",
+        colSpaceAll: "Όλοι οι χώροι",
         stationsHint:
           "Services = κλήσεις πελάτη. Το πόστο = ποιες ειδοποιήσεις πάσου βλέπει.",
         managePostsLink: "Ρύθμιση πόστων →",
@@ -921,12 +944,15 @@ export const DASHBOARD_EL = {
         colSpace: "Χώρος",
         colPost: "Πόστο",
         colMessages: "Μηνύματα",
-        messagesScopeServices: "Services — χάρτης θέσεων",
         colStations: "Πόστο",
         colLink: "Link",
-        colLinkHint: "Στείλτε το στο κινητό — άνοιγμα χωρίς login.",
+        colLinkHint:
+          "Σερβιτόρος: link κινητού (χάρτης). Κουζίνα/μπαρ: link tablet — άνοιγμα χωρίς login.",
         colActions: "Ενέργειες",
         viewLink: "Προβολή",
+        viewLinkTablet: "Άνοιγμα οθόνης",
+        missingScreen: "Δεν υπάρχει οθόνη — Ρυθμίσεις → Οθόνες.",
+        invalidAssignment: "Το πόστο δεν είναι ενεργό — επεξεργασία.",
         copyLink: "Αντιγραφή",
         copied: "Αντιγράφηκε!",
         rotateLink: "Νέο link",
@@ -946,7 +972,7 @@ export const DASHBOARD_EL = {
         delete: "Διαγραφή",
         saveEdit: "Αποθήκευση",
         stationLabels: {
-          services: "Services",
+          services: "Σερβιτόρος",
           kitchen: "Κουζίνα",
           bar: "Μπαρ",
           cold: "Κρύα",
