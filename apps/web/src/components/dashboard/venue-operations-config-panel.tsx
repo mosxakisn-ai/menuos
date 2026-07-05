@@ -715,6 +715,12 @@ export function VenueOperationsConfigPanel({
                   <Plus className="h-4 w-4" aria-hidden />
                   {M.addMessage}
                 </button>
+                <Link
+                  href="/dashboard/settings?tab=posts"
+                  className={`inline-flex shrink-0 items-center gap-1 ${buttonClass("secondary", "sm")}`}
+                >
+                  {M.addPostLink}
+                </Link>
               </div>
 
               {enabledPosts.length === 0 ? (

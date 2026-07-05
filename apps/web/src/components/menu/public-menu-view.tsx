@@ -806,11 +806,6 @@ export function PublicMenuView({
                     {cuisineLabel}
                   </p>
                 ) : null}
-                {activeMenu ? (
-                  <p className={cn("text-white/75", isEmbedded ? "mt-0.5 text-xs" : "mt-1 text-sm")}>
-                    {activeMenu.name}
-                  </p>
-                ) : null}
                 {tagline ? (
                   <p className={cn("text-white/70", isEmbedded ? "mt-1 text-xs leading-snug" : "mt-1.5 text-sm leading-relaxed")}>
                     {tagline}

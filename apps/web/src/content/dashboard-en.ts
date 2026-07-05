@@ -785,9 +785,10 @@ export const DASHBOARD_EN = {
           "First create posts in the Posts tab (e.g. Kitchen, Bar).\nThen pick a post here and add your own messages — one by one, manually.",
         byPostTitle: "Messages by post",
         byPostHint:
-          "Pick a post, tap Add, and type your message. Add as many as you need.",
+          "Pick a post, tap Add message. To create a new post (e.g. Bar), use the Posts tab.",
         selectPostLabel: "Choose post",
-        addMessage: "Add",
+        addMessage: "Add message",
+        addPostLink: "New post →",
         messagePlaceholder: "Type your message…",
         noPostsHint: "You have no active posts.",
         servicesPostTitle: "Services — Waiter",
