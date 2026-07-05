@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PassStationInput, TableTileState, VenueOperationsConfig, VenuePost, VenueSpotType } from "@menuos/shared";
+import type { TableTileState, VenueOperationsConfig, VenuePost, VenuePostStationInput, VenueSpotType } from "@menuos/shared";
 import {
-  DEFAULT_STATION_LABELS_EL,
-  DEFAULT_STATION_LABELS_EN,
+  DEFAULT_VENUE_POST_STATION_LABELS_EL,
+  DEFAULT_VENUE_POST_STATION_LABELS_EN,
   DEFAULT_TABLE_STATE_LABELS_EL,
   applyZoneLabelOverrides,
   enabledVenuePosts,
@@ -15,7 +15,7 @@ import {
   MAX_VENUE_POSTS,
   mergeTableStateLabels,
   newVenuePostId,
-  PASS_STATION_INPUTS,
+  VENUE_POST_STATION_INPUTS,
   postLabelLooksLikeFloorWaiter,
   isPlaceholderVenuePostLabel,
   isExcludedStaffVenuePost,
@@ -45,7 +45,7 @@ import {
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
 import { notifyLive360Updated } from "@/lib/live360-events";
-import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
+import { confirmDestructive } from "@/lib/confirm-action";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { DashboardIconButton } from "@/components/dashboard/dashboard-action-button";
 import { AlertTriangle, CheckCircle2, Plus, Trash2 } from "lucide-react";
@@ -360,7 +360,7 @@ export function VenueOperationsConfigPanel({
     updatePosts(posts.map((post) => (post.id === postId ? { ...post, label: value } : post)));
   }
 
-  function setPostStation(postId: string, station: PassStationInput) {
+  function setPostStation(postId: string, station: VenuePostStationInput) {
     if (!draft) return;
     const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
     updatePosts(posts.map((post) => (post.id === postId ? { ...post, station } : post)));
@@ -695,7 +695,9 @@ export function VenueOperationsConfigPanel({
                   <tbody>
                     {draftPosts.map((post) => {
                       const typeLabels =
-                        lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+                        lang === "EN"
+                          ? DEFAULT_VENUE_POST_STATION_LABELS_EN
+                          : DEFAULT_VENUE_POST_STATION_LABELS_EL;
                       return (
                         <tr
                           key={post.id}
@@ -737,12 +739,12 @@ export function VenueOperationsConfigPanel({
                             <select
                               value={post.station}
                               onChange={(e) =>
-                                setPostStation(post.id, e.target.value as PassStationInput)
+                                setPostStation(post.id, e.target.value as VenuePostStationInput)
                               }
                               className={`${dashboardFieldClass} w-full min-w-[9rem] py-2.5 text-sm`}
                               title={postsOnlyMode ? Posts.postTypeHint : O.postTypeHint}
                             >
-                              {PASS_STATION_INPUTS.map((station) => (
+                              {VENUE_POST_STATION_INPUTS.map((station) => (
                                 <option key={station} value={station}>
                                   {typeLabels[station]}
                                 </option>
@@ -794,7 +796,9 @@ export function VenueOperationsConfigPanel({
                     const hasCustom = items.length > 0;
                     const postColor = getPostMessageColor(draft, post.id, postIndex);
                     const stationLabels =
-                      lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+                      lang === "EN"
+                        ? DEFAULT_VENUE_POST_STATION_LABELS_EN
+                        : DEFAULT_VENUE_POST_STATION_LABELS_EL;
                     return (
                       <div
                         key={post.id}
@@ -1234,7 +1238,7 @@ export function VenueOperationsConfigPanel({
                 </div>
               ) : null}
 
-              <div className={`flex flex-wrap gap-3 ${postsOnlyMode ? "justify-end" : ""}`}>
+              <div className="flex flex-wrap justify-end gap-3">
                 <button
                   type="button"
                   disabled={saving}
@@ -1248,24 +1252,6 @@ export function VenueOperationsConfigPanel({
                 >
                   {saving ? O.saving : O.save}
                 </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={async () => {
-                  if (
-                    draft &&
-                    config &&
-                    JSON.stringify(draft) !== JSON.stringify(config) &&
-                    !(await confirmWarning(O.reloadDiscardConfirm))
-                  ) {
-                    return;
-                  }
-                  void reload();
-                }}
-                className={buttonClass("secondary")}
-              >
-                {O.reload}
-              </button>
               </div>
             </div>
           </div>

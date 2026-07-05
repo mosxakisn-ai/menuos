@@ -47,13 +47,13 @@ export async function PATCH(request: Request, { params }: Params) {
     );
   }
   const primaryPost = parsed.data.stations[0] ?? "services";
-  if (staffPostRequiresZoneAssignment(primaryPost) && !parsed.data.zoneId) {
+  if (staffPostRequiresZoneAssignment(primaryPost, posts) && !parsed.data.zoneId) {
     return NextResponse.json(
       { error: "Ο σερβιτόρος χρειάζεται συγκεκριμένο χώρο (π.χ. Σάλα ή Αυλή)." },
       { status: 400 },
     );
   }
-  const zoneId = normalizeStaffMemberZoneId(primaryPost, parsed.data.zoneId);
+  const zoneId = normalizeStaffMemberZoneId(primaryPost, parsed.data.zoneId, posts);
 
   const existing = await prisma.venueStaffMember.findFirst({
     where: { id: memberId, venueId },

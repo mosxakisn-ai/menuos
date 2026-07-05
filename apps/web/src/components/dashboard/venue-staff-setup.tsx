@@ -390,7 +390,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
   useEffect(() => {
     if (zoneGroups.length === 0) return;
-    if (staffPostRequiresZoneAssignment(postAssignment) && !zoneId) {
+    if (staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zoneId) {
       setZoneId(zoneGroups[0]!.id);
     }
   }, [zoneGroups, postAssignment, zoneId]);
@@ -402,7 +402,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
   function zoneLabelForMember(member: StaffMember): string {
     const assignment = staffPrimaryAssignment(member.stations);
-    if (!staffPostRequiresZoneAssignment(assignment)) return S.colSpaceAll;
+    if (!staffPostRequiresZoneAssignment(assignment, venuePosts)) return S.colSpaceAll;
     return zoneLabel(member.zoneId);
   }
 
@@ -504,7 +504,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   async function addMember(e: React.FormEvent) {
     e.preventDefault();
     if (!venueId || !name.trim()) return;
-    if (staffPostRequiresZoneAssignment(postAssignment) && !zoneId) {
+    if (staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zoneId) {
       setFlash({ type: "error", text: S.zoneRequired });
       return;
     }
@@ -539,13 +539,13 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     const assignment = staffPrimaryAssignment(member.stations);
     setEditingId(member.id);
     setEditName(member.name);
-    setEditZoneId(staffPostRequiresZoneAssignment(assignment) ? (member.zoneId ?? "") : "");
+    setEditZoneId(staffPostRequiresZoneAssignment(assignment, venuePosts) ? (member.zoneId ?? "") : "");
     setEditPostAssignment(assignment);
   }
 
   async function saveEdit(memberId: string) {
     if (!venueId) return;
-    if (!editZoneId && staffPostRequiresZoneAssignment(editPostAssignment)) {
+    if (!editZoneId && staffPostRequiresZoneAssignment(editPostAssignment, venuePosts)) {
       setFlash({ type: "error", text: S.zoneRequired });
       return;
     }
@@ -639,10 +639,10 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           <select
             value={values.zone}
             onChange={(e) => onChange.setZone(e.target.value)}
-            required={staffPostRequiresZoneAssignment(values.post)}
+            required={staffPostRequiresZoneAssignment(values.post, venuePosts)}
             className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
           >
-            {staffPostRequiresZoneAssignment(values.post) ? (
+            {staffPostRequiresZoneAssignment(values.post, venuePosts) ? (
               <option value="" disabled>
                 {S.selectSpacePlaceholder}
               </option>
@@ -663,7 +663,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
             onChange={(e) => {
               const next = e.target.value;
               onChange.setPost(next);
-              if (staffPostRequiresZoneAssignment(next)) {
+              if (staffPostRequiresZoneAssignment(next, venuePosts)) {
                 if (!values.zone && zoneGroups[0]) onChange.setZone(zoneGroups[0]!.id);
               } else {
                 onChange.setZone("");
@@ -735,7 +735,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           <p className="text-sm font-semibold text-brand-navy">{S.addTitle}</p>
           {!postsReady ? (
             <p className="text-sm text-slate-600">{S.loading}</p>
-          ) : staffPostRequiresZoneAssignment(postAssignment) && !zonesReady ? (
+          ) : staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zonesReady ? (
             <p className="text-sm text-slate-600">
               {S.noSpaces}{" "}
               <Link href="/dashboard/settings?tab=spaces" className="font-medium text-brand-blue hover:underline">
@@ -779,7 +779,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                   disabled={
                     busy !== null ||
                     !name.trim() ||
-                    (staffPostRequiresZoneAssignment(postAssignment) && !zoneId)
+                    (staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zoneId)
                   }
                   className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "md")}`}
                 >
@@ -847,7 +847,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                                 disabled={
                                   isBusy ||
                                   !editName.trim() ||
-                                  (staffPostRequiresZoneAssignment(editPostAssignment) &&
+                                  (staffPostRequiresZoneAssignment(editPostAssignment, venuePosts) &&
                                     !editZoneId)
                                 }
                                 onClick={() => void saveEdit(member.id)}

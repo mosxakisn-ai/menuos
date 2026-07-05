@@ -3,6 +3,7 @@ import { prisma } from "@menuos/db";
 import { randomUUID } from "crypto";
 import {
   DEFAULT_STATION_SCREEN_LABELS_EL,
+  isVenuePassPostStation,
   PASS_STATION_INPUTS,
   passStationInputToDb,
   staffAssignableVenuePosts,
@@ -156,6 +157,7 @@ export async function syncStationScreensFromPosts(
   const posts = staffAssignableVenuePosts(config, "GR");
   const postsByStation = new Map<PassStationInput, typeof posts>();
   for (const post of posts) {
+    if (!isVenuePassPostStation(post.station)) continue;
     const list = postsByStation.get(post.station) ?? [];
     list.push(post);
     postsByStation.set(post.station, list);

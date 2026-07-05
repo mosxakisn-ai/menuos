@@ -41,12 +41,16 @@ export async function GET(_req: Request, { params }: Params) {
         }),
   });
 
+  const opsConfig = await getVenueOperationsConfig(venueId);
+  const posts = listVenuePosts(opsConfig);
+
   const memberFixes: Promise<unknown>[] = [];
   const normalizedMembers = members.map((member) => {
     const stations = normalizeLegacyStaffStations(member.stations);
     const zoneId = normalizeStaffMemberZoneId(
       staffPrimaryAssignment(stations),
       member.zoneId,
+      posts,
     );
     const stationsChanged =
       stations.length !== member.stations.length ||
@@ -107,13 +111,13 @@ export async function POST(request: Request, { params }: Params) {
     );
   }
   const primaryPost = parsed.data.stations[0] ?? "services";
-  if (staffPostRequiresZoneAssignment(primaryPost) && !parsed.data.zoneId) {
+  if (staffPostRequiresZoneAssignment(primaryPost, posts) && !parsed.data.zoneId) {
     return NextResponse.json(
       { error: "Ο σερβιτόρος χρειάζεται συγκεκριμένο χώρο (π.χ. Σάλα ή Αυλή)." },
       { status: 400 },
     );
   }
-  const zoneId = normalizeStaffMemberZoneId(primaryPost, parsed.data.zoneId);
+  const zoneId = normalizeStaffMemberZoneId(primaryPost, parsed.data.zoneId, posts);
 
   const count = await prisma.venueStaffMember.count({ where: { venueId } });
   if (count >= 80) {

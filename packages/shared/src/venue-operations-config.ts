@@ -8,7 +8,44 @@ import {
 import { TABLE_TILE_STATES, type TableTileState } from "./waiter-table-grid";
 import type { SpotZoneGroup } from "./station-spot-zones";
 
-export const DEFAULT_ENABLED_STATIONS: PassStationInput[] = [...PASS_STATION_INPUTS];
+export const DEFAULT_ENABLED_STATIONS: PassStationInput[] = ["kitchen", "bar"];
+
+/** Post types in Settings → Πόστα (work roles — not legacy cold/dessert pass splits). */
+export const VENUE_POST_STATION_INPUTS = ["kitchen", "bar", "services"] as const;
+export type VenuePostStationInput = (typeof VENUE_POST_STATION_INPUTS)[number];
+export const venuePostStationSchema = z.enum(VENUE_POST_STATION_INPUTS);
+
+export const DEFAULT_VENUE_POST_STATION_LABELS_EL: Record<VenuePostStationInput, string> = {
+  kitchen: "Κουζίνα",
+  bar: "Μπαρ",
+  services: "Σερβιτόρος",
+};
+
+export const DEFAULT_VENUE_POST_STATION_LABELS_EN: Record<VenuePostStationInput, string> = {
+  kitchen: "Kitchen",
+  bar: "Bar",
+  services: "Services",
+};
+
+export function isVenuePassPostStation(
+  station: VenuePostStationInput,
+): station is "kitchen" | "bar" {
+  return station === "kitchen" || station === "bar";
+}
+
+function normalizeVenuePostStation(raw: string): VenuePostStationInput {
+  if (raw === "cold") return "kitchen";
+  if (raw === "dessert") return "bar";
+  if (raw === "kitchen" || raw === "bar" || raw === "services") return raw;
+  return "kitchen";
+}
+
+function migrateVenuePostStations(posts: VenuePost[]): VenuePost[] {
+  return posts.map((post) => ({
+    ...post,
+    station: normalizeVenuePostStation(post.station as string),
+  }));
+}
 
 export const DEFAULT_PASS_QUICK_CHIPS: Record<PassStationInput, string[]> = {
   kitchen: ["Ξέχασες τον πάγο", "Ξέχασες το ψωμί", "2 πιάτα μαζί", "Επείγον"],
@@ -99,7 +136,10 @@ export const venuePostSchema = z.object({
     }),
   label: stationLabelSchema,
   enabled: z.boolean(),
-  station: passStationInputSchema,
+  station: z
+    .string()
+    .transform((s) => normalizeVenuePostStation(s))
+    .pipe(venuePostStationSchema),
 });
 
 export type VenuePost = z.infer<typeof venuePostSchema>;
@@ -146,8 +186,9 @@ function uniqueStations(stations: PassStationInput[]): PassStationInput[] {
 }
 
 export function defaultVenuePosts(lang: "GR" | "EN" = "GR"): VenuePost[] {
-  const labels = lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
-  return PASS_STATION_INPUTS.map((station) => ({
+  const labels =
+    lang === "EN" ? DEFAULT_VENUE_POST_STATION_LABELS_EN : DEFAULT_VENUE_POST_STATION_LABELS_EL;
+  return (["kitchen", "bar"] as const).map((station) => ({
     id: station,
     label: labels[station],
     enabled: true,
@@ -159,13 +200,18 @@ export function postsFromLegacy(
   config: Pick<VenueOperationsConfig, "enabledStations" | "stationLabels">,
   lang: "GR" | "EN" = "GR",
 ): VenuePost[] {
-  const labels = lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
-  return PASS_STATION_INPUTS.map((station) => ({
-    id: station,
-    label: config.stationLabels?.[station]?.trim() || labels[station],
-    enabled: config.enabledStations.includes(station),
-    station,
-  }));
+  const labels =
+    lang === "EN" ? DEFAULT_VENUE_POST_STATION_LABELS_EN : DEFAULT_VENUE_POST_STATION_LABELS_EL;
+  const passStations: VenuePostStationInput[] = ["kitchen", "bar"];
+  return passStations.map((station) => {
+    const passStation = station as "kitchen" | "bar";
+    return {
+      id: station,
+      label: config.stationLabels?.[passStation]?.trim() || labels[station],
+      enabled: config.enabledStations.includes(passStation),
+      station,
+    };
+  });
 }
 
 export function listVenuePosts(
@@ -188,9 +234,14 @@ export function syncLegacyFromPosts(
   posts: VenuePost[],
 ): Pick<VenueOperationsConfig, "enabledStations" | "stationLabels"> {
   const enabled = posts.filter((post) => post.enabled);
-  const enabledStations = uniqueStations(enabled.map((post) => post.station));
+  const enabledStations = uniqueStations(
+    enabled
+      .map((post) => post.station)
+      .filter(isVenuePassPostStation),
+  );
   const stationLabels: NonNullable<VenueOperationsConfig["stationLabels"]> = {};
   for (const post of enabled) {
+    if (!isVenuePassPostStation(post.station)) continue;
     const fallback = DEFAULT_STATION_LABELS_EL[post.station];
     const trimmed = post.label.trim();
     if (trimmed && trimmed !== fallback) {
@@ -218,6 +269,7 @@ export function postLabelLooksLikeFloorWaiter(label: string): boolean {
 }
 
 export function isJunkVenuePost(post: VenuePost): boolean {
+  if (post.station === "services") return false;
   return postLabelLooksLikeFloorWaiter(post.label);
 }
 
@@ -290,6 +342,7 @@ function finalizeVenueOperationsConfig(
   data: Omit<VenueOperationsConfig, "posts"> & { posts?: VenuePost[] },
 ): VenueOperationsConfig {
   let posts = dedupeVenuePosts(data.posts?.length ? data.posts : postsFromLegacy(data));
+  posts = migrateVenuePostStations(posts);
   const removedIds = new Set(posts.filter(isJunkVenuePost).map((post) => post.id));
   posts = stripJunkVenuePosts(posts);
   if (posts.length === 0) {
@@ -318,7 +371,9 @@ function finalizeVenueOperationsConfig(
     ...legacy,
     quickChips,
     postColors,
-    enabledStations: uniqueStations(legacy.enabledStations),
+    enabledStations: uniqueStations(
+      legacy.enabledStations.filter((s) => s === "kitchen" || s === "bar"),
+    ),
     posts,
   };
 }
@@ -505,7 +560,12 @@ export function mergeTableStateLabels(
     const names = [
       ...new Set(
         listVenuePosts(config, lang)
-          .filter((post) => post.enabled && stations.includes(post.station))
+          .filter(
+            (post) =>
+              post.enabled &&
+              isVenuePassPostStation(post.station) &&
+              stations.includes(post.station),
+          )
           .map((post) => post.label.trim())
           .filter(Boolean),
       ),

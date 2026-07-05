@@ -138,7 +138,10 @@ export function resolveStaffAssignmentToPassInput(
 ): PassStationInput | null {
   if (isStaffSpecialOption(assignment)) return null;
   const post = posts?.find((row) => row.id === assignment);
-  if (post) return post.enabled ? post.station : null;
+  if (post) {
+    if (!post.enabled || post.station === "services") return null;
+    return post.station;
+  }
   if (PASS_STATION_INPUTS.includes(assignment as PassStationInput)) {
     return assignment as PassStationInput;
   }
@@ -211,6 +214,9 @@ export function staffPostStationSubtitle(
   if (assignment === "services" || assignment === "all") return null;
   const post = posts?.find((row) => row.id === assignment);
   if (!post) return null;
+  if (post.station === "services") {
+    return lang === "EN" ? "Waiter · phone" : "Σερβιτόρος · κινητό";
+  }
   const stationLabels = lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
   return lang === "EN"
     ? `${stationLabels[post.station]} · pass tablet`
@@ -337,16 +343,22 @@ export function waiterCallsVisibleToStaffMember(memberStations: string[]): boole
 }
 
 /** Floor waiters need one space; kitchen/bar pass posts work across all spaces. */
-export function staffPostRequiresZoneAssignment(assignment: string): boolean {
-  return assignment === "services";
+export function staffPostRequiresZoneAssignment(
+  assignment: string,
+  posts?: VenuePost[],
+): boolean {
+  if (assignment === "services" || assignment === "all") return true;
+  const post = posts?.find((row) => row.id === assignment);
+  return post?.station === "services";
 }
 
 /** Pass posts ignore zone; waiters require a zone id when set. */
 export function normalizeStaffMemberZoneId(
   assignment: string,
   zoneId: string | null | undefined,
+  posts?: VenuePost[],
 ): string | null {
-  if (!staffPostRequiresZoneAssignment(assignment)) return null;
+  if (!staffPostRequiresZoneAssignment(assignment, posts)) return null;
   const trimmed = zoneId?.trim();
   return trimmed || null;
 }
@@ -380,7 +392,10 @@ export function staffAssignmentLinkKind(
   if (assignment === "services") return "waiter";
   if (assignment === "all") return "waiter";
   const post = posts.find((row) => row.id === assignment);
-  if (post) return post.enabled ? "pass" : "invalid";
+  if (post) {
+    if (!post.enabled) return "invalid";
+    return post.station === "services" ? "waiter" : "pass";
+  }
   if (PASS_STATION_INPUTS.includes(assignment as PassStationInput)) return "pass";
   return "invalid";
 }

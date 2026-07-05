@@ -3,7 +3,6 @@
 import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
-import { SpaceZoneQrPanel } from "@/components/dashboard/space-zone-qr-panel";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
 import { VenueTablesBySpacePanel } from "@/components/dashboard/venue-tables-by-space-panel";
 import { VenueStaffSetup } from "@/components/dashboard/venue-staff-setup";
@@ -188,8 +187,6 @@ export function SettingsSpacesPanel({
         showHeader={false}
         hideVenuePicker
       />
-
-      <SpaceZoneQrPanel venues={venues} venueId={venueId} />
     </div>
   );
 }

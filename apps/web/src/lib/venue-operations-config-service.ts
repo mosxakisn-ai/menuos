@@ -76,6 +76,7 @@ export async function resanitizeAllVenueStaffAssignments(options?: {
       const sanitizedZone = normalizeStaffMemberZoneId(
         staffPrimaryAssignment(sanitizedStations),
         member.zoneId,
+        posts,
       );
       const stationsChanged =
         sanitizedStations.length !== member.stations.length ||
@@ -127,6 +128,7 @@ async function sanitizeVenueStaffAssignments(
       const sanitizedZone = normalizeStaffMemberZoneId(
         staffPrimaryAssignment(sanitizedStations),
         member.zoneId,
+        posts,
       );
       const stationsChanged =
         sanitizedStations.length !== member.stations.length ||
