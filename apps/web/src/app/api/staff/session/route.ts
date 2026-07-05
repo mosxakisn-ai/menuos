@@ -38,6 +38,8 @@ export async function GET(request: Request) {
 
   const token = createStaffSessionToken(auth.venue.id, key);
   const redirectTo = new URL(`/s/${venueSlug}`, resolvePublicOrigin(request));
+  const zone = url.searchParams.get("zone")?.trim();
+  if (zone) redirectTo.searchParams.set("zone", zone);
   const response = NextResponse.redirect(redirectTo, 302);
   response.cookies.set(STAFF_SESSION_COOKIE, token, staffSessionCookieOptions());
   return response;

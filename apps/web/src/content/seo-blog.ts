@@ -50,7 +50,7 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
       {
         heading: "Τιμή & δοκιμή",
         paragraphs: [
-          "Το Live 360° περιλαμβάνεται στη δωρεάν δοκιμή {trialDaysGen}, Basic και Pro — χωρίς επιπλέον χρέωση.",
+          "Το Live 360° (κλήση σερβιτόρου, live panel, οθόνες κουζίνας/bar) είναι στο πλάνο Pro — όχι στη δοκιμή ούτε στο Basic.",
           "Ξεκινήστε με εγγραφή, φτιάξτε κατάλογο, βάλτε QR και δοκιμάστε live panel την ίδια μέρα.",
         ],
       },
@@ -204,8 +204,8 @@ export const SEO_BLOG_POSTS: SeoBlogPost[] = [
       {
         heading: "Τι μπορείτε να δοκιμάσετε",
         paragraphs: [
-          "Πολυγλωσσικό menu (GR, EN, DE, FR), QR codes, κλήση σερβιτόρου από τραπέζι.",
-          "Δείτε live πώς φαίνεται το menu στους πελάτες με το demo: /m/demo-taverna?table=12",
+          "Πολυγλωσσικό menu (GR, EN, DE, FR) και QR codes — κατεβάζετε και τυπώνετε την ίδια μέρα.",
+          "Η κλήση σερβιτόρου και το Live 360° είναι στο πλάνο Pro — δοκιμάστε τα με αναβάθμιση μετά τη δοκιμή.",
         ],
       },
       {

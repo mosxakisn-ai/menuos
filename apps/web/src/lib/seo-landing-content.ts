@@ -349,12 +349,12 @@ function getLive360LandingCopy(locale: SeoLandingLocale, trialDays = TRIAL_DAYS)
       ? [
           "Το MenuOS Live · 360° συνδέει το QR menu με live συντονισμό: κλήσεις σερβιτόρου, παραγγελίες, σταθμοί κουζίνας/bar — όλα σε ένα panel, χωρίς ξεχωριστό σύστημα.",
           "Ιδανικό για εστιατόρια, beach bars και ξενοδοχεία που θέλουν ταχύτητα στην εξυπηρέτηση. Οι πελάτες σκανάρουν QR — εσείς βλέπετε live τι χρειάζεται κάθε τραπέζι, ξαπλώστρα ή δωμάτιο.",
-          `Ξεκινήστε με δωρεάν δοκιμή ${trial.trialDaysGen} — Live 360° included σε δοκιμή, Basic και Pro.`,
+          `Ξεκινήστε με δωρεάν δοκιμή ${trial.trialDaysGen} για QR κατάλογο — το Live 360° είναι στο πλάνο Pro.`,
         ]
       : [
           "MenuOS Live · 360° connects your QR menu with live coordination: waiter calls, orders, kitchen/bar stations — all in one panel, no separate system.",
           "Built for restaurants, beach bars and hotels that need faster service. Guests scan QR — you see live what each table, sunbed or room needs.",
-          `Start with a free ${trial.trialDaysAdj} trial — Live 360° included on trial, Basic and Pro.`,
+          `Start with a free ${trial.trialDaysAdj} trial for your QR catalog — Live 360° is on Pro.`,
         ],
     bullets: isEl
       ? [
@@ -496,8 +496,8 @@ export function getSeoLandingCopy(
         : `${subject} | MenuOS`;
 
   const metaDescription = isEl
-    ? `Φτιάξτε ${product} με Live 360° για ${context}. Πολυγλωσσικό menu, live κλήσεις, QR codes — δωρεάν δοκιμή ${trial.trialDaysGen}.`
-    : `Create a ${product} with Live 360° for ${context}. Multilingual menu, live calls, QR codes — free ${trial.trialDaysAdj} trial.`;
+    ? `Φτιάξτε ${product} για ${context}. Πολυγλωσσικός κατάλογος, QR codes — δωρεάν δοκιμή ${trial.trialDaysGen}. Live 360° στο Pro.`
+    : `Create a ${product} for ${context}. Multilingual catalog, QR codes — free ${trial.trialDaysAdj} trial. Live 360° on Pro.`;
 
   const h1 =
     config.kind === "product"

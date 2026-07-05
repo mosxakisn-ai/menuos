@@ -2,10 +2,7 @@
 
 import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  enabledVenuePosts,
-} from "@menuos/shared";
-import { StationScreensPanel } from "@/components/dashboard/station-screens-panel";
+import { SpaceStaffLinksPanel } from "@/components/dashboard/space-staff-links-panel";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
 import { VenueSpotsSetup } from "@/components/dashboard/venue-spots-setup";
@@ -17,7 +14,7 @@ import {
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
-type VenueSpotVenue = { id: string; name: string; slug: string };
+type VenueSpotVenue = { id: string; name: string; slug: string; staffToken?: string };
 
 function useVenuePicker(venues: VenueSpotVenue[]) {
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
@@ -108,13 +105,8 @@ export function SettingsPostsPanel({ venues }: { venues: VenueSpotVenue[] }) {
 }
 
 export function SettingsLinksPanel({ venues }: { venues: VenueSpotVenue[] }) {
-  const { d, lang } = useDashboardCopy();
+  const { d } = useDashboardCopy();
   const L = d.pages.settings.linksTab;
-  const { venueId, setVenueId } = useVenuePicker(venues);
-  const { config: opsConfig, loading } = useVenueOperationsConfig(venueId);
-
-  const langCode = lang === "EN" ? "EN" : "GR";
-  const enabledPosts = enabledVenuePosts(opsConfig ?? undefined, langCode);
 
   return (
     <div className="space-y-5">
@@ -123,29 +115,11 @@ export function SettingsLinksPanel({ venues }: { venues: VenueSpotVenue[] }) {
         description={L.description}
         hint={L.hint}
         venues={venues}
-        venueId={venueId}
-        onVenueChange={setVenueId}
+        venueId={venues[0]?.id ?? ""}
+        onVenueChange={() => {}}
+        hideVenuePicker
       />
-      {loading || !opsConfig ? (
-        <p className="text-sm text-slate-500">{L.loading}</p>
-      ) : enabledPosts.length === 0 ? (
-        <div className={dashboardCardClass}>
-          <p className="text-sm text-slate-600">{L.empty}</p>
-        </div>
-      ) : (
-        <div className="grid gap-5 md:grid-cols-2">
-          {enabledPosts.map((post) => (
-            <StationScreensPanel
-              key={post.id}
-              station={post.station}
-              titleOverride={post.label.trim()}
-              venues={venues}
-              venueId={venueId}
-              embedded
-            />
-          ))}
-        </div>
-      )}
+      <SpaceStaffLinksPanel venues={venues} />
     </div>
   );
 }

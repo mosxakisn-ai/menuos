@@ -50,6 +50,7 @@ export async function PATCH(request: Request, { params }: Params) {
     data: {
       name: parsed.data.name,
       roleLabel: parsed.data.roleLabel,
+      zoneId: parsed.data.zoneId,
       stations: parsed.data.stations,
     },
   });

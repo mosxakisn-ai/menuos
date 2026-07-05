@@ -47,7 +47,7 @@ export const SEO_PAGES = {
   home: {
     title: "Ψηφιακό menu & Live 360° — εστιατόρια, ξενοδοχεία & bars",
     description:
-      "QR menu και live συντονισμός 360° σε μία πλατφόρμα. Πολυγλωσσικό menu, κλήση σερβιτόρου, ενημέρωση τιμών online — χωρίς app για τον πελάτη. Δωρεάν δοκιμή {trialDaysGen}.",
+      "QR menu και live συντονισμός 360° σε μία πλατφόρμα. Πολυγλωσσικός κατάλογος, ενημέρωση τιμών online — χωρίς app για τον πελάτη. Live 360° και κλήση σερβιτόρου στο Pro. Δωρεάν δοκιμή {trialDaysGen}.",
     path: "/",
     breadcrumbLabel: "Αρχική",
     keywords: [
@@ -76,7 +76,7 @@ export const SEO_PAGES = {
   services: {
     title: "Υπηρεσίες — Ψηφιακό menu, Live 360° & QR codes",
     description:
-      "Υπηρεσίες MenuOS: ψηφιακό menu, QR codes, Live 360°, πολλαπλές γλώσσες, κλήση σερβιτόρου — για εστιατόρια και ξενοδοχεία.",
+      "Υπηρεσίες MenuOS: ψηφιακός κατάλογος, QR codes, 4 γλώσσες — και Live 360° με κλήση σερβιτόρου στο πλάνο Pro.",
     path: "/ypiresies",
     breadcrumbLabel: "Υπηρεσίες",
     keywords: ["υπηρεσίες QR menu", "Live 360", "ψηφιακό menu SaaS", "menu platform εστιατόριο"],
@@ -90,9 +90,9 @@ export const SEO_PAGES = {
     keywords: ["πώς φτιάχνω QR menu", "Live 360", "QR menu βήματα", "ψηφιακό menu οδηγός"],
   },
   pricing: {
-    title: "Τιμές — QR menu & Live 360° από {basicPrice}/μήνα",
+    title: "Τιμές — QR menu από {basicPrice}/μήνα · Live 360° στο Pro",
     description:
-      "Τιμές MenuOS: δωρεάν δοκιμή {trialDaysGen} με Live 360°, Basic {basicPrice}/μήνα, Pro {proPrice}/μήνα. QR menu, κλήση σερβιτόρου, live panel — χωρίς κρυφές χρεώσεις.",
+      "Τιμές MenuOS: δωρεάν δοκιμή {trialDaysGen} (1 κατάστημα, 1 κατάλογος, 50 πιάτα), Basic {basicPrice}/μήνα (5 κατάλογοι), Pro {proPrice}/μήνα (Live 360°, κλήση σερβιτόρου, PDF). Χωρίς κρυφές χρεώσεις.",
     path: "/pricing",
     breadcrumbLabel: "Τιμές",
     keywords: ["τιμές QR menu", "Live 360 τιμή", "κόστος ψηφιακού menu", "MenuOS pricing"],
@@ -147,7 +147,7 @@ export const SEO_HOME_FAQ = [
   },
   {
     q: "Τι είναι το MenuOS Live · 360°;",
-    a: "Live συντονισμός κλήσεων και παραγγελιών από QR menu — βλέπετε τι συμβαίνει στο κατάστημα σε πραγματικό χρόνο, χωρίς ξεχωριστό σύστημα.",
+    a: "Live συντονισμός κλήσεων και παραγγελιών από QR menu — διαθέσιμο στο πλάνο Pro, με live panel χωρίς ξεχωριστό σύστημα.",
   },
 ] as const;
 
@@ -170,20 +170,28 @@ export const SEO_QR_MENU_FAQ = [
   },
   {
     q: "Τι είναι το Live 360°;",
-    a: "Live panel για κλήσεις σερβιτόρου και παραγγελίες από QR — βλέπετε αναμονές, σταθμούς και ολοκληρώσεις σε πραγματικό χρόνο.",
+    a: "Live panel για κλήσεις σερβιτόρου και παραγγελίες από QR — στο πλάνο Pro. Βλέπετε αναμονές, σταθμούς και ολοκληρώσεις σε πραγματικό χρόνο.",
   },
 ] as const;
 
 export const SEO_PRICING_OFFERS = [
-  { name: "Δοκιμή {trialDaysGen}", price: 0, description: "1 κατάστημα, QR menu, Live 360°, 50 πιάτα" },
-  { name: "Basic", price: 9.99, description: "1 κατάστημα, 5 κατάλογοι, Live 360°, απεριόριστα πιάτα" },
-  { name: "Pro", price: 19.99, description: "3 καταστήματα, Live 360°, απεριόριστοι κατάλογοι" },
+  { name: "Δοκιμή {trialDaysGen}", price: 0, description: "1 κατάστημα, 1 κατάλογος, 50 πιάτα, QR, 4 γλώσσες" },
+  { name: "Basic", price: 9.99, description: "1 κατάστημα, 5 κατάλογοι, απεριόριστα πιάτα, QR, 4 γλώσσες" },
+  { name: "Pro", price: 19.99, description: "3 καταστήματα, απεριόριστοι κατάλογοι, Live 360°, κλήση σερβιτόρου, PDF" },
 ] as const;
 
 export const SEO_PRICING_FAQ = [
   {
     q: "Χρειάζεται πιστωτική κάρτα για τη δοκιμή;",
     a: "Όχι. Η δοκιμή {trialDaysGen} ξεκινά με email και κωδικό επιβεβαίωσης.",
+  },
+  {
+    q: "Τι γίνεται μετά τη δοκιμή;",
+    a: "Μετά τις 7 ημέρες δοκιμής έχετε 7 ημέρες παράτασης — το QR menu μένει online. Μετά διαλέγετε Basic ή Pro.",
+  },
+  {
+    q: "Περιλαμβάνεται το Live 360°;",
+    a: "Το Live 360° (κλήση σερβιτόρου, live panel, οθόνες κουζίνας/bar) είναι στο πλάνο Pro — όχι στη δοκιμή ούτε στο Basic.",
   },
   {
     q: "Μπορώ να αλλάξω πλάνο αργότερα;",
@@ -196,10 +204,6 @@ export const SEO_PRICING_FAQ = [
   {
     q: "Υπάρχει δέσμευση;",
     a: "Όχι. Μηνιαία συνδρομή, ακύρωση όποτε θέλετε.",
-  },
-  {
-    q: "Περιλαμβάνεται το Live 360°;",
-    a: "Ναι — στη δοκιμή, Basic και Pro. Live panel κλήσεων και συντονισμός χωρίς επιπλέον χρέωση.",
   },
 ] as const;
 

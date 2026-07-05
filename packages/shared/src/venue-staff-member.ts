@@ -75,17 +75,13 @@ export function staffRoleOptionsWithLegacy(
   return options;
 }
 
-const staffMemberRoleSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(40)
-  .refine(isAllowedStaffRole, { message: "Invalid staff role" });
+const staffMemberRoleSchema = z.string().trim().min(1).max(40);
 
 export const venueStaffMemberCreateSchema = z.object({
   name: staffMemberNameSchema,
   roleLabel: staffMemberRoleSchema,
-  stations: z.array(staffAssignmentSchema).min(1).max(12),
+  zoneId: z.string().trim().min(1).max(60),
+  stations: z.array(staffAssignmentSchema).min(1).max(1),
 });
 
 export const venueStaffMemberUpdateSchema = venueStaffMemberCreateSchema;
@@ -131,6 +127,16 @@ export function resolveStaffAssignmentToPassInput(
     return assignment as PassStationInput;
   }
   return null;
+}
+
+export function staffPrimaryAssignment(stations: string[]): string {
+  if (stations.includes("all")) return "all";
+  if (stations.includes("services")) return "services";
+  return stations[0] ?? "services";
+}
+
+export function staffAssignmentsFromPrimary(assignment: string): string[] {
+  return [assignment];
 }
 
 export function staffAssignmentLabelForLang(

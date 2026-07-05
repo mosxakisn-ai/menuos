@@ -92,9 +92,9 @@ Prefer `item_translations` table over flat `lang_gr/en/de/fr` columns.
 
 | Plan | Price | Includes |
 |------|-------|----------|
-| Trial | €0 / 7 days | 1 venue, 1 menu, 50 items |
-| Basic | €9.99/mo | 1 venue, 3 menus, unlimited items, QR |
-| Pro | €19.99/mo | 3 venues, unlimited menus, PDF import, call waiter |
+| Trial | €0 / 7 days | 1 venue, 1 catalog, 50 items, QR, 4 languages |
+| Basic | €9.99/mo | 1 venue, 5 catalogs, unlimited items, QR, 4 languages |
+| Pro | €19.99/mo | 3 venues, unlimited catalogs, Live 360°, call waiter, PDF import (Gemini AI), priority support |
 | Enterprise | Custom | Custom domain, white-label, priority support |
 
 Stripe Billing in Phase 2.

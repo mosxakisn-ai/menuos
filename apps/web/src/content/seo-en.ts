@@ -12,7 +12,7 @@ export const SEO_PAGES_EN = {
   home: {
     title: "Digital QR menu & Live 360° — restaurants, hotels & bars",
     description:
-      "QR menu and Live 360° coordination in one platform. Multilingual menu, call waiter, online price updates — no app for guests. Free {trialDaysAdj} trial.",
+      "QR menu and Live 360° coordination in one platform. Multilingual catalog, online price updates — no app for guests. Live 360° and call waiter on Pro. Free {trialDaysAdj} trial.",
     path: "/",
     breadcrumbLabel: "Home",
   },
@@ -26,7 +26,7 @@ export const SEO_PAGES_EN = {
   services: {
     title: "Services — Digital menu, Live 360° & QR codes",
     description:
-      "MenuOS services: digital menu, QR codes, Live 360°, multiple languages, call waiter — for restaurants and hotels.",
+      "MenuOS services: digital catalog, QR codes, 4 languages — plus Live 360° and call waiter on Pro.",
     path: "/ypiresies",
     breadcrumbLabel: "Services",
   },
@@ -38,9 +38,9 @@ export const SEO_PAGES_EN = {
     breadcrumbLabel: "How it works",
   },
   pricing: {
-    title: "Pricing — QR menu & Live 360° from {basicPrice}/month",
+    title: "Pricing — QR menu from {basicPrice}/month · Live 360° on Pro",
     description:
-      "MenuOS pricing: free {trialDaysAdj} trial with Live 360°, Basic {basicPrice}/month, Pro {proPrice}/month. QR menu, call waiter, live panel — no hidden fees.",
+      "MenuOS pricing: free {trialDaysAdj} trial (1 venue, 1 catalog, 50 items), Basic {basicPrice}/month (5 catalogs), Pro {proPrice}/month (Live 360°, call waiter, PDF). No hidden fees.",
     path: "/pricing",
     breadcrumbLabel: "Pricing",
   },
@@ -98,7 +98,7 @@ export const SEO_HOME_FAQ_EN = [
   },
   {
     q: "What is MenuOS Live · 360°?",
-    a: "Live coordination of calls and orders from the QR menu — see what happens in your venue in real time, without a separate system.",
+    a: "Live coordination of calls and orders from the QR menu — available on Pro, with a live panel and no separate system.",
   },
 ] as const;
 
@@ -121,7 +121,7 @@ export const SEO_QR_MENU_FAQ_EN = [
   },
   {
     q: "What is Live 360°?",
-    a: "Live panel for waiter calls and orders from QR — track waiting, stations and completions in real time.",
+    a: "Live panel for waiter calls and orders from QR — on Pro. Track waiting, stations and completions in real time.",
   },
 ] as const;
 
@@ -129,6 +129,14 @@ export const SEO_PRICING_FAQ_EN = [
   {
     q: "Do I need a credit card for the trial?",
     a: "No. The {trialDaysAdj} trial starts with email and OTP verification.",
+  },
+  {
+    q: "What happens after the trial?",
+    a: "After the 7-day trial you get 7 grace days — your QR menu stays online. Then choose Basic or Pro.",
+  },
+  {
+    q: "Is Live 360° included?",
+    a: "Live 360° (call waiter, live panel, kitchen/bar screens) is on Pro — not on trial or Basic.",
   },
   {
     q: "Can I change plan later?",
@@ -142,14 +150,10 @@ export const SEO_PRICING_FAQ_EN = [
     q: "Is there a long-term commitment?",
     a: "No. Monthly subscription, cancel anytime.",
   },
-  {
-    q: "Is Live 360° included?",
-    a: "Yes — on trial, Basic and Pro. Live call panel and coordination with no extra charge.",
-  },
 ] as const;
 
 export const SEO_PRICING_OFFERS_EN = [
-  { name: "{trialDaysGen} trial", price: 0, description: "1 location, QR menu, Live 360°, 50 items" },
-  { name: "Basic", price: 9.99, description: "1 location, 3 menus, Live 360°, unlimited items" },
-  { name: "Pro", price: 19.99, description: "3 locations, Live 360°, unlimited menus" },
+  { name: "{trialDaysGen} trial", price: 0, description: "1 venue, 1 catalog, 50 items, QR, 4 languages" },
+  { name: "Basic", price: 9.99, description: "1 venue, 5 catalogs, unlimited items, QR, 4 languages" },
+  { name: "Pro", price: 19.99, description: "3 venues, unlimited catalogs, Live 360°, call waiter, PDF" },
 ] as const;

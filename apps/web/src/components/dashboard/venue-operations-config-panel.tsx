@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PassStationInput, TableTileState, VenueOperationsConfig, VenuePost } from "@menuos/shared";
+import type { PassStationInput, TableTileState, VenueOperationsConfig, VenuePost, VenueSpotType } from "@menuos/shared";
 import {
   DEFAULT_PASS_QUICK_CHIPS,
   DEFAULT_STATION_LABELS_EL,
@@ -10,6 +10,7 @@ import {
   applyZoneLabelOverrides,
   enabledVenuePosts,
   groupVenueSpotsByZone,
+  isValidVenueSpotLabel,
   listVenuePosts,
   MAX_VENUE_POSTS,
   mergeTableStateLabels,
@@ -19,6 +20,7 @@ import {
   TABLE_TILE_STATES,
   tableLegendStates,
   zoneSourceHint,
+  type SpotZoneGroup,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
 import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
@@ -31,7 +33,11 @@ import {
 import { TableGridLegend } from "@/components/dashboard/table-grid-preview";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
+import { confirmDestructive } from "@/lib/confirm-action";
+import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { Plus, Trash2 } from "lucide-react";
+
+type SpaceKind = "prefixed" | "main" | "sunbed" | "room";
 
 type Venue = { id: string; name: string };
 
@@ -155,18 +161,34 @@ export function VenueOperationsConfigPanel({
   const { d, lang } = useDashboardCopy();
   const O = d.pages.settings.operations;
   const Z = d.pages.settings.spacesTab;
+  const Posts = d.pages.settings.postsTab;
   const P = d.pages.settings.personnel.stationLabels;
   const show = (s: OpsConfigSection) => sections.includes(s);
+  const spaceMode = sections.length === 1 && sections[0] === "zones";
+  const postsOnlyMode = sections.length === 1 && sections[0] === "departments";
   const [venueId, setVenueId] = useState(initialVenueId ?? venues[0]?.id ?? "");
-  const { spots: panelSpots } = useVenueSpots(venueId);
+  const { spots: panelSpots, reload: reloadSpots } = useVenueSpots(venueId);
   const zoneGroups = useMemo(
     () => groupVenueSpotsByZone(panelSpots.map((s) => ({ type: s.type, label: s.label }))),
     [panelSpots],
   );
+  const spotByKey = useMemo(() => {
+    const map = new Map<string, (typeof panelSpots)[number]>();
+    for (const spot of panelSpots) {
+      map.set(`${spot.type}:${spot.label}`, spot);
+    }
+    return map;
+  }, [panelSpots]);
   const { config, loading, reload, setConfig } = useVenueOperationsConfig(venueId);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<VenueOperationsConfig | null>(null);
+  const [showAddSpace, setShowAddSpace] = useState(false);
+  const [newSpaceKind, setNewSpaceKind] = useState<SpaceKind>("prefixed");
+  const [newSpaceName, setNewSpaceName] = useState("");
+  const [newSpaceFrom, setNewSpaceFrom] = useState("1");
+  const [newSpaceTo, setNewSpaceTo] = useState("");
+  const [zoneBusy, setZoneBusy] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialVenueId) setVenueId(initialVenueId);
@@ -305,6 +327,131 @@ export function VenueOperationsConfigPanel({
     });
   }
 
+  function zoneDisplayName(zone: SpotZoneGroup): string {
+    return draft?.zoneLabels?.[zone.id]?.trim() || zone.label;
+  }
+
+  async function createSpace(e: React.FormEvent) {
+    e.preventDefault();
+    if (!venueId) return;
+
+    const from = Number(newSpaceFrom);
+    const to = Number(newSpaceTo.trim() || newSpaceFrom);
+    if (!Number.isFinite(from) || !Number.isFinite(to) || to < from || from < 1 || to > 999) {
+      setFlash({ type: "error", text: Z.invalidRange });
+      return;
+    }
+    if (to - from >= 200) {
+      setFlash({ type: "error", text: d.pages.qr.bulkLimit });
+      return;
+    }
+
+    let spotType: VenueSpotType = "TABLE";
+    let prefix = "";
+    let displayName = newSpaceName.trim();
+
+    if (newSpaceKind === "prefixed") {
+      if (!displayName) {
+        setFlash({ type: "error", text: Z.spaceNameRequired });
+        return;
+      }
+      prefix = `${displayName}-`;
+      if (!isValidVenueSpotLabel(`${prefix}${from}`)) {
+        setFlash({ type: "error", text: d.pages.qr.labelHint });
+        return;
+      }
+    } else if (newSpaceKind === "main") {
+      displayName =
+        draft?.zoneLabels?.main ??
+        zoneGroups.find((z) => z.id === "main")?.label ??
+        (lang === "EN" ? "Tables" : "Τραπέζια");
+      if (!isValidVenueSpotLabel(String(from))) {
+        setFlash({ type: "error", text: d.pages.qr.labelHint });
+        return;
+      }
+    } else if (newSpaceKind === "sunbed") {
+      spotType = "SUNBED";
+      displayName =
+        draft?.zoneLabels?.sunbed ??
+        zoneGroups.find((z) => z.id === "sunbed")?.label ??
+        (lang === "EN" ? "Sunbeds" : "Ξαπλώστρες");
+    } else {
+      spotType = "ROOM";
+      displayName =
+        draft?.zoneLabels?.room ??
+        zoneGroups.find((z) => z.id === "room")?.label ??
+        (lang === "EN" ? "Rooms" : "Δωμάτια");
+    }
+
+    setZoneBusy("create");
+    try {
+      const res = await fetch(`/api/venues/${venueId}/spots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: spotType, from, to, prefix }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showFromResponse(data, false, res.status);
+        return;
+      }
+      const count = to - from + 1;
+      setFlash({ type: "success", text: Z.spaceCreated(displayName, count) });
+      setNewSpaceName("");
+      setNewSpaceFrom("1");
+      setNewSpaceTo("");
+      setShowAddSpace(false);
+      await reloadSpots();
+    } finally {
+      setZoneBusy(null);
+    }
+  }
+
+  async function deleteZone(zone: SpotZoneGroup) {
+    if (!venueId || zone.spots.length === 0) return;
+    const name = zoneDisplayName(zone);
+    if (!(await confirmDestructive(Z.deleteSpaceConfirm(name, zone.spots.length)))) return;
+
+    const ids = zone.spots
+      .map((entry) => spotByKey.get(`${entry.spot.type}:${entry.spot.label}`)?.id)
+      .filter((id): id is string => Boolean(id));
+
+    setZoneBusy(`delete-${zone.id}`);
+    try {
+      for (const id of ids) {
+        const res = await fetch(`/api/venues/${venueId}/spots/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          const data = await res.json();
+          showFromResponse(data, false, res.status);
+          return;
+        }
+      }
+
+      if (draft?.zoneLabels?.[zone.id]) {
+        const next = { ...(draft.zoneLabels ?? {}) };
+        delete next[zone.id];
+        const nextDraft = {
+          ...draft,
+          zoneLabels: Object.keys(next).length ? next : undefined,
+        };
+        setDraft(nextDraft);
+        const langCode = lang === "EN" ? "EN" : "GR";
+        const posts = listVenuePosts(nextDraft, langCode);
+        await fetch(`/api/venues/${venueId}/operations-config`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...nextDraft, ...syncLegacyFromPosts(posts), posts }),
+        });
+      }
+
+      setFlash({ type: "success", text: Z.spaceDeleted(name) });
+      await reloadSpots();
+      await reload();
+    } finally {
+      setZoneBusy(null);
+    }
+  }
+
   const previewLabels = draft
     ? mergeTableStateLabels(draft, lang === "EN" ? "EN" : "GR")
     : stateLabelDefaults;
@@ -393,10 +540,16 @@ export function VenueOperationsConfigPanel({
               <div
                 className={`${intro ? "mt-5" : "mt-4"} max-w-xl overflow-hidden rounded-xl border border-slate-200`}
               >
-                <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem] items-center gap-x-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <div
+                  className={`grid items-center gap-x-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 ${
+                    postsOnlyMode
+                      ? "grid-cols-[2.75rem_minmax(0,1fr)_2.75rem]"
+                      : "grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem]"
+                  }`}
+                >
                   <span className="text-center">{O.postActiveLabel}</span>
                   <span>{O.postNameLabel}</span>
-                  <span>{O.postTypeLabel}</span>
+                  {!postsOnlyMode ? <span>{O.postTypeLabel}</span> : null}
                   <span className="sr-only">{O.removePost}</span>
                 </div>
                 {draftPosts.map((post) => {
@@ -405,9 +558,11 @@ export function VenueOperationsConfigPanel({
                   return (
                     <div
                       key={post.id}
-                      className={`grid grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem] items-center gap-x-2 border-b border-slate-50 px-3 py-2 last:border-0 ${
-                        post.enabled ? "bg-brand-blue/[0.03]" : "bg-slate-50/40 opacity-80"
-                      }`}
+                      className={`grid items-center gap-x-2 border-b border-slate-50 px-3 py-2 last:border-0 ${
+                        postsOnlyMode
+                          ? "grid-cols-[2.75rem_minmax(0,1fr)_2.75rem]"
+                          : "grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem]"
+                      } ${post.enabled ? "bg-brand-blue/[0.03]" : "bg-slate-50/40 opacity-80"}`}
                     >
                       <div className="flex justify-center">
                         <input
@@ -422,23 +577,27 @@ export function VenueOperationsConfigPanel({
                         value={post.label}
                         onChange={(e) => setPostLabel(post.id, e.target.value)}
                         maxLength={40}
-                        placeholder={P.kitchen}
-                        className={`${dashboardFieldClass} w-full min-w-0 text-sm`}
-                      />
-                      <select
-                        value={post.station}
-                        onChange={(e) =>
-                          setPostStation(post.id, e.target.value as PassStationInput)
+                        placeholder={
+                          postsOnlyMode ? Posts.postNamePlaceholder : P.kitchen
                         }
                         className={`${dashboardFieldClass} w-full min-w-0 text-sm`}
-                        title={O.postTypeHint}
-                      >
-                        {PASS_STATION_INPUTS.map((station) => (
-                          <option key={station} value={station}>
-                            {typeLabels[station]}
-                          </option>
-                        ))}
-                      </select>
+                      />
+                      {!postsOnlyMode ? (
+                        <select
+                          value={post.station}
+                          onChange={(e) =>
+                            setPostStation(post.id, e.target.value as PassStationInput)
+                          }
+                          className={`${dashboardFieldClass} w-full min-w-0 text-sm`}
+                          title={O.postTypeHint}
+                        >
+                          {PASS_STATION_INPUTS.map((station) => (
+                            <option key={station} value={station}>
+                              {typeLabels[station]}
+                            </option>
+                          ))}
+                        </select>
+                      ) : null}
                       <div className="flex justify-center">
                         <button
                           type="button"
@@ -455,7 +614,9 @@ export function VenueOperationsConfigPanel({
                   );
                 })}
               </div>
-              <p className="mt-2 max-w-xl text-xs text-slate-500">{O.postTypeHint}</p>
+              {!postsOnlyMode ? (
+                <p className="mt-2 max-w-xl text-xs text-slate-500">{O.postTypeHint}</p>
+              ) : null}
             </section>
             ) : null}
 
@@ -524,7 +685,191 @@ export function VenueOperationsConfigPanel({
             </section>
             ) : null}
 
-            {show("zones") && zoneGroups && zoneGroups.length > 0 ? (
+            {show("zones") && spaceMode ? (
+              <section>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-brand-navy">{O.zonesTitle}</h3>
+                    <p className="mt-1 text-sm text-slate-600">{O.zonesHint}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSpace((open) => !open)}
+                    className={buttonClass("secondary", "sm")}
+                  >
+                    <Plus className="mr-1.5 inline h-4 w-4" aria-hidden />
+                    {Z.addSpace}
+                  </button>
+                </div>
+
+                {showAddSpace ? (
+                  <form
+                    onSubmit={(e) => void createSpace(e)}
+                    className="mt-4 space-y-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-4"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-brand-navy">{Z.addSpaceTitle}</p>
+                      <p className="mt-1 text-sm text-slate-600">{Z.addSpaceDesc}</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <label className="block sm:col-span-2 lg:col-span-1">
+                        <span className={dashboardLabelClass}>{Z.spaceKindLabel}</span>
+                        <select
+                          value={newSpaceKind}
+                          onChange={(e) => setNewSpaceKind(e.target.value as SpaceKind)}
+                          className={dashboardFieldClass}
+                        >
+                          <option value="prefixed">{Z.spaceKindPrefixed}</option>
+                          <option value="main">{Z.spaceKindMain}</option>
+                          <option value="sunbed">{Z.spaceKindSunbed}</option>
+                          <option value="room">{Z.spaceKindRoom}</option>
+                        </select>
+                      </label>
+                      {newSpaceKind === "prefixed" ? (
+                        <label className="block sm:col-span-2">
+                          <span className={dashboardLabelClass}>{Z.spaceNameLabel}</span>
+                          <input
+                            value={newSpaceName}
+                            onChange={(e) => setNewSpaceName(e.target.value)}
+                            placeholder={FORM_PLACEHOLDERS.spotSpaceName}
+                            maxLength={15}
+                            className={dashboardFieldClass}
+                          />
+                        </label>
+                      ) : (
+                        <div className="hidden sm:col-span-2 sm:block" aria-hidden />
+                      )}
+                      <label className="block">
+                        <span className={dashboardLabelClass}>{Z.fromLabel}</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={999}
+                          value={newSpaceFrom}
+                          onChange={(e) => setNewSpaceFrom(e.target.value)}
+                          className={dashboardFieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className={dashboardLabelClass}>{Z.toLabel}</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={999}
+                          value={newSpaceTo}
+                          onChange={(e) => setNewSpaceTo(e.target.value)}
+                          placeholder={FORM_PLACEHOLDERS.spotBulkTo}
+                          className={dashboardFieldClass}
+                        />
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="submit"
+                        disabled={zoneBusy !== null}
+                        className={buttonClass("primary", "sm")}
+                      >
+                        {zoneBusy === "create" ? Z.creatingSpace : Z.createSpace}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddSpace(false)}
+                        className={buttonClass("secondary", "sm")}
+                      >
+                        {d.pages.settings.personnel.cancelEdit}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+
+                {previewZones && previewZones.length > 0 ? (
+                  <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                    <h4 className="text-center text-sm font-semibold text-brand-navy">
+                      {Z.previewTitle}
+                    </h4>
+                    <p className="mt-1 text-center text-xs text-slate-500">{Z.previewHint}</p>
+                    <div className="mt-4 flex flex-wrap justify-center gap-2">
+                      {previewZones.map((zone) => (
+                        <div
+                          key={zone.id}
+                          className="flex min-h-[4.5rem] w-[calc(50%-0.25rem)] max-w-[9.5rem] flex-col items-center justify-center gap-1 rounded-2xl border-2 border-slate-200 bg-white px-3 py-3 text-center sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5rem)]"
+                        >
+                          <span className="text-sm font-bold leading-tight text-brand-navy sm:text-base">
+                            {zone.label}
+                          </span>
+                          <span className="text-2xl font-extrabold tabular-nums leading-none text-amber-700">
+                            {zone.spots.length}
+                          </span>
+                          <span className="text-[10px] text-slate-400 sm:text-xs">
+                            {Z.spotCount(zone.spots.length)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {zoneGroups && zoneGroups.length > 0 ? (
+                  <div className="mt-4 overflow-x-auto rounded-xl border border-slate-100">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          <th className="px-3 py-2.5">{O.zonesSourceLabel}</th>
+                          <th className="px-3 py-2.5">{O.zonesNameLabel}</th>
+                          <th className="px-3 py-2.5 text-center">{O.zonesCountLabel}</th>
+                          <th className="px-3 py-2.5 text-center">
+                            <span className="sr-only">{O.removePost}</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {zoneGroups.map((zone) => (
+                          <tr key={zone.id} className="border-b border-slate-50 last:border-0">
+                            <td className="px-3 py-2.5 align-middle text-xs text-slate-500">
+                              {zoneSourceHint(zone, langCode)}
+                            </td>
+                            <td className="px-3 py-2.5 align-middle">
+                              <input
+                                value={draft.zoneLabels?.[zone.id] ?? zone.label}
+                                onChange={(e) => setZoneLabel(zone.id, e.target.value)}
+                                maxLength={40}
+                                className={`${dashboardFieldClass} w-full min-w-[8rem] text-center text-sm`}
+                              />
+                            </td>
+                            <td className="px-3 py-2.5 align-middle text-center tabular-nums text-slate-600">
+                              {zone.spots.length}
+                            </td>
+                            <td className="px-3 py-2.5 align-middle text-center">
+                              <button
+                                type="button"
+                                onClick={() => void deleteZone(zone)}
+                                disabled={zoneBusy !== null || zone.spots.length === 0}
+                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
+                                aria-label={Z.deleteSpace}
+                                title={Z.deleteSpace}
+                              >
+                                <Trash2 className="h-4 w-4" aria-hidden />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm text-slate-600">{Z.empty}</p>
+                )}
+
+                <p className="mt-4">
+                  <a
+                    href="/dashboard/settings?tab=tables"
+                    className="text-sm font-semibold text-brand-blue hover:underline"
+                  >
+                    {Z.tablesTabLink}
+                  </a>
+                </p>
+              </section>
+            ) : show("zones") && zoneGroups && zoneGroups.length > 0 ? (
               <section>
                 <h3 className="text-sm font-semibold text-brand-navy">{O.zonesTitle}</h3>
                 <p className="mt-1 text-sm text-slate-600">{O.zonesHint}</p>

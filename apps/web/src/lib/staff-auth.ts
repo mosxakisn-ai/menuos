@@ -18,6 +18,7 @@ export type StaffMemberContext = {
   id: string;
   name: string;
   stations: string[];
+  zoneId: string | null;
 };
 
 export type StaffAuthContext = {
@@ -66,6 +67,7 @@ export async function resolveStaffAuthByKey(
       id: true,
       name: true,
       stations: true,
+      zoneId: true,
       venue: { select: venueSelect },
     },
   });
@@ -73,7 +75,12 @@ export async function resolveStaffAuthByKey(
 
   return {
     venue: member.venue,
-    staffMember: { id: member.id, name: member.name, stations: member.stations },
+    staffMember: {
+      id: member.id,
+      name: member.name,
+      stations: member.stations,
+      zoneId: member.zoneId,
+    },
   };
 }
 
@@ -93,6 +100,7 @@ export async function resolveStaffAuthBySlug(
       id: true,
       name: true,
       stations: true,
+      zoneId: true,
       venue: { select: venueSelect },
     },
   });
@@ -100,7 +108,12 @@ export async function resolveStaffAuthBySlug(
 
   return {
     venue: member.venue,
-    staffMember: { id: member.id, name: member.name, stations: member.stations },
+    staffMember: {
+      id: member.id,
+      name: member.name,
+      stations: member.stations,
+      zoneId: member.zoneId,
+    },
   };
 }
 

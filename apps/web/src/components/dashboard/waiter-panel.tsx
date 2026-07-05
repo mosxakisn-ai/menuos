@@ -58,12 +58,14 @@ type WaiterCall = {
 export function WaiterPanel({
   venues,
   initialVenueId,
+  initialZoneId,
   staffKey,
   staffViaCookie = false,
   staffMember,
 }: {
   venues: Venue[];
   initialVenueId?: string;
+  initialZoneId?: string;
   staffKey?: string;
   staffViaCookie?: boolean;
   staffMember?: { name: string; stations: string[] } | null;
@@ -254,6 +256,13 @@ export function WaiterPanel({
     const groups = groupVenueSpotsByZone(spots);
     return applyZoneLabelOverrides(groups, opsConfig?.zoneLabels);
   }, [spots, opsConfig?.zoneLabels]);
+
+  useEffect(() => {
+    if (!initialZoneId || zoneGroups.length === 0) return;
+    if (zoneGroups.some((zone) => zone.id === initialZoneId)) {
+      setZoneFilterId(initialZoneId);
+    }
+  }, [initialZoneId, zoneGroups]);
 
   const displaySpots = useMemo(
     () => filterSpotsByZone(spots, zoneFilterId, zoneGroups),

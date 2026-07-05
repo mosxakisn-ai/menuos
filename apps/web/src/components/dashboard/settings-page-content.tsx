@@ -123,7 +123,16 @@ function SettingsPageBody({
         content = <SettingsPostsPanel venues={spotVenues} />;
         break;
       case "links":
-        content = <SettingsLinksPanel venues={spotVenues} />;
+        content = (
+          <SettingsLinksPanel
+            venues={venues.map((v) => ({
+              id: v.id,
+              name: v.name,
+              slug: v.slug,
+              staffToken: v.staffToken,
+            }))}
+          />
+        );
         break;
       case "venue":
         content = <SettingsVenuePanel venues={venues} />;

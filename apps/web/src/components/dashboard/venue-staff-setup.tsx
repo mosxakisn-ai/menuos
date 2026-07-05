@@ -4,21 +4,23 @@ import Link from "next/link";
 import { Check, Copy, ExternalLink, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  applyZoneLabelOverrides,
   enabledVenuePosts,
+  groupVenueSpotsByZone,
   listVenuePosts,
-  STAFF_SPECIAL_OPTIONS,
   staffAssignmentLabelForLang,
+  staffAssignmentsFromPrimary,
+  staffPrimaryAssignment,
   staffRoleOptionsForLang,
   staffRoleOptionsWithLegacy,
   staffStationLabelForLang,
-  type PassStationInput,
   type VenuePost,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
 import {
   dashboardCardClass,
   dashboardFieldClass,
-  dashboardFormGridClass,
   dashboardLabelClass,
 } from "@/components/dashboard/dashboard-page";
 import {
@@ -30,146 +32,19 @@ import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provid
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { confirmDestructive, confirmWarning } from "@/lib/confirm-action";
 import { buildStaffShareUrl } from "@/lib/staff-share-url";
-import { cn } from "@/lib/utils";
 
 type Venue = { id: string; name: string; slug: string };
 type StaffMember = {
   id: string;
   name: string;
   roleLabel: string;
+  zoneId: string | null;
   stations: string[];
   memberToken: string;
 };
 
-function memberWaiterUrl(venueSlug: string, memberToken: string): string {
-  return buildStaffShareUrl(venueSlug, memberToken);
-}
-
-function toggleAssignment(current: string[], assignment: string): string[] {
-  if (assignment === "all") {
-    return current.includes("all") ? ["services"] : ["all"];
-  }
-  const withoutAll = current.filter((s) => s !== "all");
-  if (withoutAll.includes(assignment)) {
-    const next = withoutAll.filter((s) => s !== assignment);
-    return next.length > 0 ? next : ["services"];
-  }
-  return [...withoutAll, assignment];
-}
-
-const POST_STATION_BADGE_STYLES: Record<PassStationInput, string> = {
-  kitchen: "border-orange-200 bg-orange-50 text-orange-900",
-  bar: "border-emerald-200 bg-emerald-50 text-emerald-900",
-  cold: "border-sky-200 bg-sky-50 text-sky-900",
-  dessert: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
-};
-
-const SPECIAL_BADGE_STYLES: Record<(typeof STAFF_SPECIAL_OPTIONS)[number], string> = {
-  services: "border-blue-200 bg-blue-50 text-blue-900",
-  all: "border-violet-200 bg-violet-50 text-violet-900",
-};
-
-function assignmentBadgeStyle(assignment: string, posts: VenuePost[]): string {
-  if (assignment === "services" || assignment === "all") {
-    return SPECIAL_BADGE_STYLES[assignment];
-  }
-  const post = posts.find((row) => row.id === assignment);
-  if (post) return POST_STATION_BADGE_STYLES[post.station];
-  return "border-slate-200 bg-slate-100 text-slate-700";
-}
-
-function RoleSelect({
-  value,
-  onChange,
-  options,
-  placeholder,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-  options: readonly string[];
-  placeholder: string;
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={dashboardFieldClass}
-    >
-      <option value="">{placeholder}</option>
-      {options.map((role) => (
-        <option key={role} value={role}>
-          {role}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-function PostPicker({
-  value,
-  onChange,
-  posts,
-  lang,
-}: {
-  value: string[];
-  onChange: (next: string[]) => void;
-  posts: VenuePost[];
-  lang: "GR" | "EN";
-}) {
-  const options: Array<{ id: string; label: string }> = [
-    { id: "services", label: staffStationLabelForLang("services", lang) },
-    ...posts.map((post) => ({ id: post.id, label: post.label.trim() })),
-    { id: "all", label: staffStationLabelForLang("all", lang) },
-  ];
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((option) => {
-        const selected = value.includes(option.id);
-        return (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => onChange(toggleAssignment(value, option.id))}
-            className={cn(
-              "rounded-full border px-3 py-1.5 text-xs font-medium transition",
-              selected
-                ? assignmentBadgeStyle(option.id, posts)
-                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
-            )}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function PostBadges({
-  assignments,
-  posts,
-  lang,
-}: {
-  assignments: string[];
-  posts: VenuePost[];
-  lang: "GR" | "EN";
-}) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {assignments.map((assignment) => (
-        <span
-          key={assignment}
-          className={cn(
-            "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
-            assignmentBadgeStyle(assignment, posts),
-          )}
-        >
-          {staffAssignmentLabelForLang(assignment, lang, posts)}
-        </span>
-      ))}
-    </div>
-  );
+function memberWaiterUrl(venueSlug: string, memberToken: string, zoneId?: string | null) {
+  return buildStaffShareUrl(venueSlug, memberToken, zoneId);
 }
 
 function StaffMemberLinkActions({
@@ -193,7 +68,10 @@ function StaffMemberLinkActions({
   busy: boolean;
   onTokenRotated: (memberId: string, memberToken: string) => void;
 }) {
-  const url = useMemo(() => memberWaiterUrl(venueSlug, member.memberToken), [venueSlug, member.memberToken]);
+  const url = useMemo(
+    () => memberWaiterUrl(venueSlug, member.memberToken, member.zoneId),
+    [venueSlug, member.memberToken, member.zoneId],
+  );
   const [copied, setCopied] = useState(false);
   const [rotating, setRotating] = useState(false);
 
@@ -237,7 +115,7 @@ function StaffMemberLinkActions({
         readOnly
         value={url}
         onFocus={(e) => e.target.select()}
-        className="w-full rounded-button border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700"
+        className="w-full min-w-[12rem] rounded-button border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700"
         aria-label={labels.copyLink}
       />
       <div className="flex flex-wrap items-center gap-2">
@@ -280,6 +158,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const langCode = lang === "EN" ? "EN" : "GR";
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
   const { config: opsConfig, loading: opsLoading } = useVenueOperationsConfig(venueId);
+  const { spots, loading: spotsLoading } = useVenueSpots(venueId);
   const venuePosts = useMemo(
     () => listVenuePosts(opsConfig ?? undefined, langCode),
     [opsConfig, langCode],
@@ -288,20 +167,47 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     () => enabledVenuePosts(opsConfig ?? undefined, langCode),
     [opsConfig, langCode],
   );
+  const zoneGroups = useMemo(() => {
+    const groups = groupVenueSpotsByZone(spots);
+    return applyZoneLabelOverrides(groups, opsConfig?.zoneLabels);
+  }, [spots, opsConfig?.zoneLabels]);
+
   const [members, setMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [roleLabel, setRoleLabel] = useState("");
-  const [stations, setStations] = useState<string[]>(["services"]);
+  const [zoneId, setZoneId] = useState("");
+  const [postAssignment, setPostAssignment] = useState("services");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editRole, setEditRole] = useState("");
-  const [editStations, setEditStations] = useState<string[]>([]);
+  const [editZoneId, setEditZoneId] = useState("");
+  const [editPostAssignment, setEditPostAssignment] = useState("services");
   const [busy, setBusy] = useState<string | null>(null);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const loadGenerationRef = useRef(0);
 
   const venue = venues.find((v) => v.id === venueId);
+  const zonesReady = !spotsLoading && zoneGroups.length > 0;
+  const postsReady = !opsLoading;
+
+  useEffect(() => {
+    if (zoneGroups.length > 0 && !zoneId) {
+      setZoneId(zoneGroups[0]!.id);
+    }
+  }, [zoneGroups, zoneId]);
+
+  function zoneLabel(id: string | null | undefined): string {
+    if (!id) return "—";
+    return zoneGroups.find((z) => z.id === id)?.label ?? id;
+  }
+
+  function postOptions(): Array<{ id: string; label: string }> {
+    return [
+      { id: "services", label: staffStationLabelForLang("services", langCode) },
+      ...enabledPosts.map((post) => ({ id: post.id, label: post.label.trim() })),
+    ];
+  }
 
   function onMemberTokenRotated(memberId: string, memberToken: string) {
     setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, memberToken } : m)));
@@ -341,20 +247,25 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
   async function addMember(e: React.FormEvent) {
     e.preventDefault();
-    if (!venueId || !name.trim() || !roleLabel.trim()) return;
+    if (!venueId || !name.trim() || !roleLabel.trim() || !zoneId) return;
     setBusy("add");
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), roleLabel: roleLabel.trim(), stations }),
+        body: JSON.stringify({
+          name: name.trim(),
+          roleLabel: roleLabel.trim(),
+          zoneId,
+          stations: staffAssignmentsFromPrimary(postAssignment),
+        }),
       });
       const data = await res.json();
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setName("");
         setRoleLabel("");
-        setStations(["services"]);
+        setPostAssignment("services");
         await reload();
       }
     } finally {
@@ -366,11 +277,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     setEditingId(member.id);
     setEditName(member.name);
     setEditRole(member.roleLabel);
-    setEditStations(member.stations);
+    setEditZoneId(member.zoneId ?? zoneGroups[0]?.id ?? "");
+    setEditPostAssignment(staffPrimaryAssignment(member.stations));
   }
 
   async function saveEdit(memberId: string) {
-    if (!venueId) return;
+    if (!venueId || !editZoneId) return;
     setBusy(`edit-${memberId}`);
     try {
       const res = await fetch(`/api/venues/${venueId}/staff-members/${memberId}`, {
@@ -379,7 +291,8 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         body: JSON.stringify({
           name: editName.trim(),
           roleLabel: editRole.trim(),
-          stations: editStations,
+          zoneId: editZoneId,
+          stations: staffAssignmentsFromPrimary(editPostAssignment),
         }),
       });
       const data = await res.json();
@@ -424,8 +337,82 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     rotateConfirm: S.rotateConfirm,
   };
 
+  const roleListId = "staff-role-suggestions";
+
+  function renderAssignmentFields(
+    values: {
+      name: string;
+      role: string;
+      zone: string;
+      post: string;
+    },
+    onChange: {
+      setName: (v: string) => void;
+      setRole: (v: string) => void;
+      setZone: (v: string) => void;
+      setPost: (v: string) => void;
+    },
+    roleOptions: readonly string[],
+  ) {
+    return (
+      <>
+        <td className="px-3 py-2 align-top">
+          <input
+            value={values.name}
+            onChange={(e) => onChange.setName(e.target.value)}
+            maxLength={60}
+            placeholder={S.namePlaceholder}
+            className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
+          />
+        </td>
+        <td className="px-3 py-2 align-top">
+          <input
+            value={values.role}
+            onChange={(e) => onChange.setRole(e.target.value)}
+            list={roleListId}
+            maxLength={40}
+            placeholder={S.rolePlaceholder}
+            className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
+          />
+        </td>
+        <td className="px-3 py-2 align-top">
+          <select
+            value={values.zone}
+            onChange={(e) => onChange.setZone(e.target.value)}
+            className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
+          >
+            {zoneGroups.map((zone) => (
+              <option key={zone.id} value={zone.id}>
+                {zone.label}
+              </option>
+            ))}
+          </select>
+        </td>
+        <td className="px-3 py-2 align-top">
+          <select
+            value={values.post}
+            onChange={(e) => onChange.setPost(e.target.value)}
+            className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
+          >
+            {postOptions().map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </td>
+      </>
+    );
+  }
+
   return (
     <div className="space-y-5">
+      <datalist id={roleListId}>
+        {staffRoleOptionsForLang(langCode).map((role) => (
+          <option key={role} value={role} />
+        ))}
+      </datalist>
+
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       <div className={dashboardCardClass}>
@@ -453,72 +440,58 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           </p>
         )}
 
-        <form
-          onSubmit={(e) => void addMember(e)}
-          className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/40 p-4 sm:p-5"
-        >
+        <form onSubmit={(e) => void addMember(e)} className="mt-6 space-y-4">
           <p className="text-sm font-semibold text-brand-navy">{S.addTitle}</p>
-          <div className={`${dashboardFormGridClass} mt-4`}>
-            <label className="block">
-              <span className={dashboardLabelClass}>{S.colName}</span>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={60}
-                placeholder={S.namePlaceholder}
-                className={dashboardFieldClass}
-              />
-            </label>
-            <label className="block">
-              <span className={dashboardLabelClass}>{S.colRole}</span>
-              <RoleSelect
-                value={roleLabel}
-                onChange={setRoleLabel}
-                options={staffRoleOptionsForLang(langCode)}
-                placeholder={S.rolePlaceholder}
-              />
-            </label>
-          </div>
-          <div className="mt-4">
-            <span className={dashboardLabelClass}>{S.colStations}</span>
-            <p className="mt-1 text-xs text-slate-500">{S.stationsHint}</p>
-            {opsLoading || !opsConfig ? (
-              <p className="mt-2 text-sm text-slate-500">{S.loading}</p>
-            ) : enabledPosts.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-600">
-                {S.noPosts}{" "}
-                <Link href="/dashboard/settings?tab=posts" className="font-medium text-brand-blue hover:underline">
-                  {S.managePostsLink}
-                </Link>
-              </p>
-            ) : (
-              <>
-                <div className="mt-2">
-                  <PostPicker
-                    value={stations}
-                    onChange={setStations}
-                    posts={enabledPosts}
-                    lang={langCode}
-                  />
-                </div>
-                <p className="mt-2 text-xs text-slate-500">
-                  <Link href="/dashboard/settings?tab=posts" className="font-medium text-brand-blue hover:underline">
-                    {S.managePostsLink}
-                  </Link>
-                </p>
-              </>
-            )}
-          </div>
-          <div className="mt-4 flex justify-end">
-            <button
-              type="submit"
-              disabled={busy !== null || !name.trim() || !roleLabel.trim()}
-              className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "md")}`}
-            >
-              <Plus className="h-4 w-4" />
-              {busy === "add" ? S.saving : S.addStaff}
-            </button>
-          </div>
+          {!zonesReady ? (
+            <p className="text-sm text-slate-600">
+              {S.noSpaces}{" "}
+              <Link href="/dashboard/settings?tab=spaces" className="font-medium text-brand-blue hover:underline">
+                {S.manageSpacesLink}
+              </Link>
+            </p>
+          ) : !postsReady ? (
+            <p className="text-sm text-slate-600">{S.loading}</p>
+          ) : (
+            <>
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      <th className="px-3 py-2.5">{S.colName}</th>
+                      <th className="px-3 py-2.5">{S.colRole}</th>
+                      <th className="px-3 py-2.5">{S.colSpace}</th>
+                      <th className="px-3 py-2.5">{S.colPost}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="bg-white">
+                      {renderAssignmentFields(
+                        { name, role: roleLabel, zone: zoneId, post: postAssignment },
+                        {
+                          setName,
+                          setRole: setRoleLabel,
+                          setZone: setZoneId,
+                          setPost: setPostAssignment,
+                        },
+                        staffRoleOptionsForLang(langCode),
+                      )}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-slate-500">{S.formHint}</p>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={busy !== null || !name.trim() || !roleLabel.trim() || !zoneId}
+                  className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "md")}`}
+                >
+                  <Plus className="h-4 w-4" />
+                  {busy === "add" ? S.saving : S.addStaff}
+                </button>
+              </div>
+            </>
+          )}
         </form>
       </div>
 
@@ -530,136 +503,131 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         ) : members.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500">{S.empty}</p>
         ) : (
-          <ul className="mt-4 space-y-3">
-            {members.map((member) => {
-              const isEditing = editingId === member.id;
-              const isBusy = busy !== null;
+          <div className="mt-4 space-y-4">
+            <div className="overflow-x-auto rounded-xl border border-slate-100">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-3 py-2.5">{S.colName}</th>
+                    <th className="px-3 py-2.5">{S.colRole}</th>
+                    <th className="px-3 py-2.5">{S.colSpace}</th>
+                    <th className="px-3 py-2.5">{S.colPost}</th>
+                    <th className="px-3 py-2.5 text-right">{S.colActions}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.map((member) => {
+                    const isEditing = editingId === member.id;
+                    const isBusy = busy !== null;
 
-              if (isEditing) {
-                return (
-                  <li
-                    key={member.id}
-                    className="rounded-xl border-2 border-brand-blue/25 bg-blue-50/30 p-4 sm:p-5"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue">
-                      {S.editTitle}
-                    </p>
-                    <div className={`${dashboardFormGridClass} mt-4`}>
-                      <label className="block">
-                        <span className={dashboardLabelClass}>{S.colName}</span>
-                        <input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          maxLength={60}
-                          className={dashboardFieldClass}
-                          autoFocus
-                        />
-                      </label>
-                      <label className="block">
-                        <span className={dashboardLabelClass}>{S.colRole}</span>
-                        <RoleSelect
-                          value={editRole}
-                          onChange={setEditRole}
-                          options={staffRoleOptionsWithLegacy(langCode, editRole)}
-                          placeholder={S.rolePlaceholder}
-                        />
-                      </label>
-                    </div>
-                    <div className="mt-4">
-                      <span className={dashboardLabelClass}>{S.colStations}</span>
-                      <div className="mt-2">
-                        <PostPicker
-                          value={editStations}
-                          onChange={setEditStations}
-                          posts={enabledPosts}
-                          lang={langCode}
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setEditingId(null)}
-                        className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
-                      >
-                        <X className="h-4 w-4" />
-                        {S.cancelEdit}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isBusy || !editName.trim() || !editRole.trim()}
-                        onClick={() => void saveEdit(member.id)}
-                        className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
-                      >
-                        {S.saveEdit}
-                      </button>
-                    </div>
-                  </li>
-                );
-              }
+                    if (isEditing) {
+                      return (
+                        <tr key={member.id} className="border-b border-slate-50 bg-blue-50/30">
+                          {renderAssignmentFields(
+                            {
+                              name: editName,
+                              role: editRole,
+                              zone: editZoneId,
+                              post: editPostAssignment,
+                            },
+                            {
+                              setName: setEditName,
+                              setRole: setEditRole,
+                              setZone: setEditZoneId,
+                              setPost: setEditPostAssignment,
+                            },
+                            staffRoleOptionsWithLegacy(langCode, editRole),
+                          )}
+                          <td className="px-3 py-2 align-top text-right">
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setEditingId(null)}
+                                className={`inline-flex items-center gap-1 ${buttonClass("secondary", "sm")}`}
+                              >
+                                <X className="h-4 w-4" />
+                                {S.cancelEdit}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isBusy || !editName.trim() || !editRole.trim() || !editZoneId}
+                                onClick={() => void saveEdit(member.id)}
+                                className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
+                              >
+                                {S.saveEdit}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
 
-              return (
-                <li
-                  key={member.id}
-                  className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 sm:p-5"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-base font-semibold text-brand-navy">{member.name}</p>
-                      <p className="mt-0.5 text-sm text-slate-600">{member.roleLabel}</p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <DashboardIconButton
-                        variant="neutral"
-                        disabled={isBusy}
-                        onClick={() => startEdit(member)}
-                        label={S.edit}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </DashboardIconButton>
-                      <DashboardIconButton
-                        variant="danger"
-                        disabled={isBusy}
-                        onClick={() => void removeMember(member.id, member.name)}
-                        label={S.deleteTitle}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </DashboardIconButton>
-                    </div>
+                    return (
+                      <tr key={member.id} className="border-b border-slate-50 last:border-0">
+                        <td className="px-3 py-2.5 font-medium text-brand-navy">{member.name}</td>
+                        <td className="px-3 py-2.5 text-slate-600">{member.roleLabel}</td>
+                        <td className="px-3 py-2.5 text-slate-600">{zoneLabel(member.zoneId)}</td>
+                        <td className="px-3 py-2.5 text-slate-600">
+                          {staffAssignmentLabelForLang(
+                            staffPrimaryAssignment(member.stations),
+                            langCode,
+                            venuePosts,
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <div className="inline-flex items-center gap-1">
+                            <DashboardIconButton
+                              variant="neutral"
+                              disabled={isBusy}
+                              onClick={() => startEdit(member)}
+                              label={S.edit}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </DashboardIconButton>
+                            <DashboardIconButton
+                              variant="danger"
+                              disabled={isBusy}
+                              onClick={() => void removeMember(member.id, member.name)}
+                              label={S.deleteTitle}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </DashboardIconButton>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {members.map((member) =>
+              venue?.slug ? (
+                <div key={`link-${member.id}`} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                  <p className="text-sm font-semibold text-brand-navy">{member.name}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {S.colLink} · {zoneLabel(member.zoneId)} ·{" "}
+                    {staffAssignmentLabelForLang(
+                      staffPrimaryAssignment(member.stations),
+                      langCode,
+                      venuePosts,
+                    )}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">{S.colLinkHint}</p>
+                  <div className="mt-3">
+                    <StaffMemberLinkActions
+                      venueId={venueId}
+                      venueSlug={venue.slug}
+                      member={member}
+                      labels={linkLabels}
+                      busy={busy !== null}
+                      onTokenRotated={onMemberTokenRotated}
+                    />
                   </div>
-
-                  <div className="mt-4 space-y-4 border-t border-slate-100 pt-4">
-                    <div>
-                      <p className="text-xs font-medium text-slate-500">{S.colStations}</p>
-                      <div className="mt-2">
-                        <PostBadges
-                          assignments={member.stations}
-                          posts={venuePosts}
-                          lang={langCode}
-                        />
-                      </div>
-                    </div>
-                    {venue?.slug ? (
-                      <div>
-                        <p className="text-xs font-medium text-slate-500">{S.colLink}</p>
-                        <p className="mt-1 text-xs text-slate-500">{S.colLinkHint}</p>
-                        <div className="mt-2">
-                          <StaffMemberLinkActions
-                            venueId={venueId}
-                            venueSlug={venue.slug}
-                            member={member}
-                            labels={linkLabels}
-                            busy={isBusy}
-                            onTokenRotated={onMemberTokenRotated}
-                          />
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                </div>
+              ) : null,
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -200,11 +200,11 @@ export const MARKETING_EN = {
         },
         {
           q: "What happens after the trial?",
-          a: "Choose Basic or Pro, or contact us for Enterprise.",
+          a: "After the 7-day trial you get 7 grace days — your QR menu stays online. Then choose Basic or Pro, or contact us for Enterprise.",
         },
         {
           q: "What is MenuOS Live · 360°?",
-          a: "Live alerts for waiters, kitchen and bar — connected to the same QR menu.",
+          a: "Live alerts for waiters, kitchen and bar — connected to your QR menu. Available on Pro.",
         },
       ],
     },
@@ -217,7 +217,7 @@ export const MARKETING_EN = {
 
   footer: {
     about:
-      "Digital QR menus for hospitality — with live alerts for waiters and kitchen. No app, no reprints.",
+      "Digital QR menus for hospitality. Live 360° with waiter and kitchen alerts on Pro — no app, no reprints.",
     highlights: [
       {
         title: "Live 360° coordination",
@@ -277,10 +277,10 @@ export const MARKETING_EN = {
       hero:
         "From table QR to Live 360° coordination — every tool for modern hospitality, without complexity.",
       intro:
-        "MenuOS is not just «PDF with QR». It's a live menu with photos, multiple languages, MenuOS Live · 360° and instant price updates — built for the Greek hospitality market.",
+        "MenuOS is not just «PDF with QR». It's a live catalog with photos, 4 languages and instant price updates — built for the Greek hospitality market. Live 360° (call waiter, live panel) comes with Pro.",
       introParagraphs: [
-        "MenuOS combines a digital catalog, QR codes per table or room, waiter calls with push notifications, and live coordination for kitchen and bar — with no app install for guests.",
-        "Instead of reprinting every season, you change prices and items in seconds. Tourists see the menu in their language. Staff get alerts for calls and ready dishes — with the table number from the QR.",
+        "MenuOS combines a digital catalog and QR codes per table or room — no app for guests. Pro adds call waiter with push, live panel and kitchen/bar coordination.",
+        "Instead of reprinting every season, you change prices and items in seconds. Tourists see the menu in their language. On Pro, staff get alerts for calls — with the table number from the QR.",
       ],
     },
     howItWorks: {
@@ -288,7 +288,7 @@ export const MARKETING_EN = {
       hero: "From sign-up to QR on the table — simple steps, no special setup.",
       introParagraphs: [
         "After free sign-up, you create a venue, add categories and items, and download print-ready QR codes — in under an hour for a full menu.",
-        "Each QR can include a table (?table=12), room (?room=101) or sunbed number — so Live 360° alerts reach the right spot. Guests open the menu on their phone, no app required.",
+        "Each QR can include a table (?table=12), room (?room=101) or sunbed number. On Pro, Live 360° alerts reach the right spot. Guests open the menu on their phone, no app required.",
       ],
     },
     qrMenu: {
@@ -296,7 +296,7 @@ export const MARKETING_EN = {
       hero: "The practical choice for up-to-date menus, tourists and a premium image.",
       introParagraphs: [
         "A QR menu replaces printed catalogs with a live page that opens right after scanning. Guests see dish photos, prices, descriptions and allergens — in a clean, mobile-first layout that fits premium restaurants and hotels.",
-        "For tourism-heavy businesses, multilingual menus matter: the guest picks a language in one tap. With MenuOS you add GR, EN, DE and FR, enable call waiter and bill requests from the same QR — no POS integration and no app download.",
+        "For tourism-heavy businesses, multilingual menus matter: the guest picks a language in one tap. With MenuOS you add GR, EN, DE and FR on every plan. Call waiter and bill requests from the same QR are available on Pro (Live 360°) — no POS integration and no app download.",
       ],
     },
     about: {
@@ -317,10 +317,12 @@ export const MARKETING_EN = {
       hero: "Start free for {trialDays}. Upgrade as you grow — no multi-year lock-in.",
       introParagraphs: [
         "MenuOS plans are simple and transparent: a free {trialDaysAdj} trial with no credit card, then Basic or Pro with monthly billing you can cancel anytime. No hidden fees, setup charges or annual lock-in — you only pay while you use the service.",
-        "Basic fits one venue with up to 3 menus. Pro adds multiple venues, unlimited menus, PDF menu import and priority support. For chains and hotel groups with custom domain or white-label, contact us for Enterprise.",
+        "Basic fits one venue: 5 catalogs (e.g. restaurant, bar, pool), unlimited items and a 4-language QR menu. Pro adds up to 3 venues, unlimited catalogs, Live 360° with call waiter, PDF import with Gemini AI and priority support. For chains with custom domain or white-label, contact us for Enterprise.",
       ],
       faq: [
         { q: "Need a credit card for the trial?", a: "No. The {trialDaysAdj} trial starts with email and OTP verification." },
+        { q: "What happens after the trial?", a: "You get 7 extra grace days — your QR menu stays online. Then choose Basic or Pro." },
+        { q: "Is Live 360° included?", a: "Live 360° (call waiter, live panel, kitchen/bar screens) is on Pro — not on trial or Basic." },
         { q: "Can I change plan later?", a: "Yes. Upgrade Basic or Pro from billing. Enterprise — contact us." },
         { q: "What's in Enterprise?", a: "Custom domain, white-label, multiple venues, priority support — quote per project." },
         { q: "Any commitment?", a: "No. Monthly subscription, cancel anytime." },

@@ -14,19 +14,21 @@ export const metadata: Metadata = {
 
 type Props = {
   params: Promise<{ venueSlug: string }>;
-  searchParams: Promise<{ key?: string }>;
+  searchParams: Promise<{ key?: string; zone?: string }>;
 };
 
 export default async function StaffWaiterPage({ params, searchParams }: Props) {
   const { venueSlug } = await params;
-  const { key } = await searchParams;
+  const { key, zone } = await searchParams;
   const incomingKey = key?.trim();
+  const initialZoneId = zone?.trim() || undefined;
 
   if (incomingKey) {
     const auth = await resolveStaffAuthBySlug(venueSlug, incomingKey);
     if (!auth) return <StaffWaiterInvalidLink venueSlug={venueSlug} invalidKey />;
-    const params = new URLSearchParams({ venueSlug, key: incomingKey });
-    redirect(`/api/staff/session?${params.toString()}`);
+    const sessionParams = new URLSearchParams({ venueSlug, key: incomingKey });
+    if (initialZoneId) sessionParams.set("zone", initialZoneId);
+    redirect(`/api/staff/session?${sessionParams.toString()}`);
   }
 
   const session = await readStaffSessionFromCookies();
@@ -71,8 +73,13 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
         <WaiterPanel
           venues={[{ id: venue.id, name: venue.name, slug: venue.slug }]}
           initialVenueId={venue.id}
+          initialZoneId={staffMember?.zoneId ?? initialZoneId}
           staffViaCookie
-          staffMember={staffMember ? { name: staffMember.name, stations: staffMember.stations } : null}
+          staffMember={
+            staffMember
+              ? { name: staffMember.name, stations: staffMember.stations }
+              : null
+          }
         />
       </main>
     </div>
