@@ -1077,7 +1077,7 @@ export const DASHBOARD_EL = {
         postNameLabel: "Όνομα πόστου",
         postTypeLabel: "Τύπος",
         postTypeHint: "Ο τύπος καθορίζει σε ποια οθόνη tablet πηγαίνουν τα πάσο.",
-        postActionsLabel: "",
+        postActionsLabel: "Ενέργειες",
         addPost: "Νέο πόστο",
         removePost: "Αφαίρεση πόστου",
         removePostConfirm: (name: string) =>

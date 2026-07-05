@@ -42,6 +42,7 @@ import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provid
 import { buttonClass } from "@/components/ui/button";
 import { confirmDestructive } from "@/lib/confirm-action";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
+import { DashboardIconButton } from "@/components/dashboard/dashboard-action-button";
 import { Plus, Trash2 } from "lucide-react";
 
 type SpaceKind = "prefixed" | "main" | "sunbed" | "room";
@@ -606,81 +607,82 @@ export function VenueOperationsConfigPanel({
                   </div>
                 </div>
               ) : null}
-              <div
-                className={`${intro ? "mt-5" : "mt-4"} max-w-xl overflow-hidden rounded-xl border border-slate-200`}
-              >
-                <div
-                  className={`grid items-center gap-x-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 ${
-                    postsOnlyMode
-                      ? "grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem]"
-                      : "grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem]"
-                  }`}
-                >
-                  <span className="text-center">{O.postActiveLabel}</span>
-                  <span>{O.postNameLabel}</span>
-                  <span>{O.postTypeLabel}</span>
-                  <span className="sr-only">{O.removePost}</span>
-                </div>
-                {draftPosts.map((post) => {
-                  const typeLabels =
-                    lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
-                  return (
-                    <div
-                      key={post.id}
-                      className={`grid items-center gap-x-2 border-b border-slate-50 px-3 py-2 last:border-0 grid-cols-[2.75rem_minmax(0,1fr)_8.5rem_2.75rem] ${
-                        post.enabled ? "bg-brand-blue/[0.03]" : "bg-slate-50/40 opacity-80"
-                      }`}
-                    >
-                      <div className="flex justify-center">
-                        <input
-                          type="checkbox"
-                          checked={post.enabled}
-                          onChange={() => togglePost(post.id)}
-                          className="accent-brand-blue"
-                          aria-label={O.postActiveLabel}
-                        />
-                      </div>
-                      <input
-                        value={post.label}
-                        onChange={(e) => setPostLabel(post.id, e.target.value)}
-                        maxLength={40}
-                        placeholder={
-                          postsOnlyMode ? Posts.postNamePlaceholder : P.kitchen
-                        }
-                        className={`${dashboardFieldClass} w-full min-w-0 text-sm`}
-                      />
-                      <select
-                        value={post.station}
-                        onChange={(e) =>
-                          setPostStation(post.id, e.target.value as PassStationInput)
-                        }
-                        className={`${dashboardFieldClass} w-full min-w-0 text-sm`}
-                        title={postsOnlyMode ? Posts.postTypeHint : O.postTypeHint}
-                      >
-                        {PASS_STATION_INPUTS.map((station) => (
-                          <option key={station} value={station}>
-                            {typeLabels[station]}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="flex justify-center">
-                        <button
-                          type="button"
-                          onClick={() => void confirmRemovePost(post.id)}
-                          disabled={draftPosts.length <= 1}
-                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-30"
-                          aria-label={O.removePost}
-                          title={O.removePost}
+              <div className={`${intro ? "mt-5" : "mt-4"} overflow-x-auto rounded-xl border border-slate-200`}>
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      <th className="w-16 px-4 py-3 text-center">{O.postActiveLabel}</th>
+                      <th className="min-w-[14rem] px-4 py-3">{O.postNameLabel}</th>
+                      <th className="w-44 px-4 py-3">{O.postTypeLabel}</th>
+                      <th className="w-24 px-4 py-3 text-right">{O.postActionsLabel}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {draftPosts.map((post) => {
+                      const typeLabels =
+                        lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
+                      return (
+                        <tr
+                          key={post.id}
+                          className={`border-b border-slate-50 last:border-0 ${
+                            post.enabled ? "bg-brand-blue/[0.03]" : "bg-slate-50/40 opacity-80"
+                          }`}
                         >
-                          <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
-                          {O.removePost}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                          <td className="px-4 py-3 text-center align-middle">
+                            <input
+                              type="checkbox"
+                              checked={post.enabled}
+                              onChange={() => togglePost(post.id)}
+                              className="h-4 w-4 accent-brand-blue"
+                              aria-label={O.postActiveLabel}
+                            />
+                          </td>
+                          <td className="px-4 py-3 align-middle">
+                            <input
+                              value={post.label}
+                              onChange={(e) => setPostLabel(post.id, e.target.value)}
+                              maxLength={40}
+                              placeholder={
+                                postsOnlyMode ? Posts.postNamePlaceholder : P.kitchen
+                              }
+                              className={`${dashboardFieldClass} w-full min-w-[12rem] py-2.5 text-sm`}
+                            />
+                          </td>
+                          <td className="px-4 py-3 align-middle">
+                            <select
+                              value={post.station}
+                              onChange={(e) =>
+                                setPostStation(post.id, e.target.value as PassStationInput)
+                              }
+                              className={`${dashboardFieldClass} w-full min-w-[9rem] py-2.5 text-sm`}
+                              title={postsOnlyMode ? Posts.postTypeHint : O.postTypeHint}
+                            >
+                              {PASS_STATION_INPUTS.map((station) => (
+                                <option key={station} value={station}>
+                                  {typeLabels[station]}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-4 py-3 text-right align-middle">
+                            <div className="flex justify-end">
+                              <DashboardIconButton
+                                variant="danger"
+                                disabled={draftPosts.length <= 1}
+                                onClick={() => void confirmRemovePost(post.id)}
+                                label={O.removePost}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </DashboardIconButton>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-              <p className="mt-2 max-w-xl text-xs text-slate-500">
+              <p className="mt-3 text-xs leading-relaxed text-slate-500">
                 {postsOnlyMode ? Posts.postTypeHint : O.postTypeHint}
               </p>
             </section>
@@ -1061,7 +1063,11 @@ export function VenueOperationsConfigPanel({
               </section>
             ) : null}
 
-            <div className="flex flex-wrap gap-3 border-t border-slate-100 pt-4">
+            <div
+              className={`flex flex-wrap gap-3 border-t border-slate-100 pt-5 ${
+                postsOnlyMode ? "justify-end" : ""
+              }`}
+            >
               <button
                 type="button"
                 disabled={saving}

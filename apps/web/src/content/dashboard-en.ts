@@ -1061,7 +1061,7 @@ export const DASHBOARD_EN = {
         postNameLabel: "Post name",
         postTypeLabel: "Type",
         postTypeHint: "Type decides which tablet screen receives pass signals.",
-        postActionsLabel: "",
+        postActionsLabel: "Actions",
         addPost: "New post",
         removePost: "Remove post",
         removePostConfirm: (name: string) =>
