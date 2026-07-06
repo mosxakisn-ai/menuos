@@ -752,17 +752,17 @@ export const DASHBOARD_EN = {
         title: "Posts",
         description:
           "Define who does what — cook, waiter, bar, etc. The name appears on staff links, push and tablets.",
-        hint: "Up to 12 posts — e.g. Kitchen, Bar, Services. Type sets pass tablet vs waiter.",
+        hint: "Up to 12 posts — e.g. Kitchen, Bar, Services. Role sets pass tablet vs waiter.",
         postNamePlaceholder: "e.g. Kitchen, Bar, Services",
         postSpaceLabel: "Space",
         postSpaceAll: "All spaces",
         postTypeHint:
           "Kitchen/Bar = pass tablet · Waiter = phone · Dishwash/Cleaning/General = messages tablet.",
         waiterNameWarning:
-          "Waiter-like name with Kitchen/Bar type — switch type to Waiter or rename the post.",
+          "Waiter-like name with Kitchen/Bar role — switch role to Waiter or rename the post.",
         linkedTitle: "Where posts connect",
         linkedWaiterNote:
-          "Floor waiters = post with type Waiter here (e.g. Dining room). Then assign staff in the Staff tab.",
+          "Floor waiters = post with role Waiter here (e.g. Dining room). Then assign staff in the Staff tab.",
         linkedTablet: (postName: string, stationName: string) =>
           `«${postName}» (${stationName}) → Messages + tablet in Staff`,
         nextMessagesLink: "Messages →",
@@ -771,7 +771,7 @@ export const DASHBOARD_EN = {
         savedNextSteps:
           "Saved. Next: add messages per post and assign employees in Staff.",
         junkRemovedHint:
-          "Removed a post with wrong type — for waiters choose type Waiter.",
+          "Removed a post with wrong role — for waiters choose role Waiter.",
         placeholderNameWarning:
           "Enter a name (e.g. Kitchen) — «New post» does not appear in Staff.",
         placeholderRemovedHint:
@@ -960,7 +960,7 @@ export const DASHBOARD_EN = {
           "Waiter (Services…) → switch Screen to «Mobile».",
         noKdsPosts: "No kitchen/bar posts yet — set them up in the Posts tab first.",
         noWaiterPosts:
-          "No waiter post yet — add a post with type Waiter in the Posts tab (or pick All — everywhere).",
+          "No waiter post yet — add a post with role Waiter in the Posts tab (or pick All — everywhere).",
         selectSpacePlaceholder: "Choose space",
         selectPostPlaceholder: "Choose post",
         fieldsRequiredHint:
@@ -1130,8 +1130,8 @@ export const DASHBOARD_EN = {
         postNameLabel: "Post name",
         postSpaceLabel: "Space",
         postSpaceAll: "All spaces",
-        postTypeLabel: "Type",
-        postTypeHint: "Type sets waiter phone vs tablet (pass / messages).",
+        postTypeLabel: "Role",
+        postTypeHint: "Role sets waiter phone vs tablet (pass / messages).",
         postActionsLabel: "Actions",
         addPost: "New post",
         removePost: "Remove post",
