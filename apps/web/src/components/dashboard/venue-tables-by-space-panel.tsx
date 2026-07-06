@@ -163,16 +163,17 @@ function SpaceAccordion({
           {zone.spots.length === 0 ? (
             <p className="text-sm text-slate-500">{copy.emptyZone}</p>
           ) : (
-            <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-100 bg-white p-3">
-              <ul className="flex flex-wrap gap-2">
+            <div className="max-h-80 overflow-y-auto rounded-xl border border-slate-100 bg-white p-3">
+              <ul className="grid grid-cols-5 gap-2 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12">
                 {zone.spots.map((entry) => {
                   const spot = spotByKey.get(`${entry.spot.type}:${entry.spot.label}`);
                   if (!spot) return null;
                   const spotName = formatVenueSpotLabelForLang(spot.type, spot.label, langCode);
+                  const displayLabel = entry.displayLabel || spotName;
 
                   if (editingId === spot.id) {
                     return (
-                      <li key={spot.id} className="flex w-full max-w-xs items-center gap-2">
+                      <li key={spot.id} className="col-span-full flex max-w-md items-center gap-2">
                         <input
                           value={editLabel}
                           onChange={(e) => setEditLabel(e.target.value)}
@@ -199,29 +200,33 @@ function SpaceAccordion({
                   }
 
                   return (
-                    <li key={spot.id}>
-                      <div className="group inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-1.5 text-sm font-medium text-brand-navy">
-                        <span>{entry.displayLabel || spotName}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingId(spot.id);
-                            setEditLabel(spot.label);
-                          }}
-                          className="rounded p-0.5 text-slate-400 opacity-0 transition-opacity hover:text-brand-blue group-hover:opacity-100"
-                          title={copy.editSpot}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={Boolean(busy)}
-                          onClick={() => onDeleteSpot(spot.id, spotName)}
-                          className="rounded p-0.5 text-slate-400 opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
-                          title={copy.deleteSpot}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
+                    <li key={spot.id} className="min-w-0">
+                      <div className="group relative flex aspect-square w-full items-center justify-center rounded-lg border border-slate-200 bg-slate-50/80 text-brand-navy transition hover:border-brand-blue/30 hover:bg-white hover:shadow-sm">
+                        <span className="truncate px-1 text-sm font-semibold tabular-nums" title={displayLabel}>
+                          {displayLabel}
+                        </span>
+                        <div className="absolute -right-1 -top-1 flex gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingId(spot.id);
+                              setEditLabel(spot.label);
+                            }}
+                            className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:border-brand-blue/30 hover:text-brand-blue"
+                            title={copy.editSpot}
+                          >
+                            <Pencil className="h-2.5 w-2.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={Boolean(busy)}
+                            onClick={() => onDeleteSpot(spot.id, spotName)}
+                            className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:border-red-200 hover:text-red-600"
+                            title={copy.deleteSpot}
+                          >
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </button>
+                        </div>
                       </div>
                     </li>
                   );
