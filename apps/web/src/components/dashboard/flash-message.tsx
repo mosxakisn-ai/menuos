@@ -38,6 +38,7 @@ export function FlashMessages({
 
   useEffect(() => {
     if (initial) setMessages([initial]);
+    else setMessages([]);
   }, [initial]);
 
   useEffect(() => {

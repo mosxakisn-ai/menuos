@@ -9,14 +9,24 @@ type LogoProps = {
   dark?: boolean;
   href?: string | false;
   markSize?: number;
+  markClassName?: string;
+  wordmarkClassName?: string;
 };
 
-export function Logo({ className, showTagline = false, dark = false, href = "/", markSize = 40 }: LogoProps) {
+export function Logo({
+  className,
+  showTagline = false,
+  dark = false,
+  href = "/",
+  markSize = 40,
+  markClassName,
+  wordmarkClassName,
+}: LogoProps) {
   const content = (
     <div className={cn("flex items-center gap-3", className)}>
-      <LogoMark size={markSize} />
+      <LogoMark size={markSize} className={markClassName} />
       <div className="leading-tight">
-        <p className="text-xl font-extrabold tracking-tight">
+        <p className={cn("text-xl font-extrabold tracking-tight", wordmarkClassName)}>
           <span className={dark ? "text-white" : "text-brand-navy"}>Menu</span>
           <span className="text-gradient-brand">Os</span>
         </p>

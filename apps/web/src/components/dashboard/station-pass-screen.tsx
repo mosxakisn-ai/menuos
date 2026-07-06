@@ -13,10 +13,12 @@ import {
   mergeQuickChipLabels,
   passScreenToPostStation,
   pickDefaultZoneId,
+  venuePostMatchesZone,
   type PassStationInput,
   type VenuePostStationInput,
   type VenueSpotType,
 } from "@menuos/shared";
+import { Logo } from "@/components/brand/logo";
 import { buttonClass } from "@/components/ui/button";
 import { confirmDestructive } from "@/lib/confirm-action";
 import { cn } from "@/lib/utils";
@@ -636,8 +638,9 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const postsForZone = useMemo(() => {
     if (!stationPosts.length) return [];
-    return stationPosts;
-  }, [stationPosts]);
+    const zoneId = activeZoneId ?? zoneGroups[0]?.id ?? null;
+    return stationPosts.filter((post) => venuePostMatchesZone(post, zoneId));
+  }, [stationPosts, activeZoneId, zoneGroups]);
 
   const activePost = useMemo(
     () => postsForZone.find((post) => post.id === activePostId) ?? postsForZone[0] ?? null,
@@ -658,11 +661,15 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const headerMessages = useMemo(() => {
     if (ctx?.allQuickComments?.length) return ctx.allQuickComments;
+    if (activePost?.quickComments?.length) return activePost.quickComments;
+    if (postsForZone.length > 0) {
+      return mergeQuickChipLabels(...postsForZone.map((post) => post.quickComments));
+    }
     if (stationPosts.length > 0) {
       return mergeQuickChipLabels(...stationPosts.map((post) => post.quickComments));
     }
     return ctx?.quickComments ?? [];
-  }, [ctx?.allQuickComments, ctx?.quickComments, stationPosts]);
+  }, [ctx?.allQuickComments, ctx?.quickComments, stationPosts, postsForZone, activePost]);
 
   const headerMessageColor = screenMatchedPost?.messageColor ?? ctx?.messageColor ?? null;
 
@@ -700,10 +707,6 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     () => spots.map((s) => `${s.type}:${s.label}`).join("|"),
     [spots],
   );
-  const zoneLabelsKey =
-    ctx?.zoneLabels && Object.keys(ctx.zoneLabels).length > 0
-      ? JSON.stringify(ctx.zoneLabels)
-      : "";
   const activeSignals = ctx?.activeSignals ?? [];
 
   useEffect(() => {
@@ -712,7 +715,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     setActiveZoneId(pickDefaultZoneId(groups));
     setTable(null);
     setActivePostId(null);
-  }, [ctx?.venueId, spotsLayoutKey, zoneLabelsKey]);
+  }, [ctx?.venueId, spotsLayoutKey]);
 
   useEffect(() => {
     if (postsForZone.length === 0) {
@@ -744,9 +747,14 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   function selectZone(zoneId: string) {
     setActiveZoneId(zoneId);
-    setActivePostId(null);
     if (table && findZoneIdForSpot(zoneGroups, table) !== zoneId) {
       setTable(null);
+    }
+    if (activePostId) {
+      const current = stationPosts.find((post) => post.id === activePostId);
+      if (current && !venuePostMatchesZone(current, zoneId)) {
+        setActivePostId(null);
+      }
     }
   }
 
@@ -894,8 +902,17 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside className="flex min-h-0 w-[38%] max-w-[12.5rem] shrink-0 flex-col border-r border-white/10 bg-slate-950/50 sm:max-w-[13.5rem]">
           <div className="shrink-0 border-b border-white/10 px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-cyan-400">MenuOS</p>
-            <h1 className="mt-0.5 text-base font-bold leading-tight sm:text-lg">
+            <div aria-label="MenuOS">
+              <Logo
+                href={false}
+                dark
+                markSize={34}
+                className="gap-2.5"
+                markClassName="drop-shadow-[0_4px_14px_rgba(6,182,212,0.32)]"
+                wordmarkClassName="text-[15px] leading-none sm:text-base"
+              />
+            </div>
+            <h1 className="mt-2 text-sm font-bold leading-tight sm:text-base">
               {ctx?.screenLabel?.trim() &&
               displayStationTitle &&
               ctx.screenLabel.trim() !== displayStationTitle
@@ -1102,6 +1119,16 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               ) : null}
             </div>
 
+            <input
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={C.commentPh}
+              aria-label={C.comment}
+              maxLength={80}
+              disabled={sending}
+              className="h-9 w-full rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white placeholder:text-slate-500 disabled:opacity-50"
+            />
+
             {flash ? (
               <p
                 className={cn(
@@ -1115,7 +1142,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
             <button
               type="button"
-              disabled={sending || !hasSelection}
+              disabled={sending || !hasSelection || !comment.trim()}
               onClick={() => void send(undefined)}
               className={cn(
                 "h-12 w-full text-base font-bold sm:h-14 sm:text-lg",
