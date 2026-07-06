@@ -241,7 +241,7 @@ const QUICK_MESSAGE_ROW_PX = 56;
 const QUICK_MESSAGES_MAX_HEIGHT_PX = QUICK_MESSAGE_ROW_PX * 4 + 8;
 const TABLE_GRID_COLS = 4;
 /** Fixed tile row height (must match `auto-rows-[…]` on the grid). */
-const TABLE_TILE_ROW_PX = 52;
+const TABLE_TILE_ROW_PX = 56;
 const TABLE_GRID_GAP_PX = 8;
 const TABLE_GRID_SCROLL_ROW_PX = (TABLE_TILE_ROW_PX + TABLE_GRID_GAP_PX) * 2;
 const KDS_SCROLL_ARROW_BUTTON_CLASS =
@@ -332,13 +332,13 @@ function PassTableGrid({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 w-full items-stretch gap-1.5">
+    <div className="relative flex min-h-0 w-full flex-1 items-stretch gap-1.5">
       <div
         ref={gridRef}
         onScroll={updateScrollState}
         className={cn(
           "grid h-full min-h-0 min-w-0 flex-1 content-start gap-2 overflow-y-auto overscroll-contain scroll-smooth sm:gap-2",
-          "auto-rows-[3.25rem] sm:auto-rows-[3.5rem]",
+          "auto-rows-[3.5rem]",
           "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           TABLE_GRID_COLS === 4 ? "grid-cols-4" : "grid-cols-3",
         )}
@@ -360,7 +360,7 @@ function PassTableGrid({
               type="button"
               onClick={() => onSelectSpot(spot)}
               className={cn(
-                "relative flex h-full w-full min-h-0 flex-col items-center justify-center rounded-xl border-2 px-1 py-0.5 transition",
+                "relative flex h-full w-full min-h-0 flex-col items-center justify-center overflow-hidden rounded-xl border-2 px-1 py-0.5 transition",
                 selected
                   ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
                   : hasSignal
@@ -385,13 +385,13 @@ function PassTableGrid({
                   {latestSignal.message}
                 </span>
               ) : hasSignal ? (
-                <span className="mb-0.5 text-[8px] font-medium uppercase tracking-wide text-slate-400">
+                <span className="mb-0.5 max-w-full truncate text-[8px] font-medium uppercase tracking-wide text-slate-400">
                   {pickedUp ? waitingPicked : waitingReady}
                 </span>
               ) : null}
-              <span className="text-lg font-bold tabular-nums leading-none sm:text-xl">{displayLabel}</span>
+              <span className="shrink-0 text-lg font-bold tabular-nums leading-none sm:text-xl">{displayLabel}</span>
               {showSpotSecondaryLabel && spot.label !== displayLabel ? (
-                <span className="mt-0.5 max-w-full truncate text-[8px] font-medium uppercase tracking-wide text-slate-400">
+                <span className="mt-0.5 max-w-full shrink truncate text-[8px] font-medium uppercase tracking-wide text-slate-400">
                   {spot.label}
                 </span>
               ) : null}
@@ -425,7 +425,7 @@ function PassTableGrid({
 
       {canScrollForward ? (
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-slate-950/95 to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 right-10 h-8 bg-gradient-to-t from-slate-950/95 to-transparent sm:right-11"
           aria-hidden
         />
       ) : null}
