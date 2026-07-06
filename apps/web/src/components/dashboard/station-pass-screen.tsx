@@ -10,7 +10,8 @@ import {
   groupVenueSpotsByZone,
   isVenuePassPostStation,
   isVenueSupportPostStation,
-  mergeQuickChipLabels,
+  kdsSidebarMessages,
+  resolveKdsSendingPost,
   passScreenToPostStation,
   passSendTableNumber,
   pickDefaultZoneId,
@@ -357,22 +358,6 @@ function passStationForSend(
     return activePost.station;
   }
   return passScreenToPostStation(fallback);
-}
-
-/** allPosts=1: attribute send to the post that owns the chip, not only the active tab. */
-function resolveSendingPost(
-  messageText: string,
-  activePost: StationPostOption | null,
-  posts: StationPostOption[],
-): StationPostOption | null {
-  const trimmed = messageText.trim();
-  if (trimmed) {
-    const owners = posts.filter((post) =>
-      post.quickComments.some((chip) => chip.trim() === trimmed),
-    );
-    if (owners.length === 1) return owners[0]!;
-  }
-  return activePost;
 }
 
 /** Prefix support-post messages so waiters see which station sent them. */
@@ -819,10 +804,9 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const postsForZone = useMemo(() => {
     if (!tabletPosts.length) return [];
-    if (allPostsMode) return tabletPosts;
     const zoneId = activeZoneId ?? zoneGroups[0]?.id ?? null;
     return tabletPosts.filter((post) => venuePostMatchesZone(post, zoneId));
-  }, [tabletPosts, activeZoneId, zoneGroups, allPostsMode]);
+  }, [tabletPosts, activeZoneId, zoneGroups]);
 
   const activePost = useMemo(
     () => postsForZone.find((post) => post.id === activePostId) ?? postsForZone[0] ?? null,
@@ -831,20 +815,14 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const headerMessageColor = activePost?.messageColor ?? ctx?.messageColor ?? null;
 
-  const allPostsMessageSources = useMemo(() => {
-    const pass = ctx?.allKdsPosts?.length ? ctx.allKdsPosts : (ctx?.stationPosts ?? []);
-    const support = ctx?.supportKdsPosts ?? [];
-    return [...pass, ...support.filter((post) => !pass.some((row) => row.id === post.id))];
-  }, [ctx?.allKdsPosts, ctx?.stationPosts, ctx?.supportKdsPosts]);
-
-  const headerMessages = useMemo(() => {
-    if (allPostsMode) {
-      if (ctx?.allQuickComments?.length) return ctx.allQuickComments;
-      return mergeQuickChipLabels(...allPostsMessageSources.map((post) => post.quickComments ?? []));
-    }
-    if (activePost) return activePost.quickComments ?? [];
-    return ctx?.quickComments ?? [];
-  }, [allPostsMode, ctx?.allQuickComments, ctx?.quickComments, activePost, allPostsMessageSources]);
+  const headerMessages = useMemo(
+    () =>
+      kdsSidebarMessages(activePost, {
+        quickComments: ctx?.quickComments,
+        allQuickComments: ctx?.allQuickComments,
+      }),
+    [activePost, ctx?.quickComments, ctx?.allQuickComments],
+  );
 
   const load = useCallback(async () => {
     if (!venueSlug || !stationKey) {
@@ -940,7 +918,6 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     if (table && findZoneIdForSpot(zoneGroups, table) !== zoneId) {
       setTable(null);
     }
-    if (allPostsMode) return;
     if (activePostId) {
       const current = tabletPosts.find((post) => post.id === activePostId);
       if (current && !venuePostMatchesZone(current, zoneId)) {
@@ -992,7 +969,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
             : { sunbedNumber: table.label }
         : { tableNumber };
 
-      const sendingPost = resolveSendingPost(messageText, activePost, tabletPosts);
+      const sendingPost = resolveKdsSendingPost(messageText, activePost, tabletPosts);
       const sendStation = passStationForSend(sendingPost, station);
       const outboundMessage = formatPassMessageForSend(messageText, sendingPost, tabletPosts);
       const res = await fetch("/api/pass-signals", {
@@ -1117,7 +1094,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
           {ctx && headerMessages.length > 0 ? (
             <QuickMessagesPanel
-              key={allPostsMode ? "all-posts" : (activePost?.id ?? "default")}
+              key={activePost?.id ?? "default"}
               title={C.messagesTitle}
               messages={headerMessages}
               selectedMessage={comment}
