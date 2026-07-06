@@ -56,6 +56,14 @@ function isMonitorPendingPass(pass: PassSignal): boolean {
   return pass.status === "READY";
 }
 
+function StaffNameChip({ name }: { name: string }) {
+  return (
+    <span className="inline-flex max-w-[45%] min-w-0 shrink-0 items-center overflow-hidden rounded-full border border-brand-blue/25 bg-gradient-to-r from-brand-blue/[0.07] to-cyan-400/[0.12] px-2.5 py-0.5 text-[11px] font-semibold tracking-tight text-brand-navy shadow-[0_1px_8px_rgba(37,99,235,0.12)] sm:max-w-[50%] sm:px-3 sm:text-xs">
+      <span className="truncate">{name}</span>
+    </span>
+  );
+}
+
 export function WaiterPanel({
   venues,
   initialVenueId,
@@ -557,13 +565,16 @@ export function WaiterPanel({
 
       {assignedZoneId && assignedZoneLabel ? (
         staffViaCookie ? (
-          <p className="text-sm font-semibold text-brand-navy">
-            {assignedZoneLabel}
-            <span className="font-normal text-slate-500">
-              {" "}
-              · {W.zoneSpotCount(zoneSpotCount(assignedZoneId))}
-            </span>
-          </p>
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <p className="min-w-0 truncate text-sm font-semibold text-brand-navy">
+              {assignedZoneLabel}
+              <span className="font-normal text-slate-500">
+                {" "}
+                · {W.zoneSpotCount(zoneSpotCount(assignedZoneId))}
+              </span>
+            </p>
+            {staffMember ? <StaffNameChip name={staffMember.name} /> : null}
+          </div>
         ) : (
           <section className="rounded-2xl border border-brand-blue/25 bg-gradient-to-br from-brand-blue/[0.06] to-cyan-400/[0.08] px-4 py-3 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue/80">

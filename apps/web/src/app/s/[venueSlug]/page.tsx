@@ -89,6 +89,7 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   }
 
   const { venue, staffMember } = auth;
+  const staffZoneLock = staffMember?.zoneId?.trim() || initialZoneId?.trim();
 
   const passAccess = await resolvePassStaffAccess(venue.id, venue.slug, staffMember);
   if (passAccess.kind === "tablet") redirect(passAccess.url);
@@ -104,7 +105,7 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
             <h1 className="truncate text-base font-bold text-primary sm:text-lg">Κλήσεις σερβιτόρου</h1>
             <p className="truncate text-xs text-slate-600">
               {venue.name}
-              {staffMember ? (
+              {staffMember && !staffZoneLock ? (
                 <>
                   {" "}
                   · <span className="font-medium text-brand-navy">{staffMember.name}</span>
