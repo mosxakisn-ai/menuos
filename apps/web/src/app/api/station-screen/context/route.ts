@@ -88,13 +88,10 @@ export async function GET(request: Request) {
       });
 
   const dbStation = passStationInputToDb(passScreenToPostStation(station));
-  const allPassDbStations: Array<"KITCHEN" | "BAR" | "COLD" | "DESSERT"> = [
-    "KITCHEN",
-    "BAR",
-    "COLD",
-    "DESSERT",
-  ];
-  const passStationFilter = allPosts ? { station: { in: allPassDbStations } } : { station: dbStation };
+  const allPassDbStations = ["KITCHEN", "BAR", "COLD", "DESSERT"] as const;
+  const passStationFilter = allPosts
+    ? { station: { in: [...allPassDbStations] as Array<(typeof allPassDbStations)[number]> } }
+    : { station: dbStation };
 
   const activeSignalsRaw = await prisma.passSignal.findMany({
     where: {
