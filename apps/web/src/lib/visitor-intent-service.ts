@@ -44,6 +44,57 @@ const STUCK_STEPS = new Set<VisitorIntentStep>([
   "register_otp",
 ]);
 
+const FINAL_STEPS = new Set<VisitorIntentStep>([
+  "payment_success",
+  "payment_failed",
+  "stripe_init_failed",
+]);
+
+/** Higher = further in funnel — used to avoid step downgrades on navigation. */
+export const VISITOR_INTENT_STEP_RANK: Partial<Record<VisitorIntentStep, number>> = {
+  browse: 1,
+  pricing: 2,
+  register_start: 3,
+  register_otp: 4,
+  checkout_opened: 5,
+  pay_clicked: 6,
+  stripe_redirect: 7,
+  payment_failed: 7,
+  stripe_init_failed: 7,
+  payment_success: 10,
+};
+
+function stepRank(step: VisitorIntentStep | string | undefined): number {
+  if (!step || step === "heartbeat" || step === "session_end") return 0;
+  return VISITOR_INTENT_STEP_RANK[step as VisitorIntentStep] ?? 0;
+}
+
+export function peakFunnelStep(row: {
+  step: VisitorIntentStep | string;
+  stepTrail?: VisitorIntentStepTrailEntry[] | null;
+}): VisitorIntentStep | string {
+  const candidates = [
+    ...(row.stepTrail ?? []).map((t) => t.step),
+    row.step,
+  ].filter((s) => s && s !== "heartbeat" && s !== "session_end");
+  return candidates.reduce(
+    (best, s) => (stepRank(s) >= stepRank(best) ? s : best),
+    "browse",
+  );
+}
+
+function resolveStepTransition(
+  prev: VisitorIntentStep | undefined,
+  incoming: VisitorIntentStep,
+): VisitorIntentStep {
+  if (incoming === "session_end") return incoming;
+  if (incoming === "heartbeat") return prev ?? "browse";
+  if (!prev) return incoming;
+  if (FINAL_STEPS.has(prev) && !FINAL_STEPS.has(incoming)) return prev;
+  if (stepRank(incoming) >= stepRank(prev)) return incoming;
+  return prev;
+}
+
 const INFRA_IPS = new Set([
   "127.0.0.1",
   "::1",
@@ -149,12 +200,15 @@ function appendStepTrail(
   } else {
     trail.push({ step: label, at: atMs });
   }
-  return trail.slice(-12);
+  return trail.slice(-20);
 }
 
 function enrichLiveRow(row: VisitorIntentRow, now: Date): VisitorIntentRow {
+  const effectiveStep = peakFunnelStep(row) as VisitorIntentStep;
   const stepSeconds = Math.max(0, Math.floor((now.getTime() - row.stepSince.getTime()) / 1000));
-  const stuck = STUCK_STEPS.has(row.step) && stepSeconds >= VISITOR_INTENT_STUCK_STEP_SECONDS;
+  const stuck =
+    (STUCK_STEPS.has(row.step) || STUCK_STEPS.has(effectiveStep)) &&
+    stepSeconds >= VISITOR_INTENT_STUCK_STEP_SECONDS;
   return { ...row, stepSeconds, stuck };
 }
 
@@ -188,7 +242,10 @@ function enrichLogRow(row: VisitorIntentRow, now: Date, liveSids: Set<string>): 
     leftAt: online ? null : row.leftAt ?? row.lastSeenAt,
     durationSeconds,
     stepSeconds: Math.max(0, Math.floor((now.getTime() - row.stepSince.getTime()) / 1000)),
-    stuck: STUCK_STEPS.has(row.step) && Math.max(0, Math.floor((now.getTime() - row.stepSince.getTime()) / 1000)) >= VISITOR_INTENT_STUCK_STEP_SECONDS,
+    stuck:
+      (STUCK_STEPS.has(row.step) || STUCK_STEPS.has(peakFunnelStep(row) as VisitorIntentStep)) &&
+      Math.max(0, Math.floor((now.getTime() - row.stepSince.getTime()) / 1000)) >=
+        VISITOR_INTENT_STUCK_STEP_SECONDS,
   };
 }
 
@@ -283,20 +340,8 @@ export async function recordVisitorIntent(input: {
   }
   if (existing && input.step === "heartbeat") {
     resolvedStep = prevStep ?? "browse";
-  }
-
-  const FINAL_STEPS = new Set<VisitorIntentStep>([
-    "payment_success",
-    "payment_failed",
-    "stripe_init_failed",
-  ]);
-  if (
-    existing &&
-    prevStep &&
-    FINAL_STEPS.has(prevStep) &&
-    !FINAL_STEPS.has(resolvedStep)
-  ) {
-    resolvedStep = prevStep;
+  } else if (existing && prevStep) {
+    resolvedStep = resolveStepTransition(prevStep, resolvedStep);
   }
 
   const stepSince =
@@ -447,11 +492,31 @@ export function countPaymentsTodayFromLog(rows: VisitorIntentRow[]): number {
   }).length;
 }
 
+export async function recordVisitorIntentPaymentSuccess(input: {
+  visitorSid?: string | null;
+  planId?: string | null;
+  visitorLabel?: string | null;
+}): Promise<boolean> {
+  const sessionId = normalizeSid(input.visitorSid);
+  if (!sessionId) return false;
+  return recordVisitorIntent({
+    sessionId,
+    surface: "checkout",
+    step: "payment_success",
+    path: "/dashboard/billing",
+    planId: input.planId,
+    visitorLabel: input.visitorLabel,
+    source: "stripe_webhook",
+  });
+}
+
 export function serializeVisitorIntentRow(row: VisitorIntentRow) {
+  const peak_step = peakFunnelStep(row);
   return {
     sid: row.sessionId,
     surface: row.surface,
     step: row.step,
+    peak_step,
     path: row.path,
     plan_id: row.planId,
     visitor_label: row.visitorLabel,

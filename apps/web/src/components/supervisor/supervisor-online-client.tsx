@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock3,
-  CreditCard,
   Radio,
   RefreshCw,
 } from "lucide-react";
@@ -46,6 +45,7 @@ type SessionRow = {
   sid: string;
   surface: string;
   step: string;
+  peak_step?: string;
   path: string | null;
   plan_id: string | null;
   visitor_label: string | null;
@@ -61,6 +61,48 @@ type SessionRow = {
   left_at: number | null;
   step_trail: Array<{ step: string; at: number }>;
 };
+
+const PAYMENT_STEPS = new Set([
+  "checkout_opened",
+  "pay_clicked",
+  "stripe_redirect",
+  "payment_success",
+  "payment_failed",
+  "stripe_init_failed",
+]);
+
+function displayStep(row: SessionRow) {
+  return row.peak_step && row.peak_step !== row.step ? row.peak_step : row.step;
+}
+
+function funnelTrailSteps(row: SessionRow): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const entry of row.step_trail ?? []) {
+    const s = entry.step;
+    if (!s || s === "heartbeat" || s === "session_end" || seen.has(s)) continue;
+    seen.add(s);
+    out.push(s);
+  }
+  const peak = displayStep(row);
+  if (peak && peak !== "heartbeat" && !seen.has(peak)) out.push(peak);
+  return out.slice(-8);
+}
+
+function StepTrail({ row }: { row: SessionRow }) {
+  const steps = funnelTrailSteps(row);
+  if (steps.length <= 1) return null;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1">
+      {steps.map((step, i) => (
+        <span key={`${step}-${i}`} className="inline-flex items-center gap-1">
+          {i > 0 ? <span className="text-[9px] text-slate-300">→</span> : null}
+          <StepBadge step={step} />
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function stepLabel(step: string) {
   return STEP_LABELS[step] ?? step;
@@ -107,11 +149,14 @@ function SessionCard({ row, compact }: { row: SessionRow; compact?: boolean }) {
   const subtitle = label
     ? [SURFACE_LABELS[row.surface] ?? row.surface, row.path?.trim()].filter(Boolean).join(" · ")
     : null;
+  const shownStep = displayStep(row);
+  const inPaymentFunnel = PAYMENT_STEPS.has(shownStep) || funnelTrailSteps(row).some((s) => PAYMENT_STEPS.has(s));
   return (
     <Card
       className={cn(
         "border p-3 shadow-sm",
         online ? "border-emerald-200/80 bg-emerald-50/30" : "border-slate-200 bg-white",
+        inPaymentFunnel && !online && "border-amber-200/70",
         compact && "p-2.5",
       )}
     >
@@ -133,7 +178,10 @@ function SessionCard({ row, compact }: { row: SessionRow; compact?: boolean }) {
         </span>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <StepBadge step={row.step} />
+        <StepBadge step={shownStep} />
+        {row.step !== shownStep && row.step !== "heartbeat" ? (
+          <span className="text-[10px] text-slate-400">τώρα: {stepLabel(row.step)}</span>
+        ) : null}
         {row.stuck ? (
           <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">
             <AlertTriangle className="h-3 w-3" />
@@ -141,6 +189,7 @@ function SessionCard({ row, compact }: { row: SessionRow; compact?: boolean }) {
           </span>
         ) : null}
       </div>
+      <StepTrail row={row} />
       <div className="mt-2 space-y-0.5 text-[11px] text-slate-600">
         {row.client_ip ? (
           <p>
@@ -234,10 +283,23 @@ export function SupervisorOnlineClient() {
       : merged;
     return filtered
       .filter((row) => row.status === "left" || !liveSids.has(row.sid))
-      .slice(0, 40);
+      .slice(0, 80);
   }, [logEntries, scoped, surfaceFilter]);
 
   const stuckTotal = scoped.filter((r) => r.stuck).length;
+  const checkoutFunnelToday = useMemo(() => {
+    const all = [...logEntries, ...sessions];
+    const seen = new Set<string>();
+    let count = 0;
+    for (const row of all) {
+      if (seen.has(row.sid)) continue;
+      seen.add(row.sid);
+      const peak = displayStep(row);
+      if (PAYMENT_STEPS.has(peak) && peak !== "checkout_opened") count += 1;
+      else if (funnelTrailSteps(row).some((s) => s === "pay_clicked" || s === "stripe_redirect")) count += 1;
+    }
+    return count;
+  }, [logEntries, sessions]);
 
   return (
     <DashboardPage>
@@ -265,6 +327,11 @@ export function SupervisorOnlineClient() {
           <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-700">
             <CheckCircle2 className="h-3 w-3" />
             Σήμερα πληρωμές: {paymentsToday}
+          </span>
+        ) : null}
+        {!loading && checkoutFunnelToday > 0 ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
+            Funnel πληρωμής 24ω: {checkoutFunnelToday}
           </span>
         ) : null}
         <div className="ml-auto flex items-center gap-2">

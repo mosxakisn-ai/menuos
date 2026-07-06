@@ -87,6 +87,7 @@ export async function createPlanCheckoutSession(input: {
   stripeCustomerId?: string | null;
   returnPath?: string;
   locale?: string;
+  visitorSid?: string | null;
 }): Promise<{ url: string; sessionId: string }> {
   const plan = await getPlanFromCatalog(input.planId);
   if (plan.priceMonthly === 0) {
@@ -102,6 +103,7 @@ export async function createPlanCheckoutSession(input: {
     organizationId: input.organizationId,
     planId: input.planId,
     planName: plan.name,
+    ...(input.visitorSid?.trim() ? { visitorSid: input.visitorSid.trim().slice(0, 64) } : {}),
   });
 
   const copy = buildSubscriptionCheckoutCopy(plan);

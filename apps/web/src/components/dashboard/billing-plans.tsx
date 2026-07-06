@@ -12,7 +12,7 @@ import { formatPlanPriceDisplay } from "@/lib/plan-catalog-types";
 import { displayPlanFeature } from "@/lib/plan-feature-display";
 import { formatDashboardDate } from "@/content/dashboard-i18n";
 import type { SubscriptionDisplaySummary } from "@/lib/subscription-display";
-import { reportVisitorIntent } from "@/lib/visitor-intent-client";
+import { reportVisitorIntent, getVisitorSessionId } from "@/lib/visitor-intent-client";
 import { cn } from "@/lib/utils";
 
 type Subscription = {
@@ -42,6 +42,7 @@ export function BillingPlans({
   subscriptionAccessActive,
   subscriptionSummary,
   userRole,
+  userEmail,
   plans,
   enterprisePlan,
 }: {
@@ -50,6 +51,7 @@ export function BillingPlans({
   subscriptionAccessActive: boolean;
   subscriptionSummary: SubscriptionDisplaySummary;
   userRole?: string;
+  userEmail?: string;
   plans: PlanCatalogEntry[];
   enterprisePlan: PlanCatalogEntry | null;
 }) {
@@ -63,17 +65,24 @@ export function BillingPlans({
   async function checkout(planId: string) {
     setLoadingPlan(planId);
     setError(null);
+    const visitorLabel = userEmail?.trim() || undefined;
+    const visitorSid = getVisitorSessionId();
     reportVisitorIntent({
       surface: "checkout",
       step: "pay_clicked",
       path: "/dashboard/billing",
       planId,
+      visitorLabel,
     });
     try {
       const res = await fetch("/api/billing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, returnPath: "/dashboard/billing" }),
+        body: JSON.stringify({
+          planId,
+          returnPath: "/dashboard/billing",
+          visitorSid,
+        }),
       });
       const data = (await res.json()) as {
         checkoutUrl?: string;
@@ -87,6 +96,7 @@ export function BillingPlans({
           step: "stripe_init_failed",
           path: "/dashboard/billing",
           planId,
+          visitorLabel,
         });
         return;
       }
@@ -97,6 +107,7 @@ export function BillingPlans({
             step: "payment_success",
             path: "/dashboard/billing",
             planId,
+            visitorLabel,
           });
           router.push(data.checkoutUrl);
           router.refresh();
@@ -107,6 +118,7 @@ export function BillingPlans({
           step: "stripe_redirect",
           path: "/dashboard/billing",
           planId,
+          visitorLabel,
         });
         window.location.href = data.checkoutUrl;
       }
@@ -117,6 +129,7 @@ export function BillingPlans({
         step: "stripe_init_failed",
         path: "/dashboard/billing",
         planId,
+        visitorLabel,
       });
     } finally {
       setLoadingPlan(null);

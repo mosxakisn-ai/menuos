@@ -5,7 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { reportVisitorIntent } from "@/lib/visitor-intent-client";
 
-export function BillingConfirmHandler({ organizationId }: { organizationId: string }) {
+export function BillingConfirmHandler({
+  organizationId,
+  userEmail,
+}: {
+  organizationId: string;
+  userEmail?: string;
+}) {
   const { d } = useDashboardCopy();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -22,6 +28,7 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
         surface: "checkout",
         step: "payment_failed",
         path: "/dashboard/billing",
+        visitorLabel: userEmail?.trim() || undefined,
       });
       setMessage(d.billing.cancelled);
       setIsError(true);
@@ -59,6 +66,7 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
               surface: "checkout",
               step: "payment_failed",
               path: "/dashboard/billing",
+              visitorLabel: userEmail?.trim() || undefined,
             });
             return;
           }
@@ -69,6 +77,7 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
               surface: "checkout",
               step: "payment_failed",
               path: "/dashboard/billing",
+              visitorLabel: userEmail?.trim() || undefined,
             });
             return;
           }
@@ -77,6 +86,7 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
             step: "payment_success",
             path: "/dashboard/billing",
             planId: data.subscription?.plan,
+            visitorLabel: userEmail?.trim() || undefined,
           });
           setMessage(d.billing.activated);
           setIsError(false);
@@ -88,7 +98,7 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
           setIsError(true);
         });
     }
-  }, [organizationId, router, searchParams]);
+  }, [organizationId, router, searchParams, userEmail]);
 
   if (!message) return null;
 

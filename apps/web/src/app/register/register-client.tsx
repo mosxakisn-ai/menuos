@@ -14,7 +14,7 @@ import {
   registerSubmitLabel,
   registerSubtitle,
 } from "@/lib/register-plan-intent";
-import { bumpVisitorIntentStep, reportVisitorIntent } from "@/lib/visitor-intent-client";
+import { bumpVisitorIntentStep, reportVisitorIntent, getVisitorSessionId } from "@/lib/visitor-intent-client";
 
 export default function RegisterPageClient({
   trialDaysGen,
@@ -180,6 +180,7 @@ export default function RegisterPageClient({
           body: JSON.stringify({
             planId,
             returnPath: "/dashboard/billing",
+            visitorSid: getVisitorSessionId(),
           }),
         });
         const billingData = (await billingRes.json()) as { checkoutUrl?: string; error?: string };

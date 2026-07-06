@@ -12,6 +12,7 @@ import {
   syncSubscriptionFromStripe,
 } from "@/lib/billing";
 import { fireAdminNotify, notifyAdminStripePayment } from "@/lib/admin-notify";
+import { recordVisitorIntentPaymentSuccess } from "@/lib/visitor-intent-service";
 import { prisma } from "@menuos/db";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -118,6 +119,13 @@ export async function POST(req: NextRequest) {
             stripeSubId,
             currentPeriodEnd,
           });
+
+          void recordVisitorIntentPaymentSuccess({
+            visitorSid: metadata.visitorSid,
+            planId: metadata.planId,
+            visitorLabel:
+              typeof session.customer_email === "string" ? session.customer_email : undefined,
+          }).catch(() => undefined);
 
           fireAdminNotify(() =>
             notifyAdminStripePayment({

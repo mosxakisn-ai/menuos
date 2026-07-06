@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@menuos/db";
 import { BillingConfirmHandler } from "@/components/dashboard/billing-confirm-handler";
 import { BillingPlans } from "@/components/dashboard/billing-plans";
+import { BillingVisitorIntentLabel } from "@/components/dashboard/billing-visitor-intent";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
 import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
 import { SubscriptionInactiveBanner } from "@/components/dashboard/subscription-inactive-banner";
@@ -48,9 +49,15 @@ export default async function BillingPage({ searchParams: _searchParams }: Props
       : null,
     lang,
   );
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { email: true },
+  });
+  const userEmail = user?.email ?? "";
 
   return (
     <DashboardPage wide>
+      <BillingVisitorIntentLabel email={userEmail} />
       <LocalizedDashboardPageHeader page="billing" />
 
       <SubscriptionInactiveBanner
@@ -60,13 +67,14 @@ export default async function BillingPage({ searchParams: _searchParams }: Props
 
       <Suspense fallback={null}>
         <UpgradeReasonBanner />
-        <BillingConfirmHandler organizationId={session.organizationId} />
+        <BillingConfirmHandler organizationId={session.organizationId} userEmail={userEmail} />
       </Suspense>
 
       <div id="plans">
         <BillingPlans
           organizationId={session.organizationId}
           userRole={session.role}
+          userEmail={userEmail}
           plans={plans}
           enterprisePlan={enterprisePlan}
           subscriptionAccessActive={hasActiveSubscription}

@@ -26,14 +26,14 @@ export async function POST(request: Request) {
   const auth = await requireSession({ roles: ["ADMIN", "MANAGER"] });
   if (auth.response) return auth.response;
 
-  let body: { planId?: string; returnPath?: string };
+  let body: { planId?: string; returnPath?: string; visitorSid?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Λάθος αίτημα." }, { status: 400 });
   }
 
-  const { planId, returnPath } = body;
+  const { planId, returnPath, visitorSid } = body;
   if (!planId) {
     return NextResponse.json({ error: "Απαιτείται planId." }, { status: 400 });
   }
@@ -92,6 +92,7 @@ export async function POST(request: Request) {
       customerEmail: user.email,
       stripeCustomerId: existingSubscription?.stripeCustomerId,
       returnPath: safeReturn,
+      visitorSid: visitorSid?.trim() || undefined,
     });
 
     return NextResponse.json({

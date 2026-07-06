@@ -1,6 +1,7 @@
 "use client";
 
 const SESSION_KEY = "menuos_visitor_sid";
+const PEAK_STEP_KEY = "menuos_visitor_peak_step";
 const HEARTBEAT_MS = 45_000;
 
 export type VisitorIntentSurface = "marketing" | "register" | "checkout";
@@ -17,6 +18,55 @@ export type VisitorIntentStep =
   | "stripe_init_failed"
   | "heartbeat"
   | "session_end";
+
+const STEP_RANK: Partial<Record<VisitorIntentStep, number>> = {
+  browse: 1,
+  pricing: 2,
+  register_start: 3,
+  register_otp: 4,
+  checkout_opened: 5,
+  pay_clicked: 6,
+  stripe_redirect: 7,
+  payment_failed: 7,
+  stripe_init_failed: 7,
+  payment_success: 10,
+};
+
+function rank(step: VisitorIntentStep | undefined): number {
+  if (!step || step === "heartbeat" || step === "session_end") return 0;
+  return STEP_RANK[step] ?? 0;
+}
+
+function readPeakStep(): VisitorIntentStep | null {
+  const raw = readPersist(PEAK_STEP_KEY);
+  if (!raw) return null;
+  return raw as VisitorIntentStep;
+}
+
+function writePeakStep(step: VisitorIntentStep) {
+  if (rank(step) <= 0) return;
+  writePersist(PEAK_STEP_KEY, step);
+}
+
+function clearPeakStep() {
+  try {
+    localStorage.removeItem(PEAK_STEP_KEY);
+    sessionStorage.removeItem(PEAK_STEP_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function mergeFunnelStep(prev: VisitorIntentStep | undefined, next: VisitorIntentStep): VisitorIntentStep {
+  if (next === "heartbeat" || next === "session_end") return prev ?? next;
+  const stored = readPeakStep();
+  const best = [prev, stored, next].reduce<VisitorIntentStep | undefined>((acc, s) => {
+    if (!s || s === "heartbeat" || s === "session_end") return acc;
+    if (!acc || rank(s) >= rank(acc)) return s;
+    return acc;
+  }, undefined);
+  return best ?? next;
+}
 
 type IntentCtx = {
   surface: VisitorIntentSurface;
@@ -131,6 +181,7 @@ function registerUnloadHooks() {
   unloadHooksRegistered = true;
   const onLeave = () => {
     emitSessionEnd();
+    clearPeakStep();
     stopVisitorIntentHeartbeat();
   };
   window.addEventListener("pagehide", onLeave);
@@ -139,7 +190,15 @@ function registerUnloadHooks() {
 
 export function startVisitorIntentHeartbeat(ctx: IntentCtx) {
   if (typeof window === "undefined") return;
-  heartbeatCtx = { ...ctx };
+  const mergedStep = mergeFunnelStep(heartbeatCtx?.step, ctx.step);
+  const mergedCtx: IntentCtx = {
+    ...ctx,
+    step: mergedStep,
+    visitorLabel: ctx.visitorLabel ?? heartbeatCtx?.visitorLabel,
+    planId: ctx.planId ?? heartbeatCtx?.planId,
+  };
+  writePeakStep(mergedStep);
+  heartbeatCtx = { ...mergedCtx };
   registerUnloadHooks();
 
   const tick = () => {
@@ -154,11 +213,11 @@ export function startVisitorIntentHeartbeat(ctx: IntentCtx) {
   };
 
   reportVisitorIntent({
-    surface: ctx.surface,
-    step: ctx.step,
-    path: ctx.path,
-    planId: ctx.planId,
-    visitorLabel: ctx.visitorLabel,
+    surface: mergedCtx.surface,
+    step: mergedCtx.step,
+    path: mergedCtx.path,
+    planId: mergedCtx.planId,
+    visitorLabel: mergedCtx.visitorLabel,
   });
 
   if (heartbeatTimer) {
@@ -172,6 +231,7 @@ export function startVisitorIntentHeartbeat(ctx: IntentCtx) {
 export function stopVisitorIntentHeartbeat(opts?: { endSession?: boolean }) {
   if (opts?.endSession && heartbeatCtx) {
     emitSessionEnd();
+    clearPeakStep();
   }
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer);
@@ -198,7 +258,18 @@ export function bumpVisitorIntentStep(opts: {
       visitorLabel: opts.visitorLabel ?? heartbeatCtx.visitorLabel,
     };
   }
+  writePeakStep(opts.step);
   reportVisitorIntent(opts);
+}
+
+/** Update label/plan on active heartbeat without changing step. */
+export function patchVisitorIntentMeta(opts: { visitorLabel?: string; planId?: string }) {
+  if (!heartbeatCtx) return;
+  heartbeatCtx = {
+    ...heartbeatCtx,
+    visitorLabel: opts.visitorLabel ?? heartbeatCtx.visitorLabel,
+    planId: opts.planId ?? heartbeatCtx.planId,
+  };
 }
 
 const EXCLUDED_PREFIXES = [
@@ -217,7 +288,8 @@ export function resolveVisitorIntentFromPath(
   pathname: string,
   search = "",
 ): IntentCtx | null {
-  const planParam = new URLSearchParams(search).get("plan")?.trim().toUpperCase();
+  const qs = search.startsWith("?") ? search.slice(1) : search;
+  const planParam = new URLSearchParams(qs).get("plan")?.trim().toUpperCase();
   const planId = planParam && planParam.length <= 20 ? planParam : undefined;
 
   if (pathname.startsWith("/dashboard/billing")) {
