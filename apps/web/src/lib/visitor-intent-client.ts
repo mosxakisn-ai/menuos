@@ -71,6 +71,14 @@ function postPayload(payload: Record<string, unknown>, keepalive = false) {
   const url = "/api/visitor-intent";
   const body = JSON.stringify(payload);
   try {
+    if (keepalive && typeof navigator !== "undefined" && navigator.sendBeacon) {
+      try {
+        navigator.sendBeacon(url, new Blob([body], { type: "application/json" }));
+      } catch {
+        navigator.sendBeacon(url, body);
+      }
+      return;
+    }
     void fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -78,13 +86,6 @@ function postPayload(payload: Record<string, unknown>, keepalive = false) {
       keepalive,
       credentials: "same-origin",
     }).catch(() => {});
-    if (keepalive && typeof navigator !== "undefined" && navigator.sendBeacon) {
-      try {
-        navigator.sendBeacon(url, new Blob([body], { type: "application/json" }));
-      } catch {
-        navigator.sendBeacon(url, body);
-      }
-    }
   } catch {
     /* ignore */
   }
@@ -134,9 +135,6 @@ function registerUnloadHooks() {
   };
   window.addEventListener("pagehide", onLeave);
   window.addEventListener("beforeunload", onLeave);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") onLeave();
-  });
 }
 
 export function startVisitorIntentHeartbeat(ctx: IntentCtx) {

@@ -158,6 +158,23 @@ function enrichLiveRow(row: VisitorIntentRow, now: Date): VisitorIntentRow {
   return { ...row, stepSeconds, stuck };
 }
 
+async function enrichRowsWithGeo(rows: VisitorIntentRow[]): Promise<VisitorIntentRow[]> {
+  const out: VisitorIntentRow[] = [];
+  for (const row of rows) {
+    if (row.clientIp && (!row.ipCity || !row.ipCountry)) {
+      const geo = await lookupIpGeo(row.clientIp);
+      out.push({
+        ...row,
+        ipCity: geo.city || row.ipCity,
+        ipCountry: geo.country || row.ipCountry,
+      });
+    } else {
+      out.push(row);
+    }
+  }
+  return out;
+}
+
 function enrichLogRow(row: VisitorIntentRow, now: Date, liveSids: Set<string>): VisitorIntentRow {
   const first = row.firstSeenAt.getTime();
   const last = row.lastSeenAt.getTime();
@@ -256,25 +273,32 @@ export async function recordVisitorIntent(input: {
     return true;
   }
 
+  const ip = pickClientIp(input.clientIp, existing?.clientIp);
+
+  const prevStep = existing?.step as VisitorIntentStep | undefined;
   let resolvedStep: VisitorIntentStep = input.step;
   if (input.step === "heartbeat" && !existing) {
     if (!input.path?.trim() && !input.visitorLabel?.trim()) return false;
     resolvedStep = "browse";
   }
-
-  const ip = pickClientIp(input.clientIp, existing?.clientIp);
-  let ipCity = existing?.ipCity ?? null;
-  let ipCountry = existing?.ipCountry ?? null;
-  if (ip && (!ipCity || !ipCountry)) {
-    const geo = await lookupIpGeo(ip);
-    ipCity = geo.city || ipCity;
-    ipCountry = geo.country || ipCountry;
-  }
-
-  const prevStep = existing?.step as VisitorIntentStep | undefined;
   if (existing && input.step === "heartbeat") {
     resolvedStep = prevStep ?? "browse";
   }
+
+  const FINAL_STEPS = new Set<VisitorIntentStep>([
+    "payment_success",
+    "payment_failed",
+    "stripe_init_failed",
+  ]);
+  if (
+    existing &&
+    prevStep &&
+    FINAL_STEPS.has(prevStep) &&
+    !FINAL_STEPS.has(resolvedStep)
+  ) {
+    resolvedStep = prevStep;
+  }
+
   const stepSince =
     existing && resolvedStep === prevStep ? existing.stepSince : now;
 
@@ -294,8 +318,8 @@ export async function recordVisitorIntent(input: {
       planId: input.planId?.trim().slice(0, 20) || null,
       visitorLabel: input.visitorLabel?.trim().slice(0, 120) || null,
       clientIp: ip || null,
-      ipCity,
-      ipCountry,
+      ipCity: null,
+      ipCountry: null,
       referrer: input.referrer?.trim().slice(0, 200) || null,
       source: (input.source ?? "web").trim().slice(0, 20) || "web",
       status: "online",
@@ -311,8 +335,8 @@ export async function recordVisitorIntent(input: {
       planId: input.planId?.trim().slice(0, 20) || existing?.planId || null,
       visitorLabel: input.visitorLabel?.trim().slice(0, 120) || existing?.visitorLabel || null,
       clientIp: ip || existing?.clientIp || null,
-      ipCity,
-      ipCountry,
+      ipCity: existing?.ipCity ?? null,
+      ipCountry: existing?.ipCountry ?? null,
       referrer: input.referrer?.trim().slice(0, 200) || existing?.referrer || null,
       status: "online",
       leftAt: null,
@@ -355,7 +379,8 @@ export async function listLiveVisitorIntents(opts?: {
   }
   mapped = mapped.filter((row) => !row.clientIp || !INFRA_IPS.has(row.clientIp));
 
-  return mapped.map((row) => enrichLiveRow(row, now));
+  const enriched = await enrichRowsWithGeo(mapped);
+  return enriched.map((row) => enrichLiveRow(row, now));
 }
 
 export async function listVisitorIntentLog(opts?: {
@@ -387,11 +412,13 @@ export async function listVisitorIntentLog(opts?: {
     take: limit,
   });
 
-  return rows
+  const mapped = rows
     .map(rowFromDb)
     .filter((row) => !row.sessionId.startsWith("test-"))
     .filter((row) => !row.clientIp || !INFRA_IPS.has(row.clientIp))
     .map((row) => enrichLogRow(row, now, liveSids));
+
+  return enrichRowsWithGeo(mapped);
 }
 
 export function summarizeVisitorIntents(rows: VisitorIntentRow[]) {
@@ -412,14 +439,11 @@ export function summarizeVisitorIntents(rows: VisitorIntentRow[]) {
 
 export function countPaymentsTodayFromLog(rows: VisitorIntentRow[]): number {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens" }).format(new Date());
+  const dayOf = (ms: number) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens" }).format(new Date(ms));
   return rows.filter((row) => {
-    if (row.step !== "payment_success") return false;
-    const ts = row.lastSeenAt.getTime();
-    const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens" }).format(new Date(ts));
-    if (day === today) return true;
-    return row.stepTrail.some(
-      (t) => t.step === "payment_success" && new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens" }).format(new Date(t.at)) === today,
-    );
+    if (row.step === "payment_success" && dayOf(row.lastSeenAt.getTime()) === today) return true;
+    return row.stepTrail.some((t) => t.step === "payment_success" && dayOf(t.at) === today);
   }).length;
 }
 
