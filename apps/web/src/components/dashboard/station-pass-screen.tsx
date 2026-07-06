@@ -78,8 +78,8 @@ const COPY = {
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
     pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
-    messagesNeedTable: "Πρώτα διάλεξε τραπέζι — μετά πάτα το μήνυμα.",
-    messagesTapHint: "Πάτα το μήνυμα που θέλεις να στείλεις.",
+    messagesNeedTable: "Διάλεξε τραπέζι, μετά μήνυμα — και πάτα Αποστολή.",
+    messagesTapHint: "Πάτα μήνυμα → μπαίνει κάτω → Αποστολή.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -104,8 +104,8 @@ const COPY = {
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
     pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
-    messagesNeedTable: "Πρώτα διάλεξε τραπέζι — μετά πάτα το μήνυμα.",
-    messagesTapHint: "Πάτα το μήνυμα που θέλεις να στείλεις.",
+    messagesNeedTable: "Διάλεξε τραπέζι, μετά μήνυμα — και πάτα Αποστολή.",
+    messagesTapHint: "Πάτα μήνυμα → μπαίνει κάτω → Αποστολή.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -130,8 +130,8 @@ const COPY = {
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
     pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
-    messagesNeedTable: "Πρώτα διάλεξε τραπέζι — μετά πάτα το μήνυμα.",
-    messagesTapHint: "Πάτα το μήνυμα που θέλεις να στείλεις.",
+    messagesNeedTable: "Διάλεξε τραπέζι, μετά μήνυμα — και πάτα Αποστολή.",
+    messagesTapHint: "Πάτα μήνυμα → μπαίνει κάτω → Αποστολή.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -156,8 +156,8 @@ const COPY = {
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
     pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
-    messagesNeedTable: "Πρώτα διάλεξε τραπέζι — μετά πάτα το μήνυμα.",
-    messagesTapHint: "Πάτα το μήνυμα που θέλεις να στείλεις.",
+    messagesNeedTable: "Διάλεξε τραπέζι, μετά μήνυμα — και πάτα Αποστολή.",
+    messagesTapHint: "Πάτα μήνυμα → μπαίνει κάτω → Αποστολή.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -931,6 +931,12 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     setComment("");
   }
 
+  function selectMessageChip(chip: string) {
+    const trimmed = chip.trim();
+    if (!trimmed || sending) return;
+    setComment(trimmed);
+  }
+
   async function cancelSignal(signalId: string) {
     if (!ctx || !(await confirmDestructive(C.cancelConfirm))) return;
     const signal = activeSignals.find((row) => row.id === signalId);
@@ -1098,8 +1104,8 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               title={C.messagesTitle}
               messages={headerMessages}
               selectedMessage={comment}
-              disabled={sending || !hasSelection}
-              onSelect={(chip) => void send(chip)}
+              disabled={sending}
+              onSelect={selectMessageChip}
               sidebar
               accentColor={headerMessageColor}
             />
