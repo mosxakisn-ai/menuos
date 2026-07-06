@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { PostDeviceBadge } from "@/components/dashboard/post-device-badge";
+import { PostDeviceBadge, ScreenDeviceLabel, type PostDeviceKind } from "@/components/dashboard/post-device-badge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   applyZoneLabelOverrides,
@@ -33,7 +33,6 @@ import {
   staffPostRequiresZoneAssignment,
   staffPostStationSubtitle,
   staffPrimaryAssignment,
-  staffScreenDeviceForAssignment,
   staffScreenDeviceForJobRole,
   visibleMessagesForStaffAssignment,
   type PassStationInput,
@@ -80,6 +79,71 @@ type StaffAccessLink =
   | { kind: "pass"; url: string; station: PassStationInput }
   | { kind: "missing-screen"; station: PassStationInput }
   | { kind: "invalid-assignment" };
+
+type StaffScreenCopy = {
+  screenMobile: string;
+  screenKds: string;
+  screenSupportTablet: string;
+  screenMobileHint: string;
+  screenKdsHint: string;
+  screenSupportTabletHint: string;
+};
+
+function staffDeviceLabelForContext(
+  assignment: string,
+  posts: VenuePost[],
+  copy: StaffScreenCopy,
+  fallbackRole?: StaffJobRole,
+): {
+  device: PostDeviceKind;
+  labelMobile: string;
+  labelTablet: string;
+  hintMobile: string;
+  hintTablet: string;
+  station?: VenuePost["station"];
+} {
+  const linkKind =
+    assignment.length > 0 ? staffAssignmentLinkKind(assignment, posts) : null;
+
+  let device: PostDeviceKind;
+  if (linkKind === "waiter") device = "mobile";
+  else if (linkKind === "pass" || linkKind === "support") device = "kds";
+  else if (linkKind === "invalid") device = "invalid";
+  else device = staffScreenDeviceForJobRole(fallbackRole ?? "waiter");
+
+  const isSupport = linkKind === "support";
+  const post =
+    assignment !== "all" && assignment !== "pass-all" && assignment !== "services"
+      ? posts.find((row) => row.id === assignment)
+      : undefined;
+
+  return {
+    device,
+    labelMobile: copy.screenMobile,
+    labelTablet: isSupport ? copy.screenSupportTablet : copy.screenKds,
+    hintMobile: copy.screenMobileHint,
+    hintTablet: isSupport ? copy.screenSupportTabletHint : copy.screenKdsHint,
+    station: post?.station,
+  };
+}
+
+function staffScreenCopyFromPersonnel(S: {
+  screenMobile: string;
+  screenKds: string;
+  screenSupportTablet: string;
+  screenMobileHint: string;
+  screenKdsHint: string;
+  screenSupportTabletHint: string;
+}): StaffScreenCopy {
+  return {
+    screenMobile: S.screenMobile,
+    screenKds: S.screenKds,
+    screenSupportTablet: S.screenSupportTablet,
+    screenMobileHint: S.screenMobileHint,
+    screenKdsHint: S.screenKdsHint,
+    screenSupportTabletHint: S.screenSupportTabletHint,
+  };
+}
 
 function memberAccessLink(
   venueSlug: string,
@@ -666,6 +730,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     missingScreen: S.missingScreen,
     invalidAssignment: S.invalidAssignment,
   };
+  const screenCopy = staffScreenCopyFromPersonnel(S);
 
   function renderAssignmentFields(
     values: {
@@ -685,7 +750,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     const postOptions = staffPostOptionsForJobRole(values.role, assignablePosts, langCode);
     const kdsUnavailable = values.role === "pass" && postOptions.length === 0;
     const waiterPostsMissing = values.role === "waiter" && waiterPostOptions.length === 0;
-    const screenDevice = staffScreenDeviceForJobRole(values.role);
+    const deviceLabel = staffDeviceLabelForContext(
+      values.post,
+      venuePosts,
+      screenCopy,
+      values.role,
+    );
     const postHint = kdsUnavailable
       ? "kds-unavailable"
       : waiterPostsMissing && values.post !== "all"
@@ -722,8 +792,19 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
             <option value="waiter">{S.jobRoleWaiter}</option>
             <option value="pass">{S.jobRolePass}</option>
           </select>
-          <div className="mt-1 min-h-[2.5rem] text-[10px] leading-snug text-slate-400">
-            {screenDevice === "mobile" ? S.screenMobileHint : S.screenKdsHint}
+          <div className="mt-1.5 flex min-h-[2.5rem] flex-col gap-1">
+            <ScreenDeviceLabel
+              device={deviceLabel.device}
+              labelMobile={deviceLabel.labelMobile}
+              labelTablet={deviceLabel.labelTablet}
+              hintMobile={deviceLabel.hintMobile}
+              hintTablet={deviceLabel.hintTablet}
+            />
+            <p className="text-[10px] leading-snug text-slate-400">
+              {deviceLabel.device === "mobile"
+                ? deviceLabel.hintMobile
+                : deviceLabel.hintTablet}
+            </p>
           </div>
         </td>
         <td className="px-3 py-2 align-top">
@@ -922,20 +1003,25 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         <p className="mt-1 text-xs text-slate-500">{S.colLinkHint}</p>
         <div className="mt-3 rounded-xl border border-slate-200/90 bg-gradient-to-br from-white via-slate-50/90 to-blue-50/40 px-4 py-3">
           <p className="text-xs font-medium text-slate-600">{S.listDeviceLegend}</p>
-          <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-2">
-            <PostDeviceBadge
+          <div className="mt-2.5 flex flex-wrap items-center gap-3">
+            <ScreenDeviceLabel
               device="mobile"
-              size="sm"
-              showLabel
-              labelMobile={S.screenMobileHint}
-              labelTablet={S.screenKdsHint}
+              labelMobile={screenCopy.screenMobile}
+              labelTablet={screenCopy.screenKds}
+              hintMobile={screenCopy.screenMobileHint}
+              hintTablet={screenCopy.screenKdsHint}
             />
-            <PostDeviceBadge
+            <ScreenDeviceLabel
               device="kds"
-              size="sm"
-              showLabel
-              labelMobile={S.screenMobileHint}
-              labelTablet={S.screenKdsHint}
+              labelMobile={screenCopy.screenMobile}
+              labelTablet={screenCopy.screenKds}
+              hintTablet={screenCopy.screenKdsHint}
+            />
+            <ScreenDeviceLabel
+              device="kds"
+              labelMobile={screenCopy.screenMobile}
+              labelTablet={screenCopy.screenSupportTablet}
+              hintTablet={screenCopy.screenSupportTabletHint}
             />
           </div>
         </div>
@@ -1023,7 +1109,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       venuePosts,
                     );
                     const memberRole = staffJobRoleForAssignment(primaryPost, venuePosts);
-                    const memberScreen = staffScreenDeviceForAssignment(primaryPost, venuePosts);
+                    const deviceLabel = staffDeviceLabelForContext(
+                      primaryPost,
+                      venuePosts,
+                      screenCopy,
+                      memberRole === "invalid" ? undefined : memberRole,
+                    );
                     const assignmentInvalid =
                       member.stations.length === 0 ||
                       staffAssignmentLinkKind(primaryPost, venuePosts) === "invalid";
@@ -1045,9 +1136,14 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                               ? "—"
                               : staffJobRoleLabel(memberRole, langCode)}
                           </p>
-                          <p className="mt-0.5 text-[10px] text-slate-500">
-                            {memberScreen === "kds" ? S.screenKds : S.screenMobile}
-                          </p>
+                          <ScreenDeviceLabel
+                            device={deviceLabel.device}
+                            labelMobile={deviceLabel.labelMobile}
+                            labelTablet={deviceLabel.labelTablet}
+                            hintMobile={deviceLabel.hintMobile}
+                            hintTablet={deviceLabel.hintTablet}
+                            className="mt-1"
+                          />
                         </td>
                         <td className="px-4 py-3 align-middle text-slate-600">
                           {zoneLabelForMember(member)}
@@ -1055,9 +1151,11 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                         <td className="px-4 py-3 align-middle text-slate-600">
                           <div className="flex items-start gap-3">
                             <PostDeviceBadge
-                              device={memberScreen}
-                              labelMobile={S.screenMobileHint}
-                              labelTablet={S.screenKdsHint}
+                              device={deviceLabel.device}
+                              station={deviceLabel.station}
+                              labelMobile={screenCopy.screenMobileHint}
+                              labelTablet={screenCopy.screenKdsHint}
+                              labelSupportTablet={screenCopy.screenSupportTabletHint}
                             />
                             <div className="min-w-0 flex-1">
                               <p className="font-medium text-brand-navy">

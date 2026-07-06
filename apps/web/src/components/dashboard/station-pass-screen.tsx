@@ -10,6 +10,7 @@ import {
   groupVenueSpotsByZone,
   isVenuePassPostStation,
   isVenueSupportPostStation,
+  mergeQuickChipLabels,
   passScreenToPostStation,
   passSendTableNumber,
   pickDefaultZoneId,
@@ -358,6 +359,22 @@ function passStationForSend(
   return passScreenToPostStation(fallback);
 }
 
+/** allPosts=1: attribute send to the post that owns the chip, not only the active tab. */
+function resolveSendingPost(
+  messageText: string,
+  activePost: StationPostOption | null,
+  posts: StationPostOption[],
+): StationPostOption | null {
+  const trimmed = messageText.trim();
+  if (trimmed) {
+    const owners = posts.filter((post) =>
+      post.quickComments.some((chip) => chip.trim() === trimmed),
+    );
+    if (owners.length === 1) return owners[0]!;
+  }
+  return activePost;
+}
+
 /** Prefix support-post messages so waiters see which station sent them. */
 function formatPassMessageForSend(
   messageText: string,
@@ -593,13 +610,13 @@ function QuickMessagesPanel({
   if (sidebar) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <p className="shrink-0 px-2 pt-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+        <p className="shrink-0 px-3.5 pt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
           {title}
         </p>
         <div
           ref={listRef}
           onScroll={updateScrollState}
-          className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-2 pb-2 pt-1.5 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3.5 pb-4 pt-2 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {messages.map((chip, index) => {
             const selected = selectedMessage?.trim() === chip;
@@ -802,24 +819,32 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const postsForZone = useMemo(() => {
     if (!tabletPosts.length) return [];
+    if (allPostsMode) return tabletPosts;
     const zoneId = activeZoneId ?? zoneGroups[0]?.id ?? null;
     return tabletPosts.filter((post) => venuePostMatchesZone(post, zoneId));
-  }, [tabletPosts, activeZoneId, zoneGroups]);
+  }, [tabletPosts, activeZoneId, zoneGroups, allPostsMode]);
 
   const activePost = useMemo(
     () => postsForZone.find((post) => post.id === activePostId) ?? postsForZone[0] ?? null,
     [postsForZone, activePostId],
   );
 
-  const messageColor = activePost?.messageColor ?? ctx?.messageColor ?? null;
+  const headerMessageColor = activePost?.messageColor ?? ctx?.messageColor ?? null;
+
+  const allPostsMessageSources = useMemo(() => {
+    const pass = ctx?.allKdsPosts?.length ? ctx.allKdsPosts : (ctx?.stationPosts ?? []);
+    const support = ctx?.supportKdsPosts ?? [];
+    return [...pass, ...support.filter((post) => !pass.some((row) => row.id === post.id))];
+  }, [ctx?.allKdsPosts, ctx?.stationPosts, ctx?.supportKdsPosts]);
 
   const headerMessages = useMemo(() => {
-    if (allPostsMode && ctx?.allQuickComments?.length) return ctx.allQuickComments;
+    if (allPostsMode) {
+      if (ctx?.allQuickComments?.length) return ctx.allQuickComments;
+      return mergeQuickChipLabels(...allPostsMessageSources.map((post) => post.quickComments ?? []));
+    }
     if (activePost) return activePost.quickComments ?? [];
     return ctx?.quickComments ?? [];
-  }, [allPostsMode, ctx?.allQuickComments, ctx?.quickComments, activePost]);
-
-  const headerMessageColor = activePost?.messageColor ?? ctx?.messageColor ?? null;
+  }, [allPostsMode, ctx?.allQuickComments, ctx?.quickComments, activePost, allPostsMessageSources]);
 
   const load = useCallback(async () => {
     if (!venueSlug || !stationKey) {
@@ -915,6 +940,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     if (table && findZoneIdForSpot(zoneGroups, table) !== zoneId) {
       setTable(null);
     }
+    if (allPostsMode) return;
     if (activePostId) {
       const current = tabletPosts.find((post) => post.id === activePostId);
       if (current && !venuePostMatchesZone(current, zoneId)) {
@@ -966,8 +992,9 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
             : { sunbedNumber: table.label }
         : { tableNumber };
 
-      const sendStation = passStationForSend(activePost, station);
-      const outboundMessage = formatPassMessageForSend(messageText, activePost, tabletPosts);
+      const sendingPost = resolveSendingPost(messageText, activePost, tabletPosts);
+      const sendStation = passStationForSend(sendingPost, station);
+      const outboundMessage = formatPassMessageForSend(messageText, sendingPost, tabletPosts);
       const res = await fetch("/api/pass-signals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1070,7 +1097,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside className="flex min-h-0 w-[38%] max-w-[12.5rem] shrink-0 flex-col border-r border-white/10 bg-slate-950/50 sm:max-w-[13.5rem]">
-          <div className="shrink-0 border-b border-white/10 px-3 py-2.5">
+          <div className="shrink-0 border-b border-white/10 px-3.5 py-3">
             <div aria-label="MenuOS">
               <Logo
                 href={false}
@@ -1090,7 +1117,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
           {ctx && headerMessages.length > 0 ? (
             <QuickMessagesPanel
-              key={activePost?.id ?? "default"}
+              key={allPostsMode ? "all-posts" : (activePost?.id ?? "default")}
               title={C.messagesTitle}
               messages={headerMessages}
               selectedMessage={comment}
@@ -1110,7 +1137,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
           ) : null}
 
           {ctx ? (
-            <div className="flex min-h-0 flex-1 flex-col px-3 py-2 sm:px-4 sm:py-3">
+            <div className="flex min-h-0 flex-1 flex-col pl-4 pr-3 py-3 sm:pl-5 sm:pr-4 sm:py-4">
               <p className="shrink-0 text-sm font-semibold text-white">{C.pickTable}</p>
 
               {zoneGroups.length > 1 ? (
@@ -1228,47 +1255,28 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
       {ctx ? (
         <footer className="flex shrink-0 border-t border-white/10 bg-slate-950/95 backdrop-blur-sm">
-          <div className="flex w-[38%] max-w-[12.5rem] shrink-0 flex-col justify-end self-stretch border-r border-white/10 px-2 py-1.5 sm:max-w-[13.5rem] sm:px-2.5">
-            <p className="text-[10px] leading-snug text-slate-500">
+          <div className="flex w-[38%] max-w-[12.5rem] shrink-0 flex-col justify-end self-stretch border-r border-white/10 px-3.5 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:max-w-[13.5rem] sm:py-3 sm:pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <p className="text-[10px] leading-relaxed text-slate-500">
               {hasSelection ? C.messagesTapHint : C.messagesNeedTable}
             </p>
           </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-1 px-2.5 py-1.5 sm:px-3">
-            <div className="flex items-stretch gap-1.5">
+          <div className="flex min-w-0 flex-1 flex-col gap-2.5 px-3.5 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:gap-3 sm:px-4 sm:py-3 sm:pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="flex items-stretch gap-2.5">
               <div
                 className={cn(
-                  "flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border px-2 py-1.5",
+                  "flex min-w-0 flex-1 items-center gap-2 rounded-lg border px-2.5 py-2",
                   hasSelection ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5",
                 )}
               >
                 <MapPin className={cn("h-3.5 w-3.5 shrink-0", hasSelection ? "text-cyan-300" : "text-slate-500")} />
                 <p
                   className={cn(
-                    "min-w-0 flex-1 truncate text-xs font-semibold",
+                    "min-w-0 flex-1 truncate text-xs font-semibold sm:text-sm",
                     hasSelection ? "text-cyan-100" : "text-slate-400",
                   )}
                 >
                   {selectedLabel ?? C.noTable}
                 </p>
-                {comment.trim() ? (
-                  <span
-                    className={cn(
-                      "max-w-[42%] shrink-0 truncate rounded px-1.5 py-0.5 text-[10px] font-semibold",
-                      !messageColor && "bg-white/10 text-slate-200",
-                    )}
-                    style={
-                      messageColor
-                        ? {
-                            backgroundColor: `${messageColor}33`,
-                            color: "#f8fafc",
-                            border: `1px solid ${messageColor}`,
-                          }
-                        : undefined
-                    }
-                  >
-                    {comment.trim()}
-                  </span>
-                ) : null}
               </div>
 
               <button
@@ -1276,7 +1284,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 disabled={sending || !hasSelection || !comment.trim()}
                 onClick={() => void send(undefined)}
                 className={cn(
-                  "h-9 shrink-0 rounded-lg px-3 text-sm font-bold sm:h-10 sm:px-4",
+                  "h-10 shrink-0 rounded-lg px-4 text-sm font-bold sm:h-11 sm:px-5",
                   buttonClass("primary", "lg"),
                   "bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50",
                 )}
@@ -1292,7 +1300,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               aria-label={C.comment}
               maxLength={80}
               disabled={sending}
-              className="h-8 w-full rounded-lg border border-white/15 bg-white/5 px-2.5 text-xs text-white placeholder:text-slate-500 disabled:opacity-50"
+              className="h-9 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500 disabled:opacity-50 sm:h-10"
             />
 
             {flash ? (

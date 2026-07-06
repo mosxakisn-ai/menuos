@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   editorQuickChipsForPost,
+  enabledPassPostsAll,
+  enabledKdsPostsAll,
+  mergeQuickChipLabels,
   postHasExplicitQuickChips,
   enabledPassPostsForStation,
   isPlaceholderVenuePostLabel,
@@ -345,5 +348,40 @@ describe("staffAssignableVenuePosts", () => {
     expect(isPlaceholderVenuePostLabel("Νέο πόστο")).toBe(true);
     expect(isPlaceholderVenuePostLabel("New post")).toBe(true);
     expect(isPlaceholderVenuePostLabel("Κουζίνα")).toBe(false);
+  });
+});
+
+describe("allPosts KDS merge", () => {
+  const config = normalizeVenueOperationsConfig({
+    enabledStations: ["kitchen" as const, "bar" as const],
+    posts: [
+      { id: "svc-avli", label: "Services Αυλή", enabled: true, station: "services" as const, zoneId: "avli" },
+      { id: "svc-sala", label: "Services Σάλα", enabled: true, station: "services" as const, zoneId: "sala" },
+      { id: "bar-avli", label: "Bar Αυλή", enabled: true, station: "bar" as const, zoneId: "avli" },
+      { id: "kitchen-sala", label: "Κουζίνα Σάλας", enabled: true, station: "kitchen" as const, zoneId: "sala" },
+      { id: "bar-sala", label: "Bar Σάλα", enabled: true, station: "bar" as const, zoneId: "sala" },
+    ],
+    quickChips: {
+      "svc-avli": ["svc avli"],
+      "svc-sala": ["svc sala"],
+      kitchen: ["κουζίνα"],
+      "bar-avli": ["bar avli"],
+      "bar-sala": ["bar sala"],
+    },
+  });
+
+  it("counts only pass posts for tablet picker", () => {
+    expect(enabledPassPostsAll(config, "GR").map((post) => post.id)).toEqual([
+      "bar-avli",
+      "kitchen-sala",
+      "bar-sala",
+    ]);
+  });
+
+  it("merges quick messages from tablet posts only (not mobile services)", () => {
+    const merged = mergeQuickChipLabels(
+      ...enabledKdsPostsAll(config, "GR").map((post) => quickChipsForPost(config, post.id, "GR")),
+    );
+    expect(merged).toEqual(["bar avli", "κουζίνα", "bar sala"]);
   });
 });

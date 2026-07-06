@@ -943,7 +943,7 @@ export const DASHBOARD_EN = {
         colRoleRequired: "Role *",
         colSpace: "Space",
         colPost: "Post",
-        colPostHint: "Icon = phone or tablet",
+        colPostHint: "Blue = mobile · teal = tablet",
         colScreen: "Screen",
         colSpaceRequired: "Space *",
         colPostRequired: "Post *",
@@ -953,9 +953,11 @@ export const DASHBOARD_EN = {
         jobRoleWaiterHint: "Mobile — guest calls & pass",
         jobRolePassHint: "Tablet — quick messages & pass",
         screenMobile: "Mobile",
-        screenKds: "KDS (pass tablet)",
+        screenKds: "Pass tablet",
+        screenSupportTablet: "Messages tablet",
         screenMobileHint: "Guest calls & pass alerts on phone",
         screenKdsHint: "Quick messages & pass alerts on tablet",
+        screenSupportTabletHint: "Quick messages on tablet (dishwash, cleaning, etc.)",
         postsOnKdsScreenHint:
           "Bar, kitchen, etc. from Posts tab → switch Screen to «KDS (pass tablet)».",
         postsOnMobileScreenHint:
@@ -971,7 +973,7 @@ export const DASHBOARD_EN = {
         colLinkHint:
           "Waiter: phone link. Kitchen/Bar: tablet link — opens without login.",
         listDeviceLegend:
-          "The icon next to the post shows where the link opens — phone or tablet.",
+          "Blue = mobile · teal = tablet (pass or messages). The post column icon uses the same colors.",
         colActions: "Actions",
         viewLink: "Preview",
         viewLinkTablet: "Open screen",

@@ -957,7 +957,7 @@ export const DASHBOARD_EL = {
         colRoleRequired: "Ρόλος *",
         colSpace: "Χώρος",
         colPost: "Πόστο",
-        colPostHint: "Εικονίδιο = κινητό ή tablet",
+        colPostHint: "Μπλε = κινητό · πράσινο = tablet",
         colScreen: "Οθόνη",
         colSpaceRequired: "Χώρος *",
         colPostRequired: "Πόστο *",
@@ -967,9 +967,11 @@ export const DASHBOARD_EL = {
         jobRoleWaiterHint: "Κινητό — κλήσεις πελάτη & πάσος",
         jobRolePassHint: "Tablet — γρήγορα μηνύματα & πάσος",
         screenMobile: "Κινητό",
-        screenKds: "KDS (tablet πάσου)",
+        screenKds: "Tablet πάσου",
+        screenSupportTablet: "Tablet μηνυμάτων",
         screenMobileHint: "Κλήσεις πελάτη & πάσος στο κινητό",
         screenKdsHint: "Γρήγορα μηνύματα & πάσος στο tablet",
+        screenSupportTabletHint: "Γρήγορα μηνύματα στο tablet (λάντζα, καθαριότητα κ.λπ.)",
         postsOnKdsScreenHint:
           "Bar, κουζίνα κ.λπ. από tab Πόστα → άλλαξε Οθόνη σε «KDS (tablet πάσου)».",
         postsOnMobileScreenHint:
@@ -985,7 +987,7 @@ export const DASHBOARD_EL = {
         colLinkHint:
           "Σερβιτόρος: link κινητού. Κουζίνα/Μπαρ: link tablet — άνοιγμα χωρίς login.",
         listDeviceLegend:
-          "Το εικονίδιο δίπλα στο πόστο δείχνει πού ανοίγει το link — κινητό ή tablet.",
+          "Μπλε = κινητό · πράσινο = tablet (πάσου ή μηνυμάτων). Το ίδιο χρώμα έχει και το εικονίδιο στη στήλη «Πόστο».",
         colActions: "Ενέργειες",
         viewLink: "Προβολή",
         viewLinkTablet: "Άνοιγμα οθόνης",
