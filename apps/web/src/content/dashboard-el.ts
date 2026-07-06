@@ -497,6 +497,13 @@ export const DASHBOARD_EL = {
     zoneMessageCount: (n: number) => (n === 1 ? "1 μήνυμα" : `${n} μηνύματα`),
     zonePendingBreakdown: (parts: string[]) =>
       parts.length > 0 ? `Σε αναμονή ανά χώρο: ${parts.join(" · ")}` : "",
+    whereToGoHeading: (n: number) =>
+      n === 1 ? "1 μήνυμα — πήγαινε εδώ:" : `${n} μηνύματα — πήγαινε εδώ:`,
+    otherVenuePendingHint: (parts: string[]) =>
+      parts.length > 0
+        ? `Τα μηνύματα δεν είναι σε αυτό το κατάστημα — είναι εδώ: ${parts.join(" · ")}. Άλλαξε κατάστημα από το πεδίο πάνω δεξιά.`
+        : "",
+    otherVenuePendingPart: (name: string, n: number) => `${name} (${n})`,
     unmappedZoneLabel: (n: number) => (n === 1 ? "Άλλο (1)" : `Άλλο (${n})`),
     unmappedActiveHint: (n: number) =>
       n === 1

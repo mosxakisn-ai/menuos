@@ -275,14 +275,35 @@ export const MARKETING_EN = {
     services: {
       badge: "Full platform",
       hero:
-        "From table QR to Live 360° coordination — every tool for modern hospitality, without complexity.",
-      intro:
-        "MenuOS is not just «PDF with QR». It's a live catalog with photos, 4 languages and instant price updates — built for Greek hospitality. Pro adds PDF import with Gemini AI, Live 360° and call waiter.",
-      introParagraphs: [
-        "MenuOS combines a digital catalog and QR codes per table or room — no app for guests. Pro adds call waiter with push, live panel and kitchen/bar coordination.",
-        "Already have a printed menu? On Pro, upload a PDF — categories, dishes and prices fill in automatically. Scans and complex layouts use Gemini AI; you review everything before it goes live. Save hours of typing without losing control.",
-        "Instead of reprinting every season, you change prices and items in seconds. Tourists see the menu in their language. On Pro, staff get alerts for calls — with the table number from the QR.",
-      ],
+        "From table QR to kitchen, bar and floor team — everything in one place, without complexity.",
+      introBlock: {
+        pill: "QR Menu · Live 360°",
+        title: "MenuOS is not just another QR menu.",
+        subtitle:
+          "Forget static PDFs that merely open on a phone. MenuOS is a live digital catalog built for restaurants, cafés, beach bars and hotels in Greece.",
+        features: [
+          "Product photos",
+          "4 languages",
+          "Instant price and dish updates",
+          "QR menu — no app install",
+        ],
+        qrParagraph:
+          "Every table or room gets its own QR. Guests scan and see the catalog on their phone right away.",
+        proTitle: "With MenuOS Pro you get even more",
+        proItems: [
+          "Upload your printed menu (even a photo or scan) — dishes and prices are recognized automatically, saving hours of typing.",
+          "Guests call the waiter from the QR; staff see exactly which table needs service.",
+          "Your team stays in sync in real time — service, kitchen and bar work more smoothly.",
+        ],
+        savingsTitle: "Lower costs. More flexibility.",
+        savingsParagraphs: [
+          "No more reprinting menus when prices change or you add dishes. Updates take seconds and appear for every guest instantly.",
+          "International visitors read the catalog in their language — a better guest experience.",
+        ],
+        closing: "MenuOS — the digital catalog that grows with your business.",
+        ctaLabel: "Start free trial",
+        ctaHref: "/register",
+      },
     },
     howItWorks: {
       badge: "Step by step",

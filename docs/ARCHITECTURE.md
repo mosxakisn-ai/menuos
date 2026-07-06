@@ -1,6 +1,6 @@
 # MenuOS — Technical Architecture
 
-> Last updated: June 2026.
+> Last updated: July 2026.
 
 ## Monorepo Structure
 
@@ -63,6 +63,9 @@ menuos/
 /api/items/*          Item CRUD + translations
 /api/photos/*         Upload → Sharp WebP → R2
 /api/waiter-call/*    Create call, list, update status
+/api/pass-signals/*   KDS pass messages (create, list, status)
+/api/station-screen/* KDS context + recipient list for send popup
+/api/dashboard/pending-calls  Sidebar badge (org-wide, byVenue breakdown)
 /api/opening-hours/*  Venue hours
 /api/qr/*             Generate QR PNG/SVG
 /api/ocr/*            Proxy to Python OCR service (Phase 3)
@@ -78,13 +81,19 @@ menuos/
 
 ## Real-Time Architecture
 
+> Business rules: [`docs/LIVE360-OPERATIONS.md`](./LIVE360-OPERATIONS.md)
+
 ```
 Guest → POST /api/waiter-call → DB
+KDS   → POST /api/pass-signals (+ optional notifyStaffMemberIds[]) → DB
 Staff/manager panels → poll /api/waiter-call + /api/pass-signals (~5s)
-                              → Web Push to subscribed staff/tablet devices
+                              → Web Push to subscribed staff (personal /s/ URL)
+Sidebar badge → GET /api/dashboard/pending-calls (all venues; byVenue map)
 ```
 
-Staff links: `/s/{venueSlug}?key=…` (waiter phone), `/kds?venueSlug=…&key=…` (kitchen tablet).
+Staff links: `/s/{venueSlug}?key={memberToken}&zone=…` (waiter phone), `/kds?venueSlug=…&key={screenToken}` (kitchen tablet).
+
+Key shared: `staffMemberEligibleForKdsPassNotify`, `zoneIdForWaiterLocationView`, `venuePostMatchesZone` in `@menuos/shared`.
 
 ## Photo Pipeline
 

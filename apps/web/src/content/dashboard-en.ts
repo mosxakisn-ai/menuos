@@ -486,6 +486,13 @@ export const DASHBOARD_EN = {
     zoneMessageCount: (n: number) => (n === 1 ? "1 message" : `${n} messages`),
     zonePendingBreakdown: (parts: string[]) =>
       parts.length > 0 ? `Waiting by space: ${parts.join(" · ")}` : "",
+    whereToGoHeading: (n: number) =>
+      n === 1 ? "1 message — go here:" : `${n} messages — go here:`,
+    otherVenuePendingHint: (parts: string[]) =>
+      parts.length > 0
+        ? `Messages are at another venue: ${parts.join(" · ")}. Switch venue using the field above.`
+        : "",
+    otherVenuePendingPart: (name: string, n: number) => `${name} (${n})`,
     unmappedZoneLabel: (n: number) => (n === 1 ? "Other (1)" : `Other (${n})`),
     unmappedActiveHint: (n: number) =>
       n === 1

@@ -8,6 +8,7 @@ Premium SaaS QR menu platform for restaurants, hotels, and hospitality venues.
 
 | Doc | Contents |
 |-----|----------|
+| [docs/LIVE360-OPERATIONS.md](docs/LIVE360-OPERATIONS.md) | **Live 360°:** KDS, Οθόνες, zones, posts, staff links, pass/waiter logic |
 | [docs/PRODUCT.md](docs/PRODUCT.md) | Business logic, user flows, phasing, pricing |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Tech stack, monorepo, API, hosting, multi-tenant |
 | [docs/SEO-STRATEGY.md](docs/SEO-STRATEGY.md) | SEO landings, JSON-LD, sitemap (MatchWork pattern) |

@@ -25,4 +25,4 @@ alwaysApply: true
 
 **Stack:** Next.js 15 (App Router) + TypeScript + Tailwind + shadcn/ui · PostgreSQL 16 + Prisma · NextAuth v5 · Socket.io · Cloudflare R2 · Stripe (Phase 2) · Gemini Vision (PDF import Pro) · OCR.space (PDF scans).
 
-**Full docs:** `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `docs/PDF-IMPORT.md`, `docs/SEO-STRATEGY.md`, `docs/DESIGN-SYSTEM.md`, `docs/DOMAIN.md`
+**Full docs:** `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `docs/LIVE360-OPERATIONS.md`, `docs/PDF-IMPORT.md`, `docs/SEO-STRATEGY.md`, `docs/DESIGN-SYSTEM.md`, `docs/DOMAIN.md`

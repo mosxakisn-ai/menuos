@@ -1,6 +1,6 @@
 # MenuOS — Product & Business Logic
 
-> Last updated: June 2026. Source of truth for product scope and phasing.
+> Last updated: July 2026. Source of truth for product scope and phasing.
 
 ## Vision
 
@@ -31,29 +31,35 @@ Scan QR → menuos.gr/m/{venue}?table=12 → language → menu → category → 
 
 ### C — Staff (Pro / Live 360°)
 ```
-Owner configures spaces → tables → posts → messages → staff links
-Waiter phone link (/s/...) → spot map + guest calls + pass alerts
-Kitchen/bar tablet (/kds, /bar, …) → pass signals + quick message chips
-Manager screens (/dashboard/waiter) → live map for all zones
+Owner: Ρυθμίσεις → χώροι → πόστα → μηνύματα → προσωπικό (links)
+Waiter phone (/s/...) → χάρτης + κλήσεις πελάτη + μηνύματα πάσου
+KDS tablet (/kds, /bar, …) → τραπέζι → μήνυμα → Αποστολή → επιλογή σερβιτόρων
+Manager Οθόνες (/dashboard/waiter) → όλοι οι χώροι, badge ανά ζώνη
 ```
+
+> **Full operational spec:** [`docs/LIVE360-OPERATIONS.md`](./LIVE360-OPERATIONS.md)
 
 ## Live 360° (Pro only)
 
 Setup order in **Settings**:
 
-1. **Spaces** — zones derived from table labels (Σάλα, Αυλή, …)
+1. **Spaces** — zones derived from table labels (Σάλα, Αυλή, Όροφος)
 2. **Tables** — spots bound to QR (`?table=12`)
-3. **Posts** — tablet stations (Kitchen, Bar) — not floor waiter names
-4. **Messages** — quick chips per post for KDS/bar tablets (manual, no defaults)
-5. **Staff** — people: waiter + zone (phone) OR tablet post + screen link
+3. **Posts** — tablet stations (Kitchen, Bar, Services…) — optional `zoneId` per post
+4. **Messages** — quick chips per post for KDS/bar (owner-defined, no AI defaults)
+5. **Staff** — waiter + zone (phone `/s/...?key=memberToken`) OR tablet post + KDS link
 
-| Concept | UI (GR) | Code id | Device |
-|---------|---------|---------|--------|
-| Floor waiter | Σερβιτόρος — δάπεδο | `services` | Phone `/s/...` |
-| Tablet post | Κουζίνα, Bar, … | `post-*` | Tablet `/kds` etc. |
+| Concept | UI (GR) | Code | Device |
+|---------|---------|------|--------|
+| Floor waiter | Σερβιτόρος | `services` or services post id | Phone `/s/...` |
+| Tablet post | Κουζίνα, Bar | post id / `pass-all` | `/kds` etc. |
 | Spot map (manager) | Οθόνες | — | `/dashboard/waiter` |
 
-Real-time updates: **HTTP polling (~5s) + Web Push** (not Socket.io).
+**Signals:** Guest `WaiterCall` (PENDING…) + KDS `PassSignal` (READY…). Sidebar badge = org-wide; zone cards = per venue.
+
+**KDS send:** zone → post → table → chip (manual) → Αποστολή → pick waiters in zone → push with personal staff URL.
+
+Real-time: **HTTP polling (~5s) + Web Push** (not Socket.io).
 
 ## Pricing
 

@@ -26,6 +26,8 @@ alwaysApply: true
 | QR codes | Κατέβασμα PNG, προαιρετικά ανά τραπέζι (`?table=12`) ή δωμάτιο (`?room=101`) |
 | Κλήση σερβιτόρου | Από QR με τραπέζι/δωμάτιο — σερβιτόρος ή λογαριασμός |
 | Panel σερβιτόρου | Live λίστα κλήσεων, «πήγαινε εκεί», «ολοκληρώθηκε» |
+| Live 360° / KDS | Κουζίνα/μπαρ στέλνει μηνύματα σε τραπέζι → σερβιτόρος στο κινητό |
+| Οθόνες (manager) | Χάρτης τραπεζιών + κλήσεις πελάτη + μηνύματα πάσου ανά χώρο |
 | Εισαγωγή PDF | Ανέβασμα printed menu → προσχέδιο πιάτων (Pro+: hybrid OCR + Gemini Vision, πάντα review) |
 | Branding | Χρώματα, όνομα, περιγραφή καταστήματος |
 | Συνδρομή Stripe | Basic €9.99, Pro €19.99, δοκιμή 7 ημερών χωρίς κάρτα |
@@ -54,9 +56,9 @@ alwaysApply: true
 | `/dashboard/menus` | Κατάλογος, κατηγορίες, πιάτα |
 | `/dashboard/menus/import` | PDF (Pro+) |
 | `/dashboard/qr` | Δημιουργία & κατέβασμα QR |
-| `/dashboard/waiter` | Κλήσεις σερβιτόρου |
+| `/dashboard/waiter` | **Οθόνες** — χάρτης τραπεζιών, κλήσεις πελατών, μηνύματα κουζίνας ανά χώρο |
 | `/dashboard/billing` | Συνδρομή, αναβάθμιση |
-| `/dashboard/settings` | Χρώματα, όνομα καταστήματος |
+| `/dashboard/settings` | Χρώματα, χώροι, πόστα, μηνύματα, προσωπικό, staff links |
 
 ## Ειδοποιήσεις (πού & πότε)
 
@@ -68,6 +70,27 @@ alwaysApply: true
 
 **QR menu πελάτη:** μήνυμα αν λήξει συνδρομή · feedback κλήσης σερβιτόρου
 
+## Live 360° — λογική (Pro)
+
+**Πλήρης τεκμηρίωση:** `docs/LIVE360-OPERATIONS.md`
+
+### Ρύθμιση (σειρά)
+Θέσεις/χώροι → πόστα → μηνύματα (chips) → προσωπικό (κάθε άτομο **δικό του link** `/s/{slug}?key=…&zone=…`)
+
+### Δύο είδη ειδοποιήσεων
+1. **Κλήση από πελάτη** (QR) → σερβιτόρος κινητού
+2. **Μήνυμα πάσου** (KDS tablet) → σερβιτόρος κινητού + Οθόνες manager
+
+### KDS (κουζίνα/μπαρ tablet)
+Χώρος tab → πόστο tab → τραπέζι → μήνυμα (chip) → **Αποστολή** → popup «Σε ποιον;» (σερβιτόροi **μόνο του χώρου**). **Όχι** auto-send στο chip. Χώρος **χωρίς πόστο** = χωρίς μηνύματα.
+
+### Οθόνες (`/dashboard/waiter`)
+Badge sidebar = **όλος ο λογαριασμός** (όλα τα καταστήματα). Κάρτες χώρων = **τρέχον κατάστημα** + αριθμός μηνυμάτων ανά χώρο. Αν badge≠0 αλλά εδώ ήσυχα → άλλο κατάστημα.
+
+### Staff surfaces (χωρίς login dashboard)
+- Σερβιτόρος κινητό: `/s/{venueSlug}?key={memberToken}&zone=…`
+- KDS: `/kds?venueSlug=…&key={screenToken}`
+
 ## Ροή νέου πελάτη
 
 Εγγραφή (OTP) → κατάστημα → πιάτα → QR εκτύπωση → πελάτες σκανάρουν → (προαιρετικά) κλήσεις σερβιτόρου
@@ -78,4 +101,6 @@ alwaysApply: true
 
 ## Όχι ακόμα
 
-Upload φωτο (μόνο URL), push notifications, drag-drop, UI διαχείρισης STAFF, custom domain (μόνο Enterprise promise).
+Upload φωτο (μόνο URL), drag-drop καταλόγου, native apps, POS integration, AI chatbot. Custom domain μόνο Enterprise promise.
+
+**Υπάρχει ήδη:** Web Push σερβιτόρων/tablet, Live 360°, KDS recipient picker, ζώνες/πόστα/προσωπικό.

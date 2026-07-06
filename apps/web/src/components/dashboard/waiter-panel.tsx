@@ -85,11 +85,13 @@ export function WaiterPanel({
   const [updatingCallId, setUpdatingCallId] = useState<string | null>(null);
   const [updatingPassId, setUpdatingPassId] = useState<string | null>(null);
   const [zoneFilterId, setZoneFilterId] = useState<string>("all");
+  const [pendingByVenue, setPendingByVenue] = useState<Record<string, number>>({});
   const prevPendingRef = useRef<number | null>(null);
   const prevCallsRef = useRef<WaiterCall[]>([]);
   const prevPassIdsRef = useRef<Set<string>>(new Set());
   const pendingBaselineSetRef = useRef(false);
   const passBaselineSetRef = useRef(false);
+  const autoZoneAppliedRef = useRef(false);
   const loadGenerationRef = useRef(0);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const { config: opsConfig } = useVenueOperationsConfig(venueId);
@@ -100,9 +102,13 @@ export function WaiterPanel({
     const params = new URLSearchParams({ venueId });
     if (staffKey && !staffViaCookie) params.set("staffKey", staffKey);
     const creds = staffViaCookie ? "include" : "same-origin";
-    const [callsRes, passRes] = await Promise.all([
+    const managerView = !staffKey && !staffViaCookie;
+    const [callsRes, passRes, orgPendingRes] = await Promise.all([
       fetch(`/api/waiter-call?${params}`, { credentials: creds }),
       fetch(`/api/pass-signals?${params}`, { credentials: creds }),
+      managerView
+        ? fetch("/api/dashboard/pending-calls", { credentials: "same-origin", cache: "no-store" })
+        : Promise.resolve(null),
     ]);
     const data = await callsRes.json().catch(() => ({}));
     const passData = await passRes.json().catch(() => ({}));
@@ -165,6 +171,17 @@ export function WaiterPanel({
         if (passError) setFlash({ type: "error", text: passError });
       }
     }
+
+    if (orgPendingRes?.ok) {
+      const orgData = (await orgPendingRes.json().catch(() => ({}))) as {
+        byVenue?: Record<string, number>;
+      };
+      if (generation === loadGenerationRef.current && orgData.byVenue) {
+        setPendingByVenue(orgData.byVenue);
+      }
+    } else if (managerView && generation === loadGenerationRef.current) {
+      setPendingByVenue({});
+    }
   }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash]);
 
   useEffect(() => {
@@ -178,7 +195,9 @@ export function WaiterPanel({
     prevPassIdsRef.current = new Set();
     pendingBaselineSetRef.current = false;
     passBaselineSetRef.current = false;
+    autoZoneAppliedRef.current = false;
     setZoneFilterId("all");
+    setPendingByVenue({});
   }, [venueId]);
 
   useEffect(() => {
@@ -354,6 +373,45 @@ export function WaiterPanel({
     return zonePendingCounts.get(zoneId) ?? 0;
   }
 
+  const venueActiveTotal = zonePendingTotal("all");
+  const showZoneFilters = activeZoneGroups.length > 1 && !assignedZoneId;
+
+  const otherVenuePendingParts = useMemo(() => {
+    if (staffKey || staffViaCookie) return [];
+    return venues
+      .filter((v) => v.id !== venueId && (pendingByVenue[v.id] ?? 0) > 0)
+      .map((v) => W.otherVenuePendingPart(v.name, pendingByVenue[v.id] ?? 0));
+  }, [venues, venueId, pendingByVenue, staffKey, staffViaCookie, W]);
+
+  useEffect(() => {
+    if (staffKey || staffViaCookie) return;
+    if (autoZoneAppliedRef.current || assignedZoneId || !showZoneFilters) return;
+    if (venueActiveTotal === 0) return;
+
+    let bestZoneId = "all";
+    let bestCount = unmappedActiveCount;
+    for (const zone of activeZoneGroups) {
+      const n = zonePendingCounts.get(zone.id) ?? 0;
+      if (n > bestCount) {
+        bestCount = n;
+        bestZoneId = zone.id;
+      }
+    }
+    if (bestZoneId !== "all" && bestCount > 0) {
+      setZoneFilterId(bestZoneId);
+    }
+    autoZoneAppliedRef.current = true;
+  }, [
+    venueActiveTotal,
+    unmappedActiveCount,
+    zonePendingCounts,
+    activeZoneGroups,
+    assignedZoneId,
+    showZoneFilters,
+    staffKey,
+    staffViaCookie,
+  ]);
+
   const tableStateLabels = useMemo(
     () => mergeTableStateLabels(opsConfig ?? undefined, lang === "EN" ? "EN" : "GR"),
     [opsConfig, lang],
@@ -369,8 +427,6 @@ export function WaiterPanel({
 
   const activeVenue = venues.find((v) => v.id === venueId);
   const isManagerView = !staffViaCookie && !staffKey;
-
-  const showZoneFilters = activeZoneGroups.length > 1 && !assignedZoneId;
 
   function zoneSpotCount(zoneId: string): number {
     if (zoneId === "all") return spots.length;
@@ -401,6 +457,11 @@ export function WaiterPanel({
             count={activePending}
             className="absolute -right-1.5 -top-1.5 min-h-[1.35rem] min-w-[1.35rem] border-2 border-white text-[11px] shadow-md"
           />
+        ) : null}
+        {hasMessages && selected ? (
+          <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-300 px-1 text-[10px] font-bold text-amber-950 shadow-md">
+            {activePending}
+          </span>
         ) : null}
         <span className={cn("text-sm font-bold leading-tight sm:text-base", selected && "text-white")}>
           {label}
@@ -517,8 +578,22 @@ export function WaiterPanel({
             ) : null}
           </section>
         )
-      ) : showZoneFilters ? (
+      ) : (
+        <>
+          {isManagerView && otherVenuePendingParts.length > 0 && venueActiveTotal === 0 ? (
+            <section className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 shadow-sm">
+              <p className="text-sm font-medium text-amber-950">
+                {W.otherVenuePendingHint(otherVenuePendingParts)}
+              </p>
+            </section>
+          ) : null}
+          {showZoneFilters ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+          {venueActiveTotal > 0 && zonePendingBreakdown.length > 0 ? (
+            <p className="mb-3 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2.5 text-sm font-semibold text-cyan-950">
+              {W.whereToGoHeading(venueActiveTotal)} {zonePendingBreakdown.join(" · ")}
+            </p>
+          ) : null}
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:mb-3 sm:text-sm">
             {W.zonePickHeading}
           </p>
@@ -526,17 +601,17 @@ export function WaiterPanel({
             {renderZoneButton("all", W.zoneFilterAll)}
             {activeZoneGroups.map((zone) => renderZoneButton(zone.id, zone.label))}
           </div>
-          {zonePendingBreakdown.length > 0 ? (
-            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-950 sm:text-sm">
-              {W.zonePendingBreakdown(zonePendingBreakdown)}
-            </p>
-          ) : unmappedActiveCount > 0 ? (
+          {unmappedActiveCount > 0 &&
+          venueActiveTotal > 0 &&
+          activeZoneGroups.every((zone) => (zonePendingCounts.get(zone.id) ?? 0) === 0) ? (
             <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 sm:text-sm">
               {W.unmappedActiveHint(unmappedActiveCount)}
             </p>
           ) : null}
         </section>
-      ) : null}
+          ) : null}
+        </>
+      )}
 
       {isManagerView ? (
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
