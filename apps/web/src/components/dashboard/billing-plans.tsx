@@ -12,6 +12,7 @@ import { formatPlanPriceDisplay } from "@/lib/plan-catalog-types";
 import { displayPlanFeature } from "@/lib/plan-feature-display";
 import { formatDashboardDate } from "@/content/dashboard-i18n";
 import type { SubscriptionDisplaySummary } from "@/lib/subscription-display";
+import { reportVisitorIntent } from "@/lib/visitor-intent-client";
 import { cn } from "@/lib/utils";
 
 type Subscription = {
@@ -62,6 +63,12 @@ export function BillingPlans({
   async function checkout(planId: string) {
     setLoadingPlan(planId);
     setError(null);
+    reportVisitorIntent({
+      surface: "checkout",
+      step: "pay_clicked",
+      path: "/dashboard/billing",
+      planId,
+    });
     try {
       const res = await fetch("/api/billing", {
         method: "POST",
@@ -75,18 +82,42 @@ export function BillingPlans({
       };
       if (!res.ok) {
         setError(data.error ?? B.checkoutFailed);
+        reportVisitorIntent({
+          surface: "checkout",
+          step: "stripe_init_failed",
+          path: "/dashboard/billing",
+          planId,
+        });
         return;
       }
       if (data.checkoutUrl) {
         if (data.mode === "mock") {
+          reportVisitorIntent({
+            surface: "checkout",
+            step: "payment_success",
+            path: "/dashboard/billing",
+            planId,
+          });
           router.push(data.checkoutUrl);
           router.refresh();
           return;
         }
+        reportVisitorIntent({
+          surface: "checkout",
+          step: "stripe_redirect",
+          path: "/dashboard/billing",
+          planId,
+        });
         window.location.href = data.checkoutUrl;
       }
     } catch {
       setError(B.networkError);
+      reportVisitorIntent({
+        surface: "checkout",
+        step: "stripe_init_failed",
+        path: "/dashboard/billing",
+        planId,
+      });
     } finally {
       setLoadingPlan(null);
     }

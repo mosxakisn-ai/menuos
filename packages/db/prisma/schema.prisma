@@ -525,3 +525,28 @@ model ClientDiagnosticReport {
   @@index([status, lastSeenAt])
   @@index([fingerprint, status])
 }
+
+model VisitorIntentSession {
+  sessionId    String   @id @db.VarChar(64)
+  surface      String   @db.VarChar(20)
+  step         String   @db.VarChar(32)
+  path         String?  @db.VarChar(200)
+  planId       String?  @db.VarChar(20)
+  visitorLabel String?  @db.VarChar(120)
+  clientIp     String?  @db.VarChar(45)
+  ipCity       String?  @db.VarChar(80)
+  ipCountry    String?  @db.VarChar(80)
+  referrer     String?  @db.VarChar(200)
+  source       String   @default("web") @db.VarChar(20)
+  status       String   @default("online") @db.VarChar(12)
+  stepSince    DateTime @default(now())
+  firstSeenAt  DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+  leftAt       DateTime?
+  stepTrail    Json?
+
+  @@index([lastSeenAt])
+  @@index([status, lastSeenAt])
+  @@index([firstSeenAt])
+  @@index([surface, lastSeenAt])
+}

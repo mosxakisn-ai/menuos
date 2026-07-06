@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { reportVisitorIntent } from "@/lib/visitor-intent-client";
 
 export function BillingConfirmHandler({ organizationId }: { organizationId: string }) {
   const { d } = useDashboardCopy();
@@ -17,6 +18,11 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
     const sessionId = searchParams.get("session_id");
 
     if (billing === "cancelled") {
+      reportVisitorIntent({
+        surface: "checkout",
+        step: "payment_failed",
+        path: "/dashboard/billing",
+      });
       setMessage(d.billing.cancelled);
       setIsError(true);
       return;
@@ -49,13 +55,29 @@ export function BillingConfirmHandler({ organizationId }: { organizationId: stri
           if (!res.ok) {
             setMessage(data.error ?? d.billing.confirmFailed);
             setIsError(true);
+            reportVisitorIntent({
+              surface: "checkout",
+              step: "payment_failed",
+              path: "/dashboard/billing",
+            });
             return;
           }
           if (data.subscription?.status !== "ACTIVE") {
             setMessage(d.billing.confirmFailed);
             setIsError(true);
+            reportVisitorIntent({
+              surface: "checkout",
+              step: "payment_failed",
+              path: "/dashboard/billing",
+            });
             return;
           }
+          reportVisitorIntent({
+            surface: "checkout",
+            step: "payment_success",
+            path: "/dashboard/billing",
+            planId: data.subscription?.plan,
+          });
           setMessage(d.billing.activated);
           setIsError(false);
           router.replace("/dashboard/billing");

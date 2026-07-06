@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { RootJsonLd } from "@/components/seo/json-ld";
+import { VisitorIntentTracker } from "@/components/visitor-intent-tracker";
 import { I18nProvider } from "@/i18n/context";
 import { getMessages } from "@/i18n/get-messages";
 import { getServerLocale } from "@/i18n/server";
@@ -28,6 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen font-sans">
         <RootJsonLd />
         <I18nProvider initialLocale={locale} initialMessages={messages}>
+          <VisitorIntentTracker />
           {children}
         </I18nProvider>
       </body>

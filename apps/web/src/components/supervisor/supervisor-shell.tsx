@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, CreditCard, LayoutDashboard, LifeBuoy, LogOut, Sparkles, Users } from "lucide-react";
+import { Building2, CreditCard, LayoutDashboard, LifeBuoy, LogOut, Radio, Sparkles, Users } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/supervisor", label: "Αρχική", icon: LayoutDashboard, exact: true },
+  { href: "/supervisor/online", label: "Online", icon: Radio },
   { href: "/supervisor/organizations", label: "Πελάτες", icon: Building2 },
   { href: "/supervisor/gemini", label: "Gemini AI", icon: Sparkles },
   { href: "/supervisor/help-desk", label: "Help Desk", icon: LifeBuoy },
