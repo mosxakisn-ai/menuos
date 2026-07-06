@@ -216,6 +216,32 @@ export function zoneIdForWaiterLocation(
   return resolveWaiterLocationInZones(location, groups)?.zoneId ?? null;
 }
 
+/** Resolve a location within one zone tab (KDS manual entry). */
+export function resolveWaiterLocationInZone(
+  location: WaiterLocationLike,
+  zoneId: string | null | undefined,
+  groups: SpotZoneGroup[],
+): ResolvedWaiterLocationSpot | null {
+  if (!zoneId?.trim()) return resolveWaiterLocationInZones(location, groups);
+  const zone = groups.find((group) => group.id === zoneId.trim());
+  if (!zone) return resolveWaiterLocationInZones(location, groups);
+  return resolveWaiterLocationInZones(location, [zone]);
+}
+
+/** Pick the stored spot label for pass send (disambiguates bare table numbers by zone). */
+export function passSendTableNumber(
+  table: ZoneSpotInput | null,
+  manual: string,
+  activeZoneId: string | null | undefined,
+  groups: SpotZoneGroup[],
+): string {
+  if (table) return table.label;
+  const trimmed = manual.trim();
+  if (!trimmed) return trimmed;
+  const resolved = resolveWaiterLocationInZone({ tableNumber: trimmed }, activeZoneId, groups);
+  return resolved?.spot.label ?? trimmed;
+}
+
 export function filterSpotsByZone<T extends ZoneSpotInput & { id?: string }>(
   spots: T[],
   zoneId: string,

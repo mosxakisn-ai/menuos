@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { listVenuePosts } from "@menuos/shared";
+import { Logo } from "@/components/brand/logo";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { StaffWaiterInvalidLink } from "@/components/dashboard/staff-waiter-invalid-link";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
@@ -97,8 +98,8 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   return (
     <div className="min-h-screen bg-brand-surface/40">
       <header className="border-b border-slate-200/80 bg-white px-4 py-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue/70">MenuOS</p>
-        <h1 className="font-serif text-xl font-bold text-primary">Κλήσεις σερβιτόρου</h1>
+        <Logo href={false} markSize={32} className="gap-2.5" wordmarkClassName="text-lg leading-none" />
+        <h1 className="mt-2 font-serif text-xl font-bold text-primary">Κλήσεις σερβιτόρου</h1>
         <p className="mt-1 text-sm text-slate-600">
           {venue.name}
           {staffMember ? (

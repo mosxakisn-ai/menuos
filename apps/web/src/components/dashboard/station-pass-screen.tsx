@@ -12,6 +12,7 @@ import {
   isVenueSupportPostStation,
   mergeQuickChipLabels,
   passScreenToPostStation,
+  passSendTableNumber,
   pickDefaultZoneId,
   venuePostMatchesZone,
   type PassStationInput,
@@ -661,17 +662,18 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const headerMessages = useMemo(() => {
     if (ctx?.allQuickComments?.length) return ctx.allQuickComments;
-    if (activePost?.quickComments?.length) return activePost.quickComments;
-    if (postsForZone.length > 0) {
-      return mergeQuickChipLabels(...postsForZone.map((post) => post.quickComments));
+    const zoneId = activeZoneId ?? zoneGroups[0]?.id ?? null;
+    const messagePosts = tabletPosts.filter((post) => venuePostMatchesZone(post, zoneId));
+    if (messagePosts.length > 0) {
+      return mergeQuickChipLabels(...messagePosts.map((post) => post.quickComments));
     }
-    if (stationPosts.length > 0) {
-      return mergeQuickChipLabels(...stationPosts.map((post) => post.quickComments));
+    if (tabletPosts.length > 0) {
+      return mergeQuickChipLabels(...tabletPosts.map((post) => post.quickComments));
     }
     return ctx?.quickComments ?? [];
-  }, [ctx?.allQuickComments, ctx?.quickComments, stationPosts, postsForZone, activePost]);
+  }, [ctx?.allQuickComments, ctx?.quickComments, tabletPosts, activeZoneId, zoneGroups]);
 
-  const headerMessageColor = screenMatchedPost?.messageColor ?? ctx?.messageColor ?? null;
+  const headerMessageColor = activePost?.messageColor ?? screenMatchedPost?.messageColor ?? ctx?.messageColor ?? null;
 
   const load = useCallback(async () => {
     if (!venueSlug || !stationKey) {
@@ -789,13 +791,14 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     setSending(true);
     setFlash(null);
     try {
+      const tableNumber = passSendTableNumber(table, manual, activeZoneId, zoneGroups);
       const location = table
         ? table.type === "TABLE"
-          ? { tableNumber: table.label }
+          ? { tableNumber }
           : table.type === "ROOM"
             ? { roomNumber: table.label }
             : { sunbedNumber: table.label }
-        : { tableNumber: manual };
+        : { tableNumber };
 
       const sendStation = passStationForSend(activePost, station);
       const outboundMessage = formatPassMessageForSend(messageText, activePost, tabletPosts);

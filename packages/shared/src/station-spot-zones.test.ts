@@ -6,6 +6,7 @@ import {
   findZoneIdForSpot,
   groupVenueSpotsByZone,
   pickDefaultZoneId,
+  passSendTableNumber,
   resolveWaiterLocationInZones,
   zoneIdForWaiterLocation,
 } from "./station-spot-zones";
@@ -118,5 +119,15 @@ describe("zone filters for waiter", () => {
     expect(filterWaiterLocationsForZoneView(items, groups[0]!.id, groups).map((row) => row.id)).toEqual([
       "c1",
     ]);
+  });
+
+  it("disambiguates bare table numbers using active zone on pass send", () => {
+    const groups = groupVenueSpotsByZone([
+      { type: "TABLE", label: "Σαλα-1" },
+      { type: "TABLE", label: "Αυλή-1" },
+    ]);
+    expect(passSendTableNumber(null, "1", "prefix:σαλα", groups)).toBe("Σαλα-1");
+    expect(passSendTableNumber(null, "1", "prefix:αυλή", groups)).toBe("Αυλή-1");
+    expect(zoneIdForWaiterLocation({ tableNumber: "1" }, groups)).toBeNull();
   });
 });

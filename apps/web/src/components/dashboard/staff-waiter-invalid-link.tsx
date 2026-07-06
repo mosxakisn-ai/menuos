@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/brand/logo";
 
 export function StaffWaiterInvalidLink({
   venueSlug,
@@ -20,8 +21,10 @@ export function StaffWaiterInvalidLink({
   return (
     <div className="flex min-h-screen items-center justify-center bg-brand-surface/40 px-4">
       <div className="max-w-md rounded-card border border-slate-200 bg-white p-6 text-center shadow-soft">
-        <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">MenuOS</p>
-        <h1 className="mt-2 font-serif text-xl font-bold text-primary">
+        <div className="flex justify-center">
+          <Logo href={false} markSize={36} className="gap-2.5" wordmarkClassName="text-lg leading-none" />
+        </div>
+        <h1 className="mt-3 font-serif text-xl font-bold text-primary">
           {missingTabletScreen ? "Οθόνη tablet" : "Σύνδεσμος προσωπικού"}
         </h1>
         <p className="mt-3 text-sm text-slate-600">
