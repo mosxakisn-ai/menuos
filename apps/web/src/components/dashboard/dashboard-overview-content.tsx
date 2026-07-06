@@ -11,7 +11,6 @@ import {
   Monitor,
   Plus,
   QrCode,
-  Sparkles,
   Store,
   UtensilsCrossed,
   type LucideIcon,
@@ -77,28 +76,6 @@ function OverviewPanel({
 function OverviewSectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">{children}</p>
-  );
-}
-
-function OverviewBadge({
-  children,
-  accent = "blue",
-}: {
-  children: React.ReactNode;
-  accent?: "blue" | "cyan" | "emerald";
-}) {
-  const dotClass =
-    accent === "cyan"
-      ? "bg-brand-cyan shadow-[0_0_8px_rgba(6,182,212,0.6)]"
-      : accent === "emerald"
-        ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"
-        : "bg-brand-blue shadow-[0_0_8px_rgba(37,99,235,0.5)]";
-
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white/90 backdrop-blur-md">
-      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dotClass)} aria-hidden />
-      {children}
-    </span>
   );
 }
 
@@ -309,57 +286,55 @@ export function DashboardOverviewContent({
 
       {onboardingComplete ? (
         <>
-          <section className="animate-fade-up relative overflow-hidden rounded-[1.35rem] border border-slate-800/10 bg-gradient-to-br from-[#0c1222] via-brand-navy to-[#111827] px-6 py-7 text-white shadow-[0_20px_60px_-20px_rgba(15,23,42,0.55)] opacity-0 sm:px-8 sm:py-8">
+          <section className="animate-fade-up relative overflow-hidden rounded-xl border border-slate-800/20 bg-gradient-to-r from-[#0c1222] via-brand-navy to-[#0f172a] px-4 py-3.5 opacity-0 shadow-sm sm:px-5 sm:py-4">
             <div
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_85%_0%,rgba(6,182,212,0.22),transparent_55%)]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_100%_0%,rgba(6,182,212,0.12),transparent_55%)]"
               aria-hidden
             />
-            <div
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_0%_100%,rgba(37,99,235,0.28),transparent_50%)]"
-              aria-hidden
-            />
-            <div
-              className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:28px_28px]"
-              aria-hidden
-            />
-            <div className="relative flex flex-wrap items-start justify-between gap-5">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-brand-cyan">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/10">
-                    <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                  </span>
-                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
+            <div className="relative flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">
                     {O.heroEyebrow}
                   </span>
+                  <h1 className="font-serif text-lg font-bold leading-snug tracking-tight text-white sm:text-xl">
+                    {orgName ?? O.titleFallback}
+                  </h1>
                 </div>
-                <h1 className="mt-3 font-serif text-[1.75rem] font-bold leading-tight tracking-tight text-white sm:text-[2.15rem]">
-                  {orgName ?? O.titleFallback}
-                </h1>
-                {catalogOnline ? (
-                  <p className="mt-2 max-w-md text-sm leading-relaxed text-white/60">{O.quickStartReady}</p>
-                ) : (
-                  <p className="mt-2 max-w-md text-sm leading-relaxed text-white/60">{O.quickStartEmpty}</p>
-                )}
+                {!catalogOnline ? (
+                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/50 sm:line-clamp-1">
+                    {O.quickStartEmpty}
+                  </p>
+                ) : null}
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-white/60">
+                  <span>{planLabel(planId)}</span>
+                  <span aria-hidden className="text-white/20">
+                    ·
+                  </span>
+                  <span>
+                    {venueCount} {venueWord}
+                  </span>
+                  <span aria-hidden className="text-white/20">
+                    ·
+                  </span>
+                  <span>
+                    {menuCount} {menuWord}
+                  </span>
+                  <span aria-hidden className="text-white/20">
+                    ·
+                  </span>
+                  <span>{d.catalogEntry.count(itemCount)}</span>
+                </p>
               </div>
               {catalogOnline ? (
-                <div className="flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-200 backdrop-blur-sm">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                <div className="flex shrink-0 items-center gap-1.5 self-start rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-200 sm:self-center">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   </span>
                   {O.catalogLiveStatus}
                 </div>
               ) : null}
-            </div>
-            <div className="relative mt-5 flex flex-wrap gap-2">
-              <OverviewBadge accent="blue">{planLabel(planId)}</OverviewBadge>
-              <OverviewBadge accent="cyan">
-                {venueCount} {venueWord}
-              </OverviewBadge>
-              <OverviewBadge accent="blue">
-                {menuCount} {menuWord}
-              </OverviewBadge>
-              <OverviewBadge accent="emerald">{d.catalogEntry.count(itemCount)}</OverviewBadge>
             </div>
           </section>
 

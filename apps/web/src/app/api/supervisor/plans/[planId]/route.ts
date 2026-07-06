@@ -32,6 +32,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     return NextResponse.json({ plan, message: "Το πακέτο ενημερώθηκε." });
   } catch (err) {
     console.error("[menuos-supervisor] update plan", err);
-    return NextResponse.json({ error: "Αποτυχία ενημέρωσης." }, { status: 500 });
+    const message = err instanceof Error && err.message.includes("No allowed fields")
+      ? "Δεν επιτρέπεται επεξεργασία αυτών των πεδίων για το πακέτο."
+      : "Αποτυχία ενημέρωσης.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

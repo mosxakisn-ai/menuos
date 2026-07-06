@@ -12,6 +12,7 @@ import {
   type PricingPlanCard,
 } from "@/lib/plan-catalog-types";
 import { formatTrialPeriodLabel } from "@/lib/trial-marketing";
+import { sanitizePlanCatalogUpdate } from "@/lib/plan-catalog-edit-policy";
 
 export type { PlanCatalogEntry, PricingPlanCard } from "@/lib/plan-catalog-types";
 export { formatPlanPriceDisplay } from "@/lib/plan-catalog-types";
@@ -351,27 +352,32 @@ export async function updatePlanCatalog(
     await ensurePlanCatalogSeeded();
   }
 
+  const sanitized = sanitizePlanCatalogUpdate(planId, input);
+  if (!Object.keys(sanitized).length) {
+    throw new Error("No allowed fields to update for this plan.");
+  }
+
   const row = await prisma.planCatalog.update({
     where: { plan: planId as SubscriptionPlan },
     data: {
-      ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(input.priceMonthly !== undefined ? { priceMonthly: input.priceMonthly } : {}),
-      ...(input.priceDisplay !== undefined ? { priceDisplay: input.priceDisplay } : {}),
-      ...(input.periodLabel !== undefined ? { periodLabel: input.periodLabel } : {}),
-      ...(input.description !== undefined ? { description: input.description } : {}),
-      ...(input.features !== undefined ? { features: input.features } : {}),
-      ...(input.maxVenues !== undefined ? { maxVenues: input.maxVenues } : {}),
-      ...(input.maxMenusPerVenue !== undefined ? { maxMenusPerVenue: input.maxMenusPerVenue } : {}),
-      ...(input.maxItems !== undefined ? { maxItems: input.maxItems } : {}),
-      ...(input.maxGeminiTokensPerMonth !== undefined
-        ? { maxGeminiTokensPerMonth: input.maxGeminiTokensPerMonth }
+      ...(sanitized.name !== undefined ? { name: sanitized.name } : {}),
+      ...(sanitized.priceMonthly !== undefined ? { priceMonthly: sanitized.priceMonthly } : {}),
+      ...(sanitized.priceDisplay !== undefined ? { priceDisplay: sanitized.priceDisplay } : {}),
+      ...(sanitized.periodLabel !== undefined ? { periodLabel: sanitized.periodLabel } : {}),
+      ...(sanitized.description !== undefined ? { description: sanitized.description } : {}),
+      ...(sanitized.features !== undefined ? { features: sanitized.features } : {}),
+      ...(sanitized.maxVenues !== undefined ? { maxVenues: sanitized.maxVenues } : {}),
+      ...(sanitized.maxMenusPerVenue !== undefined ? { maxMenusPerVenue: sanitized.maxMenusPerVenue } : {}),
+      ...(sanitized.maxItems !== undefined ? { maxItems: sanitized.maxItems } : {}),
+      ...(sanitized.maxGeminiTokensPerMonth !== undefined
+        ? { maxGeminiTokensPerMonth: sanitized.maxGeminiTokensPerMonth }
         : {}),
-      ...(input.ctaLabel !== undefined ? { ctaLabel: input.ctaLabel } : {}),
-      ...(input.badge !== undefined ? { badge: input.badge } : {}),
-      ...(input.highlighted !== undefined ? { highlighted: input.highlighted } : {}),
-      ...(input.visibleOnPricing !== undefined ? { visibleOnPricing: input.visibleOnPricing } : {}),
-      ...(input.trialDays !== undefined ? { trialDays: input.trialDays } : {}),
-      ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
+      ...(sanitized.ctaLabel !== undefined ? { ctaLabel: sanitized.ctaLabel } : {}),
+      ...(sanitized.badge !== undefined ? { badge: sanitized.badge } : {}),
+      ...(sanitized.highlighted !== undefined ? { highlighted: sanitized.highlighted } : {}),
+      ...(sanitized.visibleOnPricing !== undefined ? { visibleOnPricing: sanitized.visibleOnPricing } : {}),
+      ...(sanitized.trialDays !== undefined ? { trialDays: sanitized.trialDays } : {}),
+      ...(sanitized.sortOrder !== undefined ? { sortOrder: sanitized.sortOrder } : {}),
     },
   });
 

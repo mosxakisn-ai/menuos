@@ -12,6 +12,15 @@ import {
 } from "@/components/dashboard/dashboard-page";
 import type { PlanCatalogEntry } from "@/lib/plan-catalog-types";
 import { formatPlanPriceDisplay } from "@/lib/plan-catalog-types";
+import {
+  isPlanCatalogFieldEditable,
+  planCatalogEditSummary,
+  planCatalogFieldLockReason,
+  planHasEditableLimits,
+  planShowsTrialDays,
+  type PlanCatalogEditableField,
+} from "@/lib/plan-catalog-edit-policy";
+import { formatTrialPeriodLabel } from "@/lib/trial-marketing";
 import { cn } from "@/lib/utils";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 
@@ -25,6 +34,19 @@ function parseOptionalLimit(raw: string): number | null | "invalid" {
   const parsed = Number.parseInt(trimmed, 10);
   if (!Number.isFinite(parsed) || parsed < 1) return "invalid";
   return parsed;
+}
+
+function fieldLocked(planId: PlanCatalogEntry["id"], field: PlanCatalogEditableField) {
+  return planCatalogFieldLockReason(planId, field);
+}
+
+function lockedFieldClass(locked: boolean) {
+  return locked ? "cursor-not-allowed bg-slate-50 text-slate-500" : "";
+}
+
+function FieldHint({ reason }: { reason: string | null }) {
+  if (!reason) return null;
+  return <p className="mt-1 text-[11px] leading-snug text-slate-500">{reason}</p>;
 }
 
 function PlanEditor({
@@ -58,6 +80,15 @@ function PlanEditor({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  const trialPeriodPreview =
+    plan.id === "TRIAL" && trialDays.trim()
+      ? formatTrialPeriodLabel(Number.parseInt(trialDays, 10) || plan.trialDays || 7)
+      : plan.periodLabel;
+
+  function canEdit(field: PlanCatalogEditableField) {
+    return isPlanCatalogFieldEditable(plan.id, field);
+  }
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -75,39 +106,39 @@ function PlanEditor({
     }
 
     const parsedPrice = Number.parseFloat(priceMonthly.replace(",", "."));
-    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+    if (canEdit("priceMonthly") && (!Number.isFinite(parsedPrice) || parsedPrice < 0)) {
       setError("Μη έγκυρη τιμή.");
       setSaving(false);
       return;
     }
 
     const parsedVenues = Number.parseInt(maxVenues, 10);
-    if (!Number.isFinite(parsedVenues) || parsedVenues < 1) {
+    if (canEdit("maxVenues") && (!Number.isFinite(parsedVenues) || parsedVenues < 1)) {
       setError("Μη έγκυρο όριο καταστημάτων.");
       setSaving(false);
       return;
     }
 
     const parsedMenus = parseOptionalLimit(maxMenus);
-    if (parsedMenus === "invalid") {
+    if (canEdit("maxMenusPerVenue") && parsedMenus === "invalid") {
       setError("Μη έγκυρο όριο καταλόγων.");
       setSaving(false);
       return;
     }
     const parsedItems = parseOptionalLimit(maxItems);
-    if (parsedItems === "invalid") {
+    if (canEdit("maxItems") && parsedItems === "invalid") {
       setError("Μη έγκυρο όριο πιάτων.");
       setSaving(false);
       return;
     }
     const parsedGeminiTokens = parseOptionalLimit(maxGeminiTokens);
-    if (parsedGeminiTokens === "invalid") {
+    if (canEdit("maxGeminiTokensPerMonth") && parsedGeminiTokens === "invalid") {
       setError("Μη έγκυρο όριο Gemini tokens.");
       setSaving(false);
       return;
     }
     let parsedTrialDays: number | null = null;
-    if (trialDays.trim()) {
+    if (canEdit("trialDays") && trialDays.trim()) {
       parsedTrialDays = Number.parseInt(trialDays, 10);
       if (!Number.isFinite(parsedTrialDays) || parsedTrialDays < 1) {
         setError("Μη έγκυρες ημέρες δοκιμής.");
@@ -117,31 +148,36 @@ function PlanEditor({
     }
 
     try {
+      const payload: Record<string, unknown> = {};
+      if (canEdit("name")) payload.name = name.trim();
+      if (canEdit("priceMonthly")) payload.priceMonthly = parsedPrice;
+      if (canEdit("priceDisplay")) payload.priceDisplay = priceDisplay.trim() || null;
+      if (canEdit("periodLabel")) payload.periodLabel = periodLabel.trim();
+      if (canEdit("description")) payload.description = description.trim() || null;
+      if (canEdit("features")) payload.features = features;
+      if (canEdit("maxVenues")) payload.maxVenues = parsedVenues;
+      if (canEdit("maxMenusPerVenue")) payload.maxMenusPerVenue = parsedMenus;
+      if (canEdit("maxItems")) payload.maxItems = parsedItems;
+      if (canEdit("maxGeminiTokensPerMonth")) payload.maxGeminiTokensPerMonth = parsedGeminiTokens;
+      if (canEdit("ctaLabel")) payload.ctaLabel = ctaLabel.trim() || null;
+      if (canEdit("badge")) payload.badge = badge.trim() || null;
+      if (canEdit("highlighted")) payload.highlighted = highlighted;
+      if (canEdit("visibleOnPricing")) payload.visibleOnPricing = visibleOnPricing;
+      if (canEdit("trialDays")) payload.trialDays = parsedTrialDays;
+      if (canEdit("sortOrder")) payload.sortOrder = Number.parseInt(sortOrder, 10) || 0;
+
       const res = await fetch(`/api/supervisor/plans/${plan.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          priceMonthly: parsedPrice,
-          priceDisplay: priceDisplay.trim() || null,
-          periodLabel: periodLabel.trim(),
-          description: description.trim() || null,
-          features,
-          maxVenues: parsedVenues,
-          maxMenusPerVenue: parsedMenus,
-          maxItems: parsedItems,
-          maxGeminiTokensPerMonth: parsedGeminiTokens,
-          ctaLabel: ctaLabel.trim() || null,
-          badge: badge.trim() || null,
-          highlighted,
-          visibleOnPricing,
-          trialDays: parsedTrialDays,
-          sortOrder: Number.parseInt(sortOrder, 10) || 0,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = (await res.json()) as { plan?: PlanCatalogEntry; error?: string; message?: string };
       if (!res.ok) {
         setError(data.error ?? "Αποτυχία.");
+        return;
+      }
+      if (!Object.keys(payload).length) {
+        setError("Δεν υπάρχουν επεξεργάσιμα πεδία.");
         return;
       }
       setMessage(data.message ?? "Ενημερώθηκε.");
@@ -171,147 +207,227 @@ function PlanEditor({
           </button>
         </div>
 
+        <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+          {planCatalogEditSummary(plan.id)}
+        </p>
+
         <form onSubmit={(e) => void save(e)} className="mt-5 space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm sm:col-span-2">
               <span className={dashboardLabelClass}>Όνομα εμφάνισης</span>
-              <input className={dashboardFieldClass} value={name} onChange={(e) => setName(e.target.value)} placeholder={FORM_PLACEHOLDERS.planDisplayName} required />
+              <FieldHint reason={fieldLocked(plan.id, "name")} />
+              <input
+                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("name")))}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={FORM_PLACEHOLDERS.planDisplayName}
+                required
+                disabled={!canEdit("name")}
+              />
             </label>
             <label className="block text-sm">
               <span className={dashboardLabelClass}>Τιμή / μήνα (€)</span>
+              <FieldHint reason={fieldLocked(plan.id, "priceMonthly")} />
               <input
-                className={dashboardFieldClass}
+                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("priceMonthly")))}
                 inputMode="decimal"
                 value={priceMonthly}
                 onChange={(e) => setPriceMonthly(e.target.value)}
                 placeholder={FORM_PLACEHOLDERS.planPriceMonthly}
                 required
+                disabled={!canEdit("priceMonthly")}
               />
             </label>
             <label className="block text-sm">
               <span className={dashboardLabelClass}>Εμφάνιση τιμής (προαιρετικό)</span>
+              <FieldHint reason={fieldLocked(plan.id, "priceDisplay")} />
               <input
-                className={dashboardFieldClass}
+                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("priceDisplay")))}
                 placeholder="π.χ. €9.99"
                 value={priceDisplay}
                 onChange={(e) => setPriceDisplay(e.target.value)}
+                disabled={!canEdit("priceDisplay")}
               />
             </label>
             <label className="block text-sm">
               <span className={dashboardLabelClass}>Περίοδος</span>
+              <FieldHint reason={fieldLocked(plan.id, "periodLabel")} />
               <input
-                className={dashboardFieldClass}
+                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("periodLabel")))}
                 placeholder="/μήνα ή / 7 ημέρες"
-                value={periodLabel}
+                value={canEdit("periodLabel") ? periodLabel : trialPeriodPreview}
                 onChange={(e) => setPeriodLabel(e.target.value)}
                 required
+                disabled={!canEdit("periodLabel")}
               />
             </label>
             <label className="block text-sm">
               <span className={dashboardLabelClass}>Σειρά εμφάνισης</span>
+              <FieldHint reason={fieldLocked(plan.id, "sortOrder")} />
               <input
-                className={dashboardFieldClass}
+                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("sortOrder")))}
                 type="number"
                 min={0}
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
                 placeholder={FORM_PLACEHOLDERS.planSortOrder}
+                disabled={!canEdit("sortOrder")}
               />
             </label>
             <label className="block text-sm sm:col-span-2">
               <span className={dashboardLabelClass}>Περιγραφή</span>
+              <FieldHint reason={fieldLocked(plan.id, "description")} />
               <textarea
-                className={cn(dashboardFieldClass, "min-h-[72px] resize-y")}
+                className={cn(dashboardFieldClass, "min-h-[72px] resize-y", lockedFieldClass(!canEdit("description")))}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={FORM_PLACEHOLDERS.planDescription}
+                disabled={!canEdit("description")}
               />
             </label>
             <label className="block text-sm sm:col-span-2">
               <span className={dashboardLabelClass}>Features (μία γραμμή = ένα feature)</span>
+              <FieldHint reason={fieldLocked(plan.id, "features")} />
               <textarea
-                className={cn(dashboardFieldClass, "min-h-[140px] resize-y font-mono text-xs")}
+                className={cn(
+                  dashboardFieldClass,
+                  "min-h-[140px] resize-y font-mono text-xs",
+                  lockedFieldClass(!canEdit("features")),
+                )}
                 value={featuresText}
                 onChange={(e) => setFeaturesText(e.target.value)}
                 placeholder={FORM_PLACEHOLDERS.planFeatures}
                 required
+                disabled={!canEdit("features")}
               />
             </label>
           </div>
 
-          <div>
-            <p className={dashboardLabelClass}>Όρια πλάνου</p>
-            <div className="mt-2 grid gap-4 sm:grid-cols-3">
-              <label className="block text-sm">
-                <span className="text-xs text-slate-500">Καταστήματα</span>
-                <input
-                  className={dashboardFieldClass}
-                  type="number"
-                  min={1}
-                  value={maxVenues}
-                  onChange={(e) => setMaxVenues(e.target.value)}
-                  placeholder={FORM_PLACEHOLDERS.maxVenues}
-                  required
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="text-xs text-slate-500">Κατάλογοι / μαγαζί (κενό = απεριόριστο)</span>
-                <input
-                  className={dashboardFieldClass}
-                  type="number"
-                  min={1}
-                  value={maxMenus}
-                  onChange={(e) => setMaxMenus(e.target.value)}
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="text-xs text-slate-500">Gemini tokens/μήνα (κενό = απεριόριστο)</span>
-                <input
-                  className={dashboardFieldClass}
-                  type="number"
-                  min={0}
-                  value={maxGeminiTokens}
-                  onChange={(e) => setMaxGeminiTokens(e.target.value)}
-                  placeholder="π.χ. 500000"
-                />
-              </label>
+          {planHasEditableLimits(plan.id) ? (
+            <div>
+              <p className={dashboardLabelClass}>Όρια πλάνου</p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Αυτά εφαρμόζονται στο προϊόν — όχι μόνο στο marketing κείμενο.
+              </p>
+              <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <label className="block text-sm">
+                  <span className="text-xs text-slate-500">Καταστήματα</span>
+                  <FieldHint reason={fieldLocked(plan.id, "maxVenues")} />
+                  <input
+                    className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("maxVenues")))}
+                    type="number"
+                    min={1}
+                    value={maxVenues}
+                    onChange={(e) => setMaxVenues(e.target.value)}
+                    placeholder={FORM_PLACEHOLDERS.maxVenues}
+                    required={canEdit("maxVenues")}
+                    disabled={!canEdit("maxVenues")}
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className="text-xs text-slate-500">Κατάλογοι / μαγαζί (κενό = απεριόριστο)</span>
+                  <FieldHint reason={fieldLocked(plan.id, "maxMenusPerVenue")} />
+                  <input
+                    className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("maxMenusPerVenue")))}
+                    type="number"
+                    min={1}
+                    value={maxMenus}
+                    onChange={(e) => setMaxMenus(e.target.value)}
+                    disabled={!canEdit("maxMenusPerVenue")}
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className="text-xs text-slate-500">Πιάτα (κενό = απεριόριστο)</span>
+                  <FieldHint reason={fieldLocked(plan.id, "maxItems")} />
+                  <input
+                    className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("maxItems")))}
+                    type="number"
+                    min={1}
+                    value={maxItems}
+                    onChange={(e) => setMaxItems(e.target.value)}
+                    disabled={!canEdit("maxItems")}
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className="text-xs text-slate-500">Gemini tokens/μήνα (κενό = απεριόριστο)</span>
+                  <FieldHint reason={fieldLocked(plan.id, "maxGeminiTokensPerMonth")} />
+                  <input
+                    className={cn(
+                      dashboardFieldClass,
+                      lockedFieldClass(!canEdit("maxGeminiTokensPerMonth")),
+                    )}
+                    type="number"
+                    min={0}
+                    value={maxGeminiTokens}
+                    onChange={(e) => setMaxGeminiTokens(e.target.value)}
+                    placeholder="π.χ. 500000"
+                    disabled={!canEdit("maxGeminiTokensPerMonth")}
+                  />
+                </label>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+              {fieldLocked(plan.id, "maxVenues") ?? "Τα όρια δεν επεξεργάζονται από εδώ."}
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm">
               <span className={dashboardLabelClass}>Κουμπί CTA</span>
-              <input className={dashboardFieldClass} value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} placeholder={FORM_PLACEHOLDERS.planCta} />
+              <FieldHint reason={fieldLocked(plan.id, "ctaLabel")} />
+              <input
+                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("ctaLabel")))}
+                value={ctaLabel}
+                onChange={(e) => setCtaLabel(e.target.value)}
+                placeholder={FORM_PLACEHOLDERS.planCta}
+                disabled={!canEdit("ctaLabel")}
+              />
             </label>
             <label className="block text-sm">
               <span className={dashboardLabelClass}>Badge (π.χ. Δημοφιλές)</span>
-              <input className={dashboardFieldClass} value={badge} onChange={(e) => setBadge(e.target.value)} placeholder={FORM_PLACEHOLDERS.planBadge} />
+              <FieldHint reason={fieldLocked(plan.id, "badge")} />
+              <input
+                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("badge")))}
+                value={badge}
+                onChange={(e) => setBadge(e.target.value)}
+                placeholder={FORM_PLACEHOLDERS.planBadge}
+                disabled={!canEdit("badge")}
+              />
             </label>
-            {plan.id === "TRIAL" ? (
+            {planShowsTrialDays(plan.id) ? (
               <label className="block text-sm">
                 <span className={dashboardLabelClass}>Ημέρες δοκιμής</span>
+                <FieldHint reason={fieldLocked(plan.id, "trialDays")} />
                 <input
-                  className={dashboardFieldClass}
+                  className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("trialDays")))}
                   type="number"
                   min={1}
                   value={trialDays}
                   onChange={(e) => setTrialDays(e.target.value)}
                   placeholder={FORM_PLACEHOLDERS.trialDays}
+                  disabled={!canEdit("trialDays")}
                 />
               </label>
             ) : null}
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm">
-            <label className="inline-flex items-center gap-2">
-              <input type="checkbox" checked={highlighted} onChange={(e) => setHighlighted(e.target.checked)} />
+            <label className={cn("inline-flex items-center gap-2", !canEdit("highlighted") && "opacity-50")}>
+              <input
+                type="checkbox"
+                checked={highlighted}
+                onChange={(e) => setHighlighted(e.target.checked)}
+                disabled={!canEdit("highlighted")}
+              />
               <span>Επισημασμένο (Δημοφιλές)</span>
             </label>
-            <label className="inline-flex items-center gap-2">
+            <label className={cn("inline-flex items-center gap-2", !canEdit("visibleOnPricing") && "opacity-50")}>
               <input
                 type="checkbox"
                 checked={visibleOnPricing}
                 onChange={(e) => setVisibleOnPricing(e.target.checked)}
+                disabled={!canEdit("visibleOnPricing")}
               />
               <span>Εμφάνιση στη σελίδα τιμών</span>
             </label>
