@@ -14,6 +14,7 @@ import {
   registerSubmitLabel,
   registerSubtitle,
 } from "@/lib/register-plan-intent";
+import { bumpVisitorIntentStep, reportVisitorIntent } from "@/lib/visitor-intent-client";
 
 export default function RegisterPageClient({
   trialDaysGen,
@@ -109,6 +110,13 @@ export default function RegisterPageClient({
       setResendIn(60);
       const ttl = data.expiresInSeconds ?? 30 * 60;
       setOtpExpiresAt(Date.now() + ttl * 1000);
+      bumpVisitorIntentStep({
+        surface: "register",
+        step: "register_otp",
+        path: "/register",
+        visitorLabel: email.trim(),
+        planId: planIntent.checkoutPlanId ?? undefined,
+      });
       setInfo(
         data.message ?? formatMessage(R.otpSentSuccess, { minutes: Math.round(ttl / 60) }),
       );
@@ -158,19 +166,41 @@ export default function RegisterPageClient({
       }
 
       if (planIntent.checkoutPlanId) {
+        const planId = planIntent.checkoutPlanId;
+        bumpVisitorIntentStep({
+          surface: "checkout",
+          step: "pay_clicked",
+          path: "/register",
+          planId,
+          visitorLabel: email.trim(),
+        });
         const billingRes = await fetch("/api/billing", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            planId: planIntent.checkoutPlanId,
+            planId,
             returnPath: "/dashboard/billing",
           }),
         });
         const billingData = (await billingRes.json()) as { checkoutUrl?: string; error?: string };
         if (billingRes.ok && billingData.checkoutUrl) {
+          reportVisitorIntent({
+            surface: "checkout",
+            step: "stripe_redirect",
+            path: "/register",
+            planId,
+            visitorLabel: email.trim(),
+          });
           window.location.href = billingData.checkoutUrl;
           return;
         }
+        reportVisitorIntent({
+          surface: "checkout",
+          step: "stripe_init_failed",
+          path: "/register",
+          planId,
+          visitorLabel: email.trim(),
+        });
         router.push(`/dashboard/billing?upgrade=${planIntent.checkoutPlanId.toLowerCase()}`);
         router.refresh();
         return;

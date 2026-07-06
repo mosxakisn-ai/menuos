@@ -92,12 +92,6 @@ function displayLocation(row: SessionRow) {
   return "—";
 }
 
-function displayName(row: SessionRow) {
-  if (row.visitor_label?.trim()) return row.visitor_label.trim();
-  if (row.path?.trim()) return row.path;
-  return SURFACE_LABELS[row.surface] ?? row.surface;
-}
-
 function StepBadge({ step }: { step: string }) {
   return (
     <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold", stepBadgeClass(step))}>
@@ -108,6 +102,11 @@ function StepBadge({ step }: { step: string }) {
 
 function SessionCard({ row, compact }: { row: SessionRow; compact?: boolean }) {
   const online = row.status === "online";
+  const label = row.visitor_label?.trim();
+  const title = label || row.path?.trim() || SURFACE_LABELS[row.surface] || row.surface;
+  const subtitle = label
+    ? [SURFACE_LABELS[row.surface] ?? row.surface, row.path?.trim()].filter(Boolean).join(" · ")
+    : null;
   return (
     <Card
       className={cn(
@@ -118,9 +117,9 @@ function SessionCard({ row, compact }: { row: SessionRow; compact?: boolean }) {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-brand-navy">{displayName(row)}</p>
+          <p className="truncate text-sm font-semibold text-brand-navy">{title}</p>
           <p className="mt-0.5 text-[11px] text-slate-500">
-            {SURFACE_LABELS[row.surface] ?? row.surface}
+            {subtitle ?? (SURFACE_LABELS[row.surface] ?? row.surface)}
             {row.plan_id ? ` · ${row.plan_id}` : ""}
           </p>
         </div>

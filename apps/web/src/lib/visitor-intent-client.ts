@@ -169,12 +169,36 @@ export function startVisitorIntentHeartbeat(ctx: IntentCtx) {
   heartbeatTimer = setInterval(tick, HEARTBEAT_MS);
 }
 
-export function stopVisitorIntentHeartbeat() {
+export function stopVisitorIntentHeartbeat(opts?: { endSession?: boolean }) {
+  if (opts?.endSession && heartbeatCtx) {
+    emitSessionEnd();
+  }
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer);
     heartbeatTimer = null;
   }
   heartbeatCtx = null;
+}
+
+/** Push a funnel step immediately (e.g. OTP sent, pay clicked). */
+export function bumpVisitorIntentStep(opts: {
+  surface: VisitorIntentSurface;
+  step: VisitorIntentStep;
+  path?: string;
+  planId?: string;
+  visitorLabel?: string;
+}) {
+  if (heartbeatCtx) {
+    heartbeatCtx = {
+      ...heartbeatCtx,
+      surface: opts.surface,
+      step: opts.step,
+      path: opts.path ?? heartbeatCtx.path,
+      planId: opts.planId ?? heartbeatCtx.planId,
+      visitorLabel: opts.visitorLabel ?? heartbeatCtx.visitorLabel,
+    };
+  }
+  reportVisitorIntent(opts);
 }
 
 const EXCLUDED_PREFIXES = [
@@ -189,12 +213,23 @@ const EXCLUDED_PREFIXES = [
   "/login",
 ];
 
-export function resolveVisitorIntentFromPath(pathname: string): IntentCtx | null {
+export function resolveVisitorIntentFromPath(
+  pathname: string,
+  search = "",
+): IntentCtx | null {
+  const planParam = new URLSearchParams(search).get("plan")?.trim().toUpperCase();
+  const planId = planParam && planParam.length <= 20 ? planParam : undefined;
+
   if (pathname.startsWith("/dashboard/billing")) {
     return { surface: "checkout", step: "checkout_opened", path: pathname };
   }
   if (pathname.startsWith("/register")) {
-    return { surface: "register", step: "register_start", path: pathname };
+    return {
+      surface: "register",
+      step: "register_start",
+      path: pathname,
+      planId,
+    };
   }
   if (EXCLUDED_PREFIXES.some((p) => pathname.startsWith(p))) return null;
   if (pathname.startsWith("/dashboard")) return null;
