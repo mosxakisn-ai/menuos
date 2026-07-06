@@ -301,8 +301,10 @@ export const MARKETING = {
           "Παράλληλα, οι επισκέπτες από το εξωτερικό βλέπουν τον κατάλογο στη γλώσσα τους, προσφέροντας καλύτερη εμπειρία εξυπηρέτησης.",
         ],
         closing: "MenuOS — ο ψηφιακός κατάλογος που εξελίσσεται μαζί με την επιχείρησή σας.",
-        ctaLabel: "Ξεκίνα δωρεάν δοκιμή",
+        ctaLabel: "Ξεκίνα δωρεάν {trialDays}",
         ctaHref: "/register",
+        secondaryCtaLabel: "Δες τιμές & πλάνα",
+        secondaryCtaHref: "/pricing",
       },
     },
     howItWorks: {

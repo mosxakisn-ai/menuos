@@ -14,6 +14,8 @@ export type ServicesIntroContent = {
   closing: string;
   ctaLabel: string;
   ctaHref: string;
+  secondaryCtaLabel: string;
+  secondaryCtaHref: string;
 };
 
 export function MarketingServicesIntro({ content }: { content: ServicesIntroContent }) {
@@ -98,13 +100,21 @@ export function MarketingServicesIntro({ content }: { content: ServicesIntroCont
           <p className="max-w-2xl text-balance text-lg font-semibold leading-relaxed text-white sm:text-xl">
             {content.closing}
           </p>
-          <Link
-            href={content.ctaHref}
-            className="inline-flex h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 text-sm font-bold text-white shadow-[0_8px_32px_rgba(6,182,212,0.35)] transition hover:brightness-110 sm:text-base"
-          >
-            {content.ctaLabel}
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
+            <Link
+              href={content.ctaHref}
+              className="inline-flex h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 text-sm font-bold text-white shadow-[0_8px_32px_rgba(6,182,212,0.35)] transition hover:brightness-110 sm:text-base"
+            >
+              {content.ctaLabel}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+            <Link
+              href={content.secondaryCtaHref}
+              className="inline-flex h-12 items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 text-sm font-semibold text-slate-100 transition hover:border-cyan-400/40 hover:bg-white/10 sm:text-base"
+            >
+              {content.secondaryCtaLabel}
+            </Link>
+          </div>
         </div>
       </div>
     </section>

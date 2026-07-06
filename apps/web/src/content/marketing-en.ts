@@ -277,7 +277,7 @@ export const MARKETING_EN = {
       hero:
         "From table QR to kitchen, bar and floor team — everything in one place, without complexity.",
       introBlock: {
-        pill: "QR Menu · Live 360°",
+        pill: "Digital catalog · Live 360°",
         title: "MenuOS is not just another QR menu.",
         subtitle:
           "Forget static PDFs that merely open on a phone. MenuOS is a live digital catalog built for restaurants, cafés, beach bars and hotels in Greece.",
@@ -301,8 +301,10 @@ export const MARKETING_EN = {
           "International visitors read the catalog in their language — a better guest experience.",
         ],
         closing: "MenuOS — the digital catalog that grows with your business.",
-        ctaLabel: "Start free trial",
+        ctaLabel: "Start free {trialDays} trial",
         ctaHref: "/register",
+        secondaryCtaLabel: "See pricing & plans",
+        secondaryCtaHref: "/pricing",
       },
     },
     howItWorks: {
