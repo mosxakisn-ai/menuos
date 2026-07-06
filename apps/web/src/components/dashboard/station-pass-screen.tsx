@@ -10,7 +10,6 @@ import {
   groupVenueSpotsByZone,
   isVenuePassPostStation,
   isVenueSupportPostStation,
-  mergeQuickChipLabels,
   passScreenToPostStation,
   passSendTableNumber,
   pickDefaultZoneId,
@@ -179,6 +178,174 @@ const EMPTY_SPOTS: ScreenSpot[] = [];
 const POLL_MS = 8_000;
 const QUICK_MESSAGE_ROW_PX = 56;
 const QUICK_MESSAGES_MAX_HEIGHT_PX = QUICK_MESSAGE_ROW_PX * 4 + 8;
+const TABLE_GRID_COLS = 4;
+const TABLE_GRID_PAGE_SIZE = 16;
+
+function spotKey(spot: ScreenSpot): string {
+  return `${spot.type}:${spot.label}`;
+}
+
+function spotSelected(selected: ScreenSpot | null, spot: ScreenSpot): boolean {
+  return selected?.type === spot.type && selected.label === spot.label;
+}
+
+type ZoneSpotEntry = { spot: ScreenSpot; displayLabel: string };
+
+function PassTableGrid({
+  spots,
+  spotsKey,
+  showSpotSecondaryLabel,
+  table,
+  signalsBySpotKey,
+  onSelectSpot,
+  waitingReady,
+  waitingPicked,
+}: {
+  spots: ZoneSpotEntry[];
+  spotsKey: string;
+  showSpotSecondaryLabel: boolean;
+  table: ScreenSpot | null;
+  signalsBySpotKey: Map<string, ActiveSignal[]>;
+  onSelectSpot: (spot: ScreenSpot) => void;
+  waitingReady: string;
+  waitingPicked: string;
+}) {
+  const [page, setPage] = useState(0);
+  const compact = spots.length > 24;
+  const pageCount = Math.max(1, Math.ceil(spots.length / TABLE_GRID_PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+
+  useEffect(() => {
+    setPage(0);
+  }, [spotsKey]);
+
+  useEffect(() => {
+    if (!table) return;
+    const idx = spots.findIndex(
+      (entry) => entry.spot.type === table.type && entry.spot.label === table.label,
+    );
+    if (idx >= 0) setPage(Math.floor(idx / TABLE_GRID_PAGE_SIZE));
+  }, [table, spots]);
+
+  const pageStart = safePage * TABLE_GRID_PAGE_SIZE;
+  const pageSpots = spots.slice(pageStart, pageStart + TABLE_GRID_PAGE_SIZE);
+  const needsPaging = pageCount > 1;
+  const rangeLabel =
+    spots.length > 0
+      ? `${pageStart + 1}–${Math.min(pageStart + TABLE_GRID_PAGE_SIZE, spots.length)} / ${spots.length}`
+      : null;
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-1">
+      <div className="flex min-h-0 flex-1 items-stretch gap-1.5">
+        {needsPaging ? (
+          <button
+            type="button"
+            aria-label="Προηγούμενα τραπέζια"
+            disabled={safePage <= 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            className="flex w-9 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 disabled:opacity-30 sm:w-10"
+          >
+            <ChevronUp className="h-5 w-5 -rotate-90" />
+          </button>
+        ) : null}
+
+        <div
+          className={cn(
+            "grid min-h-0 flex-1 auto-rows-fr gap-2 sm:gap-2.5",
+            TABLE_GRID_COLS === 4 ? "grid-cols-3 sm:grid-cols-4" : "grid-cols-3",
+          )}
+        >
+          {pageSpots.map(({ spot, displayLabel }) => {
+            const selected = spotSelected(table, spot);
+            const spotSignals = signalsBySpotKey.get(spotKey(spot)) ?? [];
+            const latestSignal = spotSignals[0] ?? null;
+            const hasSignal = spotSignals.length > 0;
+            const pickedUp = latestSignal?.status === "PICKED_UP";
+            return (
+              <button
+                key={`${spot.type}-${spot.label}`}
+                type="button"
+                onClick={() => onSelectSpot(spot)}
+                className={cn(
+                  "relative flex flex-col items-center justify-center rounded-xl border-2 px-1 py-1.5 transition sm:px-1.5 sm:py-2",
+                  compact
+                    ? hasSignal
+                      ? "min-h-[3.75rem] sm:min-h-[4rem]"
+                      : "min-h-[2.75rem] sm:min-h-[3rem]"
+                    : hasSignal
+                      ? "min-h-[5rem] sm:min-h-[5.25rem]"
+                      : "min-h-[3.75rem] sm:min-h-[4rem]",
+                  selected
+                    ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
+                    : hasSignal
+                      ? pickedUp
+                        ? "border-amber-400/70 bg-amber-500/10 text-white hover:border-amber-300 active:scale-[0.98]"
+                        : "border-emerald-400/70 bg-emerald-500/10 text-white hover:border-emerald-300 active:scale-[0.98]"
+                      : "border-white/15 bg-white/5 text-slate-100 hover:border-white/30 active:scale-[0.98]",
+                )}
+              >
+                {spotSignals.length > 1 ? (
+                  <span className="absolute right-0.5 top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-white/20 px-0.5 text-[8px] font-bold leading-none text-white sm:h-4 sm:min-w-4 sm:text-[9px]">
+                    {spotSignals.length}
+                  </span>
+                ) : null}
+                {latestSignal?.message ? (
+                  <span
+                    className={cn(
+                      "mb-0.5 max-w-full truncate px-0.5 font-semibold leading-tight",
+                      compact ? "text-[9px] sm:text-[10px]" : "text-[10px] sm:text-[11px]",
+                      pickedUp ? "text-amber-200" : "text-emerald-200",
+                    )}
+                  >
+                    {latestSignal.message}
+                  </span>
+                ) : hasSignal ? (
+                  <span className="mb-0.5 text-[8px] font-medium uppercase tracking-wide text-slate-400 sm:text-[9px]">
+                    {pickedUp ? waitingPicked : waitingReady}
+                  </span>
+                ) : null}
+                <span
+                  className={cn(
+                    "font-bold tabular-nums leading-none",
+                    compact ? "text-lg sm:text-xl" : "text-xl sm:text-2xl",
+                  )}
+                >
+                  {displayLabel}
+                </span>
+                {showSpotSecondaryLabel && spot.label !== displayLabel ? (
+                  <span className="mt-0.5 max-w-full truncate text-[8px] font-medium uppercase tracking-wide text-slate-400 sm:text-[9px]">
+                    {spot.label}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+
+        {needsPaging ? (
+          <button
+            type="button"
+            aria-label="Επόμενα τραπέζια"
+            disabled={safePage >= pageCount - 1}
+            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+            className="flex w-9 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 disabled:opacity-30 sm:w-10"
+          >
+            <ChevronDown className="h-5 w-5 -rotate-90" />
+          </button>
+        ) : null}
+      </div>
+
+      {needsPaging && rangeLabel ? (
+        <p className="shrink-0 text-center text-[10px] font-medium tabular-nums text-slate-500">
+          {rangeLabel}
+          <span className="mx-1.5 text-slate-600">·</span>
+          {safePage + 1}/{pageCount}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 function passStationForSend(
   activePost: StationPostOption | null,
@@ -541,9 +708,6 @@ function QuickMessagesPanel({
   );
 }
 
-function spotSelected(selected: ScreenSpot | null, spot: ScreenSpot): boolean {
-  return selected?.type === spot.type && selected.label === spot.label;
-}
 
 function signalToSpot(signal: ActiveSignal): ScreenSpot | null {
   if (signal.tableNumber) return { type: "TABLE", label: signal.tableNumber };
@@ -624,7 +788,6 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const passPosts = ctx?.allKdsPosts?.length ? ctx.allKdsPosts : (ctx?.stationPosts ?? []);
   const supportPosts = ctx?.supportKdsPosts ?? [];
-  const stationPosts = passPosts.length > 0 ? passPosts : supportPosts;
   const tabletPosts = useMemo(
     () => [...passPosts, ...supportPosts.filter((post) => !passPosts.some((row) => row.id === post.id))],
     [passPosts, supportPosts],
@@ -637,10 +800,10 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   }, [ctx?.spots, ctx?.zoneLabels]);
 
   const postsForZone = useMemo(() => {
-    if (!stationPosts.length) return [];
+    if (!tabletPosts.length) return [];
     const zoneId = activeZoneId ?? zoneGroups[0]?.id ?? null;
-    return stationPosts.filter((post) => venuePostMatchesZone(post, zoneId));
-  }, [stationPosts, activeZoneId, zoneGroups]);
+    return tabletPosts.filter((post) => venuePostMatchesZone(post, zoneId));
+  }, [tabletPosts, activeZoneId, zoneGroups]);
 
   const activePost = useMemo(
     () => postsForZone.find((post) => post.id === activePostId) ?? postsForZone[0] ?? null,
@@ -649,30 +812,13 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const messageColor = activePost?.messageColor ?? ctx?.messageColor ?? null;
 
-  const screenMatchedPost = useMemo(() => {
-    const screenLabel = ctx?.screenLabel?.trim();
-    if (screenLabel && stationPosts.length > 0) {
-      const match = stationPosts.find((post) => post.label.trim() === screenLabel);
-      if (match) return match;
-    }
-    if (stationPosts.length === 1) return stationPosts[0]!;
-    return null;
-  }, [stationPosts, ctx?.screenLabel]);
-
   const headerMessages = useMemo(() => {
-    if (ctx?.allQuickComments?.length) return ctx.allQuickComments;
-    const zoneId = activeZoneId ?? zoneGroups[0]?.id ?? null;
-    const messagePosts = tabletPosts.filter((post) => venuePostMatchesZone(post, zoneId));
-    if (messagePosts.length > 0) {
-      return mergeQuickChipLabels(...messagePosts.map((post) => post.quickComments));
-    }
-    if (tabletPosts.length > 0) {
-      return mergeQuickChipLabels(...tabletPosts.map((post) => post.quickComments));
-    }
+    if (allPostsMode && ctx?.allQuickComments?.length) return ctx.allQuickComments;
+    if (activePost) return activePost.quickComments ?? [];
     return ctx?.quickComments ?? [];
-  }, [ctx?.allQuickComments, ctx?.quickComments, tabletPosts, activeZoneId, zoneGroups]);
+  }, [allPostsMode, ctx?.allQuickComments, ctx?.quickComments, activePost]);
 
-  const headerMessageColor = activePost?.messageColor ?? screenMatchedPost?.messageColor ?? ctx?.messageColor ?? null;
+  const headerMessageColor = activePost?.messageColor ?? ctx?.messageColor ?? null;
 
   const load = useCallback(async () => {
     if (!venueSlug || !stationKey) {
@@ -710,6 +856,19 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   );
   const activeSignals = ctx?.activeSignals ?? [];
 
+  const signalsBySpotKey = useMemo(() => {
+    const map = new Map<string, ActiveSignal[]>();
+    for (const signal of activeSignals) {
+      const signalSpot = signalToSpot(signal);
+      if (!signalSpot) continue;
+      const key = spotKey(signalSpot);
+      const rows = map.get(key) ?? [];
+      rows.push(signal);
+      map.set(key, rows);
+    }
+    return map;
+  }, [activeSignals]);
+
   useEffect(() => {
     const spotList = ctx?.spots?.length ? ctx.spots : [];
     const groups = applyZoneLabelOverrides(groupVenueSpotsByZone(spotList), ctx?.zoneLabels);
@@ -730,7 +889,11 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   }, [postsForZone, ctx?.screenLabel, activePostId, station]);
 
   const activeZone = zoneGroups.find((z) => z.id === activeZoneId) ?? zoneGroups[0];
-  const visibleSpots = activeZone?.spots ?? [];
+  const visibleSpots = useMemo(() => activeZone?.spots ?? [], [activeZone]);
+  const visibleSpotsKey = useMemo(
+    () => visibleSpots.map((entry) => `${entry.spot.type}:${entry.spot.label}`).join("|"),
+    [visibleSpots],
+  );
   const hasSelection = Boolean(table || manualTable.trim());
 
   function selectSpot(spot: ScreenSpot) {
@@ -752,7 +915,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       setTable(null);
     }
     if (activePostId) {
-      const current = stationPosts.find((post) => post.id === activePostId);
+      const current = tabletPosts.find((post) => post.id === activePostId);
       if (current && !venuePostMatchesZone(current, zoneId)) {
         setActivePostId(null);
       }
@@ -761,6 +924,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   function selectPost(postId: string) {
     setActivePostId(postId);
+    setComment("");
   }
 
   async function cancelSignal(signalId: string) {
@@ -914,7 +1078,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 wordmarkClassName="text-[15px] leading-none sm:text-base"
               />
             </div>
-            <h1 className="mt-2 text-sm font-bold leading-tight sm:text-base">{displayStationTitle}</h1>
+            <h1 className="mt-2 text-sm font-bold leading-tight sm:text-base">{C.title}</h1>
             {ctx ? <p className="mt-0.5 text-xs text-slate-400">{ctx.venueName}</p> : null}
             {ctx && typeof ctx.todayCount === "number" ? (
               <p className="mt-1 text-[10px] text-slate-500">{C.todayCount(ctx.todayCount)}</p>
@@ -978,7 +1142,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 </div>
               ) : null}
 
-              {stationPosts.length > 0 ? (
+              {tabletPosts.length > 0 ? (
                 <div className="mt-2 shrink-0 space-y-1">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{C.pickPost}</p>
                   {postsForZone.length > 0 ? (
@@ -1016,35 +1180,18 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 </div>
               ) : null}
 
-              <div className="mt-2 min-h-0 flex-1 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="mt-2 min-h-0 flex-1 overflow-hidden">
                 {spots.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 md:grid-cols-6">
-                    {visibleSpots.map(({ spot, displayLabel }) => {
-                      const selected = spotSelected(table, spot);
-                      return (
-                        <button
-                          key={`${spot.type}-${spot.label}`}
-                          type="button"
-                          onClick={() => selectSpot(spot)}
-                          className={cn(
-                            "flex min-h-[3.25rem] flex-col items-center justify-center rounded-xl border-2 px-1 py-2 transition sm:min-h-[3.75rem]",
-                            selected
-                              ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
-                              : "border-white/15 bg-white/5 text-slate-100 hover:border-white/30 active:scale-[0.98]",
-                          )}
-                        >
-                          <span className="text-xl font-bold tabular-nums leading-none sm:text-2xl">
-                            {displayLabel}
-                          </span>
-                          {zoneGroups.length <= 1 && spot.label !== displayLabel ? (
-                            <span className="mt-0.5 max-w-full truncate text-[9px] font-medium uppercase tracking-wide text-slate-400">
-                              {spot.label}
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <PassTableGrid
+                    spots={visibleSpots}
+                    spotsKey={visibleSpotsKey}
+                    showSpotSecondaryLabel={zoneGroups.length <= 1}
+                    table={table}
+                    signalsBySpotKey={signalsBySpotKey}
+                    onSelectSpot={selectSpot}
+                    waitingReady={C.waitingReady}
+                    waitingPicked={C.waitingPicked}
+                  />
                 ) : ctx.spotPrefix ? (
                   <div className="space-y-2">
                     <p className="rounded-lg border border-amber-400/30 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
@@ -1082,37 +1229,57 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       </div>
 
       {ctx ? (
-        <footer className="shrink-0 border-t border-white/10 bg-slate-950/95 px-3 py-2.5 backdrop-blur-sm sm:px-4">
-          <div className="mx-auto flex max-w-4xl flex-col gap-2">
-            <div
-              className={cn(
-                "flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2",
-                hasSelection ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5",
-              )}
-            >
-              <MapPin className={cn("h-4 w-4 shrink-0", hasSelection ? "text-cyan-300" : "text-slate-500")} />
-              <p className={cn("min-w-0 flex-1 text-sm font-semibold", hasSelection ? "text-cyan-100" : "text-slate-400")}>
-                {selectedLabel ?? C.noTable}
-              </p>
-              {comment.trim() ? (
-                <span
+        <footer className="shrink-0 border-t border-white/10 bg-slate-950/95 px-2.5 py-1.5 backdrop-blur-sm sm:px-3">
+          <div className="mx-auto flex max-w-4xl flex-col gap-1">
+            <div className="flex items-stretch gap-1.5">
+              <div
+                className={cn(
+                  "flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border px-2 py-1.5",
+                  hasSelection ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5",
+                )}
+              >
+                <MapPin className={cn("h-3.5 w-3.5 shrink-0", hasSelection ? "text-cyan-300" : "text-slate-500")} />
+                <p
                   className={cn(
-                    "max-w-[50%] truncate rounded-md px-2 py-0.5 text-left text-xs font-semibold",
-                    !messageColor && "bg-white/10 text-slate-200",
+                    "min-w-0 flex-1 truncate text-xs font-semibold",
+                    hasSelection ? "text-cyan-100" : "text-slate-400",
                   )}
-                  style={
-                    messageColor
-                      ? {
-                          backgroundColor: `${messageColor}33`,
-                          color: "#f8fafc",
-                          border: `1px solid ${messageColor}`,
-                        }
-                      : undefined
-                  }
                 >
-                  {comment.trim()}
-                </span>
-              ) : null}
+                  {selectedLabel ?? C.noTable}
+                </p>
+                {comment.trim() ? (
+                  <span
+                    className={cn(
+                      "max-w-[42%] shrink-0 truncate rounded px-1.5 py-0.5 text-[10px] font-semibold",
+                      !messageColor && "bg-white/10 text-slate-200",
+                    )}
+                    style={
+                      messageColor
+                        ? {
+                            backgroundColor: `${messageColor}33`,
+                            color: "#f8fafc",
+                            border: `1px solid ${messageColor}`,
+                          }
+                        : undefined
+                    }
+                  >
+                    {comment.trim()}
+                  </span>
+                ) : null}
+              </div>
+
+              <button
+                type="button"
+                disabled={sending || !hasSelection || !comment.trim()}
+                onClick={() => void send(undefined)}
+                className={cn(
+                  "h-9 shrink-0 rounded-lg px-3 text-sm font-bold sm:h-10 sm:px-4",
+                  buttonClass("primary", "lg"),
+                  "bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50",
+                )}
+              >
+                {sending ? "…" : C.send}
+              </button>
             </div>
 
             <input
@@ -1122,32 +1289,19 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               aria-label={C.comment}
               maxLength={80}
               disabled={sending}
-              className="h-9 w-full rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white placeholder:text-slate-500 disabled:opacity-50"
+              className="h-8 w-full rounded-lg border border-white/15 bg-white/5 px-2.5 text-xs text-white placeholder:text-slate-500 disabled:opacity-50"
             />
 
             {flash ? (
               <p
                 className={cn(
-                  "rounded-lg px-3 py-2 text-center text-xs font-semibold",
+                  "rounded-md px-2 py-1 text-center text-[10px] font-semibold leading-snug",
                   flash === C.sent ? "bg-emerald-500/20 text-emerald-200" : "bg-red-500/20 text-red-200",
                 )}
               >
                 {flash}
               </p>
             ) : null}
-
-            <button
-              type="button"
-              disabled={sending || !hasSelection || !comment.trim()}
-              onClick={() => void send(undefined)}
-              className={cn(
-                "h-12 w-full text-base font-bold sm:h-14 sm:text-lg",
-                buttonClass("primary", "lg"),
-                "rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50",
-              )}
-            >
-              {sending ? "…" : C.send}
-            </button>
           </div>
         </footer>
       ) : null}

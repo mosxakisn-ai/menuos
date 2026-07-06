@@ -106,14 +106,16 @@ export async function authorizePassSignalCreate(
   }
 
   const key = input.stationKey?.trim();
-  if (key && SCREEN_STATIONS.includes(input.station)) {
-    const stationScreen = await resolveStationScreenByToken(venue.id, input.station, key);
-    if (stationScreen) {
-      return { venue, stationScreen, response: null };
-    }
-    if (legacyVenueTokenMatches(venue, input.station, key)) {
-      const primary = await resolvePrimaryStationScreen(venue.id, input.station);
-      return { venue, stationScreen: primary, response: null };
+  if (key) {
+    for (const screenStation of SCREEN_STATIONS) {
+      const stationScreen = await resolveStationScreenByToken(venue.id, screenStation, key);
+      if (stationScreen) {
+        return { venue, stationScreen, response: null };
+      }
+      if (legacyVenueTokenMatches(venue, screenStation, key)) {
+        const primary = await resolvePrimaryStationScreen(venue.id, screenStation);
+        return { venue, stationScreen: primary, response: null };
+      }
     }
     return {
       venue: null,
