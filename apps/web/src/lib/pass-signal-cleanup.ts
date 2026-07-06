@@ -4,7 +4,7 @@ import { prisma } from "@menuos/db";
 export const PASS_SIGNAL_RETENTION_DAYS = 90;
 
 /** READY / PICKED_UP signals older than this are auto-closed (delivered). */
-export const PASS_SIGNAL_ACTIVE_MAX_HOURS = 5;
+export const PASS_SIGNAL_ACTIVE_MAX_HOURS = 24;
 
 export type PassSignalCleanupResult = {
   retentionDays: number;

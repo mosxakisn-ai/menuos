@@ -42,6 +42,11 @@ export const passSignalStationCancelSchema = z.object({
   stationKey: z.string().min(1).max(80),
 });
 
+/** KDS bulk dismiss — same auth as single cancel, explicit signal ids from active zone. */
+export const passSignalBulkDismissSchema = passSignalStationCancelSchema.extend({
+  signalIds: z.array(z.string().min(1).max(80)).min(1).max(100),
+});
+
 export function passStationInputToDb(station: PassStationInput): "KITCHEN" | "BAR" | "COLD" | "DESSERT" {
   return station.toUpperCase() as "KITCHEN" | "BAR" | "COLD" | "DESSERT";
 }

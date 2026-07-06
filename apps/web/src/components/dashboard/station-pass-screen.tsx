@@ -102,6 +102,8 @@ const COPY = {
     messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
+    clearWaiting: "Καθάρισμα",
+    clearWaitingConfirm: "Να αφαιρεθούν όλες οι ειδοποιήσεις αυτής της ζώνης από την οθόνη;",
     quickComments: ["Ξέχασες τον πάγο", "Ξέχασες το ψωμί", "2 πιάτα μαζί", "Επείγον"],
   },
   bar: {
@@ -129,6 +131,8 @@ const COPY = {
     messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
+    clearWaiting: "Καθάρισμα",
+    clearWaitingConfirm: "Να αφαιρεθούν όλες οι ειδοποιήσεις αυτής της ζώνης από την οθόνη;",
     quickComments: ["Χωρίς πάγο", "Με πάγο", "Ξέχασες καλαμάκι", "Επείγον"],
   },
   cold: {
@@ -156,6 +160,8 @@ const COPY = {
     messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
+    clearWaiting: "Καθάρισμα",
+    clearWaitingConfirm: "Να αφαιρεθούν όλες οι ειδοποιήσεις αυτής της ζώνης από την οθόνη;",
     quickComments: ["Με σως χωριστά", "Χωρίς κρεμμύδι", "Ξέχασες πίτα", "Επείγον"],
   },
   dessert: {
@@ -183,6 +189,8 @@ const COPY = {
     messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
+    clearWaiting: "Καθάρισμα",
+    clearWaitingConfirm: "Να αφαιρεθούν όλες οι ειδοποιήσεις αυτής της ζώνης από την οθόνη;",
     quickComments: ["Με παγωτό", "Χωρίς ζάχαρη", "Ξέχασες κουταλάκι", "Επείγον"],
   },
 };
@@ -901,6 +909,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   const [comment, setComment] = useState("");
   const [sending, setSending] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [clearingWaiting, setClearingWaiting] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [sendDialogLoading, setSendDialogLoading] = useState(false);
@@ -1107,6 +1116,41 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     }
   }
 
+  async function clearWaitingSignals() {
+    if (!ctx || zoneFilteredSignals.length === 0) return;
+    if (!(await confirmDestructive(C.clearWaitingConfirm))) return;
+    setClearingWaiting(true);
+    try {
+      const res = await fetch("/api/pass-signals/dismiss-active", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venueSlug: ctx.venueSlug,
+          station,
+          stationKey,
+          signalIds: zoneFilteredSignals.map((row) => row.id),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFlash(typeof data.error === "string" ? data.error : "Σφάλμα");
+        return;
+      }
+      const dismissed = typeof data.dismissed === "number" ? data.dismissed : 0;
+      if (dismissed < zoneFilteredSignals.length) {
+        setFlash(
+          dismissed === 0
+            ? "Δεν αφαιρέθηκε καμία ειδοποίηση."
+            : `Αφαιρέθηκαν ${dismissed} από ${zoneFilteredSignals.length}.`,
+        );
+        setTimeout(() => setFlash(null), 3500);
+      }
+      void load();
+    } finally {
+      setClearingWaiting(false);
+    }
+  }
+
   async function openSendDialog() {
     if ((!table && !manualTable.trim()) || !ctx || !canSend) return;
     setSendDialogOpen(true);
@@ -1232,7 +1276,19 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-center py-2 pr-3 sm:py-2.5 sm:pr-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{waitingHeading}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{waitingHeading}</p>
+            {zoneFilteredSignals.length > 0 ? (
+              <button
+                type="button"
+                disabled={clearingWaiting || cancellingId !== null}
+                onClick={() => void clearWaitingSignals()}
+                className="shrink-0 rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[10px] font-semibold text-slate-200 transition hover:border-white/25 hover:bg-white/10 disabled:opacity-40 sm:text-xs"
+              >
+                {clearingWaiting ? "…" : C.clearWaiting}
+              </button>
+            ) : null}
+          </div>
           {zoneFilteredSignals.length > 0 ? (
             <div className="mt-1 flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {zoneFilteredSignals.map((signal) => {
