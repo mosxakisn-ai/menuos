@@ -622,7 +622,6 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   useScreenWakeLock();
 
-  const displayStationTitle = ctx?.stationLabel?.trim() || C.title;
   const passPosts = ctx?.allKdsPosts?.length ? ctx.allKdsPosts : (ctx?.stationPosts ?? []);
   const supportPosts = ctx?.supportKdsPosts ?? [];
   const stationPosts = passPosts.length > 0 ? passPosts : supportPosts;
@@ -915,13 +914,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 wordmarkClassName="text-[15px] leading-none sm:text-base"
               />
             </div>
-            <h1 className="mt-2 text-sm font-bold leading-tight sm:text-base">
-              {ctx?.screenLabel?.trim() &&
-              displayStationTitle &&
-              ctx.screenLabel.trim() !== displayStationTitle
-                ? `${displayStationTitle} · ${ctx.screenLabel.trim()}`
-                : displayStationTitle}
-            </h1>
+            <h1 className="mt-2 text-sm font-bold leading-tight sm:text-base">{displayStationTitle}</h1>
             {ctx ? <p className="mt-0.5 text-xs text-slate-400">{ctx.venueName}</p> : null}
             {ctx && typeof ctx.todayCount === "number" ? (
               <p className="mt-1 text-[10px] text-slate-500">{C.todayCount(ctx.todayCount)}</p>
