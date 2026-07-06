@@ -765,7 +765,8 @@ export const DASHBOARD_EL = {
         postNamePlaceholder: "π.χ. Κουζίνα, Bar, Services",
         postSpaceLabel: "Χώρος",
         postSpaceAll: "Όλοι οι χώροι",
-        postTypeHint: "Κουζίνα/Μπαρ = tablet πάσου · Σερβιτόρος = κινητό, χάρτης θέσεων.",
+        postTypeHint:
+          "Κουζίνα/Μπαρ = tablet πάσου · Σερβιτόρος = κινητό · Λάντζα/Καθαριότητα/Γενικά = tablet μηνυμάτων.",
         waiterNameWarning:
           "Όνομα σερβιτόρου με τύπο Κουζίνα/Μπαρ — άλλαξε τύπο σε «Σερβιτόρος» ή βάλε όνομα πάστου.",
         linkedTitle: "Πού συνδέονται τα πόστα",
@@ -923,14 +924,14 @@ export const DASHBOARD_EL = {
       personnel: {
         title: "Προσωπικό",
         description:
-          "Φτιάξε εργαζόμενο: όνομα, χώρος, πόστο και οθόνη. Σερβιτόρος → κινητό. Μάγειρας/μπαρ → KDS tablet.",
+          "Φτιάξε εργαζόμενο: όνομα, ρόλος, χώρος και πόστο. Πρώτα διάλεξε ρόλο — μετά εμφανίζονται τα σωστά πόστα.",
         addTitle: "Νέος εργαζόμενος",
         addStaff: "Προσθήκη",
         listTitle: "Εργαζόμενοι",
         editTitle: "Επεξεργασία",
         cancelEdit: "Άκυρο",
         formHint:
-          "Σερβιτόρος = κινητό (κλήσεις πελάτη, πάσο). Κουζίνα/μπαρ = tablet με γρήγορα μηνύματα — το πόστο πρέπει να ταιριάζει με Ρυθμίσεις → Μηνύματα.",
+          "Σερβιτόρος = κινητό (κλήσεις, πάσο). Κουζίνα/Μπαρ = tablet (γρήγορα μηνύματα, πάσος). Το πόστο πρέπει να ταιριάζει με Ρυθμίσεις → Μηνύματα.",
         messagesScopeWaiter:
           "Σερβιτόρος δάπεδου — κλήσεις & πάσο στο κινητό (δεν στέλνει γρήγορα μηνύματα)",
         messagesScopeAll:
@@ -946,12 +947,18 @@ export const DASHBOARD_EL = {
         zoneRequired: "Επίλεξε χώρο — π.χ. Σάλα, Αυλή ή «Όλοι οι χώροι».",
         saving: "Αποθήκευση...",
         colName: "Όνομα",
+        colRole: "Ρόλος",
+        colRoleRequired: "Ρόλος *",
         colSpace: "Χώρος",
         colPost: "Πόστο",
         colScreen: "Οθόνη",
         colSpaceRequired: "Χώρος *",
         colPostRequired: "Πόστο *",
         colScreenRequired: "Οθόνη *",
+        jobRoleWaiter: "Σερβιτόρος",
+        jobRolePass: "Κουζίνα / Μπαρ",
+        jobRoleWaiterHint: "Κινητό — κλήσεις πελάτη & πάσος",
+        jobRolePassHint: "Tablet — γρήγορα μηνύματα & πάσος",
         screenMobile: "Κινητό",
         screenKds: "KDS (tablet πάσου)",
         screenMobileHint: "Κλήσεις πελάτη & πάσος στο κινητό",
@@ -966,10 +973,10 @@ export const DASHBOARD_EL = {
         selectSpacePlaceholder: "Επίλεξε χώρο",
         selectPostPlaceholder: "Επίλεξε πόστο",
         fieldsRequiredHint:
-          "Όνομα, χώρος, πόστο και οθόνη είναι υποχρεωτικά. Σερβιτόρος = πόστο τύπου «Σερβιτόρος» από tab Πόστα. Κουζίνα/μπαρ = πόστο από tab Πόστα.",
+          "Όνομα, ρόλος, χώρος (σερβιτόρος) και πόστο είναι υποχρεωτικά. Τα πόστα φιλτράρονται από τον ρόλο.",
         colLink: "Link",
         colLinkHint:
-          "Κινητό: link σερβιτόρου (χάρτης, κλήσεις). KDS: link tablet — άνοιγμα χωρίς login.",
+          "Σερβιτόρος: link κινητού. Κουζίνα/Μπαρ: link tablet — άνοιγμα χωρίς login.",
         colActions: "Ενέργειες",
         viewLink: "Προβολή",
         viewLinkTablet: "Άνοιγμα οθόνης",
@@ -1133,7 +1140,7 @@ export const DASHBOARD_EL = {
         postSpaceLabel: "Χώρος",
         postSpaceAll: "Όλοι οι χώροι",
         postTypeLabel: "Τύπος",
-        postTypeHint: "Ο τύπος καθορίζει σε ποια οθόνη tablet πηγαίνουν τα πάσο.",
+        postTypeHint: "Ο τύπος καθορίζει κινητό σερβιτόρου ή tablet (πάσος / μηνύματα).",
         postActionsLabel: "Ενέργειες",
         addPost: "Νέο πόστο",
         removePost: "Αφαίρεση πόστου",

@@ -11,7 +11,14 @@ import type { SpotZoneGroup } from "./station-spot-zones";
 export const DEFAULT_ENABLED_STATIONS: PassStationInput[] = ["kitchen", "bar"];
 
 /** Post types in Settings → Πόστα (work roles — not legacy cold/dessert pass splits). */
-export const VENUE_POST_STATION_INPUTS = ["kitchen", "bar", "services"] as const;
+export const VENUE_POST_STATION_INPUTS = [
+  "kitchen",
+  "bar",
+  "services",
+  "dishwash",
+  "cleaning",
+  "general",
+] as const;
 export type VenuePostStationInput = (typeof VENUE_POST_STATION_INPUTS)[number];
 export const venuePostStationSchema = z.enum(VENUE_POST_STATION_INPUTS);
 
@@ -19,13 +26,28 @@ export const DEFAULT_VENUE_POST_STATION_LABELS_EL: Record<VenuePostStationInput,
   kitchen: "Κουζίνα",
   bar: "Μπαρ",
   services: "Σερβιτόρος",
+  dishwash: "Λάντζα",
+  cleaning: "Καθαριότητα",
+  general: "Γενικά",
 };
 
 export const DEFAULT_VENUE_POST_STATION_LABELS_EN: Record<VenuePostStationInput, string> = {
   kitchen: "Kitchen",
   bar: "Bar",
   services: "Services",
+  dishwash: "Dishwash",
+  cleaning: "Cleaning",
+  general: "General",
 };
+
+export function venuePostStationLabel(
+  station: VenuePostStationInput,
+  lang: "GR" | "EN" = "GR",
+): string {
+  return lang === "EN"
+    ? DEFAULT_VENUE_POST_STATION_LABELS_EN[station]
+    : DEFAULT_VENUE_POST_STATION_LABELS_EL[station];
+}
 
 export function isVenuePassPostStation(
   station: VenuePostStationInput,
@@ -33,10 +55,24 @@ export function isVenuePassPostStation(
   return station === "kitchen" || station === "bar";
 }
 
+/** Back-of-house roles with tablet messages (not food pass). */
+export function isVenueSupportPostStation(
+  station: VenuePostStationInput,
+): station is "dishwash" | "cleaning" | "general" {
+  return station === "dishwash" || station === "cleaning" || station === "general";
+}
+
+/** Kitchen/bar pass or support tablet posts — shown on KDS staff picker. */
+export function isVenueKdsPostStation(station: VenuePostStationInput): boolean {
+  return isVenuePassPostStation(station) || isVenueSupportPostStation(station);
+}
+
 function normalizeVenuePostStation(raw: string): VenuePostStationInput {
   if (raw === "cold") return "kitchen";
   if (raw === "dessert") return "bar";
-  if (raw === "kitchen" || raw === "bar" || raw === "services") return raw;
+  if ((VENUE_POST_STATION_INPUTS as readonly string[]).includes(raw)) {
+    return raw as VenuePostStationInput;
+  }
   return "kitchen";
 }
 
@@ -259,6 +295,29 @@ export function enabledPassPostsAll(
   return enabledVenuePosts(config, lang).filter((post) => isVenuePassPostStation(post.station));
 }
 
+/** All enabled tablet posts (kitchen, bar, λάντζα, κ.λπ.) — shared messages on KDS. */
+export function enabledKdsPostsAll(
+  config: VenueOperationsConfig | undefined,
+  lang: "GR" | "EN" = "GR",
+): VenuePost[] {
+  return enabledVenuePosts(config, lang).filter((post) => isVenueKdsPostStation(post.station));
+}
+
+/** Merge quick-message labels from several posts (dedupe, keep order). */
+export function mergeQuickChipLabels(...groups: string[][]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const group of groups) {
+    for (const label of group) {
+      const trimmed = label.trim();
+      if (!trimmed || seen.has(trimmed)) continue;
+      seen.add(trimmed);
+      out.push(trimmed);
+    }
+  }
+  return out;
+}
+
 /** Pass post shown under a KDS zone tab (no zoneId = all spaces). */
 export function venuePostMatchesZone(
   post: Pick<VenuePost, "zoneId">,
@@ -365,6 +424,26 @@ function dedupeVenuePosts(posts: VenuePost[]): VenuePost[] {
   return out;
 }
 
+function postsForLegacyQuickChipStation(
+  posts: VenuePost[],
+  stationKey: string,
+): VenuePost[] {
+  const enabled = posts.filter((post) => post.enabled);
+  if (stationKey === "cold") {
+    return enabled.filter((post) => post.station === "kitchen");
+  }
+  if (stationKey === "dessert") {
+    return enabled.filter((post) => post.station === "bar");
+  }
+  return enabled.filter((post) => post.station === stationKey);
+}
+
+/** Station keys that may appear as legacy quickChips map keys (pre per-post ids). */
+function legacyQuickChipStationKeys(): string[] {
+  const keys = new Set<string>([...PASS_STATION_INPUTS, ...VENUE_POST_STATION_INPUTS]);
+  return [...keys];
+}
+
 function migrateLegacyQuickChipsToPostIds(
   posts: VenuePost[],
   quickChips?: Record<string, string[]>,
@@ -372,10 +451,26 @@ function migrateLegacyQuickChipsToPostIds(
   if (!quickChips) return undefined;
   const next = { ...quickChips };
   let changed = false;
-  for (const station of PASS_STATION_INPUTS) {
-    const legacy = next[station];
+  const postIds = new Set(posts.map((post) => post.id));
+
+  for (const stationKey of legacyQuickChipStationKeys()) {
+    const legacy = next[stationKey];
     if (!legacy) continue;
-    const stationPosts = posts.filter((post) => post.enabled && post.station === station);
+
+    const stationPosts = postsForLegacyQuickChipStation(posts, stationKey);
+    const keyIsPostId = postIds.has(stationKey);
+
+    if (keyIsPostId) {
+      // Keep chips on the post whose id equals the station key; copy to siblings without their own key.
+      for (const post of stationPosts) {
+        if (post.id !== stationKey && next[post.id] === undefined) {
+          next[post.id] = [...legacy];
+          changed = true;
+        }
+      }
+      continue;
+    }
+
     for (const post of stationPosts) {
       if (next[post.id] === undefined) {
         next[post.id] = [...legacy];
@@ -383,7 +478,7 @@ function migrateLegacyQuickChipsToPostIds(
       }
     }
     if (stationPosts.length > 0) {
-      delete next[station];
+      delete next[stationKey];
       changed = true;
     }
   }

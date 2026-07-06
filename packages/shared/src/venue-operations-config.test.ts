@@ -120,6 +120,52 @@ describe("migrateLegacyQuickChipsToPostIds", () => {
     expect(config.quickChips?.b1).toEqual(["No ice"]);
     expect(config.quickChips?.kitchen).toBeUndefined();
   });
+
+  it("keeps messages when quickChips key matches a post id (bar, kitchen)", () => {
+    const config = normalizeVenueOperationsConfig({
+      enabledStations: ["kitchen" as const, "bar" as const],
+      posts: [
+        { id: "kitchen", label: "Κουζίνα Σάλας", enabled: true, station: "kitchen" as const },
+        { id: "bar", label: "Bar Αυλή", enabled: true, station: "bar" as const },
+        { id: "bar-sala", label: "Bar Σάλα", enabled: true, station: "bar" as const },
+      ],
+      quickChips: {
+        bar: ["φερε παγο", "ελα πισω"],
+        "bar-sala": [],
+        kitchen: ["ετοιμο"],
+      },
+    });
+    expect(config.quickChips?.bar).toEqual(["φερε παγο", "ελα πισω"]);
+    expect(config.quickChips?.kitchen).toEqual(["ετοιμο"]);
+    expect(config.quickChips?.["bar-sala"]).toEqual([]);
+  });
+
+  it("copies legacy services key to each services post without explicit chips", () => {
+    const config = normalizeVenueOperationsConfig({
+      enabledStations: ["kitchen" as const, "bar" as const],
+      posts: [
+        { id: "svc-avli", label: "Services Αυλή", enabled: true, station: "services" as const },
+        { id: "svc-sala", label: "Services Σάλα", enabled: true, station: "services" as const },
+      ],
+      quickChips: { services: ["σερβιτόρος εδώ"] },
+    });
+    expect(config.quickChips?.["svc-avli"]).toEqual(["σερβιτόρος εδώ"]);
+    expect(config.quickChips?.["svc-sala"]).toEqual(["σερβιτόρος εδώ"]);
+    expect(config.quickChips?.services).toBeUndefined();
+  });
+
+  it("keeps post-id key and copies legacy kitchen chips to sibling posts", () => {
+    const config = normalizeVenueOperationsConfig({
+      enabledStations: ["kitchen" as const],
+      posts: [
+        { id: "kitchen", label: "Κουζίνα Σάλας", enabled: true, station: "kitchen" as const },
+        { id: "grill", label: "Grill", enabled: true, station: "kitchen" as const },
+      ],
+      quickChips: { kitchen: ["ετοιμο"] },
+    });
+    expect(config.quickChips?.kitchen).toEqual(["ετοιμο"]);
+    expect(config.quickChips?.grill).toEqual(["ετοιμο"]);
+  });
 });
 
 describe("stationScreenLabelMatchesPost", () => {

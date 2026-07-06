@@ -8,6 +8,7 @@ import {
   filterVenueSpotsForScreen,
   getPostMessageColor,
   isPrimaryStationScreen,
+  mergeQuickChipLabels,
   passLocationMatchesScreenSpotPrefix,
   passSignalStationScreenWhere,
   passStationInputSchema,
@@ -178,6 +179,20 @@ export async function GET(request: Request) {
     };
   });
 
+  const allKdsPostsRaw = enabledPassPostsAll(opsConfig, "GR");
+  const allKdsPosts = allKdsPostsRaw.map((post) => {
+    const index = enabledPosts.findIndex((row) => row.id === post.id);
+    return {
+      id: post.id,
+      label: post.label.trim(),
+      zoneId: post.zoneId ?? null,
+      station: post.station,
+      quickComments: quickChipsForPost(opsConfig, post.id, "GR"),
+      messageColor: getPostMessageColor(opsConfig, post.id, index >= 0 ? index : 0),
+    };
+  });
+  const allQuickComments = mergeQuickChipLabels(...allKdsPosts.map((post) => post.quickComments));
+
   return NextResponse.json({
     venueId: auth.venue.id,
     venueName: auth.venue.name,
@@ -190,6 +205,8 @@ export async function GET(request: Request) {
     quickComments,
     messageColor,
     stationPosts,
+    allKdsPosts,
+    allQuickComments,
     spots: filtered,
     activeSignals,
     todayCount,

@@ -7,9 +7,11 @@ import {
   findZoneIdForSpot,
   formatWaiterCallLocation,
   groupVenueSpotsByZone,
+  isVenuePassPostStation,
+  mergeQuickChipLabels,
   pickDefaultZoneId,
-  venuePostMatchesZone,
   type PassStationInput,
+  type VenuePostStationInput,
   type VenueSpotType,
 } from "@menuos/shared";
 import { buttonClass } from "@/components/ui/button";
@@ -32,7 +34,7 @@ type StationPostOption = {
   id: string;
   label: string;
   zoneId: string | null;
-  station: PassStationInput;
+  station: VenuePostStationInput;
   quickComments: string[];
   messageColor: string | null;
 };
@@ -48,6 +50,8 @@ type ScreenContext = {
   quickComments?: string[];
   messageColor?: string | null;
   stationPosts?: StationPostOption[];
+  allKdsPosts?: StationPostOption[];
+  allQuickComments?: string[];
   allPosts?: boolean;
   spots: ScreenSpot[];
   activeSignals?: ActiveSignal[];
@@ -63,6 +67,7 @@ const COPY = {
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
+    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ). Τα μηνύματα πάνω είναι από όλα τα πόστα.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -72,6 +77,8 @@ const COPY = {
     noTable: "Διάλεξε τραπέζι παραπάνω",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
+    messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
+    messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     quickComments: ["Ξέχασες τον πάγο", "Ξέχασες το ψωμί", "2 πιάτα μαζί", "Επείγον"],
@@ -84,6 +91,7 @@ const COPY = {
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
+    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ). Τα μηνύματα πάνω είναι από όλα τα πόστα.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -93,6 +101,8 @@ const COPY = {
     noTable: "Διάλεξε τραπέζι παραπάνω",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
+    messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
+    messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     quickComments: ["Χωρίς πάγο", "Με πάγο", "Ξέχασες καλαμάκι", "Επείγον"],
@@ -105,6 +115,7 @@ const COPY = {
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
+    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ). Τα μηνύματα πάνω είναι από όλα τα πόστα.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -114,6 +125,8 @@ const COPY = {
     noTable: "Διάλεξε τραπέζι παραπάνω",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
+    messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
+    messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     quickComments: ["Με σως χωριστά", "Χωρίς κρεμμύδι", "Ξέχασες πίτα", "Επείγον"],
@@ -126,6 +139,7 @@ const COPY = {
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
+    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ). Τα μηνύματα πάνω είναι από όλα τα πόστα.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -135,6 +149,8 @@ const COPY = {
     noTable: "Διάλεξε τραπέζι παραπάνω",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
+    messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
+    messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
     cancelSignal: "Ακύρωση",
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     quickComments: ["Με παγωτό", "Χωρίς ζάχαρη", "Ξέχασες κουταλάκι", "Επείγον"],
@@ -148,6 +164,32 @@ const POLL_MS = 8_000;
 const QUICK_MESSAGE_ROW_PX = 56;
 const QUICK_MESSAGES_MAX_HEIGHT_PX = QUICK_MESSAGE_ROW_PX * 4 + 8;
 
+function passStationForSend(
+  activePost: StationPostOption | null,
+  fallback: PassStationInput,
+): PassStationInput {
+  if (activePost && isVenuePassPostStation(activePost.station)) {
+    return activePost.station;
+  }
+  return fallback;
+}
+
+function pickDefaultActivePost(
+  posts: StationPostOption[],
+  screenLabel: string | null | undefined,
+  screenStation: PassStationInput,
+): StationPostOption | null {
+  if (!posts.length) return null;
+  const label = screenLabel?.trim();
+  if (label) {
+    const byLabel = posts.find((post) => post.label.trim() === label);
+    if (byLabel) return byLabel;
+  }
+  const sameStation = posts.filter((post) => post.station === screenStation);
+  if (sameStation.length > 0) return sameStation[0]!;
+  return posts[0]!;
+}
+
 function QuickMessagesPanel({
   title,
   messages,
@@ -158,6 +200,7 @@ function QuickMessagesPanel({
   accentColor,
   fullWidth = false,
   sidebar = false,
+  hideTitle = false,
 }: {
   title: string;
   messages: string[];
@@ -170,6 +213,8 @@ function QuickMessagesPanel({
   fullWidth?: boolean;
   /** Right rail on KDS — vertical list, full-width tap targets. */
   sidebar?: boolean;
+  /** Parent renders section title (e.g. KDS header strip). */
+  hideTitle?: boolean;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
   const [canScrollBack, setCanScrollBack] = useState(false);
@@ -327,14 +372,16 @@ function QuickMessagesPanel({
           fullWidth ? "w-full items-stretch" : "max-w-[min(100%,20rem)] shrink-0 items-end sm:max-w-[min(100%,28rem)]",
         )}
       >
-        <p
-          className={cn(
-            "text-[10px] font-semibold uppercase tracking-wide text-slate-500",
-            fullWidth ? "text-left" : "text-right",
-          )}
-        >
-          {title}
-        </p>
+        {!hideTitle ? (
+          <p
+            className={cn(
+              "text-[10px] font-semibold uppercase tracking-wide text-slate-500",
+              fullWidth ? "text-left" : "text-right",
+            )}
+          >
+            {title}
+          </p>
+        ) : null}
         <div className={cn("flex items-center gap-1.5", fullWidth ? "justify-start" : "justify-end")}>
           {showArrows ? (
             <button
@@ -480,7 +527,8 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   useScreenWakeLock();
 
   const displayStationTitle = ctx?.stationLabel?.trim() || C.title;
-  const stationPosts = ctx?.stationPosts ?? [];
+  const kdsPosts = ctx?.allKdsPosts?.length ? ctx.allKdsPosts : (ctx?.stationPosts ?? []);
+  const stationPosts = kdsPosts;
 
   const zoneGroups = useMemo(
     () => (ctx?.spots?.length ? groupVenueSpotsByZone(ctx.spots) : []),
@@ -489,16 +537,35 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const postsForZone = useMemo(() => {
     if (!stationPosts.length) return [];
-    return stationPosts.filter((post) => venuePostMatchesZone(post, activeZoneId));
-  }, [stationPosts, activeZoneId]);
+    return stationPosts;
+  }, [stationPosts]);
 
   const activePost = useMemo(
     () => postsForZone.find((post) => post.id === activePostId) ?? postsForZone[0] ?? null,
     [postsForZone, activePostId],
   );
 
-  const quickComments = activePost?.quickComments ?? ctx?.quickComments ?? [];
   const messageColor = activePost?.messageColor ?? ctx?.messageColor ?? null;
+
+  const screenMatchedPost = useMemo(() => {
+    const screenLabel = ctx?.screenLabel?.trim();
+    if (screenLabel && stationPosts.length > 0) {
+      const match = stationPosts.find((post) => post.label.trim() === screenLabel);
+      if (match) return match;
+    }
+    if (stationPosts.length === 1) return stationPosts[0]!;
+    return null;
+  }, [stationPosts, ctx?.screenLabel]);
+
+  const headerMessages = useMemo(() => {
+    if (ctx?.allQuickComments?.length) return ctx.allQuickComments;
+    if (stationPosts.length > 0) {
+      return mergeQuickChipLabels(...stationPosts.map((post) => post.quickComments));
+    }
+    return ctx?.quickComments ?? [];
+  }, [ctx?.allQuickComments, ctx?.quickComments, stationPosts]);
+
+  const headerMessageColor = screenMatchedPost?.messageColor ?? ctx?.messageColor ?? null;
 
   const load = useCallback(async () => {
     if (!venueSlug || !stationKey) {
@@ -547,15 +614,11 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       setActivePostId(null);
       return;
     }
-    const screenLabel = ctx?.screenLabel?.trim();
-    const matchByLabel = screenLabel
-      ? postsForZone.find((post) => post.label === screenLabel)
-      : undefined;
-    const preferred = matchByLabel ?? postsForZone[0]!;
+    const preferred = pickDefaultActivePost(postsForZone, ctx?.screenLabel, station);
     if (!activePostId || !postsForZone.some((post) => post.id === activePostId)) {
-      setActivePostId(preferred.id);
+      setActivePostId(preferred?.id ?? null);
     }
-  }, [postsForZone, ctx?.screenLabel, activePostId]);
+  }, [postsForZone, ctx?.screenLabel, activePostId, station]);
 
   const activeZone = zoneGroups.find((z) => z.id === activeZoneId) ?? zoneGroups[0];
   const visibleSpots = activeZone?.spots ?? [];
@@ -621,7 +684,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
             : { sunbedNumber: table.label }
         : { tableNumber: manual };
 
-      const sendStation = activePost?.station ?? station;
+      const sendStation = passStationForSend(activePost, station);
       const res = await fetch("/api/pass-signals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -676,6 +739,31 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 : displayStationTitle}
             </h1>
             {ctx ? <p className="mt-1 text-sm text-slate-400 sm:text-base">{ctx.venueName}</p> : null}
+            {ctx ? (
+              <div className="mt-4 border-t border-white/10 pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  {C.messagesTitle}
+                </p>
+                {headerMessages.length > 0 ? (
+                  <div className="mt-2">
+                    <QuickMessagesPanel
+                      title={C.messagesTitle}
+                      messages={headerMessages}
+                      selectedMessage={comment}
+                      disabled={sending || !hasSelection}
+                      onSelect={(chip) => void send(chip)}
+                      layout="horizontal"
+                      accentColor={headerMessageColor}
+                      fullWidth
+                      hideTitle
+                    />
+                    <p className="mt-2 text-xs text-slate-500">{C.messagesAllPostsHint}</p>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-slate-500">{C.messagesEmpty}</p>
+                )}
+              </div>
+            ) : null}
           </div>
           {ctx && typeof ctx.todayCount === "number" ? (
             <p className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-300">
@@ -819,6 +907,9 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 ) : (
                   <p className="text-sm text-slate-500">{C.noPostInZone}</p>
                 )}
+                {stationPosts.length > 1 ? (
+                  <p className="text-xs text-slate-500">{C.pickPostHint}</p>
+                ) : null}
               </div>
             ) : null}
 
@@ -883,20 +974,6 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
           <p className="text-center text-slate-500">Φόρτωση…</p>
         ) : null}
       </main>
-
-      {ctx && quickComments.length > 0 ? (
-        <aside className="flex w-[11rem] shrink-0 flex-col border-l border-white/10 bg-slate-950/90 sm:w-[13rem]">
-          <QuickMessagesPanel
-            title={C.messagesTitle}
-            messages={quickComments}
-            disabled={sending || !hasSelection}
-            onSelect={(chip) => void send(chip)}
-            layout="vertical"
-            accentColor={messageColor}
-            sidebar
-          />
-        </aside>
-      ) : null}
       </div>
 
       {ctx ? (

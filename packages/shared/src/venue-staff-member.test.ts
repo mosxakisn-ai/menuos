@@ -8,13 +8,18 @@ import {
   passSignalVisibleToStaffMember,
   passSignalsVisibleToStaffMember,
   pickStationScreenForStaffAssignment,
+  resolveStaffAssignmentToPassInput,
   resolveStaffMessageScope,
   sanitizeStaffAssignments,
   sanitizeStaffMessageScope,
   staffAssignmentLinkKind,
+  defaultStaffAssignmentForJobRole,
+  staffJobRoleForAssignment,
+  staffPostOptionsForJobRole,
   staffPostPickerLabel,
   staffPrimaryAssignment,
   staffScreenDeviceForAssignment,
+  staffScreenDeviceForJobRole,
   validateStaffMessageScope,
   waiterCallsVisibleToStaffMember,
 } from "./venue-staff-member";
@@ -209,6 +214,16 @@ describe("pickStationScreenForStaffAssignment", () => {
   it("returns null for floor staff", () => {
     expect(pickStationScreenForStaffAssignment("services", posts, screens)).toBeNull();
   });
+
+  it("opens kitchen screen for support post staff", () => {
+    const supportPosts = [
+      { id: "lanza", label: "Λάντζα", enabled: true, station: "dishwash" as const },
+    ];
+    expect(resolveStaffAssignmentToPassInput("lanza", supportPosts)).toBe("kitchen");
+    expect(
+      pickStationScreenForStaffAssignment("lanza", supportPosts, screens)?.screenToken,
+    ).toBe("tok-main");
+  });
 });
 
 describe("staffAssignmentLinkKind", () => {
@@ -260,5 +275,46 @@ describe("staffPostPickerLabel", () => {
       { id: "k2", label: "Grill", enabled: true, station: "kitchen" as const },
     ];
     expect(staffPostPickerLabel("k2", "GR", multi)).toBe("Grill");
+  });
+});
+
+describe("staffJobRole", () => {
+  const posts = [
+    { id: "svc-sala", label: "Services Σάλα", enabled: true, station: "services" as const },
+    { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+    { id: "bar", label: "Bar", enabled: true, station: "bar" as const },
+  ];
+
+  it("derives role from assignment", () => {
+    expect(staffJobRoleForAssignment("all", posts)).toBe("waiter");
+    expect(staffJobRoleForAssignment("pass-all", posts)).toBe("pass");
+    expect(staffJobRoleForAssignment("kitchen", posts)).toBe("pass");
+    expect(staffJobRoleForAssignment("svc-sala", posts)).toBe("waiter");
+  });
+
+  it("filters post options by role", () => {
+    expect(staffPostOptionsForJobRole("waiter", posts).map((row) => row.id)).toEqual([
+      "all",
+      "svc-sala",
+    ]);
+    expect(staffPostOptionsForJobRole("pass", posts).map((row) => row.id)).toEqual([
+      "pass-all",
+      "kitchen",
+      "bar",
+    ]);
+  });
+
+  it("maps role to screen device", () => {
+    expect(staffScreenDeviceForJobRole("waiter")).toBe("mobile");
+    expect(staffScreenDeviceForJobRole("pass")).toBe("kds");
+    expect(defaultStaffAssignmentForJobRole("pass", posts)).toBe("pass-all");
+  });
+
+  it("omits pass-all when venue has only support tablet posts", () => {
+    const supportOnly = [
+      { id: "lanza", label: "Λάντζα", enabled: true, station: "dishwash" as const },
+    ];
+    expect(staffPostOptionsForJobRole("pass", supportOnly).map((row) => row.id)).toEqual(["lanza"]);
+    expect(defaultStaffAssignmentForJobRole("pass", supportOnly)).toBe("lanza");
   });
 });

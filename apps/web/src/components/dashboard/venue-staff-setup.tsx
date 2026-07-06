@@ -8,23 +8,26 @@ import {
   enabledVenuePosts,
   getPostMessageColor,
   groupVenueSpotsByZone,
-  isVenuePassPostStation,
   listVenuePosts,
+  defaultStaffAssignmentForJobRole,
   pickStationScreenForStaffAssignment,
   resolveStaffAssignmentToPassInput,
   staffAssignmentLinkKind,
   staffAssignmentLabelForLang,
   staffAssignmentsFromPrimary,
   staffAssignableVenuePosts,
+  staffJobRoleForAssignment,
+  staffJobRoleLabel,
+  staffPostOptionsForJobRole,
   staffPostPickerLabel,
   staffPostRequiresZoneAssignment,
   staffPostStationSubtitle,
   staffPrimaryAssignment,
   staffScreenDeviceForAssignment,
-  waiterVenuePosts,
+  staffScreenDeviceForJobRole,
   visibleMessagesForStaffAssignment,
   type PassStationInput,
-  type StaffScreenDevice,
+  type StaffJobRole,
   type VenueOperationsConfig,
   type VenuePost,
 } from "@menuos/shared";
@@ -370,12 +373,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const [name, setName] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [postAssignment, setPostAssignment] = useState("all");
-  const [screenDevice, setScreenDevice] = useState<StaffScreenDevice>("mobile");
+  const [jobRole, setJobRole] = useState<StaffJobRole>("waiter");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editZoneId, setEditZoneId] = useState("");
   const [editPostAssignment, setEditPostAssignment] = useState("all");
-  const [editScreenDevice, setEditScreenDevice] = useState<StaffScreenDevice>("mobile");
+  const [editJobRole, setEditJobRole] = useState<StaffJobRole>("waiter");
   const [busy, setBusy] = useState<string | null>(null);
   const [screensByStation, setScreensByStation] = useState<StaffScreensByStation>({});
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -422,70 +425,31 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     return null;
   }
 
+  const postOptionsForRole = useCallback(
+    (role: StaffJobRole) => staffPostOptionsForJobRole(role, assignablePosts, langCode),
+    [assignablePosts, langCode],
+  );
+
   const waiterPostOptions = useMemo(
-    () =>
-      waiterVenuePosts(opsConfig ?? undefined, langCode).map((post) => ({
-        id: post.id,
-        label: post.label.trim(),
-      })),
-    [opsConfig, langCode],
+    () => postOptionsForRole("waiter").filter((row) => row.id !== "all"),
+    [postOptionsForRole],
   );
 
-  const kdsPostOptions = useMemo(() => {
-    const passPosts = assignablePosts.filter((post) => isVenuePassPostStation(post.station));
-    const mapped = passPosts.map((post) => ({
-      id: post.id,
-      label: staffPostPickerLabel(post.id, langCode, assignablePosts),
-    }));
-    if (passPosts.length === 0) return [];
-    return [
-      { id: "pass-all", label: staffPostPickerLabel("pass-all", langCode, assignablePosts) },
-      ...mapped,
-    ];
-  }, [assignablePosts, langCode]);
+  const kdsPostOptions = useMemo(() => postOptionsForRole("pass"), [postOptionsForRole]);
 
-  const mobilePostOptions = useMemo(
-    () => [
-      { id: "all", label: staffPostPickerLabel("all", langCode, assignablePosts) },
-      ...waiterPostOptions,
-    ],
-    [waiterPostOptions, assignablePosts, langCode],
-  );
-
-  function postOptionsForScreen(device: StaffScreenDevice): Array<{ id: string; label: string }> {
-    return device === "kds" ? kdsPostOptions : mobilePostOptions;
-  }
-
-  function firstWaiterPostId(): string | null {
-    return waiterPostOptions[0]?.id ?? null;
-  }
-
-  function firstKdsPostId(): string | null {
-    return kdsPostOptions.some((row) => row.id === "pass-all")
-      ? "pass-all"
-      : (kdsPostOptions[0]?.id ?? null);
-  }
-
-  function applyScreenDeviceChange(
-    device: StaffScreenDevice,
-    currentPost: string,
-    currentZone: string,
+  function applyJobRoleChange(
+    role: StaffJobRole,
     setPost: (post: string) => void,
     setZone: (zone: string) => void,
+    currentZone: string,
   ) {
-    if (device === "mobile") {
-      if (staffAssignmentLinkKind(currentPost, venuePosts) === "pass") {
-        setPost(firstWaiterPostId() ?? "all");
-        if (!currentZone) setZone("all");
-      }
-      return;
-    }
-    if (staffAssignmentLinkKind(currentPost, venuePosts) !== "pass") {
-      const first = firstKdsPostId();
-      if (first) {
-        setPost(first);
-        setZone("");
-      }
+    const options = staffPostOptionsForJobRole(role, assignablePosts, langCode);
+    const nextPost = defaultStaffAssignmentForJobRole(role, assignablePosts) || options[0]?.id || "";
+    setPost(nextPost);
+    if (role === "waiter") {
+      if (!currentZone) setZone("all");
+    } else {
+      setZone("");
     }
   }
 
@@ -592,8 +556,8 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setName("");
-        setPostAssignment(firstWaiterPostId() ?? "all");
-        setScreenDevice("mobile");
+        setPostAssignment(defaultStaffAssignmentForJobRole("waiter", assignablePosts) || "all");
+        setJobRole("waiter");
         setZoneId("");
         await reload();
         notifyLive360Updated();
@@ -603,16 +567,26 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     }
   }
 
+  function assignmentForRole(role: StaffJobRole, assignment: string): string {
+    const options = staffPostOptionsForJobRole(role, assignablePosts, langCode);
+    if (options.some((option) => option.id === assignment)) return assignment;
+    return defaultStaffAssignmentForJobRole(role, assignablePosts) || options[0]?.id || "";
+  }
+
   function startEdit(member: StaffMember) {
     const assignment = staffPrimaryAssignment(member.stations);
-    const device = staffScreenDeviceForAssignment(assignment, venuePosts);
+    const role = staffJobRoleForAssignment(assignment, venuePosts);
+    const resolvedRole: StaffJobRole = role === "invalid" ? "waiter" : role;
+    const resolvedAssignment = assignmentForRole(resolvedRole, assignment);
     setEditingId(member.id);
     setEditName(member.name);
     setEditZoneId(
-      staffPostRequiresZoneAssignment(assignment, venuePosts) ? (member.zoneId ?? "all") : "",
+      staffPostRequiresZoneAssignment(resolvedAssignment, venuePosts)
+        ? (member.zoneId ?? "all")
+        : "",
     );
-    setEditPostAssignment(assignment);
-    setEditScreenDevice(device === "kds" ? "kds" : "mobile");
+    setEditPostAssignment(resolvedAssignment);
+    setEditJobRole(resolvedRole);
   }
 
   async function saveEdit(memberId: string) {
@@ -686,21 +660,22 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   function renderAssignmentFields(
     values: {
       name: string;
+      role: StaffJobRole;
       zone: string;
       post: string;
-      screen: StaffScreenDevice;
     },
     onChange: {
       setName: (v: string) => void;
+      setRole: (v: StaffJobRole) => void;
       setZone: (v: string) => void;
       setPost: (v: string) => void;
-      setScreen: (v: StaffScreenDevice) => void;
     },
   ) {
     const chipsScope = messageScopeForPost(values.post);
-    const postOptions = postOptionsForScreen(values.screen);
-    const kdsUnavailable = values.screen === "kds" && kdsPostOptions.length === 0;
-    const waiterPostsMissing = values.screen === "mobile" && waiterPostOptions.length === 0;
+    const postOptions = staffPostOptionsForJobRole(values.role, assignablePosts, langCode);
+    const kdsUnavailable = values.role === "pass" && postOptions.length === 0;
+    const waiterPostsMissing = values.role === "waiter" && waiterPostOptions.length === 0;
+    const screenDevice = staffScreenDeviceForJobRole(values.role);
     return (
       <>
         <td className="px-3 py-2 align-top">
@@ -714,9 +689,28 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         </td>
         <td className="px-3 py-2 align-top">
           <select
+            value={values.role}
+            required
+            onChange={(e) => {
+              const next = e.target.value as StaffJobRole;
+              onChange.setRole(next);
+              applyJobRoleChange(next, onChange.setPost, onChange.setZone, values.zone);
+            }}
+            className={`${dashboardFieldClass} w-full min-w-[9rem] text-sm`}
+          >
+            <option value="waiter">{S.jobRoleWaiter}</option>
+            <option value="pass">{S.jobRolePass}</option>
+          </select>
+          <p className="mt-1 text-[10px] leading-snug text-slate-400">
+            {screenDevice === "mobile" ? S.screenMobileHint : S.screenKdsHint}
+          </p>
+        </td>
+        <td className="px-3 py-2 align-top">
+          <select
             value={values.zone}
             onChange={(e) => onChange.setZone(e.target.value)}
             required={staffPostRequiresZoneAssignment(values.post, venuePosts)}
+            disabled={values.role === "pass"}
             className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
           >
             {staffPostRequiresZoneAssignment(values.post, venuePosts) ? (
@@ -744,8 +738,6 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
             onChange={(e) => {
               const next = e.target.value;
               onChange.setPost(next);
-              const device = staffScreenDeviceForAssignment(next, venuePosts);
-              if (device === "mobile" || device === "kds") onChange.setScreen(device);
               if (staffPostRequiresZoneAssignment(next, venuePosts)) {
                 if (!values.zone) onChange.setZone("all");
               } else {
@@ -791,32 +783,8 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
             </>
           ) : values.post === "all" ? (
             <p className="mt-1.5 text-[10px] leading-snug text-slate-400">{S.messagesScopeAll}</p>
-          ) : values.screen === "mobile" ? (
+          ) : values.role === "waiter" ? (
             <p className="mt-1.5 text-[10px] leading-snug text-slate-400">{S.messagesScopeWaiter}</p>
-          ) : null}
-        </td>
-        <td className="px-3 py-2 align-top">
-          <select
-            value={values.screen}
-            required
-            onChange={(e) => {
-              const next = e.target.value as StaffScreenDevice;
-              onChange.setScreen(next);
-              applyScreenDeviceChange(next, values.post, values.zone, onChange.setPost, onChange.setZone);
-            }}
-            className={`${dashboardFieldClass} w-full min-w-[9rem] text-sm`}
-          >
-            <option value="mobile">{S.screenMobile}</option>
-            <option value="kds">{S.screenKds}</option>
-          </select>
-          <p className="mt-1 text-[10px] leading-snug text-slate-400">
-            {values.screen === "mobile" ? S.screenMobileHint : S.screenKdsHint}
-          </p>
-          {values.screen === "mobile" && kdsPostOptions.length > 0 ? (
-            <p className="mt-1 text-[10px] leading-snug text-amber-800">{S.postsOnKdsScreenHint}</p>
-          ) : null}
-          {values.screen === "kds" && waiterPostOptions.length > 0 ? (
-            <p className="mt-1 text-[10px] leading-snug text-slate-400">{S.postsOnMobileScreenHint}</p>
           ) : null}
         </td>
       </>
@@ -876,9 +844,9 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                       <th className="px-3 py-2.5">{S.colName}</th>
+                      <th className="px-3 py-2.5">{S.colRoleRequired}</th>
                       <th className="px-3 py-2.5">{S.colSpaceRequired}</th>
                       <th className="px-3 py-2.5">{S.colPostRequired}</th>
-                      <th className="px-3 py-2.5">{S.colScreenRequired}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -886,15 +854,15 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       {renderAssignmentFields(
                         {
                           name,
+                          role: jobRole,
                           zone: zoneId,
                           post: postAssignment,
-                          screen: screenDevice,
                         },
                         {
                           setName,
+                          setRole: setJobRole,
                           setZone: setZoneId,
                           setPost: setPostAssignment,
-                          setScreen: setScreenDevice,
                         },
                       )}
                     </tr>
@@ -910,7 +878,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                     busy !== null ||
                     !name.trim() ||
                     (staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zoneId) ||
-                    (screenDevice === "kds" && kdsPostOptions.length === 0) ||
+                    (jobRole === "pass" && kdsPostOptions.length === 0) ||
                     !postAssignment
                   }
                   className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "md")}`}
@@ -938,9 +906,9 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     <th className="w-[12%] px-4 py-3">{S.colName}</th>
-                    <th className="w-[11%] px-4 py-3">{S.colSpaceRequired}</th>
-                    <th className="min-w-[9rem] px-4 py-3">{S.colPostRequired}</th>
-                    <th className="w-[11%] px-4 py-3">{S.colScreen}</th>
+                    <th className="w-[11%] px-4 py-3">{S.colRole}</th>
+                    <th className="w-[11%] px-4 py-3">{S.colSpace}</th>
+                    <th className="min-w-[9rem] px-4 py-3">{S.colPost}</th>
                     <th className="w-[7.25rem] px-4 py-3 text-center">{S.colLink}</th>
                     <th className="w-[5.5rem] px-4 py-3 text-center">{S.colActions}</th>
                   </tr>
@@ -956,15 +924,15 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                           {renderAssignmentFields(
                             {
                               name: editName,
+                              role: editJobRole,
                               zone: editZoneId,
                               post: editPostAssignment,
-                              screen: editScreenDevice,
                             },
                             {
                               setName: setEditName,
+                              setRole: setEditJobRole,
                               setZone: setEditZoneId,
                               setPost: setEditPostAssignment,
-                              setScreen: setEditScreenDevice,
                             },
                           )}
                           <td className="px-4 py-3 align-top text-right" colSpan={2}>
@@ -984,7 +952,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                                   !editName.trim() ||
                                   (staffPostRequiresZoneAssignment(editPostAssignment, venuePosts) &&
                                     !editZoneId) ||
-                                  (editScreenDevice === "kds" && kdsPostOptions.length === 0) ||
+                                  (editJobRole === "pass" && kdsPostOptions.length === 0) ||
                                   !editPostAssignment
                                 }
                                 onClick={() => void saveEdit(member.id)}
@@ -1005,6 +973,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       langCode,
                       venuePosts,
                     );
+                    const memberRole = staffJobRoleForAssignment(primaryPost, venuePosts);
                     const memberScreen = staffScreenDeviceForAssignment(primaryPost, venuePosts);
                     const assignmentInvalid =
                       member.stations.length === 0 ||
@@ -1020,6 +989,16 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       >
                         <td className="px-4 py-3 align-middle font-medium text-brand-navy">
                           {member.name}
+                        </td>
+                        <td className="px-4 py-3 align-middle text-slate-600">
+                          <p className="font-medium text-brand-navy">
+                            {memberRole === "invalid"
+                              ? "—"
+                              : staffJobRoleLabel(memberRole, langCode)}
+                          </p>
+                          <p className="mt-0.5 text-[10px] text-slate-500">
+                            {memberScreen === "kds" ? S.screenKds : S.screenMobile}
+                          </p>
                         </td>
                         <td className="px-4 py-3 align-middle text-slate-600">
                           {zoneLabelForMember(member)}
@@ -1041,14 +1020,6 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                               compact
                             />
                           ) : null}
-                        </td>
-                        <td className="px-4 py-3 align-middle text-slate-600">
-                          <p className="font-medium text-brand-navy">
-                            {memberScreen === "kds" ? S.screenKds : S.screenMobile}
-                          </p>
-                          <p className="mt-0.5 text-[10px] leading-snug text-slate-400">
-                            {memberScreen === "kds" ? S.screenKdsHint : S.screenMobileHint}
-                          </p>
                         </td>
                         <td className="px-4 py-3 align-middle text-center">
                           {venue?.slug ? (

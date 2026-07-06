@@ -1,8 +1,11 @@
 import { z } from "zod";
 import { PASS_STATION_INPUTS, passStationInputToDb, type PassStationInput } from "./pass-signal";
 import {
-  DEFAULT_STATION_LABELS_EL,
-  DEFAULT_STATION_LABELS_EN,
+  DEFAULT_VENUE_POST_STATION_LABELS_EL,
+  DEFAULT_VENUE_POST_STATION_LABELS_EN,
+  isVenueKdsPostStation,
+  isVenuePassPostStation,
+  isVenueSupportPostStation,
   postLabelLooksLikeFloorWaiter,
   type VenuePost,
 } from "./venue-operations-config";
@@ -141,7 +144,9 @@ export function resolveStaffAssignmentToPassInput(
   const post = posts?.find((row) => row.id === assignment);
   if (post) {
     if (!post.enabled || post.station === "services") return null;
-    return post.station;
+    if (isVenuePassPostStation(post.station)) return post.station;
+    if (isVenueSupportPostStation(post.station)) return "kitchen";
+    return null;
   }
   if (PASS_STATION_INPUTS.includes(assignment as PassStationInput)) {
     return assignment as PassStationInput;
@@ -254,10 +259,19 @@ export function staffPostStationSubtitle(
   if (post.station === "services") {
     return lang === "EN" ? "Waiter · phone" : "Σερβιτόρος · κινητό";
   }
-  const stationLabels = lang === "EN" ? DEFAULT_STATION_LABELS_EN : DEFAULT_STATION_LABELS_EL;
-  return lang === "EN"
-    ? `${stationLabels[post.station]} · pass tablet`
-    : `${stationLabels[post.station]} · tablet πάσου`;
+  const typeLabels =
+    lang === "EN" ? DEFAULT_VENUE_POST_STATION_LABELS_EN : DEFAULT_VENUE_POST_STATION_LABELS_EL;
+  if (isVenueSupportPostStation(post.station)) {
+    return lang === "EN"
+      ? `${typeLabels[post.station]} · messages tablet`
+      : `${typeLabels[post.station]} · tablet μηνυμάτων`;
+  }
+  if (isVenuePassPostStation(post.station)) {
+    return lang === "EN"
+      ? `${typeLabels[post.station]} · pass tablet`
+      : `${typeLabels[post.station]} · tablet πάσου`;
+  }
+  return null;
 }
 
 export function formatStaffAssignmentsForLang(
@@ -424,9 +438,77 @@ export function pickStationScreenForStaffAssignment(
   return first ? { station, screenToken: first.screenToken } : null;
 }
 
-export type StaffAssignmentLinkKind = "waiter" | "pass" | "invalid";
+export type StaffAssignmentLinkKind = "waiter" | "pass" | "support" | "invalid";
 
 export type StaffScreenDevice = "mobile" | "kds";
+
+/** Staff form role — drives post picker and screen (Option A). */
+export const STAFF_JOB_ROLES = ["waiter", "pass"] as const;
+export type StaffJobRole = (typeof STAFF_JOB_ROLES)[number];
+
+export function staffJobRoleLabel(role: StaffJobRole, lang: "GR" | "EN" = "GR"): string {
+  if (role === "waiter") return lang === "EN" ? "Waiter" : "Σερβιτόρος";
+  return lang === "EN" ? "Kitchen / Bar" : "Κουζίνα / Μπαρ";
+}
+
+export function staffJobRoleForLinkKind(kind: StaffAssignmentLinkKind): StaffJobRole | null {
+  if (kind === "waiter") return "waiter";
+  if (kind === "pass" || kind === "support") return "pass";
+  return null;
+}
+
+export function staffJobRoleForAssignment(
+  assignment: string,
+  posts: VenuePost[],
+): StaffJobRole | "invalid" {
+  const kind = staffAssignmentLinkKind(assignment, posts);
+  return staffJobRoleForLinkKind(kind) ?? "invalid";
+}
+
+export function staffScreenDeviceForJobRole(role: StaffJobRole): StaffScreenDevice {
+  return role === "waiter" ? "mobile" : "kds";
+}
+
+export function staffPostOptionsForJobRole(
+  role: StaffJobRole,
+  posts: VenuePost[],
+  lang: "GR" | "EN" = "GR",
+): Array<{ id: string; label: string }> {
+  if (role === "waiter") {
+    const waiterPosts = posts.filter((post) => post.enabled && post.station === "services");
+    return [
+      { id: "all", label: staffPostPickerLabel("all", lang, posts) },
+      ...waiterPosts.map((post) => ({
+        id: post.id,
+        label: post.label.trim(),
+      })),
+    ];
+  }
+  const passPosts = posts.filter((post) => post.enabled && isVenuePassPostStation(post.station));
+  const kdsPosts = posts.filter((post) => post.enabled && isVenueKdsPostStation(post.station));
+  if (kdsPosts.length === 0) return [];
+  const mapped = kdsPosts.map((post) => ({
+    id: post.id,
+    label: staffPostPickerLabel(post.id, lang, posts),
+  }));
+  if (passPosts.length === 0) return mapped;
+  return [
+    { id: "pass-all", label: staffPostPickerLabel("pass-all", lang, posts) },
+    ...mapped,
+  ];
+}
+
+export function defaultStaffAssignmentForJobRole(role: StaffJobRole, posts: VenuePost[]): string {
+  if (role === "waiter") {
+    const waiterPosts = posts.filter((post) => post.enabled && post.station === "services");
+    return waiterPosts[0]?.id ?? "all";
+  }
+  const passPosts = posts.filter((post) => post.enabled && isVenuePassPostStation(post.station));
+  const kdsPosts = posts.filter((post) => post.enabled && isVenueKdsPostStation(post.station));
+  if (kdsPosts.length === 0) return "";
+  if (passPosts.length > 0) return "pass-all";
+  return kdsPosts[0]!.id;
+}
 
 /** Phone waiter link vs KDS/BDS tablet — derived from post assignment. */
 export function staffScreenDeviceForAssignment(
@@ -435,7 +517,7 @@ export function staffScreenDeviceForAssignment(
 ): StaffScreenDevice | "invalid" {
   const kind = staffAssignmentLinkKind(assignment, posts);
   if (kind === "waiter") return "mobile";
-  if (kind === "pass") return "kds";
+  if (kind === "pass" || kind === "support") return "kds";
   return "invalid";
 }
 
@@ -449,7 +531,10 @@ export function staffAssignmentLinkKind(
   const post = posts.find((row) => row.id === assignment);
   if (post) {
     if (!post.enabled) return "invalid";
-    return post.station === "services" ? "waiter" : "pass";
+    if (post.station === "services") return "waiter";
+    if (isVenuePassPostStation(post.station)) return "pass";
+    if (isVenueSupportPostStation(post.station)) return "support";
+    return "invalid";
   }
   if (assignment === "pass-all") return "pass";
   if (PASS_STATION_INPUTS.includes(assignment as PassStationInput)) return "pass";

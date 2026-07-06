@@ -752,7 +752,8 @@ export const DASHBOARD_EN = {
         postNamePlaceholder: "e.g. Kitchen, Bar, Services",
         postSpaceLabel: "Space",
         postSpaceAll: "All spaces",
-        postTypeHint: "Kitchen/Bar = pass tablet · Waiter = phone, seat map.",
+        postTypeHint:
+          "Kitchen/Bar = pass tablet · Waiter = phone · Dishwash/Cleaning/General = messages tablet.",
         waiterNameWarning:
           "Waiter-like name with Kitchen/Bar type — switch type to Waiter or rename the post.",
         linkedTitle: "Where posts connect",
@@ -910,14 +911,14 @@ export const DASHBOARD_EN = {
       personnel: {
         title: "Staff",
         description:
-          "Add an employee: name, space, post and screen. Waiter → mobile. Kitchen/bar → KDS tablet.",
+          "Add an employee: name, role, space and post. Pick role first — then the right posts appear.",
         addTitle: "New employee",
         addStaff: "Add",
         listTitle: "Staff members",
         editTitle: "Edit",
         cancelEdit: "Cancel",
         formHint:
-          "Waiter = phone (guest calls, pass alerts). Kitchen/bar = tablet with quick messages — post must match Settings → Messages.",
+          "Waiter = phone (calls, pass). Kitchen/Bar = tablet (quick messages, pass). Post must match Settings → Messages.",
         messagesScopeWaiter:
           "Floor waiter — calls & pass alerts on phone (does not send quick messages)",
         messagesScopeAll:
@@ -933,12 +934,18 @@ export const DASHBOARD_EN = {
         zoneRequired: "Pick a space — e.g. dining room, terrace, or All spaces.",
         saving: "Saving...",
         colName: "Name",
+        colRole: "Role",
+        colRoleRequired: "Role *",
         colSpace: "Space",
         colPost: "Post",
         colScreen: "Screen",
         colSpaceRequired: "Space *",
         colPostRequired: "Post *",
         colScreenRequired: "Screen *",
+        jobRoleWaiter: "Waiter",
+        jobRolePass: "Kitchen / Bar",
+        jobRoleWaiterHint: "Mobile — guest calls & pass",
+        jobRolePassHint: "Tablet — quick messages & pass",
         screenMobile: "Mobile",
         screenKds: "KDS (pass tablet)",
         screenMobileHint: "Guest calls & pass alerts on phone",
@@ -953,10 +960,10 @@ export const DASHBOARD_EN = {
         selectSpacePlaceholder: "Choose space",
         selectPostPlaceholder: "Choose post",
         fieldsRequiredHint:
-          "Name, space and post are required. Solo staff? Pick All — everywhere and All spaces. Waiter = one space. Kitchen/bar = post from Posts tab.",
-        colLink: "Waiter link",
+          "Name, role, space (waiter) and post are required. Posts are filtered by role.",
+        colLink: "Link",
         colLinkHint:
-          "Mobile: waiter link (map, guest calls). KDS: tablet link — opens without login.",
+          "Waiter: phone link. Kitchen/Bar: tablet link — opens without login.",
         colActions: "Actions",
         viewLink: "Preview",
         viewLinkTablet: "Open screen",
@@ -1118,7 +1125,7 @@ export const DASHBOARD_EN = {
         postSpaceLabel: "Space",
         postSpaceAll: "All spaces",
         postTypeLabel: "Type",
-        postTypeHint: "Type decides which tablet screen receives pass signals.",
+        postTypeHint: "Type sets waiter phone vs tablet (pass / messages).",
         postActionsLabel: "Actions",
         addPost: "New post",
         removePost: "Remove post",
