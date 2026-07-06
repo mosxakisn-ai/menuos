@@ -16,8 +16,9 @@ import {
   mergeTableStateLabels,
   newVenuePostId,
   VENUE_POST_STATION_INPUTS,
+  editorQuickChipsForPost,
+  postHasExplicitQuickChips,
   getPostMessageColor,
-  quickChipsForPost,
   syncLegacyFromPosts,
   TABLE_TILE_STATES,
   tableLegendStates,
@@ -228,7 +229,7 @@ export function VenueOperationsConfigPanel({
       ) {
         return;
       }
-      if (chips.length === 0) delete chipsMap[postId];
+      if (chips.length === 0) chipsMap[postId] = [];
       else chipsMap[postId] = chips;
       changed = true;
     });
@@ -332,9 +333,11 @@ export function VenueOperationsConfigPanel({
   }
 
   function updatePosts(nextPosts: VenuePost[]) {
-    if (!draft) return;
-    const legacy = syncLegacyFromPosts(nextPosts);
-    setDraft({ ...draft, ...legacy, posts: nextPosts });
+    setDraft((current) => {
+      if (!current) return current;
+      const legacy = syncLegacyFromPosts(nextPosts);
+      return { ...current, ...legacy, posts: nextPosts };
+    });
   }
 
   function togglePost(postId: string) {
@@ -372,25 +375,30 @@ export function VenueOperationsConfigPanel({
   }
 
   function removePost(postId: string) {
-    if (!draft) return;
-    const posts = listVenuePosts(draft, lang === "EN" ? "EN" : "GR");
-    if (posts.length <= 1) return;
-    const removed = posts.find((post) => post.id === postId);
-    const remaining = posts.filter((post) => post.id !== postId);
-    const nextChips = { ...(draft.quickChips ?? {}) };
-    delete nextChips[postId];
-    if (removed && !remaining.some((post) => post.enabled && post.station === removed.station)) {
-      delete nextChips[removed.station];
-    }
-    const nextColors = { ...(draft.postColors ?? {}) };
-    delete nextColors[postId];
-    const legacy = syncLegacyFromPosts(posts.filter((post) => post.id !== postId));
-    setDraft({
-      ...draft,
-      ...legacy,
-      posts: posts.filter((post) => post.id !== postId),
-      quickChips: Object.keys(nextChips).length ? nextChips : undefined,
-      postColors: Object.keys(nextColors).length ? nextColors : undefined,
+    setDraft((current) => {
+      if (!current) return current;
+      const posts = listVenuePosts(current, lang === "EN" ? "EN" : "GR");
+      if (posts.length <= 1) return current;
+      const removed = posts.find((post) => post.id === postId);
+      const remaining = posts.filter((post) => post.id !== postId);
+      const nextChips = { ...(current.quickChips ?? {}) };
+      delete nextChips[postId];
+      if (removed && !remaining.some((post) => post.enabled && post.station === removed.station)) {
+        delete nextChips[removed.station];
+      }
+      const nextColors = { ...(current.postColors ?? {}) };
+      delete nextColors[postId];
+      const nextPosts = posts.filter((post) => post.id !== postId);
+      const legacy = syncLegacyFromPosts(nextPosts);
+      const quickChips = Object.keys(nextChips).length ? nextChips : undefined;
+      quickChipsRef.current = quickChips;
+      return {
+        ...current,
+        ...legacy,
+        posts: nextPosts,
+        quickChips,
+        postColors: Object.keys(nextColors).length ? nextColors : undefined,
+      };
     });
   }
 
@@ -417,20 +425,19 @@ export function VenueOperationsConfigPanel({
   function setQuickChips(postId: string, chips: string[]) {
     setDraft((current) => {
       if (!current) return current;
-      const nextMap = { ...(current.quickChips ?? {}) };
-      if (chips.length === 0) delete nextMap[postId];
-      else nextMap[postId] = chips;
-      const quickChips = Object.keys(nextMap).length ? nextMap : undefined;
-      quickChipsRef.current = quickChips;
-      return { ...current, quickChips };
+      const nextMap = { ...(current.quickChips ?? {}), [postId]: chips };
+      quickChipsRef.current = nextMap;
+      return { ...current, quickChips: nextMap };
     });
   }
 
   function setPostColor(postId: string, hex: string) {
-    if (!draft) return;
-    setDraft({
-      ...draft,
-      postColors: { ...(draft.postColors ?? {}), [postId]: hex },
+    setDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        postColors: { ...(current.postColors ?? {}), [postId]: hex },
+      };
     });
   }
 
@@ -452,34 +459,38 @@ export function VenueOperationsConfigPanel({
   }
 
   function setTableStateLabel(state: TableTileState, value: string) {
-    if (!draft) return;
-    const merged = mergeTableStateLabels(draft, langCode);
-    const trimmed = value.trim();
-    const next = { ...(draft.tableStateLabels ?? {}) };
-    if (!trimmed || trimmed === merged[state]) {
-      delete next[state];
-    } else {
-      next[state] = trimmed;
-    }
-    setDraft({
-      ...draft,
-      tableStateLabels: Object.keys(next).length ? next : undefined,
+    setDraft((current) => {
+      if (!current) return current;
+      const merged = mergeTableStateLabels(current, langCode);
+      const trimmed = value.trim();
+      const next = { ...(current.tableStateLabels ?? {}) };
+      if (!trimmed || trimmed === merged[state]) {
+        delete next[state];
+      } else {
+        next[state] = trimmed;
+      }
+      return {
+        ...current,
+        tableStateLabels: Object.keys(next).length ? next : undefined,
+      };
     });
   }
 
   function setZoneLabel(zoneId: string, value: string) {
-    if (!draft) return;
-    const trimmed = value.trim();
-    const autoLabel = zoneGroups?.find((z) => z.id === zoneId)?.label ?? zoneId;
-    const next = { ...(draft.zoneLabels ?? {}) };
-    if (!trimmed || trimmed === autoLabel) {
-      delete next[zoneId];
-    } else {
-      next[zoneId] = trimmed;
-    }
-    setDraft({
-      ...draft,
-      zoneLabels: Object.keys(next).length ? next : undefined,
+    setDraft((current) => {
+      if (!current) return current;
+      const trimmed = value.trim();
+      const autoLabel = zoneGroups?.find((z) => z.id === zoneId)?.label ?? zoneId;
+      const next = { ...(current.zoneLabels ?? {}) };
+      if (!trimmed || trimmed === autoLabel) {
+        delete next[zoneId];
+      } else {
+        next[zoneId] = trimmed;
+      }
+      return {
+        ...current,
+        zoneLabels: Object.keys(next).length ? next : undefined,
+      };
     });
   }
 
@@ -812,8 +823,8 @@ export function VenueOperationsConfigPanel({
               ) : draft ? (
                 <div className="space-y-4">
                   {enabledPosts.map((post, postIndex) => {
-                    const items = draft.quickChips?.[post.id] ?? [];
-                    const hasCustom = items.length > 0;
+                    const items = editorQuickChipsForPost(draft, post.id, langCode);
+                    const hasCustom = postHasExplicitQuickChips(draft, post.id);
                     const postColor = getPostMessageColor(draft, post.id, postIndex);
                     const stationLabels =
                       lang === "EN"

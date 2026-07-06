@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import type { PassStationInput } from "@menuos/shared";
 import {
+  enabledPassPostsForStation,
   enabledVenuePosts,
   filterVenueSpotsForScreen,
   getPostMessageColor,
@@ -10,6 +11,7 @@ import {
   passSignalStationScreenWhere,
   passStationInputSchema,
   passStationInputToDb,
+  quickChipsForPost,
   quickChipsForStation,
   resolvePostIdForStationScreen,
   stationDisplayLabel,
@@ -57,7 +59,13 @@ export async function GET(request: Request) {
     take: 200,
   });
 
-  const filtered = filterVenueSpotsForScreen(spots, auth.stationScreen?.spotPrefix);
+  const enabledPosts = enabledVenuePosts(opsConfig, "GR");
+  const stationPostsRaw = enabledPassPostsForStation(opsConfig, station, "GR");
+  const useAllSpots =
+    stationPostsRaw.length > 1 || stationPostsRaw.some((post) => !post.zoneId?.trim());
+  const filtered = useAllSpots
+    ? spots
+    : filterVenueSpotsForScreen(spots, auth.stationScreen?.spotPrefix);
 
   const primaryScreen = await resolvePrimaryStationScreen(auth.venue.id, station);
   const isPrimary = isPrimaryStationScreen(auth.stationScreen?.id, primaryScreen?.id);
@@ -87,6 +95,8 @@ export async function GET(request: Request) {
     },
   });
 
+  const spotPrefixForSignals = useAllSpots ? null : auth.stationScreen?.spotPrefix;
+
   const activeSignals = activeSignalsRaw.filter((signal) =>
     passLocationMatchesScreenSpotPrefix(
       {
@@ -94,7 +104,7 @@ export async function GET(request: Request) {
         roomNumber: signal.roomNumber ?? undefined,
         sunbedNumber: signal.sunbedNumber ?? undefined,
       },
-      auth.stationScreen?.spotPrefix,
+      spotPrefixForSignals,
     ),
   );
   const todayStart = startOfTodayAthens();
@@ -119,11 +129,10 @@ export async function GET(request: Request) {
         roomNumber: signal.roomNumber ?? undefined,
         sunbedNumber: signal.sunbedNumber ?? undefined,
       },
-      auth.stationScreen?.spotPrefix,
+      spotPrefixForSignals,
     ),
   ).length;
 
-  const enabledPosts = enabledVenuePosts(opsConfig, "GR");
   const postId = resolvePostIdForStationScreen(
     opsConfig,
     station,
@@ -141,6 +150,17 @@ export async function GET(request: Request) {
     lang: "GR",
   });
 
+  const stationPosts = stationPostsRaw.map((post) => {
+    const index = enabledPosts.findIndex((row) => row.id === post.id);
+    return {
+      id: post.id,
+      label: post.label.trim(),
+      zoneId: post.zoneId ?? null,
+      quickComments: quickChipsForPost(opsConfig, post.id, "GR"),
+      messageColor: getPostMessageColor(opsConfig, post.id, index >= 0 ? index : 0),
+    };
+  });
+
   return NextResponse.json({
     venueId: auth.venue.id,
     venueName: auth.venue.name,
@@ -151,6 +171,7 @@ export async function GET(request: Request) {
     spotPrefix: auth.stationScreen?.spotPrefix ?? null,
     quickComments,
     messageColor,
+    stationPosts,
     spots: filtered,
     activeSignals,
     todayCount,

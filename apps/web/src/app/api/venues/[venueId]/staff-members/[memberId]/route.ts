@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { venueStaffMemberUpdateSchema, listVenuePosts, normalizeStaffMemberZoneId, staffPostRequiresZoneAssignment, validateStaffAssignments, validateStaffMessageScope, zodFirstErrorMessage } from "@menuos/shared";
+import { venueStaffMemberUpdateSchema, listVenuePosts, migrateStaffStationsFromLegacy, normalizeStaffMemberZoneId, staffPostRequiresZoneAssignment, validateStaffAssignments, validateStaffMessageScope, zodFirstErrorMessage } from "@menuos/shared";
 import { requireLive360Plan } from "@/lib/api-auth";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import { getVenueForOrganization } from "@/lib/venue-access";
@@ -49,11 +49,12 @@ export async function PATCH(request: Request, { params }: Params) {
   const primaryPost = parsed.data.stations[0] ?? "services";
   if (staffPostRequiresZoneAssignment(primaryPost, posts) && !parsed.data.zoneId) {
     return NextResponse.json(
-      { error: "Ο σερβιτόρος χρειάζεται συγκεκριμένο χώρο (π.χ. Σάλα ή Αυλή)." },
+      { error: "Επίλεξε χώρο — π.χ. Σάλα, Αυλή ή «Όλοι οι χώροι»." },
       { status: 400 },
     );
   }
   const zoneId = normalizeStaffMemberZoneId(primaryPost, parsed.data.zoneId, posts);
+  const stations = migrateStaffStationsFromLegacy(parsed.data.stations, posts);
 
   const existing = await prisma.venueStaffMember.findFirst({
     where: { id: memberId, venueId },
@@ -69,7 +70,7 @@ export async function PATCH(request: Request, { params }: Params) {
       roleLabel: parsed.data.roleLabel,
       zoneId,
       messageScope: parsed.data.messageScope,
-      stations: parsed.data.stations,
+      stations,
     },
   });
 

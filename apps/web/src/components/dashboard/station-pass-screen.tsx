@@ -8,6 +8,7 @@ import {
   formatWaiterCallLocation,
   groupVenueSpotsByZone,
   pickDefaultZoneId,
+  venuePostMatchesZone,
   type PassStationInput,
   type VenueSpotType,
 } from "@menuos/shared";
@@ -27,6 +28,14 @@ type ActiveSignal = {
   readyAt: string;
 };
 
+type StationPostOption = {
+  id: string;
+  label: string;
+  zoneId: string | null;
+  quickComments: string[];
+  messageColor: string | null;
+};
+
 type ScreenContext = {
   venueId: string;
   venueName: string;
@@ -37,6 +46,7 @@ type ScreenContext = {
   spotPrefix?: string | null;
   quickComments?: string[];
   messageColor?: string | null;
+  stationPosts?: StationPostOption[];
   spots: ScreenSpot[];
   activeSignals?: ActiveSignal[];
   todayCount?: number;
@@ -50,6 +60,8 @@ const COPY = {
     commentPh: "π.χ. ξέχασες τον πάγο",
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
+    pickPost: "Πόστο",
+    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
     waitingTitle: "Σε αναμονή",
@@ -69,6 +81,8 @@ const COPY = {
     commentPh: "π.χ. χωρίς πάγο",
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
+    pickPost: "Πόστο",
+    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
     waitingTitle: "Σε αναμονή",
@@ -88,6 +102,8 @@ const COPY = {
     commentPh: "π.χ. σαλάτα",
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
+    pickPost: "Πόστο",
+    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
     waitingTitle: "Σε αναμονή",
@@ -107,6 +123,8 @@ const COPY = {
     commentPh: "π.χ. με παγωτό",
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
+    pickPost: "Πόστο",
+    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
     waitingTitle: "Σε αναμονή",
@@ -448,6 +466,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   const [error, setError] = useState<string | null>(null);
   const [table, setTable] = useState<ScreenSpot | null>(null);
   const [activeZoneId, setActiveZoneId] = useState<string | null>(null);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
   const [manualTable, setManualTable] = useState("");
   const [comment, setComment] = useState("");
   const [sending, setSending] = useState(false);
@@ -457,8 +476,26 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   useScreenWakeLock();
 
-  const quickComments = ctx?.quickComments ?? [];
   const displayStationTitle = ctx?.stationLabel?.trim() || C.title;
+  const stationPosts = ctx?.stationPosts ?? [];
+
+  const zoneGroups = useMemo(
+    () => (ctx?.spots?.length ? groupVenueSpotsByZone(ctx.spots) : []),
+    [ctx?.spots],
+  );
+
+  const postsForZone = useMemo(() => {
+    if (!stationPosts.length) return [];
+    return stationPosts.filter((post) => venuePostMatchesZone(post, activeZoneId));
+  }, [stationPosts, activeZoneId]);
+
+  const activePost = useMemo(
+    () => postsForZone.find((post) => post.id === activePostId) ?? postsForZone[0] ?? null,
+    [postsForZone, activePostId],
+  );
+
+  const quickComments = activePost?.quickComments ?? ctx?.quickComments ?? [];
+  const messageColor = activePost?.messageColor ?? ctx?.messageColor ?? null;
 
   const load = useCallback(async () => {
     if (!venueSlug || !stationKey) {
@@ -494,12 +531,27 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     [spots],
   );
   const activeSignals = ctx?.activeSignals ?? [];
-  const zoneGroups = useMemo(() => groupVenueSpotsByZone(spots), [spotsLayoutKey, spots]);
 
   useEffect(() => {
     setActiveZoneId(pickDefaultZoneId(groupVenueSpotsByZone(spots)));
     setTable(null);
+    setActivePostId(null);
   }, [ctx?.venueId, spotsLayoutKey]);
+
+  useEffect(() => {
+    if (postsForZone.length === 0) {
+      setActivePostId(null);
+      return;
+    }
+    const screenLabel = ctx?.screenLabel?.trim();
+    const matchByLabel = screenLabel
+      ? postsForZone.find((post) => post.label === screenLabel)
+      : undefined;
+    const preferred = matchByLabel ?? postsForZone[0]!;
+    if (!activePostId || !postsForZone.some((post) => post.id === activePostId)) {
+      setActivePostId(preferred.id);
+    }
+  }, [postsForZone, ctx?.screenLabel, activePostId]);
 
   const activeZone = zoneGroups.find((z) => z.id === activeZoneId) ?? zoneGroups[0];
   const visibleSpots = activeZone?.spots ?? [];
@@ -520,9 +572,14 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   function selectZone(zoneId: string) {
     setActiveZoneId(zoneId);
+    setActivePostId(null);
     if (table && findZoneIdForSpot(zoneGroups, table) !== zoneId) {
       setTable(null);
     }
+  }
+
+  function selectPost(postId: string) {
+    setActivePostId(postId);
   }
 
   async function cancelSignal(signalId: string) {
@@ -718,6 +775,48 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               </div>
             ) : null}
 
+            {stationPosts.length > 0 ? (
+              <div className="space-y-2 border-t border-white/10 pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{C.pickPost}</p>
+                {postsForZone.length > 0 ? (
+                  <div
+                    className="flex flex-wrap gap-2"
+                    role="tablist"
+                    aria-label={C.pickPost}
+                  >
+                    {postsForZone.map((post) => (
+                      <button
+                        key={post.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={activePost?.id === post.id}
+                        onClick={() => selectPost(post.id)}
+                        className={cn(
+                          "shrink-0 rounded-xl border-2 px-4 py-2 text-sm font-semibold transition",
+                          activePost?.id === post.id
+                            ? "border-transparent text-white"
+                            : "border-white/15 bg-white/5 text-slate-300 hover:border-white/25",
+                        )}
+                        style={
+                          activePost?.id === post.id && post.messageColor
+                            ? {
+                                backgroundColor: `${post.messageColor}33`,
+                                borderColor: post.messageColor,
+                                boxShadow: `0 0 0 1px ${post.messageColor}55`,
+                              }
+                            : undefined
+                        }
+                      >
+                        {post.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">{C.noPostInZone}</p>
+                )}
+              </div>
+            ) : null}
+
             {spots.length > 0 ? (
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
                 {visibleSpots.map(({ spot, displayLabel }) => {
@@ -788,7 +887,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
             disabled={sending || !hasSelection}
             onSelect={(chip) => void send(chip)}
             layout="vertical"
-            accentColor={ctx.messageColor}
+            accentColor={messageColor}
             sidebar
           />
         </aside>
@@ -812,15 +911,15 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                   <span
                     className={cn(
                       "max-w-[12rem] truncate rounded-lg px-2.5 py-1 text-center text-xs font-semibold sm:max-w-xs sm:text-sm",
-                      !ctx.messageColor && "bg-white/10 text-slate-200",
+                      !messageColor && "bg-white/10 text-slate-200",
                     )}
                     style={
-                      ctx.messageColor
+                      messageColor
                         ? {
-                            backgroundColor: `${ctx.messageColor}33`,
+                            backgroundColor: `${messageColor}33`,
                             color: "#f8fafc",
-                            border: `1px solid ${ctx.messageColor}`,
-                            boxShadow: `inset 3px 0 0 ${ctx.messageColor}`,
+                            border: `1px solid ${messageColor}`,
+                            boxShadow: `inset 3px 0 0 ${messageColor}`,
                           }
                         : undefined
                     }

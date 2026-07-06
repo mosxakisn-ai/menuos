@@ -757,7 +757,7 @@ export const DASHBOARD_EN = {
           "Waiter-like name with Kitchen/Bar type — switch type to Waiter or rename the post.",
         linkedTitle: "Where posts connect",
         linkedWaiterNote:
-          "Floor waiters (phone, guest calls) are not created here — only in the Staff tab.",
+          "Floor waiters = post with type Waiter here (e.g. Dining room). Then assign staff in the Staff tab.",
         linkedTablet: (postName: string, stationName: string) =>
           `«${postName}» (${stationName}) → Messages + tablet in Staff`,
         nextMessagesLink: "Messages →",
@@ -910,7 +910,7 @@ export const DASHBOARD_EN = {
       personnel: {
         title: "Staff",
         description:
-          "Add an employee: name, space and post. Waiter → phone link. Kitchen/bar → tablet pass screen link.",
+          "Add an employee: name, space, post and screen. Waiter → mobile. Kitchen/bar → KDS tablet.",
         addTitle: "New employee",
         addStaff: "Add",
         listTitle: "Staff members",
@@ -920,6 +920,8 @@ export const DASHBOARD_EN = {
           "Waiter = phone (guest calls, pass alerts). Kitchen/bar = tablet with quick messages — post must match Settings → Messages.",
         messagesScopeWaiter:
           "Floor waiter — calls & pass alerts on phone (does not send quick messages)",
+        messagesScopeAll:
+          "All posts & spaces — calls, pass alerts and every space on phone",
         messagesScopeTablet: "Pass tablet — sends this post's quick messages",
         colSpaceAll: "All spaces",
         managePostsLink: "Manage posts →",
@@ -928,20 +930,29 @@ export const DASHBOARD_EN = {
         messagesPreviewEmpty: "No messages configured for this post yet.",
         noPosts: "No active posts.",
         noSpaces: "No spaces yet.",
-        zoneRequired: "Waiters need a specific space (e.g. dining room or terrace).",
+        zoneRequired: "Pick a space — e.g. dining room, terrace, or All spaces.",
         saving: "Saving...",
         colName: "Name",
         colSpace: "Space",
         colPost: "Post",
+        colScreen: "Screen",
         colSpaceRequired: "Space *",
         colPostRequired: "Post *",
+        colScreenRequired: "Screen *",
+        screenMobile: "Mobile",
+        screenKds: "KDS (pass tablet)",
+        screenMobileHint: "Guest calls & pass alerts on phone",
+        screenKdsHint: "Quick messages & pass alerts on tablet",
+        noKdsPosts: "No kitchen/bar posts yet — set them up in the Posts tab first.",
+        noWaiterPosts:
+          "No waiter post yet — add a post with type Waiter in the Posts tab (or pick All — everywhere).",
         selectSpacePlaceholder: "Choose space",
         selectPostPlaceholder: "Choose post",
         fieldsRequiredHint:
-          "Name, space and post are required. Waiter = specific space (dining room, terrace). Kitchen/bar = post from Posts tab.",
+          "Name, space and post are required. Solo staff? Pick All — everywhere and All spaces. Waiter = one space. Kitchen/bar = post from Posts tab.",
         colLink: "Waiter link",
         colLinkHint:
-          "Waiter: phone link (floor map). Kitchen/bar: tablet link — opens without login.",
+          "Mobile: waiter link (map, guest calls). KDS: tablet link — opens without login.",
         colActions: "Actions",
         viewLink: "Preview",
         viewLinkTablet: "Open screen",

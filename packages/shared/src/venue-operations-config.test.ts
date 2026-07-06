@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  editorQuickChipsForPost,
+  postHasExplicitQuickChips,
+  enabledPassPostsForStation,
   isPlaceholderVenuePostLabel,
   isReservedVenuePostId,
   normalizeVenueOperationsConfig,
@@ -13,8 +16,59 @@ import {
   stationScreenLabelMatchesPost,
   tableLegendStates,
   venueOperationsConfigSchema,
+  venuePostMatchesZone,
   visibleMessagesForStaffAssignment,
 } from "./venue-operations-config";
+
+describe("venuePostMatchesZone", () => {
+  it("matches when post has no zone (all spaces)", () => {
+    expect(venuePostMatchesZone({ zoneId: null }, "main")).toBe(true);
+    expect(venuePostMatchesZone({ zoneId: null }, "prefix:αυλή")).toBe(true);
+  });
+
+  it("matches only assigned zone", () => {
+    expect(venuePostMatchesZone({ zoneId: "main" }, "main")).toBe(true);
+    expect(venuePostMatchesZone({ zoneId: "main" }, "prefix:αυλή")).toBe(false);
+    expect(venuePostMatchesZone({ zoneId: "prefix:αυλή" }, "prefix:αυλή")).toBe(true);
+  });
+});
+
+describe("enabledPassPostsForStation", () => {
+  it("returns enabled posts for one station", () => {
+    const config = {
+      enabledStations: ["kitchen" as const, "bar" as const],
+      posts: [
+        { id: "k1", label: "Kitchen", enabled: true, station: "kitchen" as const },
+        { id: "b1", label: "Bar", enabled: true, station: "bar" as const },
+        { id: "b2", label: "Bar 2", enabled: false, station: "bar" as const },
+      ],
+    };
+    expect(enabledPassPostsForStation(config, "kitchen").map((p) => p.id)).toEqual(["k1"]);
+    expect(enabledPassPostsForStation(config, "bar").map((p) => p.id)).toEqual(["b1"]);
+  });
+});
+
+describe("editorQuickChipsForPost", () => {
+  it("falls back to legacy station chips when post key is missing", () => {
+    const config = {
+      enabledStations: ["kitchen" as const],
+      posts: [{ id: "post-k", label: "Κουζίνα", enabled: true, station: "kitchen" as const }],
+      quickChips: { kitchen: ["Legacy msg"] },
+    };
+    expect(editorQuickChipsForPost(config, "post-k")).toEqual(["Legacy msg"]);
+  });
+
+  it("returns empty when post key was explicitly cleared", () => {
+    const config = {
+      enabledStations: ["kitchen" as const],
+      posts: [{ id: "post-k", label: "Κουζίνα", enabled: true, station: "kitchen" as const }],
+      quickChips: { kitchen: ["Legacy msg"], "post-k": [] },
+    };
+    expect(editorQuickChipsForPost(config, "post-k")).toEqual([]);
+    expect(postHasExplicitQuickChips(config, "post-k")).toBe(true);
+    expect(postHasExplicitQuickChips(config, "post-missing")).toBe(false);
+  });
+});
 
 describe("quickChipsForPost", () => {
   it("returns chips keyed by post id", () => {

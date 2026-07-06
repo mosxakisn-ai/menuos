@@ -53,6 +53,26 @@ function spotMatchesScreenPrefix(spot: ScreenSpotInput, spotPrefix: string): boo
   return tableLabelMatchesPrefix(spot.label, spotPrefix);
 }
 
+/** KDS/BDS table filter from a pass post's space (zone id on Πόστα tab). */
+export function spotPrefixForVenuePost(
+  post: { zoneId?: string | null },
+  zoneLabels?: Record<string, string> | undefined,
+): string | null {
+  const zoneId = post.zoneId?.trim();
+  if (!zoneId) return null;
+  if (zoneId === "main") return MAIN_HALL_SPOT_PREFIX;
+  if (zoneId.startsWith("prefix:")) {
+    const labelled = zoneLabels?.[zoneId]?.trim();
+    if (labelled) {
+      const normalized = normalizeStationScreenSpotPrefix(labelled);
+      if (normalized) return normalized;
+    }
+    const fromId = zoneId.slice("prefix:".length);
+    return normalizeStationScreenSpotPrefix(fromId);
+  }
+  return null;
+}
+
 /** Limit KDS/BDS spot list to a zone when the screen has spotPrefix set. */
 export function filterVenueSpotsForScreen(
   spots: ScreenSpotInput[],

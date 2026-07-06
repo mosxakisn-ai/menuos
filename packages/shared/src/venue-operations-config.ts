@@ -189,12 +189,21 @@ function uniqueStations(stations: PassStationInput[]): PassStationInput[] {
 export function defaultVenuePosts(lang: "GR" | "EN" = "GR"): VenuePost[] {
   const labels =
     lang === "EN" ? DEFAULT_VENUE_POST_STATION_LABELS_EN : DEFAULT_VENUE_POST_STATION_LABELS_EL;
-  return (["kitchen", "bar"] as const).map((station) => ({
-    id: station,
-    label: labels[station],
-    enabled: true,
-    station,
-  }));
+  return [
+    ...( ["kitchen", "bar"] as const).map((station) => ({
+      id: station,
+      label: labels[station],
+      enabled: true,
+      station,
+    })),
+    {
+      id: "post-waiter",
+      label: labels.services,
+      enabled: true,
+      station: "services" as const,
+      zoneId: null,
+    },
+  ];
 }
 
 export function postsFromLegacy(
@@ -229,6 +238,28 @@ export function enabledVenuePosts(
   lang: "GR" | "EN" = "GR",
 ): VenuePost[] {
   return listVenuePosts(config, lang).filter((post) => post.enabled);
+}
+
+/** Enabled pass posts for one tablet station (kitchen, bar, …). */
+export function enabledPassPostsForStation(
+  config: VenueOperationsConfig | undefined,
+  station: PassStationInput,
+  lang: "GR" | "EN" = "GR",
+): VenuePost[] {
+  return enabledVenuePosts(config, lang).filter(
+    (post) => isVenuePassPostStation(post.station) && post.station === station,
+  );
+}
+
+/** Pass post shown under a KDS zone tab (no zoneId = all spaces). */
+export function venuePostMatchesZone(
+  post: Pick<VenuePost, "zoneId">,
+  zoneId: string | null | undefined,
+): boolean {
+  const assigned = post.zoneId?.trim();
+  if (!assigned) return true;
+  if (!zoneId?.trim()) return true;
+  return assigned === zoneId.trim();
 }
 
 export function syncLegacyFromPosts(
@@ -301,6 +332,14 @@ export function staffAssignableVenuePosts(
   return enabledVenuePosts(config, lang).filter(
     (post) => !isPlaceholderVenuePostLabel(post.label),
   );
+}
+
+/** Floor-waiter posts from Settings → Posts (type Σερβιτόρος / services). */
+export function waiterVenuePosts(
+  config: VenueOperationsConfig | undefined,
+  lang: "GR" | "EN" = "GR",
+): VenuePost[] {
+  return staffAssignableVenuePosts(config, lang).filter((post) => post.station === "services");
 }
 
 function stripJunkVenuePosts(posts: VenuePost[]): VenuePost[] {
@@ -459,6 +498,28 @@ export function passPushTitle(
   }
 }
 
+/** Messages tab editor: respect explicit post key (even empty); else legacy/fallback. */
+export function editorQuickChipsForPost(
+  config: VenueOperationsConfig | undefined,
+  postId: string,
+  lang: "GR" | "EN" = "GR",
+): string[] {
+  if (!config?.quickChips || !Object.prototype.hasOwnProperty.call(config.quickChips, postId)) {
+    return quickChipsForPost(config, postId, lang);
+  }
+  return config.quickChips[postId] ?? [];
+}
+
+/** True when this post has a saved override in quickChips (including explicit empty list). */
+export function postHasExplicitQuickChips(
+  config: VenueOperationsConfig | undefined,
+  postId: string,
+): boolean {
+  return Boolean(
+    config?.quickChips && Object.prototype.hasOwnProperty.call(config.quickChips, postId),
+  );
+}
+
 export function quickChipsForPost(
   config: VenueOperationsConfig | undefined,
   postId: string,
@@ -531,7 +592,9 @@ export function visibleMessagesForStaffAssignment(
   assignment: string,
   lang: "GR" | "EN" = "GR",
 ): StaffVisibleMessages {
-  if (assignment === "services" || assignment === "all") {
+  const posts = listVenuePosts(config, lang);
+  const post = posts.find((row) => row.id === assignment);
+  if (assignment === "services" || assignment === "all" || post?.station === "services") {
     const merged = mergeTableStateLabels(config, lang);
     const states = tableLegendStates(config);
     return { kind: "waiter_map", labels: states.map((state) => merged[state]) };

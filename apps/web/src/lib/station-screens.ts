@@ -6,6 +6,7 @@ import {
   isVenuePassPostStation,
   PASS_STATION_INPUTS,
   passStationInputToDb,
+  spotPrefixForVenuePost,
   staffAssignableVenuePosts,
   type PassStationInput,
   type VenueOperationsConfig,
@@ -149,7 +150,7 @@ export async function isStationScreenLabelTaken(
   return rows.some((row) => row.label.trim().toLowerCase() === normalized);
 }
 
-/** One tablet screen per pass post — label matches post name from Πόστα tab. */
+/** One tablet screen per pass post — label + spot filter match Πόστα tab. */
 export async function syncStationScreensFromPosts(
   venueId: string,
   config: VenueOperationsConfig,
@@ -177,32 +178,13 @@ export async function syncStationScreensFromPosts(
   for (const station of PASS_STATION_INPUTS) {
     const dbStation = passStationInputToDb(station);
     const postsForStation = postsByStation.get(station) ?? [];
+    const desiredLabels = new Set(postsForStation.map((post) => post.label.trim()));
+
     let existing = await prisma.venueStationScreen.findMany({
       where: { venueId, station: dbStation },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
-    if (
-      postsForStation.length > 0 &&
-      postsForStation.length === existing.length
-    ) {
-      for (let i = 0; i < postsForStation.length; i++) {
-        const desiredLabel = postsForStation[i]!.label.trim();
-        const screen = existing[i]!;
-        if (screen.label.trim() !== desiredLabel) {
-          await prisma.venueStationScreen.update({
-            where: { id: screen.id },
-            data: { label: desiredLabel },
-          });
-        }
-      }
-      existing = await prisma.venueStationScreen.findMany({
-        where: { venueId, station: dbStation },
-        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-      });
-    }
-
-    const desiredLabels = new Set(postsForStation.map((post) => post.label.trim()));
     for (const screen of existing) {
       if (!desiredLabels.has(screen.label.trim())) {
         await prisma.venueStationScreen.delete({ where: { id: screen.id } });
@@ -213,36 +195,44 @@ export async function syncStationScreensFromPosts(
       where: { venueId, station: dbStation },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
-    const existingLabels = new Set(existing.map((row) => row.label.trim()));
-    let screenCount = existing.length;
 
-    for (const post of postsForStation) {
+    for (let index = 0; index < postsForStation.length; index++) {
+      const post = postsForStation[index]!;
       const label = post.label.trim();
-      if (existingLabels.has(label)) continue;
+      const spotPrefix = spotPrefixForVenuePost(post, config.zoneLabels);
+      const match = existing.find((row) => row.label.trim() === label);
 
-      const screenToken =
-        screenCount === 0
-          ? legacyVenueScreenToken(venueRow, station)
-          : randomUUID();
-      const sortOrder = await nextStationScreenSortOrder(venueId, dbStation);
+      if (match) {
+        if (match.spotPrefix !== spotPrefix || match.sortOrder !== index) {
+          await prisma.venueStationScreen.update({
+            where: { id: match.id },
+            data: { spotPrefix, sortOrder: index },
+          });
+        }
+        continue;
+      }
 
-      await prisma.venueStationScreen.create({
+      const isFirstForStation = existing.length === 0;
+      const screenToken = isFirstForStation
+        ? legacyVenueScreenToken(venueRow, station)
+        : randomUUID();
+
+      const created = await prisma.venueStationScreen.create({
         data: {
           venueId,
           station: dbStation,
           label,
-          spotPrefix: null,
+          spotPrefix,
           screenToken,
-          sortOrder,
+          sortOrder: index,
         },
       });
 
-      if (screenCount === 0) {
+      existing = [...existing, created];
+
+      if (isFirstForStation) {
         await syncLegacyVenueToken(venueId, station, screenToken);
       }
-
-      existingLabels.add(label);
-      screenCount += 1;
     }
   }
 }

@@ -8,6 +8,7 @@ import {
   enabledVenuePosts,
   getPostMessageColor,
   groupVenueSpotsByZone,
+  isVenuePassPostStation,
   listVenuePosts,
   pickStationScreenForStaffAssignment,
   resolveStaffAssignmentToPassInput,
@@ -19,8 +20,11 @@ import {
   staffPostRequiresZoneAssignment,
   staffPostStationSubtitle,
   staffPrimaryAssignment,
+  staffScreenDeviceForAssignment,
+  waiterVenuePosts,
   visibleMessagesForStaffAssignment,
   type PassStationInput,
+  type StaffScreenDevice,
   type VenueOperationsConfig,
   type VenuePost,
 } from "@menuos/shared";
@@ -363,11 +367,13 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [zoneId, setZoneId] = useState("");
-  const [postAssignment, setPostAssignment] = useState("services");
+  const [postAssignment, setPostAssignment] = useState("all");
+  const [screenDevice, setScreenDevice] = useState<StaffScreenDevice>("mobile");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editZoneId, setEditZoneId] = useState("");
-  const [editPostAssignment, setEditPostAssignment] = useState("services");
+  const [editPostAssignment, setEditPostAssignment] = useState("all");
+  const [editScreenDevice, setEditScreenDevice] = useState<StaffScreenDevice>("mobile");
   const [busy, setBusy] = useState<string | null>(null);
   const [screensByStation, setScreensByStation] = useState<StaffScreensByStation>({});
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -391,12 +397,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   useEffect(() => {
     if (zoneGroups.length === 0) return;
     if (staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zoneId) {
-      setZoneId(zoneGroups[0]!.id);
+      setZoneId("all");
     }
-  }, [zoneGroups, postAssignment, zoneId]);
+  }, [zoneGroups, postAssignment, zoneId, venuePosts]);
 
   function zoneLabel(id: string | null | undefined): string {
-    if (!id) return S.colSpaceAll;
+    if (!id || id === "all") return S.colSpaceAll;
     return zoneGroups.find((z) => z.id === id)?.label ?? id;
   }
 
@@ -408,18 +414,73 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
   function messageScopeForPost(post: string): string | null {
     if (post === "services" || post === "all") return null;
+    const venuePost = venuePosts.find((row) => row.id === post);
+    if (venuePost?.station === "services") return null;
     if (enabledPosts.some((row) => row.id === post)) return post;
     return null;
   }
 
-  function postOptions(): Array<{ id: string; label: string }> {
-    return [
-      { id: "services", label: staffPostPickerLabel("services", langCode, assignablePosts) },
-      ...assignablePosts.map((post) => ({
+  const waiterPostOptions = useMemo(
+    () =>
+      waiterVenuePosts(opsConfig ?? undefined, langCode).map((post) => ({
         id: post.id,
-        label: staffPostPickerLabel(post.id, langCode, assignablePosts),
+        label: post.label.trim(),
       })),
-    ];
+    [opsConfig, langCode],
+  );
+
+  const kdsPostOptions = useMemo(
+    () =>
+      assignablePosts
+        .filter((post) => isVenuePassPostStation(post.station))
+        .map((post) => ({
+          id: post.id,
+          label: staffPostPickerLabel(post.id, langCode, assignablePosts),
+        })),
+    [assignablePosts, langCode],
+  );
+
+  const mobilePostOptions = useMemo(
+    () => [
+      { id: "all", label: staffPostPickerLabel("all", langCode, assignablePosts) },
+      ...waiterPostOptions,
+    ],
+    [waiterPostOptions, assignablePosts, langCode],
+  );
+
+  function postOptionsForScreen(device: StaffScreenDevice): Array<{ id: string; label: string }> {
+    return device === "kds" ? kdsPostOptions : mobilePostOptions;
+  }
+
+  function firstWaiterPostId(): string | null {
+    return waiterPostOptions[0]?.id ?? null;
+  }
+
+  function firstKdsPostId(): string | null {
+    return kdsPostOptions[0]?.id ?? null;
+  }
+
+  function applyScreenDeviceChange(
+    device: StaffScreenDevice,
+    currentPost: string,
+    currentZone: string,
+    setPost: (post: string) => void,
+    setZone: (zone: string) => void,
+  ) {
+    if (device === "mobile") {
+      if (staffAssignmentLinkKind(currentPost, venuePosts) === "pass") {
+        setPost(firstWaiterPostId() ?? "all");
+        if (!currentZone) setZone("all");
+      }
+      return;
+    }
+    if (staffAssignmentLinkKind(currentPost, venuePosts) !== "pass") {
+      const first = firstKdsPostId();
+      if (first) {
+        setPost(first);
+        setZone("");
+      }
+    }
   }
 
   function roleLabelFromPost(assignment: string): string {
@@ -525,7 +586,8 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setName("");
-        setPostAssignment("services");
+        setPostAssignment(firstWaiterPostId() ?? "all");
+        setScreenDevice("mobile");
         setZoneId("");
         await reload();
         notifyLive360Updated();
@@ -537,10 +599,14 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
 
   function startEdit(member: StaffMember) {
     const assignment = staffPrimaryAssignment(member.stations);
+    const device = staffScreenDeviceForAssignment(assignment, venuePosts);
     setEditingId(member.id);
     setEditName(member.name);
-    setEditZoneId(staffPostRequiresZoneAssignment(assignment, venuePosts) ? (member.zoneId ?? "") : "");
+    setEditZoneId(
+      staffPostRequiresZoneAssignment(assignment, venuePosts) ? (member.zoneId ?? "all") : "",
+    );
     setEditPostAssignment(assignment);
+    setEditScreenDevice(device === "kds" ? "kds" : "mobile");
   }
 
   async function saveEdit(memberId: string) {
@@ -616,14 +682,19 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
       name: string;
       zone: string;
       post: string;
+      screen: StaffScreenDevice;
     },
     onChange: {
       setName: (v: string) => void;
       setZone: (v: string) => void;
       setPost: (v: string) => void;
+      setScreen: (v: StaffScreenDevice) => void;
     },
   ) {
     const chipsScope = messageScopeForPost(values.post);
+    const postOptions = postOptionsForScreen(values.screen);
+    const kdsUnavailable = values.screen === "kds" && kdsPostOptions.length === 0;
+    const waiterPostsMissing = values.screen === "mobile" && waiterPostOptions.length === 0;
     return (
       <>
         <td className="px-3 py-2 align-top">
@@ -643,9 +714,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
             className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
           >
             {staffPostRequiresZoneAssignment(values.post, venuePosts) ? (
-              <option value="" disabled>
-                {S.selectSpacePlaceholder}
-              </option>
+              <>
+                <option value="" disabled>
+                  {S.selectSpacePlaceholder}
+                </option>
+                <option value="all">{S.colSpaceAll}</option>
+              </>
             ) : (
               <option value="">{S.colSpaceAll}</option>
             )}
@@ -658,26 +732,47 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         </td>
         <td className="px-3 py-2 align-top">
           <select
-            value={values.post}
+            value={postOptions.some((option) => option.id === values.post) ? values.post : ""}
             required
+            disabled={kdsUnavailable}
             onChange={(e) => {
               const next = e.target.value;
               onChange.setPost(next);
+              const device = staffScreenDeviceForAssignment(next, venuePosts);
+              if (device === "mobile" || device === "kds") onChange.setScreen(device);
               if (staffPostRequiresZoneAssignment(next, venuePosts)) {
-                if (!values.zone && zoneGroups[0]) onChange.setZone(zoneGroups[0]!.id);
+                if (!values.zone) onChange.setZone("all");
               } else {
                 onChange.setZone("");
               }
             }}
             className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
           >
-            {postOptions().map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
+            {postOptions.length === 0 ? (
+              <option value="">{S.noKdsPosts}</option>
+            ) : (
+              postOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))
+            )}
           </select>
-          {chipsScope ? (
+          {kdsUnavailable ? (
+            <p className="mt-1 text-[10px] text-amber-700">
+              {S.noKdsPosts}{" "}
+              <Link href="/dashboard/settings?tab=posts" className="font-semibold underline">
+                →
+              </Link>
+            </p>
+          ) : waiterPostsMissing && values.post !== "all" ? (
+            <p className="mt-1 text-[10px] text-amber-700">
+              {S.noWaiterPosts}{" "}
+              <Link href="/dashboard/settings?tab=posts" className="font-semibold underline">
+                →
+              </Link>
+            </p>
+          ) : chipsScope ? (
             <>
               <p className="mt-1 text-[10px] font-medium text-slate-500">{S.messagesScopeTablet}</p>
               <StaffMessagesChips
@@ -688,9 +783,29 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                 emptyHint={S.messagesPreviewEmpty}
               />
             </>
-          ) : (
+          ) : values.post === "all" ? (
+            <p className="mt-1.5 text-[10px] leading-snug text-slate-400">{S.messagesScopeAll}</p>
+          ) : values.screen === "mobile" ? (
             <p className="mt-1.5 text-[10px] leading-snug text-slate-400">{S.messagesScopeWaiter}</p>
-          )}
+          ) : null}
+        </td>
+        <td className="px-3 py-2 align-top">
+          <select
+            value={values.screen}
+            required
+            onChange={(e) => {
+              const next = e.target.value as StaffScreenDevice;
+              onChange.setScreen(next);
+              applyScreenDeviceChange(next, values.post, values.zone, onChange.setPost, onChange.setZone);
+            }}
+            className={`${dashboardFieldClass} w-full min-w-[9rem] text-sm`}
+          >
+            <option value="mobile">{S.screenMobile}</option>
+            <option value="kds">{S.screenKds}</option>
+          </select>
+          <p className="mt-1 text-[10px] leading-snug text-slate-400">
+            {values.screen === "mobile" ? S.screenMobileHint : S.screenKdsHint}
+          </p>
         </td>
       </>
     );
@@ -751,6 +866,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       <th className="px-3 py-2.5">{S.colName}</th>
                       <th className="px-3 py-2.5">{S.colSpaceRequired}</th>
                       <th className="px-3 py-2.5">{S.colPostRequired}</th>
+                      <th className="px-3 py-2.5">{S.colScreenRequired}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -760,11 +876,13 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                           name,
                           zone: zoneId,
                           post: postAssignment,
+                          screen: screenDevice,
                         },
                         {
                           setName,
                           setZone: setZoneId,
                           setPost: setPostAssignment,
+                          setScreen: setScreenDevice,
                         },
                       )}
                     </tr>
@@ -779,7 +897,9 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                   disabled={
                     busy !== null ||
                     !name.trim() ||
-                    (staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zoneId)
+                    (staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zoneId) ||
+                    (screenDevice === "kds" && kdsPostOptions.length === 0) ||
+                    !postAssignment
                   }
                   className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "md")}`}
                 >
@@ -802,12 +922,13 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           <p className="mt-4 text-sm text-slate-500">{S.empty}</p>
         ) : (
           <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200/90">
-              <table className="w-full min-w-[52rem] text-sm">
+              <table className="w-full min-w-[58rem] text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    <th className="w-[14%] px-4 py-3">{S.colName}</th>
-                    <th className="w-[12%] px-4 py-3">{S.colSpaceRequired}</th>
-                    <th className="min-w-[10rem] px-4 py-3">{S.colPostRequired}</th>
+                    <th className="w-[12%] px-4 py-3">{S.colName}</th>
+                    <th className="w-[11%] px-4 py-3">{S.colSpaceRequired}</th>
+                    <th className="min-w-[9rem] px-4 py-3">{S.colPostRequired}</th>
+                    <th className="w-[11%] px-4 py-3">{S.colScreen}</th>
                     <th className="w-[7.25rem] px-4 py-3 text-center">{S.colLink}</th>
                     <th className="w-[5.5rem] px-4 py-3 text-center">{S.colActions}</th>
                   </tr>
@@ -825,11 +946,13 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                               name: editName,
                               zone: editZoneId,
                               post: editPostAssignment,
+                              screen: editScreenDevice,
                             },
                             {
                               setName: setEditName,
                               setZone: setEditZoneId,
                               setPost: setEditPostAssignment,
+                              setScreen: setEditScreenDevice,
                             },
                           )}
                           <td className="px-4 py-3 align-top text-right" colSpan={2}>
@@ -848,7 +971,9 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                                   isBusy ||
                                   !editName.trim() ||
                                   (staffPostRequiresZoneAssignment(editPostAssignment, venuePosts) &&
-                                    !editZoneId)
+                                    !editZoneId) ||
+                                  (editScreenDevice === "kds" && kdsPostOptions.length === 0) ||
+                                  !editPostAssignment
                                 }
                                 onClick={() => void saveEdit(member.id)}
                                 className={`inline-flex items-center gap-1 ${buttonClass("primary", "sm")}`}
@@ -868,6 +993,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       langCode,
                       venuePosts,
                     );
+                    const memberScreen = staffScreenDeviceForAssignment(primaryPost, venuePosts);
                     const assignmentInvalid =
                       member.stations.length === 0 ||
                       staffAssignmentLinkKind(primaryPost, venuePosts) === "invalid";
@@ -896,22 +1022,21 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                             </p>
                           ) : null}
                           {chipsScope ? (
-                            <>
-                              <p className="mt-1 text-[10px] font-medium text-slate-500">
-                                {S.messagesScopeTablet}
-                              </p>
-                              <StaffMessagesChips
-                                config={opsConfig}
-                                scopeId={chipsScope}
-                                langCode={langCode}
-                                compact
-                              />
-                            </>
-                          ) : (
-                            <p className="mt-1 text-[10px] leading-snug text-slate-400">
-                              {S.messagesScopeWaiter}
-                            </p>
-                          )}
+                            <StaffMessagesChips
+                              config={opsConfig}
+                              scopeId={chipsScope}
+                              langCode={langCode}
+                              compact
+                            />
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-3 align-middle text-slate-600">
+                          <p className="font-medium text-brand-navy">
+                            {memberScreen === "kds" ? S.screenKds : S.screenMobile}
+                          </p>
+                          <p className="mt-0.5 text-[10px] leading-snug text-slate-400">
+                            {memberScreen === "kds" ? S.screenKdsHint : S.screenMobileHint}
+                          </p>
                         </td>
                         <td className="px-4 py-3 align-middle text-center">
                           {venue?.slug ? (

@@ -151,14 +151,33 @@ export function resolveStaffAssignmentToPassInput(
 export function staffPrimaryAssignment(stations: string[]): string {
   const normalized = normalizeLegacyStaffStations(stations);
   if (normalized.length === 0) return "";
+  if (normalized.includes("all")) return "all";
   if (normalized.includes("services")) return "services";
   return normalized[0] ?? "";
 }
 
-/** Legacy «all» → services (floor staff with guest calls). */
+/** Drop empty station ids; keep «all» and other assignments as stored. */
 export function normalizeLegacyStaffStations(stations: string[]): string[] {
-  if (stations.length === 1 && stations[0] === "all") return ["services"];
-  return stations.filter((s) => s !== "all");
+  return stations.filter((s) => s.length > 0);
+}
+
+/** Map legacy «services» token to the first waiter post from Settings → Posts. */
+export function migrateStaffAssignmentFromLegacy(
+  assignment: string,
+  posts: VenuePost[],
+): string {
+  if (assignment !== "services") return assignment;
+  const waiterPost = posts.find((post) => post.enabled && post.station === "services");
+  return waiterPost?.id ?? assignment;
+}
+
+export function migrateStaffStationsFromLegacy(
+  stations: string[],
+  posts: VenuePost[],
+): string[] {
+  return normalizeLegacyStaffStations(stations).map((station) =>
+    migrateStaffAssignmentFromLegacy(station, posts),
+  );
 }
 
 export function staffAssignmentsFromPrimary(assignment: string): string[] {
@@ -172,6 +191,9 @@ export function staffAssignmentLabelForLang(
 ): string {
   if (assignment === "services") {
     return staffPostPickerLabel("services", lang, posts);
+  }
+  if (assignment === "all") {
+    return staffPostPickerLabel("all", lang, posts);
   }
   if (isStaffSpecialOption(assignment)) {
     return staffStationLabelForLang(assignment, lang);
@@ -191,10 +213,14 @@ export function staffPostPickerLabel(
   posts?: VenuePost[],
 ): string {
   if (assignment === "services") {
-    return lang === "EN" ? "Waiter — phone (floor)" : "Σερβιτόρος — δάπεδο (κινητό)";
+    const migrated = migrateStaffAssignmentFromLegacy("services", posts ?? []);
+    if (migrated !== "services") {
+      return posts?.find((row) => row.id === migrated)?.label.trim() ?? migrated;
+    }
+    return lang === "EN" ? "Waiter (add in Posts tab)" : "Σερβιτόρος (πρόσθεσε στο tab Πόστα)";
   }
   if (assignment === "all") {
-    return staffStationLabelForLang("all", lang);
+    return lang === "EN" ? "All — everywhere" : "Όλα — παντού";
   }
   const post = posts?.find((row) => row.id === assignment);
   if (post) {
@@ -211,7 +237,10 @@ export function staffPostStationSubtitle(
   lang: "GR" | "EN" = "GR",
   posts?: VenuePost[],
 ): string | null {
-  if (assignment === "services" || assignment === "all") return null;
+  if (assignment === "services") return null;
+  if (assignment === "all") {
+    return lang === "EN" ? "All posts & spaces · phone" : "Όλα τα πόστα & χώροι · κινητό";
+  }
   const post = posts?.find((row) => row.id === assignment);
   if (!post) return null;
   if (post.station === "services") {
@@ -360,6 +389,7 @@ export function normalizeStaffMemberZoneId(
 ): string | null {
   if (!staffPostRequiresZoneAssignment(assignment, posts)) return null;
   const trimmed = zoneId?.trim();
+  if (trimmed === "all") return "all";
   return trimmed || null;
 }
 
@@ -383,6 +413,19 @@ export function pickStationScreenForStaffAssignment(
 }
 
 export type StaffAssignmentLinkKind = "waiter" | "pass" | "invalid";
+
+export type StaffScreenDevice = "mobile" | "kds";
+
+/** Phone waiter link vs KDS/BDS tablet — derived from post assignment. */
+export function staffScreenDeviceForAssignment(
+  assignment: string,
+  posts: VenuePost[],
+): StaffScreenDevice | "invalid" {
+  const kind = staffAssignmentLinkKind(assignment, posts);
+  if (kind === "waiter") return "mobile";
+  if (kind === "pass") return "kds";
+  return "invalid";
+}
 
 /** What link type this assignment expects (waiter / tablet / invalid removed post). */
 export function staffAssignmentLinkKind(

@@ -240,6 +240,10 @@ export function WaiterPanel({
 
   useEffect(() => {
     if (!initialZoneId || zoneGroups.length === 0) return;
+    if (initialZoneId.trim() === "all") {
+      setZoneFilterId("all");
+      return;
+    }
     if (zoneGroups.some((zone) => zone.id === initialZoneId)) {
       setZoneFilterId(initialZoneId);
     }
@@ -247,15 +251,19 @@ export function WaiterPanel({
 
   /** Locked when staff has a zone or the share link/QR includes ?zone= (not manager panel). */
   const assignedZoneId = useMemo(() => {
-    if (!initialZoneId?.trim()) return null;
+    const raw = initialZoneId?.trim();
+    if (!raw || raw === "all") return null;
     if (!staffMember && !staffViaCookie && !staffKey) return null;
-    const id = initialZoneId.trim();
-    return zoneGroups.some((zone) => zone.id === id) ? id : null;
+    return zoneGroups.some((zone) => zone.id === raw) ? raw : null;
   }, [staffMember, staffViaCookie, staffKey, initialZoneId, zoneGroups]);
 
   useEffect(() => {
+    if (initialZoneId?.trim() === "all") {
+      setZoneFilterId("all");
+      return;
+    }
     if (assignedZoneId) setZoneFilterId(assignedZoneId);
-  }, [assignedZoneId]);
+  }, [assignedZoneId, initialZoneId]);
 
   const assignedZoneLabel = useMemo(
     () => zoneGroups.find((zone) => zone.id === assignedZoneId)?.label ?? null,

@@ -308,6 +308,9 @@ export const MessageChipList = forwardRef<
                   addItem();
                 }
               }}
+              onBlur={() => {
+                if (draft.trim()) addItem();
+              }}
               placeholder={placeholder}
               maxLength={60}
               className={

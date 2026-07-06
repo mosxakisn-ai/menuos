@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  migrateStaffAssignmentFromLegacy,
+  migrateStaffStationsFromLegacy,
   normalizeStaffMemberZoneId,
   passDbStationsForStaffMember,
   passSignalVisibleToStaffMember,
@@ -12,6 +14,7 @@ import {
   staffAssignmentLinkKind,
   staffPostPickerLabel,
   staffPrimaryAssignment,
+  staffScreenDeviceForAssignment,
   validateStaffMessageScope,
   waiterCallsVisibleToStaffMember,
 } from "./venue-staff-member";
@@ -150,6 +153,22 @@ describe("sanitizeStaffMessageScope", () => {
   });
 });
 
+describe("migrateStaffAssignmentFromLegacy", () => {
+  const posts = [
+    { id: "post-waiter", label: "Services Σάλα", enabled: true, station: "services" as const },
+    { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+  ];
+
+  it("maps legacy services to first waiter post", () => {
+    expect(migrateStaffAssignmentFromLegacy("services", posts)).toBe("post-waiter");
+    expect(migrateStaffAssignmentFromLegacy("kitchen", posts)).toBe("kitchen");
+  });
+
+  it("keeps services when no waiter post exists", () => {
+    expect(migrateStaffAssignmentFromLegacy("services", [])).toBe("services");
+  });
+});
+
 describe("normalizeStaffMemberZoneId", () => {
   it("clears zone for pass posts", () => {
     expect(normalizeStaffMemberZoneId("kitchen", "prefix:main")).toBeNull();
@@ -159,6 +178,8 @@ describe("normalizeStaffMemberZoneId", () => {
   it("keeps zone for waiters", () => {
     expect(normalizeStaffMemberZoneId("services", "prefix:main")).toBe("prefix:main");
     expect(normalizeStaffMemberZoneId("services", "")).toBeNull();
+    expect(normalizeStaffMemberZoneId("all", "all")).toBe("all");
+    expect(normalizeStaffMemberZoneId("services", "all")).toBe("all");
   });
 });
 
@@ -196,8 +217,8 @@ describe("staffAssignmentLinkKind", () => {
     { id: "old", label: "Old", enabled: false, station: "bar" as const },
   ];
 
-  it("maps legacy all assignment to services primary", () => {
-    expect(staffPrimaryAssignment(["all"])).toBe("services");
+  it("keeps all as primary assignment", () => {
+    expect(staffPrimaryAssignment(["all"])).toBe("all");
   });
 
   it("returns empty primary when no stations assigned", () => {
@@ -207,6 +228,12 @@ describe("staffAssignmentLinkKind", () => {
   it("classifies waiter and pass", () => {
     expect(staffAssignmentLinkKind("services", posts)).toBe("waiter");
     expect(staffAssignmentLinkKind("kitchen", posts)).toBe("pass");
+  });
+
+  it("maps screen device from assignment", () => {
+    expect(staffScreenDeviceForAssignment("services", posts)).toBe("mobile");
+    expect(staffScreenDeviceForAssignment("kitchen", posts)).toBe("kds");
+    expect(staffScreenDeviceForAssignment("missing", posts)).toBe("invalid");
   });
 
   it("marks disabled or unknown posts invalid", () => {

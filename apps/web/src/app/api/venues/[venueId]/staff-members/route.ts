@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@menuos/db";
-import { venueStaffMemberCreateSchema, listVenuePosts, normalizeLegacyStaffStations, normalizeStaffMemberZoneId, staffPostRequiresZoneAssignment, staffPrimaryAssignment, validateStaffAssignments, validateStaffMessageScope, zodFirstErrorMessage } from "@menuos/shared";
+import { venueStaffMemberCreateSchema, listVenuePosts, migrateStaffStationsFromLegacy, normalizeLegacyStaffStations, normalizeStaffMemberZoneId, staffPostRequiresZoneAssignment, staffPrimaryAssignment, validateStaffAssignments, validateStaffMessageScope, zodFirstErrorMessage } from "@menuos/shared";
 import { requireLive360Plan } from "@/lib/api-auth";
 import { canManageVenueSecrets } from "@/lib/dashboard-roles";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
@@ -46,12 +46,15 @@ export async function GET(_req: Request, { params }: Params) {
 
   const memberFixes: Promise<unknown>[] = [];
   const normalizedMembers = members.map((member) => {
-    const stations = normalizeLegacyStaffStations(member.stations);
-    const zoneId = normalizeStaffMemberZoneId(
-      staffPrimaryAssignment(stations),
-      member.zoneId,
+    const stations = migrateStaffStationsFromLegacy(
+      normalizeLegacyStaffStations(member.stations),
       posts,
     );
+    const primary = staffPrimaryAssignment(stations);
+    let zoneId = normalizeStaffMemberZoneId(primary, member.zoneId, posts);
+    if (staffPostRequiresZoneAssignment(primary, posts) && !zoneId) {
+      zoneId = "all";
+    }
     const stationsChanged =
       stations.length !== member.stations.length ||
       stations.some((station, index) => station !== member.stations[index]);
@@ -113,11 +116,12 @@ export async function POST(request: Request, { params }: Params) {
   const primaryPost = parsed.data.stations[0] ?? "services";
   if (staffPostRequiresZoneAssignment(primaryPost, posts) && !parsed.data.zoneId) {
     return NextResponse.json(
-      { error: "Ο σερβιτόρος χρειάζεται συγκεκριμένο χώρο (π.χ. Σάλα ή Αυλή)." },
+      { error: "Επίλεξε χώρο — π.χ. Σάλα, Αυλή ή «Όλοι οι χώροι»." },
       { status: 400 },
     );
   }
   const zoneId = normalizeStaffMemberZoneId(primaryPost, parsed.data.zoneId, posts);
+  const stations = migrateStaffStationsFromLegacy(parsed.data.stations, posts);
 
   const count = await prisma.venueStaffMember.count({ where: { venueId } });
   if (count >= 80) {
@@ -136,7 +140,7 @@ export async function POST(request: Request, { params }: Params) {
       roleLabel: parsed.data.roleLabel,
       zoneId,
       messageScope: parsed.data.messageScope,
-      stations: parsed.data.stations,
+      stations,
       memberToken: randomUUID(),
       sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
     },
