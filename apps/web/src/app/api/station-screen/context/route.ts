@@ -2,14 +2,18 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import type { PassStationInput } from "@menuos/shared";
 import {
+  enabledKdsPostsAll,
   enabledPassPostsAll,
   enabledPassPostsForStation,
+  enabledSupportPostsAll,
   enabledVenuePosts,
   filterVenueSpotsForScreen,
   getPostMessageColor,
+  isPassScreenStationEnabled,
   isPrimaryStationScreen,
   mergeQuickChipLabels,
   passLocationMatchesScreenSpotPrefix,
+  passScreenToPostStation,
   passSignalStationScreenWhere,
   passStationInputSchema,
   passStationInputToDb,
@@ -51,7 +55,7 @@ export async function GET(request: Request) {
   await expireStaleActivePassSignals({ venueId: auth.venue.id });
 
   const opsConfig = await getVenueOperationsConfig(auth.venue.id);
-  if (!opsConfig.enabledStations.includes(station)) {
+  if (!isPassScreenStationEnabled(opsConfig, station)) {
     return NextResponse.json({ error: "Το τμήμα δεν είναι ενεργό για αυτό το κατάστημα." }, { status: 403 });
   }
 
@@ -83,7 +87,7 @@ export async function GET(request: Request) {
         isPrimaryScreen: isPrimary,
       });
 
-  const dbStation = passStationInputToDb(station);
+  const dbStation = passStationInputToDb(passScreenToPostStation(station));
   const allPassDbStations: Array<"KITCHEN" | "BAR" | "COLD" | "DESSERT"> = [
     "KITCHEN",
     "BAR",
@@ -167,7 +171,7 @@ export async function GET(request: Request) {
     lang: "GR",
   });
 
-  const stationPosts = stationPostsRaw.map((post) => {
+  const mapPostOption = (post: (typeof enabledPosts)[number]) => {
     const index = enabledPosts.findIndex((row) => row.id === post.id);
     return {
       id: post.id,
@@ -177,21 +181,17 @@ export async function GET(request: Request) {
       quickComments: quickChipsForPost(opsConfig, post.id, "GR"),
       messageColor: getPostMessageColor(opsConfig, post.id, index >= 0 ? index : 0),
     };
-  });
+  };
 
-  const allKdsPostsRaw = enabledPassPostsAll(opsConfig, "GR");
-  const allKdsPosts = allKdsPostsRaw.map((post) => {
-    const index = enabledPosts.findIndex((row) => row.id === post.id);
-    return {
-      id: post.id,
-      label: post.label.trim(),
-      zoneId: post.zoneId ?? null,
-      station: post.station,
-      quickComments: quickChipsForPost(opsConfig, post.id, "GR"),
-      messageColor: getPostMessageColor(opsConfig, post.id, index >= 0 ? index : 0),
-    };
-  });
-  const allQuickComments = mergeQuickChipLabels(...allKdsPosts.map((post) => post.quickComments));
+  const stationPosts = stationPostsRaw.map(mapPostOption);
+
+  const allKdsPosts = enabledPassPostsAll(opsConfig, "GR").map(mapPostOption);
+  const supportKdsPosts = enabledSupportPostsAll(opsConfig, "GR").map(mapPostOption);
+  const allQuickComments = mergeQuickChipLabels(
+    ...enabledKdsPostsAll(opsConfig, "GR").map((post) =>
+      quickChipsForPost(opsConfig, post.id, "GR"),
+    ),
+  );
 
   return NextResponse.json({
     venueId: auth.venue.id,
@@ -206,6 +206,7 @@ export async function GET(request: Request) {
     messageColor,
     stationPosts,
     allKdsPosts,
+    supportKdsPosts,
     allQuickComments,
     spots: filtered,
     activeSignals,

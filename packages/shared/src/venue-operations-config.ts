@@ -276,14 +276,32 @@ export function enabledVenuePosts(
   return listVenuePosts(config, lang).filter((post) => post.enabled);
 }
 
+/** Map legacy cold/dessert screen URLs to kitchen/bar pass stations. */
+export function passScreenToPostStation(station: PassStationInput): PassStationInput {
+  if (station === "cold") return "kitchen";
+  if (station === "dessert") return "bar";
+  return station;
+}
+
+/** Whether this tablet screen station is enabled (cold → kitchen, dessert → bar). */
+export function isPassScreenStationEnabled(
+  config: VenueOperationsConfig | undefined,
+  station: PassStationInput,
+): boolean {
+  if (!config) return false;
+  const postStation = passScreenToPostStation(station);
+  return config.enabledStations.includes(postStation as PassStationInput);
+}
+
 /** Enabled pass posts for one tablet station (kitchen, bar, …). */
 export function enabledPassPostsForStation(
   config: VenueOperationsConfig | undefined,
   station: PassStationInput,
   lang: "GR" | "EN" = "GR",
 ): VenuePost[] {
+  const postStation = passScreenToPostStation(station);
   return enabledVenuePosts(config, lang).filter(
-    (post) => isVenuePassPostStation(post.station) && post.station === station,
+    (post) => isVenuePassPostStation(post.station) && post.station === postStation,
   );
 }
 
@@ -301,6 +319,16 @@ export function enabledKdsPostsAll(
   lang: "GR" | "EN" = "GR",
 ): VenuePost[] {
   return enabledVenuePosts(config, lang).filter((post) => isVenueKdsPostStation(post.station));
+}
+
+/** Enabled support tablet posts (λάντζα, καθαριότητα, γενικά). */
+export function enabledSupportPostsAll(
+  config: VenueOperationsConfig | undefined,
+  lang: "GR" | "EN" = "GR",
+): VenuePost[] {
+  return enabledVenuePosts(config, lang).filter((post) =>
+    isVenueSupportPostStation(post.station),
+  );
 }
 
 /** Merge quick-message labels from several posts (dedupe, keep order). */

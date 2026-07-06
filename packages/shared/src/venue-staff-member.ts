@@ -485,16 +485,23 @@ export function staffPostOptionsForJobRole(
     ];
   }
   const passPosts = posts.filter((post) => post.enabled && isVenuePassPostStation(post.station));
+  const supportPosts = posts.filter(
+    (post) => post.enabled && isVenueSupportPostStation(post.station),
+  );
   const kdsPosts = posts.filter((post) => post.enabled && isVenueKdsPostStation(post.station));
   if (kdsPosts.length === 0) return [];
-  const mapped = kdsPosts.map((post) => ({
-    id: post.id,
-    label: staffPostPickerLabel(post.id, lang, posts),
-  }));
-  if (passPosts.length === 0) return mapped;
+  if (passPosts.length === 0) {
+    return supportPosts.map((post) => ({
+      id: post.id,
+      label: staffPostPickerLabel(post.id, lang, posts),
+    }));
+  }
   return [
     { id: "pass-all", label: staffPostPickerLabel("pass-all", lang, posts) },
-    ...mapped,
+    ...passPosts.map((post) => ({
+      id: post.id,
+      label: staffPostPickerLabel(post.id, lang, posts),
+    })),
   ];
 }
 

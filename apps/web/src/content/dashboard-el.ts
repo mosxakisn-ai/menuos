@@ -494,6 +494,10 @@ export const DASHBOARD_EL = {
     zonePickHeading: "Διάλεξε χώρο",
     zoneSpotCount: (n: number) => (n === 1 ? "1 θέση" : `${n} θέσεις`),
     zoneActiveCount: (n: number) => (n === 1 ? "1 ενεργό" : `${n} ενεργά`),
+    unmappedActiveHint: (n: number) =>
+      n === 1
+        ? "1 κλήση/μήνυμα χωρίς σαφή χώρο — δες «Όλοι οι χώροι» ή έλεγξε τον αριθμό τραπεζιού."
+        : `${n} κλήσεις/μηνύματα χωρίς σαφή χώρο — δες «Όλοι οι χώροι» ή έλεγξε τους αριθμούς τραπεζιών.`,
     emptyZoneView: "Καμία θέση ή κίνηση σε αυτόν τον χώρο αυτή τη στιγμή.",
     pendingCount: (n: number) => `${n} σε αναμονή`,
     activeCount: (n: number) => (n === 1 ? "1 ενεργό" : `${n} ενεργά`),

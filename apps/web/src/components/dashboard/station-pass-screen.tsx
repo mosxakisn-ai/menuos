@@ -8,7 +8,9 @@ import {
   formatWaiterCallLocation,
   groupVenueSpotsByZone,
   isVenuePassPostStation,
+  isVenueSupportPostStation,
   mergeQuickChipLabels,
+  passScreenToPostStation,
   pickDefaultZoneId,
   type PassStationInput,
   type VenuePostStationInput,
@@ -51,6 +53,7 @@ type ScreenContext = {
   messageColor?: string | null;
   stationPosts?: StationPostOption[];
   allKdsPosts?: StationPostOption[];
+  supportKdsPosts?: StationPostOption[];
   allQuickComments?: string[];
   allPosts?: boolean;
   spots: ScreenSpot[];
@@ -171,7 +174,33 @@ function passStationForSend(
   if (activePost && isVenuePassPostStation(activePost.station)) {
     return activePost.station;
   }
-  return fallback;
+  return passScreenToPostStation(fallback);
+}
+
+/** Prefix support-post messages so waiters see which station sent them. */
+function formatPassMessageForSend(
+  messageText: string,
+  activePost: StationPostOption | null,
+  tabletPosts: StationPostOption[],
+): string {
+  const trimmed = messageText.trim();
+  if (!trimmed) return trimmed;
+
+  let post = activePost;
+  if (!post || isVenuePassPostStation(post.station)) {
+    const supportOwners = tabletPosts.filter(
+      (row) =>
+        isVenueSupportPostStation(row.station) &&
+        row.quickComments.some((chip) => chip.trim() === trimmed),
+    );
+    if (supportOwners.length === 1) post = supportOwners[0]!;
+  }
+
+  if (!post || isVenuePassPostStation(post.station)) return trimmed;
+  const label = post.label.trim();
+  const prefix = `${label}: `;
+  if (trimmed.startsWith(prefix)) return trimmed;
+  return `${prefix}${trimmed}`;
 }
 
 function pickDefaultActivePost(
@@ -185,8 +214,11 @@ function pickDefaultActivePost(
     const byLabel = posts.find((post) => post.label.trim() === label);
     if (byLabel) return byLabel;
   }
-  const sameStation = posts.filter((post) => post.station === screenStation);
+  const postStation = passScreenToPostStation(screenStation);
+  const sameStation = posts.filter((post) => post.station === postStation);
   if (sameStation.length > 0) return sameStation[0]!;
+  const supportPosts = posts.filter((post) => isVenueSupportPostStation(post.station));
+  if (supportPosts.length === 1) return supportPosts[0]!;
   return posts[0]!;
 }
 
@@ -527,8 +559,13 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   useScreenWakeLock();
 
   const displayStationTitle = ctx?.stationLabel?.trim() || C.title;
-  const kdsPosts = ctx?.allKdsPosts?.length ? ctx.allKdsPosts : (ctx?.stationPosts ?? []);
-  const stationPosts = kdsPosts;
+  const passPosts = ctx?.allKdsPosts?.length ? ctx.allKdsPosts : (ctx?.stationPosts ?? []);
+  const supportPosts = ctx?.supportKdsPosts ?? [];
+  const stationPosts = passPosts.length > 0 ? passPosts : supportPosts;
+  const tabletPosts = useMemo(
+    () => [...passPosts, ...supportPosts.filter((post) => !passPosts.some((row) => row.id === post.id))],
+    [passPosts, supportPosts],
+  );
 
   const zoneGroups = useMemo(
     () => (ctx?.spots?.length ? groupVenueSpotsByZone(ctx.spots) : []),
@@ -685,6 +722,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
         : { tableNumber: manual };
 
       const sendStation = passStationForSend(activePost, station);
+      const outboundMessage = formatPassMessageForSend(messageText, activePost, tabletPosts);
       const res = await fetch("/api/pass-signals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -693,7 +731,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
           station: sendStation,
           stationKey,
           ...location,
-          message: messageText || undefined,
+          message: outboundMessage || undefined,
         }),
       });
       const data = await res.json();

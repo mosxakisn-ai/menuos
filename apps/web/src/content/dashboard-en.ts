@@ -483,6 +483,10 @@ export const DASHBOARD_EN = {
     zonePickHeading: "Pick a space",
     zoneSpotCount: (n: number) => (n === 1 ? "1 spot" : `${n} spots`),
     zoneActiveCount: (n: number) => (n === 1 ? "1 active" : `${n} active`),
+    unmappedActiveHint: (n: number) =>
+      n === 1
+        ? "1 call/message with no clear zone — open «All areas» or check the table number."
+        : `${n} calls/messages with no clear zone — open «All areas» or check table numbers.`,
     emptyZoneView: "No spots or activity in this space right now.",
     pendingCount: (n: number) => `${n} pending`,
     activeCount: (n: number) => (n === 1 ? "1 active" : `${n} active`),

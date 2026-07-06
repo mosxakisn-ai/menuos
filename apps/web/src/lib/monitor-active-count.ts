@@ -1,6 +1,6 @@
 import { prisma } from "@menuos/db";
 
-/** Sidebar badge on Οθόνες — pending waiter calls only. */
+/** Sidebar badge on Οθόνες — pending waiter calls + ready pass messages. */
 export async function countOrganizationMonitorActive(organizationId: string): Promise<{
   pendingCount: number;
   activeCount: number;
@@ -16,13 +16,19 @@ export async function countOrganizationMonitorActive(organizationId: string): Pr
 
   const venueIds = venues.map((venue) => venue.id);
 
-  const pendingByVenue = await prisma.waiterCall.groupBy({
-    by: ["venueId"],
-    where: { venueId: { in: venueIds }, status: "PENDING" },
-    _count: { _all: true },
-  });
+  const [pendingByVenue, readyPassCount] = await Promise.all([
+    prisma.waiterCall.groupBy({
+      by: ["venueId"],
+      where: { venueId: { in: venueIds }, status: "PENDING" },
+      _count: { _all: true },
+    }),
+    prisma.passSignal.count({
+      where: { venueId: { in: venueIds }, status: "READY" },
+    }),
+  ]);
 
-  const pendingCount = pendingByVenue.reduce((sum, row) => sum + row._count._all, 0);
+  const pendingCalls = pendingByVenue.reduce((sum, row) => sum + row._count._all, 0);
+  const pendingCount = pendingCalls + readyPassCount;
 
   return { pendingCount, activeCount: pendingCount };
 }

@@ -317,4 +317,17 @@ describe("staffJobRole", () => {
     expect(staffPostOptionsForJobRole("pass", supportOnly).map((row) => row.id)).toEqual(["lanza"]);
     expect(defaultStaffAssignmentForJobRole("pass", supportOnly)).toBe("lanza");
   });
+
+  it("excludes support posts when kitchen/bar pass posts exist", () => {
+    const mixed = [
+      { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+      { id: "bar", label: "Bar", enabled: true, station: "bar" as const },
+      { id: "lanza", label: "Λάντζα", enabled: true, station: "dishwash" as const },
+    ];
+    expect(staffPostOptionsForJobRole("pass", mixed).map((row) => row.id)).toEqual([
+      "pass-all",
+      "kitchen",
+      "bar",
+    ]);
+  });
 });

@@ -11,10 +11,12 @@ import {
   groupVenueSpotsByZone,
   mergeTableStateLabels,
   zoneIdForWaiterLocation,
+  resolveWaiterLocationInZones,
   type OrderPayload,
   type VenueSpotType,
 } from "@menuos/shared";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
+import { DashboardCountBadge } from "@/components/dashboard/dashboard-ui";
 import { WaiterTableGrid } from "@/components/dashboard/waiter-table-grid";
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { Card } from "@/components/ui/card";
@@ -298,6 +300,20 @@ export function WaiterPanel({
     return activeCalls + readyPasses;
   }, [displayCalls, displayPassSignals]);
 
+  const unmappedActiveCount = useMemo(() => {
+    if (zoneGroups.length === 0) return 0;
+    let count = 0;
+    for (const call of calls) {
+      if (call.status !== "PENDING" && call.status !== "ACKNOWLEDGED") continue;
+      if (!resolveWaiterLocationInZones(call, zoneGroups)) count += 1;
+    }
+    for (const pass of passSignals) {
+      if (pass.status !== "READY") continue;
+      if (!resolveWaiterLocationInZones(pass, zoneGroups)) count += 1;
+    }
+    return count;
+  }, [calls, passSignals, zoneGroups]);
+
   const zonePendingCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const call of calls) {
@@ -359,7 +375,7 @@ export function WaiterPanel({
         type="button"
         onClick={() => setZoneFilterId(zoneId)}
         className={cn(
-          "flex min-h-[4rem] w-[calc(50%-0.25rem)] max-w-[9.5rem] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 px-3 py-3 text-center transition sm:min-h-[4.25rem] sm:w-[calc(33.333%-0.5rem)] sm:px-4 lg:w-[calc(25%-0.5rem)]",
+          "relative flex min-h-[4rem] w-[calc(50%-0.25rem)] max-w-[9.5rem] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 px-3 py-3 text-center transition sm:min-h-[4.25rem] sm:w-[calc(33.333%-0.5rem)] sm:px-4 lg:w-[calc(25%-0.5rem)]",
           selected
             ? "border-brand-blue bg-brand-blue text-white shadow-md shadow-brand-blue/20"
             : activePending > 0
@@ -367,6 +383,12 @@ export function WaiterPanel({
               : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
         )}
       >
+        {activePending > 0 ? (
+          <DashboardCountBadge
+            count={activePending}
+            className="absolute -right-1.5 -top-1.5 min-h-[1.35rem] min-w-[1.35rem] border-2 border-white text-[11px] shadow-md"
+          />
+        ) : null}
         <span className={cn("text-base font-bold leading-tight sm:text-lg", selected && "text-white")}>
           {label}
         </span>
@@ -463,6 +485,11 @@ export function WaiterPanel({
             {renderZoneButton("all", W.zoneFilterAll)}
             {activeZoneGroups.map((zone) => renderZoneButton(zone.id, zone.label))}
           </div>
+          {unmappedActiveCount > 0 ? (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 sm:text-sm">
+              {W.unmappedActiveHint(unmappedActiveCount)}
+            </p>
+          ) : null}
         </section>
       ) : null}
 

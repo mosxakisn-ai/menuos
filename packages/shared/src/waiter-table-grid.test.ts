@@ -126,4 +126,16 @@ describe("buildTableGridTiles", () => {
     expect(tiles).toHaveLength(1);
     expect(tiles[0]?.state).toBe("both");
   });
+
+  it("matches bare table numbers to prefixed spot labels", () => {
+    const prefixed = [{ id: "s1", type: "TABLE" as const, label: "Σαλα-12" }];
+    const tiles = buildTableGridTiles(
+      prefixed,
+      [],
+      [{ id: "p1", station: "KITCHEN", tableNumber: "12", message: "έλα πίσω" }],
+      { includeUnmapped: true },
+    );
+    expect(tiles.find((t) => t.label === "Σαλα-12")?.state).toBe("kitchen_ready");
+    expect(tiles.some((t) => t.spotId.startsWith("__unmapped__:"))).toBe(false);
+  });
 });

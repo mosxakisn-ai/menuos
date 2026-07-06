@@ -1,4 +1,5 @@
 import { spotToQueryParams, waiterCallLocationMatches, type VenueSpotType, type WaiterCallLocation } from "./venue-spots";
+import { groupVenueSpotsByZone, resolveWaiterLocationInZones } from "./station-spot-zones";
 import type { OrderPayload } from "./menu-cart";
 
 export const TABLE_TILE_STATES = [
@@ -57,10 +58,6 @@ function locationKey(location: WaiterCallLocation): string {
   return "NONE";
 }
 
-function isMatchedByAnySpot(spots: TableGridSpot[], location: WaiterCallLocation): boolean {
-  return spots.some((spot) => matchesSpot(spot, location));
-}
-
 function spotLocationRequest(spot: TableGridSpot): {
   tableNumber?: string;
   roomNumber?: string;
@@ -74,7 +71,15 @@ function spotLocationRequest(spot: TableGridSpot): {
   };
 }
 
-function matchesSpot(spot: TableGridSpot, location: WaiterCallLocation): boolean {
+function matchesSpot(
+  spot: TableGridSpot,
+  location: WaiterCallLocation,
+  groups: ReturnType<typeof groupVenueSpotsByZone>,
+): boolean {
+  const resolved = resolveWaiterLocationInZones(location, groups);
+  if (resolved) {
+    return resolved.spot.type === spot.type && resolved.spot.label === spot.label;
+  }
   return waiterCallLocationMatches(location, spotLocationRequest(spot));
 }
 
@@ -113,10 +118,11 @@ export function buildTableGridTiles(
 ): TableGridTile[] {
   const activeCalls = calls.filter((c) => ACTIVE_CALL_STATUSES.has(c.status));
   const includeUnmapped = options?.includeUnmapped ?? spots.length === 0;
+  const zoneGroups = groupVenueSpotsByZone(spots);
 
   const tiles = spots.map((spot) => {
-    const spotCalls = activeCalls.filter((c) => matchesSpot(spot, c));
-    const spotPasses = passSignals.filter((p) => matchesSpot(spot, p));
+    const spotCalls = activeCalls.filter((c) => matchesSpot(spot, c, zoneGroups));
+    const spotPasses = passSignals.filter((p) => matchesSpot(spot, p, zoneGroups));
     const hasGuest = spotCalls.length > 0;
     const hasKitchen = spotPasses.some((p) => isKitchenStation(p.station));
     const hasCold = spotPasses.some((p) => isColdStation(p.station));
@@ -133,8 +139,12 @@ export function buildTableGridTiles(
 
   if (!includeUnmapped) return tiles;
 
-  const unmappedCalls = activeCalls.filter((c) => !isMatchedByAnySpot(spots, c));
-  const unmappedPasses = passSignals.filter((p) => !isMatchedByAnySpot(spots, p));
+  const unmappedCalls = activeCalls.filter(
+    (c) => !spots.some((spot) => matchesSpot(spot, c, zoneGroups)),
+  );
+  const unmappedPasses = passSignals.filter(
+    (p) => !spots.some((spot) => matchesSpot(spot, p, zoneGroups)),
+  );
   const groups = new Map<string, { calls: TableGridCall[]; passes: TableGridPassSignal[] }>();
 
   for (const call of unmappedCalls) {

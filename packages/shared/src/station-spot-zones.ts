@@ -1,4 +1,5 @@
 import type { VenueSpotType } from "./venue-spots";
+import { normalizeWaiterCallLocation } from "./venue-spots";
 
 export type ZoneSpotInput = { type: VenueSpotType; label: string };
 
@@ -136,22 +137,83 @@ type WaiterLocationLike = {
   sunbedNumber?: string | null;
 };
 
+export type ResolvedWaiterLocationSpot = {
+  zoneId: string;
+  spot: ZoneSpotInput;
+};
+
+function normalizeTableToken(value: string): string {
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) return String(Number.parseInt(trimmed, 10));
+  return trimmed;
+}
+
+/** Match KDS manual entry (e.g. «12») to configured spot label (e.g. «Σαλα-12»). */
+export function resolveWaiterLocationInZones(
+  location: WaiterLocationLike,
+  groups: SpotZoneGroup[],
+): ResolvedWaiterLocationSpot | null {
+  if (groups.length === 0) return null;
+
+  const normalized = normalizeWaiterCallLocation(location);
+
+  if (normalized.tableNumber) {
+    const table = normalized.tableNumber;
+    const exact: ResolvedWaiterLocationSpot[] = [];
+    const byDisplay: ResolvedWaiterLocationSpot[] = [];
+
+    for (const group of groups) {
+      for (const entry of group.spots) {
+        if (entry.spot.type !== "TABLE") continue;
+        if (entry.spot.label === table) {
+          exact.push({ zoneId: group.id, spot: entry.spot });
+          continue;
+        }
+        const displayNorm = normalizeTableToken(entry.displayLabel);
+        const tableNorm = normalizeTableToken(table);
+        if (displayNorm === tableNorm || entry.displayLabel.trim() === table) {
+          byDisplay.push({ zoneId: group.id, spot: entry.spot });
+        }
+      }
+    }
+
+    if (exact.length === 1) return exact[0]!;
+    if (exact.length > 1) return null;
+    if (byDisplay.length === 1) return byDisplay[0]!;
+    return null;
+  }
+
+  if (normalized.roomNumber) {
+    for (const group of groups) {
+      for (const entry of group.spots) {
+        if (entry.spot.type === "ROOM" && entry.spot.label === normalized.roomNumber) {
+          return { zoneId: group.id, spot: entry.spot };
+        }
+      }
+    }
+    return null;
+  }
+
+  if (normalized.sunbedNumber) {
+    for (const group of groups) {
+      for (const entry of group.spots) {
+        if (entry.spot.type === "SUNBED" && entry.spot.label === normalized.sunbedNumber) {
+          return { zoneId: group.id, spot: entry.spot };
+        }
+      }
+    }
+    return null;
+  }
+
+  return null;
+}
+
 /** Resolve zone tab id for a waiter call / pass location (needs groups from venue spots). */
 export function zoneIdForWaiterLocation(
   location: WaiterLocationLike,
   groups: SpotZoneGroup[],
 ): string | null {
-  if (groups.length === 0) return null;
-  if (location.tableNumber) {
-    return findZoneIdForSpot(groups, { type: "TABLE", label: location.tableNumber });
-  }
-  if (location.roomNumber) {
-    return findZoneIdForSpot(groups, { type: "ROOM", label: location.roomNumber });
-  }
-  if (location.sunbedNumber) {
-    return findZoneIdForSpot(groups, { type: "SUNBED", label: location.sunbedNumber });
-  }
-  return null;
+  return resolveWaiterLocationInZones(location, groups)?.zoneId ?? null;
 }
 
 export function filterSpotsByZone<T extends ZoneSpotInput & { id?: string }>(
@@ -172,17 +234,12 @@ export function filterWaiterLocationsByZone<T extends WaiterLocationLike>(
   return items.filter((item) => zoneIdForWaiterLocation(item, groups) === zoneId);
 }
 
-/** Zone filter plus unknown-location rows (unconfigured table numbers). */
+/** Zone filter — unmapped locations only appear under «Όλοι οι χώροι». */
 export function filterWaiterLocationsForZoneView<T extends WaiterLocationLike & { id?: string }>(
   items: T[],
   zoneId: string,
   groups: SpotZoneGroup[],
 ): T[] {
   if (zoneId === "all") return items;
-  const inZone = filterWaiterLocationsByZone(items, zoneId, groups);
-  const unmapped = items.filter((item) => zoneIdForWaiterLocation(item, groups) === null);
-  if (unmapped.length === 0) return inZone;
-  const seen = new Set(inZone.map((item) => item.id).filter(Boolean));
-  const extra = unmapped.filter((item) => !item.id || !seen.has(item.id));
-  return extra.length > 0 ? [...inZone, ...extra] : inZone;
+  return filterWaiterLocationsByZone(items, zoneId, groups);
 }

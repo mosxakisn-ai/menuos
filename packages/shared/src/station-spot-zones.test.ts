@@ -6,6 +6,7 @@ import {
   findZoneIdForSpot,
   groupVenueSpotsByZone,
   pickDefaultZoneId,
+  resolveWaiterLocationInZones,
   zoneIdForWaiterLocation,
 } from "./station-spot-zones";
 
@@ -81,7 +82,24 @@ describe("zone filters for waiter", () => {
     expect(zoneIdForWaiterLocation({ tableNumber: "Αυλή-1" }, groups)).toBe("prefix:αυλή");
   });
 
-  it("includes unmapped locations when a zone is selected", () => {
+  it("maps bare table numbers to prefixed spots when unique", () => {
+    const groups = groupVenueSpotsByZone([
+      { type: "TABLE", label: "Σαλα-12" },
+      { type: "TABLE", label: "Αυλή-3" },
+    ]);
+    expect(zoneIdForWaiterLocation({ tableNumber: "12" }, groups)).toBe("prefix:σαλα");
+    expect(resolveWaiterLocationInZones({ tableNumber: "12" }, groups)?.spot.label).toBe("Σαλα-12");
+  });
+
+  it("returns null when bare table number matches multiple zones", () => {
+    const groups = groupVenueSpotsByZone([
+      { type: "TABLE", label: "Σαλα-12" },
+      { type: "TABLE", label: "Αυλή-12" },
+    ]);
+    expect(zoneIdForWaiterLocation({ tableNumber: "12" }, groups)).toBeNull();
+  });
+
+  it("includes unmapped locations only under all zones", () => {
     const groups = groupVenueSpotsByZone([
       { type: "TABLE", label: "5" },
       { type: "TABLE", label: "Αυλή-1" },
@@ -90,9 +108,15 @@ describe("zone filters for waiter", () => {
       { id: "c1", tableNumber: "5" },
       { id: "c2", tableNumber: "99" },
     ];
-    const patio = filterWaiterLocationsForZoneView(items, "prefix:αυλή", groups);
-    expect(patio.map((row) => row.id)).toEqual(["c2"]);
-    const sala = filterWaiterLocationsForZoneView(items, groups[0]!.id, groups);
-    expect(sala.map((row) => row.id)).toEqual(["c1", "c2"]);
+    expect(filterWaiterLocationsForZoneView(items, "prefix:αυλή", groups).map((row) => row.id)).toEqual(
+      [],
+    );
+    expect(filterWaiterLocationsForZoneView(items, "all", groups).map((row) => row.id)).toEqual([
+      "c1",
+      "c2",
+    ]);
+    expect(filterWaiterLocationsForZoneView(items, groups[0]!.id, groups).map((row) => row.id)).toEqual([
+      "c1",
+    ]);
   });
 });

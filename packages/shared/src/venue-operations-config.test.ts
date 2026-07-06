@@ -46,6 +46,18 @@ describe("enabledPassPostsForStation", () => {
     expect(enabledPassPostsForStation(config, "kitchen").map((p) => p.id)).toEqual(["k1"]);
     expect(enabledPassPostsForStation(config, "bar").map((p) => p.id)).toEqual(["b1"]);
   });
+
+  it("maps cold/dessert screens to kitchen/bar posts", () => {
+    const config = {
+      enabledStations: ["kitchen" as const, "bar" as const],
+      posts: [
+        { id: "k1", label: "Kitchen", enabled: true, station: "kitchen" as const },
+        { id: "b1", label: "Bar", enabled: true, station: "bar" as const },
+      ],
+    };
+    expect(enabledPassPostsForStation(config, "cold").map((p) => p.id)).toEqual(["k1"]);
+    expect(enabledPassPostsForStation(config, "dessert").map((p) => p.id)).toEqual(["b1"]);
+  });
 });
 
 describe("editorQuickChipsForPost", () => {
