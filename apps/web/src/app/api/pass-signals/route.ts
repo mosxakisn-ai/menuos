@@ -16,6 +16,7 @@ import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service"
 import { pushStaffPassSignal } from "@/lib/pass-signal-push";
 import { expireStaleActivePassSignals } from "@/lib/pass-signal-cleanup";
 import { logPassSignalCreated } from "@/lib/push-diagnostics";
+import { validateKdsPassNotifyTargets } from "@/lib/kds-pass-recipients";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
 
@@ -152,6 +153,18 @@ export async function POST(request: Request) {
     );
   }
 
+  const notifyIds = parsed.data.notifyStaffMemberIds;
+  if (notifyIds && notifyIds.length > 0) {
+    const targetCheck = await validateKdsPassNotifyTargets({
+      venueId: auth.venue.id,
+      targetZoneId: parsed.data.zoneId ?? null,
+      notifyStaffMemberIds: notifyIds,
+    });
+    if (!targetCheck.ok) {
+      return NextResponse.json({ error: targetCheck.error, code: "invalid_recipients" }, { status: 400 });
+    }
+  }
+
   try {
     const signal = await prisma.passSignal.create({
       data: {
@@ -184,7 +197,9 @@ export async function POST(request: Request) {
         stationScreenLabel: signal.stationScreen?.label ?? null,
         stationDisplayName: stationDisplayLabel(opsConfig, parsed.data.station),
       });
-      pushStaffPassSignal(venueFull, signal);
+      pushStaffPassSignal(venueFull, signal, {
+        notifyStaffMemberIds: notifyIds && notifyIds.length > 0 ? notifyIds : undefined,
+      });
     }
 
     return NextResponse.json({

@@ -6,6 +6,7 @@ import {
   type OrderPayload,
   waiterCallSchema,
   normalizeWaiterCallLocation,
+  listVenuePosts,
   waiterCallsVisibleToStaffMember,
 } from "@menuos/shared";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
@@ -14,6 +15,7 @@ import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/
 import { validateOrderItemsForVenue } from "@/lib/validate-order-items";
 import { pushStaffWaiterCall } from "@/lib/waiter-call-push";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
+import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import type { StaffWaiterNotifyReason } from "@/lib/staff-push-notify";
 
 type TxResult = {
@@ -118,7 +120,9 @@ export async function GET(request: Request) {
   if (auth.response) return auth.response;
 
   const member = auth.access.staffMember;
-  const canSeeWaiterCalls = !member || waiterCallsVisibleToStaffMember(member.stations);
+  const opsConfig = await getVenueOperationsConfig(venueId);
+  const posts = listVenuePosts(opsConfig);
+  const canSeeWaiterCalls = !member || waiterCallsVisibleToStaffMember(member.stations, posts);
 
   const [calls, spots] = await Promise.all([
     canSeeWaiterCalls

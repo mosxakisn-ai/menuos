@@ -360,12 +360,20 @@ const PASS_DB_STATION_TO_STAFF: Record<string, StaffStationOption> = {
   DESSERT: "dessert",
 };
 
+/** Legacy «services» / «all» or an enabled services post id. */
+function memberHasFloorWaiterAssignment(memberStations: string[], posts?: VenuePost[]): boolean {
+  if (memberStations.includes("all") || memberStations.includes("services")) return true;
+  if (!posts?.length) return false;
+  return memberStations.some((assignment) => staffAssignmentLinkKind(assignment, posts) === "waiter");
+}
+
 /** PassStation DB values this member may see; null = all stations. */
 export function passDbStationsForStaffMember(
   memberStations: string[],
   posts?: VenuePost[],
 ): string[] | null {
   if (memberStations.includes("all") || memberStations.includes("pass-all") || memberStations.includes("services")) return null;
+  if (memberHasFloorWaiterAssignment(memberStations, posts)) return null;
   const stations = memberStations
     .map((assignment) => resolveStaffAssignmentToPassInput(assignment, posts))
     .filter((station): station is PassStationInput => Boolean(station))
@@ -380,6 +388,7 @@ export function passSignalVisibleToStaffMember(
   posts?: VenuePost[],
 ): boolean {
   if (memberStations.includes("all") || memberStations.includes("pass-all") || memberStations.includes("services")) return true;
+  if (memberHasFloorWaiterAssignment(memberStations, posts)) return true;
   const mapped = PASS_DB_STATION_TO_STAFF[passDbStation];
   if (!mapped) return false;
   return memberStations.some((assignment) => {
@@ -389,8 +398,11 @@ export function passSignalVisibleToStaffMember(
 }
 
 /** Waiter calls (table buzz) only for floor/service staff. */
-export function waiterCallsVisibleToStaffMember(memberStations: string[]): boolean {
-  return memberStations.includes("all") || memberStations.includes("services");
+export function waiterCallsVisibleToStaffMember(
+  memberStations: string[],
+  posts?: VenuePost[],
+): boolean {
+  return memberHasFloorWaiterAssignment(memberStations, posts);
 }
 
 /** Floor waiters need one space; kitchen/bar pass posts work across all spaces. */
@@ -555,4 +567,49 @@ export function passSignalsVisibleToStaffMember(
 ): boolean {
   const allowed = passDbStationsForStaffMember(memberStations, posts);
   return allowed === null || allowed.length > 0;
+}
+
+export type KdsPassNotifyMember = {
+  stations: string[];
+  zoneId?: string | null;
+};
+
+/** Effective zone for floor staff — post zone wins over member zone. */
+export function staffMemberEffectiveZoneId(
+  member: KdsPassNotifyMember,
+  posts: VenuePost[],
+): string | null {
+  const assignment = staffPrimaryAssignment(member.stations);
+  if (assignment === "all") return "all";
+  const post = posts.find((row) => row.id === assignment);
+  if (post?.zoneId?.trim()) return post.zoneId.trim();
+  return normalizeStaffMemberZoneId(assignment, member.zoneId, posts);
+}
+
+/** Whether a waiter's assigned space covers the table's zone. */
+export function staffMemberMatchesNotifyZone(
+  member: KdsPassNotifyMember,
+  targetZoneId: string | null | undefined,
+  posts: VenuePost[],
+): boolean {
+  if (!targetZoneId?.trim()) return true;
+  const effectiveZone = staffMemberEffectiveZoneId(member, posts);
+  if (!effectiveZone || effectiveZone === "all") return true;
+  return effectiveZone === targetZoneId.trim();
+}
+
+/**
+ * KDS → floor: only mobile waiters who serve the table's zone.
+ * (Kitchen/bar messages always go to floor staff, not back to KDS tablets.)
+ */
+export function staffMemberEligibleForKdsPassNotify(
+  member: KdsPassNotifyMember,
+  input: {
+    targetZoneId: string | null | undefined;
+  },
+  posts: VenuePost[],
+): boolean {
+  const assignment = staffPrimaryAssignment(member.stations);
+  if (staffAssignmentLinkKind(assignment, posts) !== "waiter") return false;
+  return staffMemberMatchesNotifyZone(member, input.targetZoneId, posts);
 }

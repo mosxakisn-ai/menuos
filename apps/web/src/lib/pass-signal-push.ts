@@ -13,8 +13,9 @@ export function pushStaffPassSignal(
   > & {
     stationScreen?: { label: string } | null;
   },
+  opts?: { notifyStaffMemberIds?: string[] },
 ) {
-  fireStaffPushNotify(() => notifyStaffPassSignal(venue, signal));
+  fireStaffPushNotify(() => notifyStaffPassSignal(venue, signal, opts));
 }
 
 async function notifyStaffPassSignal(
@@ -25,6 +26,7 @@ async function notifyStaffPassSignal(
   > & {
     stationScreen?: { label: string } | null;
   },
+  opts?: { notifyStaffMemberIds?: string[] },
 ) {
   const opsConfig = await getVenueOperationsConfig(venue.id);
   const stationInput = passStationDbToInput(signal.station);
@@ -49,6 +51,7 @@ async function notifyStaffPassSignal(
     payload,
     signalId: signal.id,
     location: loc,
+    notifyStaffMemberIds: opts?.notifyStaffMemberIds,
   });
 }
 

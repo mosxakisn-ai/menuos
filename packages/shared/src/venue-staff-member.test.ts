@@ -7,6 +7,9 @@ import {
   passDbStationsForStaffMember,
   passSignalVisibleToStaffMember,
   passSignalsVisibleToStaffMember,
+  staffMemberEligibleForKdsPassNotify,
+  staffMemberEffectiveZoneId,
+  staffMemberMatchesNotifyZone,
   pickStationScreenForStaffAssignment,
   resolveStaffAssignmentToPassInput,
   resolveStaffMessageScope,
@@ -48,6 +51,22 @@ describe("passSignalVisibleToStaffMember", () => {
     expect(passSignalVisibleToStaffMember("BAR", ["all"])).toBe(true);
   });
 
+  it("shows all stations for services post ids", () => {
+    const withServices = [
+      ...posts,
+      { id: "svc-sala", label: "Services Σάλα", enabled: true, station: "services" as const, zoneId: "main" },
+    ];
+    expect(passSignalVisibleToStaffMember("KITCHEN", ["svc-sala"], withServices)).toBe(true);
+    expect(passSignalVisibleToStaffMember("BAR", ["svc-sala"], withServices)).toBe(true);
+  });
+
+  it("passDbStationsForStaffMember returns null for services post ids", () => {
+    const withServices = [
+      { id: "svc-sala", label: "Services Σάλα", enabled: true, station: "services" as const, zoneId: "main" },
+    ];
+    expect(passDbStationsForStaffMember(["svc-sala"], withServices)).toBeNull();
+  });
+
   it("filters by department tag", () => {
     expect(passSignalVisibleToStaffMember("KITCHEN", ["kitchen"])).toBe(true);
     expect(passSignalVisibleToStaffMember("BAR", ["kitchen"])).toBe(false);
@@ -65,6 +84,13 @@ describe("waiterCallsVisibleToStaffMember", () => {
     expect(waiterCallsVisibleToStaffMember(["all"])).toBe(true);
     expect(waiterCallsVisibleToStaffMember(["kitchen"])).toBe(false);
     expect(waiterCallsVisibleToStaffMember(["bar"])).toBe(false);
+  });
+
+  it("allows services post ids when posts provided", () => {
+    const posts = [
+      { id: "svc-sala", label: "Services Σάλα", enabled: true, station: "services" as const, zoneId: "main" },
+    ];
+    expect(waiterCallsVisibleToStaffMember(["svc-sala"], posts)).toBe(true);
   });
 });
 
@@ -329,5 +355,31 @@ describe("staffJobRole", () => {
       "kitchen",
       "bar",
     ]);
+  });
+});
+
+describe("staffMemberEligibleForKdsPassNotify", () => {
+  const posts = [
+    { id: "svc-sala", label: "Services Σάλα", enabled: true, station: "services" as const, zoneId: "main" },
+    { id: "svc-avli", label: "Services Αυλή", enabled: true, station: "services" as const, zoneId: "prefix:αυλή" },
+    { id: "kitchen-sala", label: "Κουζίνα Σάλας", enabled: true, station: "kitchen" as const, zoneId: "main" },
+    { id: "bar-sala", label: "Bar Σάλα", enabled: true, station: "bar" as const, zoneId: "main" },
+  ];
+
+  it("includes waiters for the table zone only", () => {
+    const salaWaiter = { stations: ["svc-sala"], zoneId: "main" };
+    const avliWaiter = { stations: ["svc-avli"], zoneId: "prefix:αυλή" };
+    const allWaiter = { stations: ["all"], zoneId: "all" };
+    const kitchenTablet = { stations: ["kitchen-sala"], zoneId: null };
+
+    expect(staffMemberEligibleForKdsPassNotify(salaWaiter, { targetZoneId: "main" }, posts)).toBe(true);
+    expect(staffMemberEligibleForKdsPassNotify(avliWaiter, { targetZoneId: "main" }, posts)).toBe(false);
+    expect(staffMemberEligibleForKdsPassNotify(allWaiter, { targetZoneId: "main" }, posts)).toBe(true);
+    expect(staffMemberEligibleForKdsPassNotify(kitchenTablet, { targetZoneId: "main" }, posts)).toBe(false);
+  });
+
+  it("excludes kitchen/bar tablet assignments", () => {
+    const barTablet = { stations: ["bar-sala"], zoneId: "main" };
+    expect(staffMemberEligibleForKdsPassNotify(barTablet, { targetZoneId: "main" }, posts)).toBe(false);
   });
 });

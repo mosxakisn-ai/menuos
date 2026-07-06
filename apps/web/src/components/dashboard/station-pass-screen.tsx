@@ -18,12 +18,17 @@ import {
   passSendTableNumber,
   pickDefaultZoneId,
   resolveWaiterLocationInZone,
+  zoneIdForWaiterLocationView,
   venuePostMatchesZone,
   type PassStationInput,
   type VenuePostStationInput,
   type VenueSpotType,
 } from "@menuos/shared";
 import { Logo } from "@/components/brand/logo";
+import {
+  KdsSendRecipientsDialog,
+  type KdsPassRecipient,
+} from "@/components/dashboard/kds-send-recipients-dialog";
 import { buttonClass } from "@/components/ui/button";
 import { confirmDestructive } from "@/lib/confirm-action";
 import { cn } from "@/lib/utils";
@@ -83,14 +88,15 @@ const COPY = {
     pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
     messagesNeedTable: "Διάλεξε τραπέζι, μετά μήνυμα — και πάτα Αποστολή.",
     messagesTapHint: "Πάτα μήνυμα → μπαίνει κάτω → Αποστολή.",
-    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
+    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο — ρύθμισέ το από Ρυθμίσεις → Πόστα.",
+    noPostInZoneSidebar: "Δεν έχεις πόστο εδώ. Τα μηνύματα φαίνονται μόνο στον χώρο που έχεις πόστο (π.χ. Σάλα).",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
     waitingTitle: "Σε αναμονή",
     waitingReady: "Περιμένει σερβιτόρο",
     waitingPicked: "Ο σερβιτόρος πήγε",
     noTable: "Διάλεξε τραπέζι δεξιά",
-    todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
+    todayCount: (n: number) => `Σήμερα (όλοι οι χώροι): ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
     messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
     messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
@@ -109,14 +115,15 @@ const COPY = {
     pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
     messagesNeedTable: "Διάλεξε τραπέζι, μετά μήνυμα — και πάτα Αποστολή.",
     messagesTapHint: "Πάτα μήνυμα → μπαίνει κάτω → Αποστολή.",
-    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
+    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο — ρύθμισέ το από Ρυθμίσεις → Πόστα.",
+    noPostInZoneSidebar: "Δεν έχεις πόστο εδώ. Τα μηνύματα φαίνονται μόνο στον χώρο που έχεις πόστο (π.χ. Σάλα).",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
     waitingTitle: "Σε αναμονή",
     waitingReady: "Περιμένει σερβιτόρο",
     waitingPicked: "Ο σερβιτόρος πήγε",
     noTable: "Διάλεξε τραπέζι δεξιά",
-    todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
+    todayCount: (n: number) => `Σήμερα (όλοι οι χώροι): ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
     messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
     messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
@@ -135,14 +142,15 @@ const COPY = {
     pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
     messagesNeedTable: "Διάλεξε τραπέζι, μετά μήνυμα — και πάτα Αποστολή.",
     messagesTapHint: "Πάτα μήνυμα → μπαίνει κάτω → Αποστολή.",
-    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
+    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο — ρύθμισέ το από Ρυθμίσεις → Πόστα.",
+    noPostInZoneSidebar: "Δεν έχεις πόστο εδώ. Τα μηνύματα φαίνονται μόνο στον χώρο που έχεις πόστο (π.χ. Σάλα).",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
     waitingTitle: "Σε αναμονή",
     waitingReady: "Περιμένει σερβιτόρο",
     waitingPicked: "Ο σερβιτόρος πήγε",
     noTable: "Διάλεξε τραπέζι δεξιά",
-    todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
+    todayCount: (n: number) => `Σήμερα (όλοι οι χώροι): ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
     messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
     messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
@@ -161,14 +169,15 @@ const COPY = {
     pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
     messagesNeedTable: "Διάλεξε τραπέζι, μετά μήνυμα — και πάτα Αποστολή.",
     messagesTapHint: "Πάτα μήνυμα → μπαίνει κάτω → Αποστολή.",
-    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
+    noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο — ρύθμισέ το από Ρυθμίσεις → Πόστα.",
+    noPostInZoneSidebar: "Δεν έχεις πόστο εδώ. Τα μηνύματα φαίνονται μόνο στον χώρο που έχεις πόστο (π.χ. Σάλα).",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
     waitingTitle: "Σε αναμονή",
     waitingReady: "Περιμένει σερβιτόρο",
     waitingPicked: "Ο σερβιτόρος πήγε",
     noTable: "Διάλεξε τραπέζι δεξιά",
-    todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
+    todayCount: (n: number) => `Σήμερα (όλοι οι χώροι): ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
     messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
     messagesAllPostsHint: "Μηνύματα από όλα τα πόστα — φτάνουν στον σερβιτόρο στο τραπέζι.",
@@ -231,7 +240,9 @@ const POLL_MS = 8_000;
 const QUICK_MESSAGE_ROW_PX = 56;
 const QUICK_MESSAGES_MAX_HEIGHT_PX = QUICK_MESSAGE_ROW_PX * 4 + 8;
 const TABLE_GRID_COLS = 4;
-const TABLE_GRID_PAGE_SIZE = 16;
+const TABLE_GRID_SCROLL_ROW_PX = 88;
+const KDS_SCROLL_ARROW_BUTTON_CLASS =
+  "flex shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white transition hover:bg-white/10 disabled:opacity-30";
 
 function spotKey(spot: ScreenSpot): string {
   return `${spot.type}:${spot.label}`;
@@ -262,138 +273,162 @@ function PassTableGrid({
   waitingReady: string;
   waitingPicked: string;
 }) {
-  const [page, setPage] = useState(0);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const tileRefs = useRef(new Map<string, HTMLButtonElement>());
+  const [canScrollBack, setCanScrollBack] = useState(false);
+  const [canScrollForward, setCanScrollForward] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
   const compact = spots.length > 24;
-  const pageCount = Math.max(1, Math.ceil(spots.length / TABLE_GRID_PAGE_SIZE));
-  const safePage = Math.min(page, pageCount - 1);
+
+  const updateScrollState = useCallback(() => {
+    const el = gridRef.current;
+    if (!el) {
+      setCanScrollBack(false);
+      setCanScrollForward(false);
+      setHasOverflow(false);
+      return;
+    }
+    const overflow = el.scrollHeight > el.clientHeight + 4;
+    setHasOverflow(overflow);
+    setCanScrollBack(el.scrollTop > 4);
+    setCanScrollForward(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
+  }, []);
 
   useEffect(() => {
-    setPage(0);
-  }, [spotsKey]);
+    updateScrollState();
+    const el = gridRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => updateScrollState());
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [spotsKey, spots.length, updateScrollState]);
 
   useEffect(() => {
     if (!table) return;
-    const idx = spots.findIndex(
-      (entry) => entry.spot.type === table.type && entry.spot.label === table.label,
-    );
-    if (idx >= 0) setPage(Math.floor(idx / TABLE_GRID_PAGE_SIZE));
-  }, [table, spots]);
+    const btn = tileRefs.current.get(spotKey(table));
+    btn?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [table, spotsKey]);
 
-  const pageStart = safePage * TABLE_GRID_PAGE_SIZE;
-  const pageSpots = spots.slice(pageStart, pageStart + TABLE_GRID_PAGE_SIZE);
-  const needsPaging = pageCount > 1;
-  const rangeLabel =
-    spots.length > 0
-      ? `${pageStart + 1}–${Math.min(pageStart + TABLE_GRID_PAGE_SIZE, spots.length)} / ${spots.length}`
-      : null;
+  function scrollGrid(direction: "back" | "forward") {
+    const el = gridRef.current;
+    if (!el) return;
+    const delta =
+      direction === "back" ? -TABLE_GRID_SCROLL_ROW_PX * 2 : TABLE_GRID_SCROLL_ROW_PX * 2;
+    el.scrollBy({ top: delta, behavior: "smooth" });
+    window.setTimeout(updateScrollState, 320);
+  }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-1">
-      <div className="flex min-h-0 flex-1 items-stretch gap-1.5">
-        {needsPaging ? (
+    <div className="relative flex min-h-0 flex-1 items-stretch gap-1.5">
+      <div
+        ref={gridRef}
+        onScroll={updateScrollState}
+        className={cn(
+          "grid min-h-0 min-w-0 flex-1 gap-2 overflow-y-auto overscroll-contain scroll-smooth sm:gap-2.5",
+          "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          TABLE_GRID_COLS === 4 ? "grid-cols-3 sm:grid-cols-4" : "grid-cols-3",
+        )}
+      >
+        {spots.map(({ spot, displayLabel }) => {
+          const selected = spotSelected(table, spot);
+          const spotSignals = signalsBySpotKey.get(spotKey(spot)) ?? [];
+          const latestSignal = spotSignals[0] ?? null;
+          const hasSignal = spotSignals.length > 0;
+          const pickedUp = latestSignal?.status === "PICKED_UP";
+          const key = spotKey(spot);
+          return (
+            <button
+              key={`${spot.type}-${spot.label}`}
+              ref={(el) => {
+                if (el) tileRefs.current.set(key, el);
+                else tileRefs.current.delete(key);
+              }}
+              type="button"
+              onClick={() => onSelectSpot(spot)}
+              className={cn(
+                "relative flex flex-col items-center justify-center rounded-xl border-2 px-1 py-1.5 transition sm:px-1.5 sm:py-2",
+                compact
+                  ? hasSignal
+                    ? "min-h-[3.75rem] sm:min-h-[4rem]"
+                    : "min-h-[2.75rem] sm:min-h-[3rem]"
+                  : hasSignal
+                    ? "min-h-[5rem] sm:min-h-[5.25rem]"
+                    : "min-h-[3.75rem] sm:min-h-[4rem]",
+                selected
+                  ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
+                  : hasSignal
+                    ? pickedUp
+                      ? "border-amber-400/70 bg-amber-500/10 text-white hover:border-amber-300 active:scale-[0.98]"
+                      : "border-emerald-400/70 bg-emerald-500/10 text-white hover:border-emerald-300 active:scale-[0.98]"
+                    : "border-white/15 bg-white/5 text-slate-100 hover:border-white/30 active:scale-[0.98]",
+              )}
+            >
+              {spotSignals.length > 1 ? (
+                <span className="absolute right-0.5 top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-white/20 px-0.5 text-[8px] font-bold leading-none text-white sm:h-4 sm:min-w-4 sm:text-[9px]">
+                  {spotSignals.length}
+                </span>
+              ) : null}
+              {latestSignal?.message ? (
+                <span
+                  className={cn(
+                    "mb-0.5 max-w-full truncate px-0.5 font-semibold leading-tight",
+                    compact ? "text-[9px] sm:text-[10px]" : "text-[10px] sm:text-[11px]",
+                    pickedUp ? "text-amber-200" : "text-emerald-200",
+                  )}
+                >
+                  {latestSignal.message}
+                </span>
+              ) : hasSignal ? (
+                <span className="mb-0.5 text-[8px] font-medium uppercase tracking-wide text-slate-400 sm:text-[9px]">
+                  {pickedUp ? waitingPicked : waitingReady}
+                </span>
+              ) : null}
+              <span
+                className={cn(
+                  "font-bold tabular-nums leading-none",
+                  compact ? "text-lg sm:text-xl" : "text-xl sm:text-2xl",
+                )}
+              >
+                {displayLabel}
+              </span>
+              {showSpotSecondaryLabel && spot.label !== displayLabel ? (
+                <span className="mt-0.5 max-w-full truncate text-[8px] font-medium uppercase tracking-wide text-slate-400 sm:text-[9px]">
+                  {spot.label}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+
+      {hasOverflow ? (
+        <div className="flex w-9 shrink-0 flex-col justify-center gap-1 py-1 sm:w-10">
           <button
             type="button"
             aria-label="Προηγούμενα τραπέζια"
-            disabled={safePage <= 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            className="flex w-9 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 disabled:opacity-30 sm:w-10"
+            disabled={!canScrollBack}
+            onClick={() => scrollGrid("back")}
+            className={cn(KDS_SCROLL_ARROW_BUTTON_CLASS, "h-9 w-9 sm:h-10 sm:w-10")}
           >
-            <ChevronUp className="h-5 w-5 -rotate-90" />
+            <ChevronUp className="h-5 w-5" />
           </button>
-        ) : null}
-
-        <div
-          className={cn(
-            "grid min-h-0 flex-1 auto-rows-fr gap-2 sm:gap-2.5",
-            TABLE_GRID_COLS === 4 ? "grid-cols-3 sm:grid-cols-4" : "grid-cols-3",
-          )}
-        >
-          {pageSpots.map(({ spot, displayLabel }) => {
-            const selected = spotSelected(table, spot);
-            const spotSignals = signalsBySpotKey.get(spotKey(spot)) ?? [];
-            const latestSignal = spotSignals[0] ?? null;
-            const hasSignal = spotSignals.length > 0;
-            const pickedUp = latestSignal?.status === "PICKED_UP";
-            return (
-              <button
-                key={`${spot.type}-${spot.label}`}
-                type="button"
-                onClick={() => onSelectSpot(spot)}
-                className={cn(
-                  "relative flex flex-col items-center justify-center rounded-xl border-2 px-1 py-1.5 transition sm:px-1.5 sm:py-2",
-                  compact
-                    ? hasSignal
-                      ? "min-h-[3.75rem] sm:min-h-[4rem]"
-                      : "min-h-[2.75rem] sm:min-h-[3rem]"
-                    : hasSignal
-                      ? "min-h-[5rem] sm:min-h-[5.25rem]"
-                      : "min-h-[3.75rem] sm:min-h-[4rem]",
-                  selected
-                    ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
-                    : hasSignal
-                      ? pickedUp
-                        ? "border-amber-400/70 bg-amber-500/10 text-white hover:border-amber-300 active:scale-[0.98]"
-                        : "border-emerald-400/70 bg-emerald-500/10 text-white hover:border-emerald-300 active:scale-[0.98]"
-                      : "border-white/15 bg-white/5 text-slate-100 hover:border-white/30 active:scale-[0.98]",
-                )}
-              >
-                {spotSignals.length > 1 ? (
-                  <span className="absolute right-0.5 top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-white/20 px-0.5 text-[8px] font-bold leading-none text-white sm:h-4 sm:min-w-4 sm:text-[9px]">
-                    {spotSignals.length}
-                  </span>
-                ) : null}
-                {latestSignal?.message ? (
-                  <span
-                    className={cn(
-                      "mb-0.5 max-w-full truncate px-0.5 font-semibold leading-tight",
-                      compact ? "text-[9px] sm:text-[10px]" : "text-[10px] sm:text-[11px]",
-                      pickedUp ? "text-amber-200" : "text-emerald-200",
-                    )}
-                  >
-                    {latestSignal.message}
-                  </span>
-                ) : hasSignal ? (
-                  <span className="mb-0.5 text-[8px] font-medium uppercase tracking-wide text-slate-400 sm:text-[9px]">
-                    {pickedUp ? waitingPicked : waitingReady}
-                  </span>
-                ) : null}
-                <span
-                  className={cn(
-                    "font-bold tabular-nums leading-none",
-                    compact ? "text-lg sm:text-xl" : "text-xl sm:text-2xl",
-                  )}
-                >
-                  {displayLabel}
-                </span>
-                {showSpotSecondaryLabel && spot.label !== displayLabel ? (
-                  <span className="mt-0.5 max-w-full truncate text-[8px] font-medium uppercase tracking-wide text-slate-400 sm:text-[9px]">
-                    {spot.label}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-
-        {needsPaging ? (
           <button
             type="button"
             aria-label="Επόμενα τραπέζια"
-            disabled={safePage >= pageCount - 1}
-            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-            className="flex w-9 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 disabled:opacity-30 sm:w-10"
+            disabled={!canScrollForward}
+            onClick={() => scrollGrid("forward")}
+            className={cn(KDS_SCROLL_ARROW_BUTTON_CLASS, "h-9 w-9 sm:h-10 sm:w-10")}
           >
-            <ChevronDown className="h-5 w-5 -rotate-90" />
+            <ChevronDown className="h-5 w-5" />
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
-      {needsPaging && rangeLabel ? (
-        <p className="shrink-0 text-center text-[10px] font-medium tabular-nums text-slate-500">
-          {rangeLabel}
-          <span className="mx-1.5 text-slate-600">·</span>
-          {safePage + 1}/{pageCount}
-        </p>
+      {canScrollForward ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-slate-950/95 to-transparent"
+          aria-hidden
+        />
       ) : null}
     </div>
   );
@@ -868,6 +903,10 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   const [sending, setSending] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const [sendDialogLoading, setSendDialogLoading] = useState(false);
+  const [sendRecipients, setSendRecipients] = useState<KdsPassRecipient[]>([]);
+  const [sendRecipientsZoneLabel, setSendRecipientsZoneLabel] = useState<string | null>(null);
   const loadGenerationRef = useRef(0);
 
   useScreenWakeLock();
@@ -901,14 +940,13 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   const headerMessageColor = activePost?.messageColor ?? ctx?.messageColor ?? null;
 
-  const headerMessages = useMemo(
-    () =>
-      kdsSidebarMessages(activePost, {
-        quickComments: ctx?.quickComments,
-        allQuickComments: ctx?.allQuickComments,
-      }),
-    [activePost, ctx?.quickComments, ctx?.allQuickComments],
-  );
+  const headerMessages = useMemo(() => {
+    if (postsForZone.length === 0) return [];
+    return kdsSidebarMessages(activePost, {
+      quickComments: ctx?.quickComments,
+      allQuickComments: ctx?.allQuickComments,
+    });
+  }, [activePost, postsForZone.length, ctx?.quickComments, ctx?.allQuickComments]);
 
   const load = useCallback(async () => {
     if (!venueSlug || !stationKey) {
@@ -945,6 +983,17 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     [spots],
   );
   const activeSignals = ctx?.activeSignals ?? [];
+
+  const zoneSignalCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    if (zoneGroups.length <= 1) return counts;
+    for (const signal of activeSignals) {
+      const zoneId = zoneIdForWaiterLocationView(signal, zoneGroups);
+      if (!zoneId) continue;
+      counts.set(zoneId, (counts.get(zoneId) ?? 0) + 1);
+    }
+    return counts;
+  }, [activeSignals, zoneGroups]);
 
   const zoneFilteredSignals = useMemo(() => {
     if (zoneGroups.length <= 1) return activeSignals;
@@ -992,6 +1041,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     [visibleSpots],
   );
   const hasSelection = Boolean(table || manualTable.trim());
+  const canSend = hasSelection && comment.trim().length > 0 && postsForZone.length > 0;
 
   function selectSpot(spot: ScreenSpot) {
     setTable(spot);
@@ -1012,10 +1062,15 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       setTable(null);
       setComment("");
     }
-    if (activePostId) {
+    const postsInZone = tabletPosts.filter((post) => venuePostMatchesZone(post, zoneId));
+    if (postsInZone.length === 0) {
+      setActivePostId(null);
+      setComment("");
+    } else if (activePostId) {
       const current = tabletPosts.find((post) => post.id === activePostId);
       if (current && !venuePostMatchesZone(current, zoneId)) {
         setActivePostId(null);
+        setComment("");
       }
     }
   }
@@ -1053,7 +1108,43 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     }
   }
 
-  async function send(messageOverride?: string) {
+  async function openSendDialog() {
+    if ((!table && !manualTable.trim()) || !ctx || !canSend) return;
+    setSendDialogOpen(true);
+    setSendDialogLoading(true);
+    setSendRecipients([]);
+    setSendRecipientsZoneLabel(null);
+    try {
+      const messageText = comment.trim();
+      const sendingPost = resolveKdsSendingPost(
+        messageText,
+        activePost,
+        postsForZone.length ? postsForZone : tabletPosts,
+      );
+      const sendStation = passStationForSend(sendingPost, station);
+      const params = new URLSearchParams({
+        venueSlug: ctx.venueSlug,
+        key: stationKey,
+        station,
+        passStation: sendStation,
+      });
+      const zoneId = activeZoneId ?? zoneGroups[0]?.id;
+      if (zoneId) params.set("zoneId", zoneId);
+      const res = await fetch(`/api/station-screen/recipients?${params}`);
+      const data = await res.json();
+      if (!res.ok) {
+        setFlash(typeof data.error === "string" ? data.error : "Σφάλμα");
+        setSendDialogOpen(false);
+        return;
+      }
+      setSendRecipients((data.recipients ?? []) as KdsPassRecipient[]);
+      setSendRecipientsZoneLabel(typeof data.zoneLabel === "string" ? data.zoneLabel : null);
+    } finally {
+      setSendDialogLoading(false);
+    }
+  }
+
+  async function send(messageOverride?: string, notifyStaffMemberIds?: string[]) {
     const manual = manualTable.trim();
     if ((!table && !manual) || !ctx) return;
     const messageText = (messageOverride ?? comment).trim();
@@ -1072,6 +1163,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       const sendingPost = resolveKdsSendingPost(messageText, activePost, postsForZone.length ? postsForZone : tabletPosts);
       const sendStation = passStationForSend(sendingPost, station);
       const outboundMessage = formatPassMessageForSend(messageText, sendingPost, tabletPosts);
+      const zoneId = activeZoneId ?? zoneGroups[0]?.id ?? undefined;
       const res = await fetch("/api/pass-signals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1081,6 +1173,10 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
           stationKey,
           ...location,
           message: outboundMessage || undefined,
+          ...(zoneId ? { zoneId } : {}),
+          ...(notifyStaffMemberIds && notifyStaffMemberIds.length > 0
+            ? { notifyStaffMemberIds }
+            : {}),
         }),
       });
       const data = await res.json();
@@ -1098,6 +1194,12 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     } finally {
       setSending(false);
     }
+  }
+
+  async function confirmSend(selectedIds: string[]) {
+    if (selectedIds.length === 0 && sendRecipients.length > 0) return;
+    setSendDialogOpen(false);
+    await send(undefined, selectedIds.length > 0 ? selectedIds : undefined);
   }
 
   const selectedLabel = selectedTableLabel(table, manualTable, zoneGroups, activeZoneId);
@@ -1202,6 +1304,10 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               sidebar
               accentColor={headerMessageColor}
             />
+          ) : ctx && postsForZone.length === 0 && tabletPosts.length > 0 ? (
+            <p className="flex flex-1 items-start px-3 py-3 text-xs leading-snug text-slate-500">
+              {C.noPostInZoneSidebar}
+            </p>
           ) : ctx ? (
             <p className="flex flex-1 items-start px-3 py-3 text-xs leading-snug text-slate-500">{C.messagesEmpty}</p>
           ) : null}
@@ -1222,7 +1328,9 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                   role="tablist"
                   aria-label="Ζώνες"
                 >
-                  {zoneGroups.map((zone) => (
+                  {zoneGroups.map((zone) => {
+                    const pending = zoneSignalCounts.get(zone.id) ?? 0;
+                    return (
                     <button
                       key={zone.id}
                       type="button"
@@ -1230,16 +1338,22 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                       aria-selected={activeZone?.id === zone.id}
                       onClick={() => selectZone(zone.id)}
                       className={cn(
-                        "shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition sm:px-3 sm:text-sm",
+                        "relative shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition sm:px-3 sm:text-sm",
                         activeZone?.id === zone.id
                           ? "bg-cyan-500 text-slate-950"
+                          : pending > 0
+                            ? "bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/50 hover:bg-amber-500/30"
                           : "bg-white/10 text-slate-300 hover:bg-white/15",
                       )}
                     >
                       {zone.label}
-                      <span className="ml-1 text-[10px] font-normal opacity-80">({zone.spots.length})</span>
+                      <span className="ml-1 text-[10px] font-normal opacity-80">
+                        ({zone.spots.length}
+                        {pending > 0 ? ` · ${pending} μην.` : ""})
+                      </span>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : null}
 
@@ -1357,8 +1471,8 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
               <button
                 type="button"
-                disabled={sending || !hasSelection || !comment.trim()}
-                onClick={() => void send(undefined)}
+                disabled={sending || !canSend}
+                onClick={() => void openSendDialog()}
                 className={cn(
                   "h-10 shrink-0 rounded-lg px-4 text-sm font-bold sm:h-11 sm:px-5",
                   buttonClass("primary", "lg"),
@@ -1392,6 +1506,20 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
           </div>
         </footer>
       ) : null}
+
+      <KdsSendRecipientsDialog
+        open={sendDialogOpen}
+        loading={sendDialogLoading}
+        recipients={sendRecipients}
+        zoneLabel={sendRecipientsZoneLabel ?? activeZone?.label ?? null}
+        tableLabel={selectedLabel}
+        message={comment}
+        sending={sending}
+        onClose={() => {
+          if (!sending) setSendDialogOpen(false);
+        }}
+        onConfirm={(selectedIds) => void confirmSend(selectedIds)}
+      />
     </div>
   );
 }

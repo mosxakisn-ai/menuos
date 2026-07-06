@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { formatWaiterCallLocation, waiterCallUpdateSchema, waiterCallsVisibleToStaffMember } from "@menuos/shared";
+import { formatWaiterCallLocation, listVenuePosts, waiterCallUpdateSchema, waiterCallsVisibleToStaffMember } from "@menuos/shared";
 import { logWaiterCallStatusChange } from "@/lib/push-diagnostics";
 import { requireWaiterCallAccess } from "@/lib/staff-auth";
+import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 
 type Params = { params: Promise<{ callId: string }> };
 
@@ -25,8 +26,12 @@ export async function PATCH(request: Request, { params }: Params) {
   if (auth.response) return auth.response;
 
   const member = auth.access!.staffMember;
-  if (member && !waiterCallsVisibleToStaffMember(member.stations)) {
-    return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 403 });
+  if (member) {
+    const opsConfig = await getVenueOperationsConfig(auth.access!.venue.id);
+    const posts = listVenuePosts(opsConfig);
+    if (!waiterCallsVisibleToStaffMember(member.stations, posts)) {
+      return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 403 });
+    }
   }
 
   const existing = await prisma.waiterCall.findFirst({

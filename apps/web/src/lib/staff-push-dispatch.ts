@@ -69,14 +69,21 @@ function filterSubsForPassSignal(
   venueStaffToken: string,
   posts: ReturnType<typeof listVenuePosts>,
   screensByStation: StaffScreensByStation,
+  notifyStaffMemberIds?: string[],
 ): Array<PushSubRow & { url: string }> {
+  const notifySet =
+    notifyStaffMemberIds && notifyStaffMemberIds.length > 0
+      ? new Set(notifyStaffMemberIds)
+      : null;
   return subs
     .filter((sub) => {
       if (sub.staffMemberId) {
         const member = membersById.get(sub.staffMemberId);
         if (!member || member.venueId !== venueId) return false;
+        if (notifySet) return notifySet.has(sub.staffMemberId);
         return passSignalVisibleToStaffMember(station, member.stations, posts);
       }
+      if (notifySet) return false;
       return sub.venueId === null || sub.venueId === venueId;
     })
     .map((sub) => ({
@@ -99,7 +106,7 @@ function filterSubsForWaiterCall(
       if (sub.staffMemberId) {
         const member = membersById.get(sub.staffMemberId);
         if (!member || member.venueId !== venueId) return false;
-        return waiterCallsVisibleToStaffMember(member.stations);
+        return waiterCallsVisibleToStaffMember(member.stations, posts);
       }
       return sub.venueId === null || sub.venueId === venueId;
     })
@@ -226,6 +233,7 @@ export async function pushPassSignalToStaff(input: {
   payload: string;
   signalId: string;
   location?: string;
+  notifyStaffMemberIds?: string[];
 }): Promise<void> {
   const subscriptions = await prisma.pushSubscription.findMany({
     where: {
@@ -264,6 +272,7 @@ export async function pushPassSignalToStaff(input: {
         input.venue.staffToken,
         posts,
         screensByStation,
+        input.notifyStaffMemberIds,
       ),
     subscriptions.length,
   );

@@ -15,6 +15,10 @@ export const passSignalCreateSchema = z
     roomNumber: z.string().max(20).optional(),
     sunbedNumber: z.string().max(20).optional(),
     message: z.string().max(80).optional(),
+    /** KDS active zone — used to filter push recipients. */
+    zoneId: z.string().trim().max(60).optional(),
+    /** When set, push only to these staff member ids (must be eligible for zone/station). */
+    notifyStaffMemberIds: z.array(z.string().min(1).max(80)).max(40).optional(),
   })
   .refine((d) => Boolean(d.venueSlug?.trim() || d.venueId?.trim()), {
     message: "venueSlug or venueId required",
