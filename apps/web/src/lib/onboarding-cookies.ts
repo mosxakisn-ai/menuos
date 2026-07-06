@@ -16,7 +16,9 @@ export function resolveOnboardingCookies(
   cookieStore: ReadonlyRequestCookies,
   status: OnboardingStatus,
 ): ResolvedOnboardingCookies {
-  const qrVisitedRaw = cookieStore.get(ONBOARDING_QR_COOKIE)?.value === "1";
-  const confirmedRaw = cookieStore.get(ONBOARDING_CONFIRMED_COOKIE)?.value === "1";
+  const qrVisitedRaw =
+    cookieStore.get(ONBOARDING_QR_COOKIE)?.value === "1" || status.onboardingQrAcknowledgedAt != null;
+  const confirmedRaw =
+    cookieStore.get(ONBOARDING_CONFIRMED_COOKIE)?.value === "1" || status.onboardingConfirmedAt != null;
   return resolveOnboardingCookieFlags(status, qrVisitedRaw, confirmedRaw);
 }

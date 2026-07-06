@@ -19,6 +19,8 @@ export type OnboardingStatus = {
   firstVenueDescription?: string | null;
   firstVenueCuisineType?: CuisineType | null;
   firstVenueCreatedAt?: Date;
+  onboardingQrAcknowledgedAt?: Date | null;
+  onboardingConfirmedAt?: Date | null;
   catalogPreview: CatalogPreviewCategory[];
 };
 
@@ -48,22 +50,31 @@ export function getStarterCatalogPreview(): CatalogPreviewCategory[] {
 }
 
 export async function getOnboardingStatus(organizationId: string): Promise<OnboardingStatus> {
-  const venues = await prisma.venue.findMany({
-    where: { organizationId },
-    include: {
-      menus: {
-        include: {
-          categories: {
-            include: {
-              translations: true,
-              items: { include: { translations: true } },
+  const [org, venues] = await Promise.all([
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        onboardingQrAcknowledgedAt: true,
+        onboardingConfirmedAt: true,
+      },
+    }),
+    prisma.venue.findMany({
+      where: { organizationId },
+      include: {
+        menus: {
+          include: {
+            categories: {
+              include: {
+                translations: true,
+                items: { include: { translations: true } },
+              },
             },
           },
         },
       },
-    },
-    orderBy: { createdAt: "asc" },
-  });
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
 
   const venueCount = venues.length;
   const menuCount = venues.reduce((n, v) => n + v.menus.length, 0);
@@ -96,6 +107,8 @@ export async function getOnboardingStatus(organizationId: string): Promise<Onboa
     firstVenueDescription: firstVenue?.description ?? null,
     firstVenueCuisineType: firstVenue?.cuisineType ?? null,
     firstVenueCreatedAt: firstVenue?.createdAt,
+    onboardingQrAcknowledgedAt: org?.onboardingQrAcknowledgedAt ?? null,
+    onboardingConfirmedAt: org?.onboardingConfirmedAt ?? null,
     catalogPreview,
   };
 }

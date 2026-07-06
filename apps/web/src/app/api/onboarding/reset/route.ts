@@ -21,6 +21,14 @@ export async function POST() {
     where: { organizationId: auth.session!.organizationId },
   });
 
+  await prisma.organization.update({
+    where: { id: auth.session!.organizationId },
+    data: {
+      onboardingQrAcknowledgedAt: null,
+      onboardingConfirmedAt: null,
+    },
+  });
+
   const cookieStore = await cookies();
   cookieStore.set(ONBOARDING_QR_COOKIE, "", clearCookie);
   cookieStore.set(ONBOARDING_CONFIRMED_COOKIE, "", clearCookie);
