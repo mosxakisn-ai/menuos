@@ -136,6 +136,8 @@ function QuickMessagesPanel({
   onSelect,
   layout = "horizontal",
   accentColor,
+  fullWidth = false,
+  sidebar = false,
 }: {
   title: string;
   messages: string[];
@@ -144,6 +146,10 @@ function QuickMessagesPanel({
   onSelect: (message: string) => void;
   layout?: "horizontal" | "vertical";
   accentColor?: string | null;
+  /** Footer row — full width, left-aligned for cook thumb reach. */
+  fullWidth?: boolean;
+  /** Right rail on KDS — vertical list, full-width tap targets. */
+  sidebar?: boolean;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
   const [canScrollBack, setCanScrollBack] = useState(false);
@@ -205,8 +211,12 @@ function QuickMessagesPanel({
 
   const chipClass = (selected: boolean) =>
     cn(
-      "shrink-0 rounded-xl border px-3 py-2.5 text-center text-sm font-semibold leading-snug transition active:scale-[0.98] disabled:opacity-40",
-      horizontal ? "min-h-[2.75rem] max-w-[10rem] truncate" : "min-h-[3.25rem]",
+      "shrink-0 rounded-xl border px-3 py-2.5 text-sm font-semibold leading-snug transition active:scale-[0.98] disabled:opacity-40",
+      horizontal
+        ? "min-h-[2.75rem] max-w-[11rem] truncate text-left sm:max-w-[14rem]"
+        : sidebar
+          ? "min-h-[3rem] w-full text-left leading-snug"
+          : "min-h-[3.25rem] text-center",
       !accentColor &&
         (selected
           ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
@@ -230,10 +240,13 @@ function QuickMessagesPanel({
       className={cn(
         "scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         horizontal
-          ? "flex max-w-[min(100%,28rem)] gap-2 overflow-x-auto sm:max-w-[min(100%,36rem)]"
+          ? cn(
+              "flex gap-2 overflow-x-auto pb-0.5",
+              fullWidth ? "w-full min-w-0" : "max-w-[min(100%,28rem)] sm:max-w-[min(100%,36rem)]",
+            )
           : "flex w-[11.5rem] flex-col gap-2 overflow-y-auto sm:w-[13rem]",
       )}
-      style={horizontal ? undefined : { maxHeight: QUICK_MESSAGES_MAX_HEIGHT_PX }}
+      style={horizontal || sidebar ? undefined : { maxHeight: QUICK_MESSAGES_MAX_HEIGHT_PX }}
     >
       {messages.map((chip, index) => {
         const selected = selectedMessage?.trim() === chip;
@@ -254,13 +267,55 @@ function QuickMessagesPanel({
     </div>
   );
 
-  if (horizontal) {
+  if (sidebar) {
     return (
-      <div className="flex shrink-0 flex-col items-end gap-1.5 max-w-[min(100%,20rem)] sm:max-w-[min(100%,28rem)]">
-        <p className="text-right text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+      <div className="flex h-full min-h-0 flex-col">
+        <p className="shrink-0 border-b border-white/10 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
           {title}
         </p>
-        <div className="flex items-center justify-end gap-1.5">
+        <div
+          ref={listRef}
+          onScroll={updateScrollState}
+          className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-3 pt-2 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {messages.map((chip, index) => {
+            const selected = selectedMessage?.trim() === chip;
+            return (
+              <button
+                key={`${index}-${chip}`}
+                type="button"
+                disabled={disabled}
+                title={chip}
+                onClick={() => onSelect(chip)}
+                className={chipClass(selected)}
+                style={chipStyle(selected)}
+              >
+                {chip}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (horizontal) {
+    return (
+      <div
+        className={cn(
+          "flex flex-col gap-1.5",
+          fullWidth ? "w-full items-stretch" : "max-w-[min(100%,20rem)] shrink-0 items-end sm:max-w-[min(100%,28rem)]",
+        )}
+      >
+        <p
+          className={cn(
+            "text-[10px] font-semibold uppercase tracking-wide text-slate-500",
+            fullWidth ? "text-left" : "text-right",
+          )}
+        >
+          {title}
+        </p>
+        <div className={cn("flex items-center gap-1.5", fullWidth ? "justify-start" : "justify-end")}>
           {showArrows ? (
             <button
               type="button"
@@ -490,10 +545,10 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     }
   }
 
-  async function send() {
+  async function send(messageOverride?: string) {
     const manual = manualTable.trim();
     if ((!table && !manual) || !ctx) return;
-    const messageText = comment.trim();
+    const messageText = (messageOverride ?? comment).trim();
     setSending(true);
     setFlash(null);
     try {
@@ -626,7 +681,8 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
         </section>
       ) : null}
 
-      <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
         {error ? (
           <p className="rounded-xl border border-red-400/40 bg-red-950/50 px-4 py-3 text-sm text-red-200">{error}</p>
         ) : null}
@@ -635,47 +691,30 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
           <div className="mx-auto w-full max-w-4xl space-y-4">
             <p className="text-base font-semibold text-white sm:text-lg">{C.pickTable}</p>
 
-            {zoneGroups.length > 1 || quickComments.length > 0 ? (
-              <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-3 sm:gap-4">
-                <div className="min-w-0 flex-1">
-                  {zoneGroups.length > 1 ? (
-                    <div
-                      className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                      role="tablist"
-                      aria-label="Ζώνες"
-                    >
-                      {zoneGroups.map((zone) => (
-                        <button
-                          key={zone.id}
-                          type="button"
-                          role="tab"
-                          aria-selected={activeZone?.id === zone.id}
-                          onClick={() => selectZone(zone.id)}
-                          className={cn(
-                            "shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
-                            activeZone?.id === zone.id
-                              ? "bg-cyan-500 text-slate-950"
-                              : "bg-white/10 text-slate-300 hover:bg-white/15",
-                          )}
-                        >
-                          {zone.label}
-                          <span className="ml-1.5 text-xs font-normal opacity-80">({zone.spots.length})</span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-                {quickComments.length > 0 ? (
-                  <QuickMessagesPanel
-                    title={C.messagesTitle}
-                    messages={quickComments}
-                    selectedMessage={comment}
-                    disabled={sending}
-                    onSelect={setComment}
-                    layout="horizontal"
-                    accentColor={ctx.messageColor}
-                  />
-                ) : null}
+            {zoneGroups.length > 1 ? (
+              <div
+                className="flex gap-2 overflow-x-auto border-t border-white/10 pt-3 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                role="tablist"
+                aria-label="Ζώνες"
+              >
+                {zoneGroups.map((zone) => (
+                  <button
+                    key={zone.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeZone?.id === zone.id}
+                    onClick={() => selectZone(zone.id)}
+                    className={cn(
+                      "shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
+                      activeZone?.id === zone.id
+                        ? "bg-cyan-500 text-slate-950"
+                        : "bg-white/10 text-slate-300 hover:bg-white/15",
+                    )}
+                  >
+                    {zone.label}
+                    <span className="ml-1.5 text-xs font-normal opacity-80">({zone.spots.length})</span>
+                  </button>
+                ))}
               </div>
             ) : null}
 
@@ -741,6 +780,21 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
         ) : null}
       </main>
 
+      {ctx && quickComments.length > 0 ? (
+        <aside className="flex w-[11rem] shrink-0 flex-col border-l border-white/10 bg-slate-950/90 sm:w-[13rem]">
+          <QuickMessagesPanel
+            title={C.messagesTitle}
+            messages={quickComments}
+            disabled={sending || !hasSelection}
+            onSelect={(chip) => void send(chip)}
+            layout="vertical"
+            accentColor={ctx.messageColor}
+            sidebar
+          />
+        </aside>
+      ) : null}
+      </div>
+
       {ctx ? (
         <footer className="shrink-0 border-t border-white/10 bg-slate-950/95 px-4 py-4 backdrop-blur-sm sm:px-6">
           <div className="mx-auto w-full max-w-4xl space-y-3">
@@ -801,7 +855,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               <button
                 type="button"
                 disabled={sending || !hasSelection}
-                onClick={() => void send()}
+                onClick={() => void send(undefined)}
                 className={cn(
                   "h-16 w-full text-lg font-bold sm:h-[4.5rem] sm:text-xl",
                   buttonClass("primary", "lg"),
