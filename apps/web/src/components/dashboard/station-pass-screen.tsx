@@ -6,7 +6,9 @@ import { ChevronDown, ChevronUp, Clock, MapPin, X } from "lucide-react";
 import {
   applyZoneLabelOverrides,
   findZoneIdForSpot,
+  filterWaiterLocationsForZoneView,
   formatWaiterCallLocation,
+  formatWaiterCallLocationWithZone,
   groupVenueSpotsByZone,
   isVenuePassPostStation,
   isVenueSupportPostStation,
@@ -894,9 +896,16 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   );
   const activeSignals = ctx?.activeSignals ?? [];
 
+  const zoneFilteredSignals = useMemo(() => {
+    if (zoneGroups.length <= 1) return activeSignals;
+    const zoneId = activeZoneId ?? zoneGroups[0]?.id;
+    if (!zoneId) return activeSignals;
+    return filterWaiterLocationsForZoneView(activeSignals, zoneId, zoneGroups);
+  }, [activeSignals, activeZoneId, zoneGroups]);
+
   const signalsBySpotKey = useMemo(() => {
     const map = new Map<string, ActiveSignal[]>();
-    for (const signal of activeSignals) {
+    for (const signal of zoneFilteredSignals) {
       const signalSpot = signalToSpot(signal);
       if (!signalSpot) continue;
       const key = spotKey(signalSpot);
@@ -905,7 +914,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       map.set(key, rows);
     }
     return map;
-  }, [activeSignals]);
+  }, [zoneFilteredSignals]);
 
   useEffect(() => {
     const spotList = ctx?.spots?.length ? ctx.spots : [];
@@ -1054,15 +1063,17 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-slate-900 text-white">
-      {activeSignals.length > 0 ? (
+      {zoneFilteredSignals.length > 0 ? (
         <section className="shrink-0 border-b border-white/10 bg-slate-950/60 px-3 py-2 sm:px-4">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-            {C.waitingTitle} ({activeSignals.length})
+            {C.waitingTitle} ({zoneFilteredSignals.length})
           </p>
           <div className="mt-1.5 flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {activeSignals.map((signal) => {
+            {zoneFilteredSignals.map((signal) => {
               const spot = signalToSpot(signal);
-              const location = formatWaiterCallLocation(signal);
+              const location = formatWaiterCallLocationWithZone(signal, zoneGroups, {
+                activeZoneId,
+              });
               const picked = signal.status === "PICKED_UP";
               const canCancel = signal.status === "READY" || signal.status === "PICKED_UP";
               return (

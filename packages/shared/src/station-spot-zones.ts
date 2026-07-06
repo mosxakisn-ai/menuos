@@ -1,5 +1,5 @@
-import type { VenueSpotType } from "./venue-spots";
-import { normalizeWaiterCallLocation } from "./venue-spots";
+import type { VenueSpotLang, VenueSpotType } from "./venue-spots";
+import { formatWaiterCallLocationForLang, normalizeWaiterCallLocation } from "./venue-spots";
 
 export type ZoneSpotInput = { type: VenueSpotType; label: string };
 
@@ -214,6 +214,41 @@ export function zoneIdForWaiterLocation(
   groups: SpotZoneGroup[],
 ): string | null {
   return resolveWaiterLocationInZones(location, groups)?.zoneId ?? null;
+}
+
+/** KDS / waiter card label with zone prefix, e.g. «Σάλα · Τραπέζι 1». */
+export function formatWaiterCallLocationWithZone(
+  location: WaiterLocationLike,
+  groups: SpotZoneGroup[],
+  options?: { activeZoneId?: string | null; lang?: VenueSpotLang },
+): string {
+  const lang = options?.lang ?? "GR";
+  const resolved = options?.activeZoneId?.trim()
+    ? resolveWaiterLocationInZone(location, options.activeZoneId, groups)
+    : resolveWaiterLocationInZones(location, groups);
+
+  if (!resolved) {
+    return formatWaiterCallLocationForLang(location, lang);
+  }
+
+  const group = groups.find((row) => row.id === resolved.zoneId);
+  const entry = group?.spots.find(
+    (row) => row.spot.type === resolved.spot.type && row.spot.label === resolved.spot.label,
+  );
+
+  const spotLocation =
+    resolved.spot.type === "TABLE"
+      ? { tableNumber: entry?.displayLabel ?? resolved.spot.label }
+      : resolved.spot.type === "ROOM"
+        ? { roomNumber: resolved.spot.label }
+        : { sunbedNumber: resolved.spot.label };
+
+  const spotLabel = formatWaiterCallLocationForLang(spotLocation, lang);
+  const zoneLabel = group?.label?.trim();
+  if (zoneLabel && resolved.zoneId !== MAIN_ZONE_ID) {
+    return `${zoneLabel} · ${spotLabel}`;
+  }
+  return spotLabel;
 }
 
 /** Resolve a location within one zone tab (KDS manual entry). */

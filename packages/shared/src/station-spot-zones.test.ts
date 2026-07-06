@@ -3,6 +3,7 @@ import {
   filterSpotsByZone,
   filterWaiterLocationsByZone,
   filterWaiterLocationsForZoneView,
+  formatWaiterCallLocationWithZone,
   findZoneIdForSpot,
   groupVenueSpotsByZone,
   pickDefaultZoneId,
@@ -119,6 +120,20 @@ describe("zone filters for waiter", () => {
     expect(filterWaiterLocationsForZoneView(items, groups[0]!.id, groups).map((row) => row.id)).toEqual([
       "c1",
     ]);
+  });
+
+  it("formats location with zone prefix for prefixed tables", () => {
+    const groups = groupVenueSpotsByZone([
+      { type: "TABLE", label: "Σαλα-1" },
+      { type: "TABLE", label: "Αυλή-2" },
+    ]);
+    expect(formatWaiterCallLocationWithZone({ tableNumber: "Σαλα-1" }, groups)).toBe(
+      "Σαλα · Τραπέζι 1",
+    );
+    expect(
+      formatWaiterCallLocationWithZone({ tableNumber: "1" }, groups, { activeZoneId: "prefix:σαλα" }),
+    ).toBe("Σαλα · Τραπέζι 1");
+    expect(formatWaiterCallLocationWithZone({ tableNumber: "12" }, groups)).toBe("Τραπέζι 12");
   });
 
   it("disambiguates bare table numbers using active zone on pass send", () => {
