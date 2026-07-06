@@ -85,7 +85,9 @@ function memberAccessLink(
     if (picked) {
       return {
         kind: "pass",
-        url: buildStationScreenShareUrl(picked.station, venueSlug, picked.screenToken),
+        url: buildStationScreenShareUrl(picked.station, venueSlug, picked.screenToken, {
+          allPosts: assignment === "pass-all",
+        }),
         station: picked.station,
       };
     }
@@ -413,7 +415,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   }
 
   function messageScopeForPost(post: string): string | null {
-    if (post === "services" || post === "all") return null;
+    if (post === "services" || post === "all" || post === "pass-all") return null;
     const venuePost = venuePosts.find((row) => row.id === post);
     if (venuePost?.station === "services") return null;
     if (enabledPosts.some((row) => row.id === post)) return post;
@@ -429,16 +431,18 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     [opsConfig, langCode],
   );
 
-  const kdsPostOptions = useMemo(
-    () =>
-      assignablePosts
-        .filter((post) => isVenuePassPostStation(post.station))
-        .map((post) => ({
-          id: post.id,
-          label: staffPostPickerLabel(post.id, langCode, assignablePosts),
-        })),
-    [assignablePosts, langCode],
-  );
+  const kdsPostOptions = useMemo(() => {
+    const passPosts = assignablePosts.filter((post) => isVenuePassPostStation(post.station));
+    const mapped = passPosts.map((post) => ({
+      id: post.id,
+      label: staffPostPickerLabel(post.id, langCode, assignablePosts),
+    }));
+    if (passPosts.length === 0) return [];
+    return [
+      { id: "pass-all", label: staffPostPickerLabel("pass-all", langCode, assignablePosts) },
+      ...mapped,
+    ];
+  }, [assignablePosts, langCode]);
 
   const mobilePostOptions = useMemo(
     () => [
@@ -457,7 +461,9 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   }
 
   function firstKdsPostId(): string | null {
-    return kdsPostOptions[0]?.id ?? null;
+    return kdsPostOptions.some((row) => row.id === "pass-all")
+      ? "pass-all"
+      : (kdsPostOptions[0]?.id ?? null);
   }
 
   function applyScreenDeviceChange(
@@ -806,6 +812,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           <p className="mt-1 text-[10px] leading-snug text-slate-400">
             {values.screen === "mobile" ? S.screenMobileHint : S.screenKdsHint}
           </p>
+          {values.screen === "mobile" && kdsPostOptions.length > 0 ? (
+            <p className="mt-1 text-[10px] leading-snug text-amber-800">{S.postsOnKdsScreenHint}</p>
+          ) : null}
+          {values.screen === "kds" && waiterPostOptions.length > 0 ? (
+            <p className="mt-1 text-[10px] leading-snug text-slate-400">{S.postsOnMobileScreenHint}</p>
+          ) : null}
         </td>
       </>
     );

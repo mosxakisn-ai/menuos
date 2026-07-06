@@ -32,6 +32,7 @@ type StationPostOption = {
   id: string;
   label: string;
   zoneId: string | null;
+  station: PassStationInput;
   quickComments: string[];
   messageColor: string | null;
 };
@@ -47,6 +48,7 @@ type ScreenContext = {
   quickComments?: string[];
   messageColor?: string | null;
   stationPosts?: StationPostOption[];
+  allPosts?: boolean;
   spots: ScreenSpot[];
   activeSignals?: ActiveSignal[];
   todayCount?: number;
@@ -460,6 +462,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   const searchParams = useSearchParams();
   const venueSlug = searchParams.get("venueSlug")?.trim() ?? "";
   const stationKey = searchParams.get("key")?.trim() ?? "";
+  const allPostsMode = searchParams.get("allPosts") === "1";
   const C = COPY[station];
 
   const [ctx, setCtx] = useState<ScreenContext | null>(null);
@@ -504,6 +507,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     }
     const generation = ++loadGenerationRef.current;
     const params = new URLSearchParams({ venueSlug, key: stationKey, station });
+    if (allPostsMode) params.set("allPosts", "1");
     const res = await fetch(`/api/station-screen/context?${params}`);
     const data = await res.json();
     if (generation !== loadGenerationRef.current) return;
@@ -514,7 +518,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     }
     setError(null);
     setCtx(data as ScreenContext);
-  }, [venueSlug, stationKey, station, C.invalid]);
+  }, [venueSlug, stationKey, station, allPostsMode, C.invalid]);
 
   useEffect(() => {
     void load();
@@ -617,12 +621,13 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
             : { sunbedNumber: table.label }
         : { tableNumber: manual };
 
+      const sendStation = activePost?.station ?? station;
       const res = await fetch("/api/pass-signals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           venueSlug: ctx.venueSlug,
-          station,
+          station: sendStation,
           stationKey,
           ...location,
           message: messageText || undefined,

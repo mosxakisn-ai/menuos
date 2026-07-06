@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import type { PassStationInput } from "@menuos/shared";
 import {
+  enabledPassPostsAll,
   enabledPassPostsForStation,
   enabledVenuePosts,
   filterVenueSpotsForScreen,
@@ -34,6 +35,7 @@ export async function GET(request: Request) {
   }
 
   const station = stationParsed.data as PassStationInput;
+  const allPosts = url.searchParams.get("allPosts") === "1";
   if (!["kitchen", "bar", "cold", "dessert"].includes(station)) {
     return NextResponse.json({ error: "Μη έγκυρο τμήμα." }, { status: 400 });
   }
@@ -60,25 +62,35 @@ export async function GET(request: Request) {
   });
 
   const enabledPosts = enabledVenuePosts(opsConfig, "GR");
-  const stationPostsRaw = enabledPassPostsForStation(opsConfig, station, "GR");
+  const stationPostsRaw = allPosts
+    ? enabledPassPostsAll(opsConfig, "GR")
+    : enabledPassPostsForStation(opsConfig, station, "GR");
   const useAllSpots =
-    stationPostsRaw.length > 1 || stationPostsRaw.some((post) => !post.zoneId?.trim());
+    allPosts ||
+    stationPostsRaw.length > 1 ||
+    stationPostsRaw.some((post) => !post.zoneId?.trim());
   const filtered = useAllSpots
     ? spots
     : filterVenueSpotsForScreen(spots, auth.stationScreen?.spotPrefix);
 
   const primaryScreen = await resolvePrimaryStationScreen(auth.venue.id, station);
   const isPrimary = isPrimaryStationScreen(auth.stationScreen?.id, primaryScreen?.id);
-  const screenFilter = passSignalStationScreenWhere({
-    stationScreenId: auth.stationScreen?.id,
-    isPrimaryScreen: isPrimary,
-  });
+  const screenFilter = allPosts
+    ? {}
+    : passSignalStationScreenWhere({
+        stationScreenId: auth.stationScreen?.id,
+        isPrimaryScreen: isPrimary,
+      });
 
   const dbStation = passStationInputToDb(station);
+  const passStationFilter = allPosts
+    ? { station: { in: ["KITCHEN", "BAR", "COLD", "DESSERT"] as const } }
+    : { station: dbStation };
+
   const activeSignalsRaw = await prisma.passSignal.findMany({
     where: {
       venueId: auth.venue.id,
-      station: dbStation,
+      ...passStationFilter,
       status: { in: ["READY", "PICKED_UP"] },
       ...screenFilter,
     },
@@ -111,7 +123,7 @@ export async function GET(request: Request) {
   const todaySignalsRaw = await prisma.passSignal.findMany({
     where: {
       venueId: auth.venue.id,
-      station: dbStation,
+      ...passStationFilter,
       readyAt: { gte: todayStart },
       ...screenFilter,
     },
@@ -156,6 +168,7 @@ export async function GET(request: Request) {
       id: post.id,
       label: post.label.trim(),
       zoneId: post.zoneId ?? null,
+      station: post.station,
       quickComments: quickChipsForPost(opsConfig, post.id, "GR"),
       messageColor: getPostMessageColor(opsConfig, post.id, index >= 0 ? index : 0),
     };
@@ -166,6 +179,7 @@ export async function GET(request: Request) {
     venueName: auth.venue.name,
     venueSlug: auth.venue.slug,
     station,
+    allPosts,
     stationLabel: stationDisplayLabel(opsConfig, station),
     screenLabel: auth.stationScreen?.label ?? null,
     spotPrefix: auth.stationScreen?.spotPrefix ?? null,

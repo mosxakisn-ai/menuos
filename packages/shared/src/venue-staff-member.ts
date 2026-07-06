@@ -7,7 +7,7 @@ import {
   type VenuePost,
 } from "./venue-operations-config";
 
-export const STAFF_SPECIAL_OPTIONS = ["services", "all"] as const;
+export const STAFF_SPECIAL_OPTIONS = ["services", "all", "pass-all"] as const;
 export type StaffSpecialOption = (typeof STAFF_SPECIAL_OPTIONS)[number];
 
 /** @deprecated Legacy fixed slots — staff assignments now use post ids from operations config. */
@@ -129,13 +129,14 @@ export function staffStationLabelForLang(
 }
 
 export function isStaffSpecialOption(value: string): value is StaffSpecialOption {
-  return value === "services" || value === "all";
+  return value === "services" || value === "all" || value === "pass-all";
 }
 
 export function resolveStaffAssignmentToPassInput(
   assignment: string,
   posts?: VenuePost[],
 ): PassStationInput | null {
+  if (assignment === "pass-all") return "kitchen";
   if (isStaffSpecialOption(assignment)) return null;
   const post = posts?.find((row) => row.id === assignment);
   if (post) {
@@ -152,6 +153,7 @@ export function staffPrimaryAssignment(stations: string[]): string {
   const normalized = normalizeLegacyStaffStations(stations);
   if (normalized.length === 0) return "";
   if (normalized.includes("all")) return "all";
+  if (normalized.includes("pass-all")) return "pass-all";
   if (normalized.includes("services")) return "services";
   return normalized[0] ?? "";
 }
@@ -195,6 +197,9 @@ export function staffAssignmentLabelForLang(
   if (assignment === "all") {
     return staffPostPickerLabel("all", lang, posts);
   }
+  if (assignment === "pass-all") {
+    return staffPostPickerLabel("pass-all", lang, posts);
+  }
   if (isStaffSpecialOption(assignment)) {
     return staffStationLabelForLang(assignment, lang);
   }
@@ -222,6 +227,9 @@ export function staffPostPickerLabel(
   if (assignment === "all") {
     return lang === "EN" ? "All — everywhere" : "Όλα — παντού";
   }
+  if (assignment === "pass-all") {
+    return lang === "EN" ? "All posts — tablet" : "Όλα τα πόστα — tablet";
+  }
   const post = posts?.find((row) => row.id === assignment);
   if (post) {
     return post.label.trim();
@@ -240,6 +248,9 @@ export function staffPostStationSubtitle(
   if (assignment === "services") return null;
   if (assignment === "all") {
     return lang === "EN" ? "All posts & spaces · phone" : "Όλα τα πόστα & χώροι · κινητό";
+  }
+  if (assignment === "pass-all") {
+    return lang === "EN" ? "All kitchen/bar posts · one tablet" : "Όλα τα πόστα κουζίνας/μπαρ · ένα tablet";
   }
   const post = posts?.find((row) => row.id === assignment);
   if (!post) return null;
@@ -343,7 +354,7 @@ export function passDbStationsForStaffMember(
   memberStations: string[],
   posts?: VenuePost[],
 ): string[] | null {
-  if (memberStations.includes("all") || memberStations.includes("services")) return null;
+  if (memberStations.includes("all") || memberStations.includes("pass-all") || memberStations.includes("services")) return null;
   const stations = memberStations
     .map((assignment) => resolveStaffAssignmentToPassInput(assignment, posts))
     .filter((station): station is PassStationInput => Boolean(station))
@@ -357,7 +368,7 @@ export function passSignalVisibleToStaffMember(
   memberStations: string[],
   posts?: VenuePost[],
 ): boolean {
-  if (memberStations.includes("all") || memberStations.includes("services")) return true;
+  if (memberStations.includes("all") || memberStations.includes("pass-all") || memberStations.includes("services")) return true;
   const mapped = PASS_DB_STATION_TO_STAFF[passDbStation];
   if (!mapped) return false;
   return memberStations.some((assignment) => {
@@ -403,6 +414,10 @@ export function pickStationScreenForStaffAssignment(
 ): { station: PassStationInput; screenToken: string } | null {
   const station = resolveStaffAssignmentToPassInput(assignment, posts);
   if (!station || screens.length === 0) return null;
+  if (assignment === "pass-all") {
+    const first = screens[0];
+    return first ? { station, screenToken: first.screenToken } : null;
+  }
   const post = posts.find((row) => row.id === assignment);
   if (post) {
     const byLabel = screens.find((row) => row.label.trim() === post.label.trim());
@@ -439,6 +454,7 @@ export function staffAssignmentLinkKind(
     if (!post.enabled) return "invalid";
     return post.station === "services" ? "waiter" : "pass";
   }
+  if (assignment === "pass-all") return "pass";
   if (PASS_STATION_INPUTS.includes(assignment as PassStationInput)) return "pass";
   return "invalid";
 }

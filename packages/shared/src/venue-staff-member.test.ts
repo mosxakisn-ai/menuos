@@ -233,6 +233,7 @@ describe("staffAssignmentLinkKind", () => {
   it("maps screen device from assignment", () => {
     expect(staffScreenDeviceForAssignment("services", posts)).toBe("mobile");
     expect(staffScreenDeviceForAssignment("kitchen", posts)).toBe("kds");
+    expect(staffScreenDeviceForAssignment("pass-all", posts)).toBe("kds");
     expect(staffScreenDeviceForAssignment("missing", posts)).toBe("invalid");
   });
 

@@ -37,7 +37,9 @@ export function staffMemberTabletUrlFromScreens(
   const screens = screensByStation[station] ?? [];
   const picked = pickStationScreenForStaffAssignment(assignment, posts, screens);
   if (!picked) return null;
-  return buildStationScreenUrl(stationScreenPath(picked.station), venueSlug, picked.screenToken);
+  return buildStationScreenUrl(stationScreenPath(picked.station), venueSlug, picked.screenToken, {
+    allPosts: assignment === "pass-all",
+  });
 }
 
 export function staffMemberAccessUrlFromScreens(input: {
@@ -92,6 +94,8 @@ export async function resolvePassStaffAccessResult(input: {
   if (!picked) return { kind: "missing-screen", station };
   return {
     kind: "tablet",
-    url: buildStationScreenUrl(stationScreenPath(picked.station), input.venueSlug, picked.screenToken),
+    url: buildStationScreenUrl(stationScreenPath(picked.station), input.venueSlug, picked.screenToken, {
+      allPosts: assignment === "pass-all",
+    }),
   };
 }

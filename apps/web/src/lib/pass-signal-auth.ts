@@ -139,10 +139,12 @@ export function buildStationScreenUrl(
   path: "/kds" | "/bds" | "/cold" | "/dessert",
   slug: string,
   screenToken: string,
+  opts?: { allPosts?: boolean },
 ): string {
   const base = process.env.APP_URL?.replace(/\/$/, "") ?? "https://menuos.gr";
   const url = new URL(path, base);
   url.searchParams.set("venueSlug", slug);
   url.searchParams.set("key", screenToken);
+  if (opts?.allPosts) url.searchParams.set("allPosts", "1");
   return url.toString();
 }

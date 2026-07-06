@@ -956,6 +956,10 @@ export const DASHBOARD_EL = {
         screenKds: "KDS (tablet πάσου)",
         screenMobileHint: "Κλήσεις πελάτη & πάσος στο κινητό",
         screenKdsHint: "Γρήγορα μηνύματα & πάσος στο tablet",
+        postsOnKdsScreenHint:
+          "Bar, κουζίνα κ.λπ. από tab Πόστα → άλλαξε Οθόνη σε «KDS (tablet πάσου)».",
+        postsOnMobileScreenHint:
+          "Σερβιτόρος (Services…) → άλλαξε Οθόνη σε «Κινητό».",
         noKdsPosts: "Δεν έχεις πόστα κουζίνας/μπαρ — ρύθμισε πρώτα το tab «Πόστα».",
         noWaiterPosts:
           "Δεν έχεις πόστο σερβιτόρου — πρόσθεσε πόστο με τύπο «Σερβιτόρος» στο tab «Πόστα» (ή διάλεξε «Όλα — παντού»).",

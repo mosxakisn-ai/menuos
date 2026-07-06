@@ -943,6 +943,10 @@ export const DASHBOARD_EN = {
         screenKds: "KDS (pass tablet)",
         screenMobileHint: "Guest calls & pass alerts on phone",
         screenKdsHint: "Quick messages & pass alerts on tablet",
+        postsOnKdsScreenHint:
+          "Bar, kitchen, etc. from Posts tab → switch Screen to «KDS (pass tablet)».",
+        postsOnMobileScreenHint:
+          "Waiter (Services…) → switch Screen to «Mobile».",
         noKdsPosts: "No kitchen/bar posts yet — set them up in the Posts tab first.",
         noWaiterPosts:
           "No waiter post yet — add a post with type Waiter in the Posts tab (or pick All — everywhere).",

@@ -251,6 +251,14 @@ export function enabledPassPostsForStation(
   );
 }
 
+/** All enabled kitchen/bar/cold/dessert posts — for one cook on one tablet. */
+export function enabledPassPostsAll(
+  config: VenueOperationsConfig | undefined,
+  lang: "GR" | "EN" = "GR",
+): VenuePost[] {
+  return enabledVenuePosts(config, lang).filter((post) => isVenuePassPostStation(post.station));
+}
+
 /** Pass post shown under a KDS zone tab (no zoneId = all spaces). */
 export function venuePostMatchesZone(
   post: Pick<VenuePost, "zoneId">,
