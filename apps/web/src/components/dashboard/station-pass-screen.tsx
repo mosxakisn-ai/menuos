@@ -544,6 +544,78 @@ function QuickMessagesPanel({
 
   const showArrows = hasOverflow || (horizontal ? messages.length > 3 : messages.length > 4);
 
+  const scrollArrowButtonClass =
+    "flex shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white transition hover:bg-white/10 disabled:opacity-30";
+
+  if (sidebar) {
+    const sidebarShowArrows = showArrows || messages.length > 4;
+    return (
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <p className="shrink-0 px-3.5 pt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+          {title}
+        </p>
+        <div className="relative flex min-h-0 flex-1 items-stretch gap-1 px-2 pb-2 pt-1">
+          <div
+            ref={listRef}
+            onScroll={updateScrollState}
+            className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain px-1.5 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {messages.map((chip, index) => {
+              const selected = selectedMessage?.trim() === chip;
+              return (
+                <button
+                  key={`${index}-${chip}`}
+                  type="button"
+                  disabled={disabled}
+                  title={chip}
+                  onClick={() => onSelect(chip)}
+                  className={cn(
+                    "w-full shrink-0 rounded-lg border px-2.5 py-2 text-left text-xs font-semibold leading-snug whitespace-normal break-words transition active:scale-[0.99] disabled:opacity-40 sm:text-sm",
+                    !accentColor &&
+                      (selected
+                        ? "border-cyan-400 bg-cyan-500/20 text-white"
+                        : "border-white/15 bg-white/10 text-slate-100 hover:border-cyan-400/40"),
+                  )}
+                  style={chipStyle(selected)}
+                >
+                  {chip}
+                </button>
+              );
+            })}
+          </div>
+          {sidebarShowArrows ? (
+            <div className="flex w-9 shrink-0 flex-col justify-center gap-1 py-1">
+              <button
+                type="button"
+                aria-label="Προηγούμενα μηνύματα"
+                disabled={!canScrollBack}
+                onClick={() => scrollMessages("back")}
+                className={cn(scrollArrowButtonClass, "h-9 w-9")}
+              >
+                <ChevronUp className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Επόμενα μηνύματα"
+                disabled={!canScrollForward}
+                onClick={() => scrollMessages("forward")}
+                className={cn(scrollArrowButtonClass, "h-9 w-9")}
+              >
+                <ChevronDown className="h-5 w-5" />
+              </button>
+            </div>
+          ) : null}
+          {canScrollForward ? (
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-2 h-8 bg-gradient-to-t from-slate-950/95 to-transparent"
+              aria-hidden
+            />
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   const chipClass = (selected: boolean) =>
     cn(
       "shrink-0 rounded-xl border px-3 py-2.5 text-sm font-semibold leading-snug transition active:scale-[0.98] disabled:opacity-40",
@@ -591,44 +663,6 @@ function QuickMessagesPanel({
       })}
     </div>
   );
-
-  if (sidebar) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col">
-        <p className="shrink-0 px-3.5 pt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-          {title}
-        </p>
-        <div
-          ref={listRef}
-          onScroll={updateScrollState}
-          className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3.5 pb-4 pt-2 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {messages.map((chip, index) => {
-            const selected = selectedMessage?.trim() === chip;
-            return (
-              <button
-                key={`${index}-${chip}`}
-                type="button"
-                disabled={disabled}
-                title={chip}
-                onClick={() => onSelect(chip)}
-                className={cn(
-                  "w-full rounded-lg border px-2.5 py-2 text-left text-xs font-semibold leading-snug whitespace-normal break-words transition active:scale-[0.99] disabled:opacity-40 sm:text-sm",
-                  !accentColor &&
-                    (selected
-                      ? "border-cyan-400 bg-cyan-500/20 text-white"
-                      : "border-white/15 bg-white/10 text-slate-100 hover:border-cyan-400/40"),
-                )}
-                style={chipStyle(selected)}
-              >
-                {chip}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
 
   if (horizontal) {
     return (
