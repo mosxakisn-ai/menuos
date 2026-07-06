@@ -27,6 +27,7 @@ type ScreenSpot = { type: VenueSpotType; label: string };
 
 type ActiveSignal = {
   id: string;
+  station: PassStationInput;
   tableNumber: string | null;
   roomNumber: string | null;
   sunbedNumber: string | null;
@@ -929,12 +930,14 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   async function cancelSignal(signalId: string) {
     if (!ctx || !(await confirmDestructive(C.cancelConfirm))) return;
+    const signal = activeSignals.find((row) => row.id === signalId);
+    const cancelStation = signal?.station ?? passStationForSend(activePost, station);
     setCancellingId(signalId);
     try {
       const res = await fetch(`/api/pass-signals/${signalId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venueSlug: ctx.venueSlug, station, stationKey }),
+        body: JSON.stringify({ venueSlug: ctx.venueSlug, station: cancelStation, stationKey }),
       });
       const data = await res.json();
       if (!res.ok) {

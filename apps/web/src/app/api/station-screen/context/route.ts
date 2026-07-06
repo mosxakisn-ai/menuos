@@ -17,6 +17,7 @@ import {
   passSignalStationScreenWhere,
   passStationInputSchema,
   passStationInputToDb,
+  passStationDbToInput,
   quickChipsForPost,
   quickChipsForStation,
   resolvePostIdForStationScreen,
@@ -104,6 +105,7 @@ export async function GET(request: Request) {
     take: 24,
     select: {
       id: true,
+      station: true,
       tableNumber: true,
       roomNumber: true,
       sunbedNumber: true,
@@ -115,16 +117,21 @@ export async function GET(request: Request) {
 
   const spotPrefixForSignals = useAllSpots ? null : auth.stationScreen?.spotPrefix;
 
-  const activeSignals = activeSignalsRaw.filter((signal) =>
-    passLocationMatchesScreenSpotPrefix(
-      {
-        tableNumber: signal.tableNumber ?? undefined,
-        roomNumber: signal.roomNumber ?? undefined,
-        sunbedNumber: signal.sunbedNumber ?? undefined,
-      },
-      spotPrefixForSignals,
-    ),
-  );
+  const activeSignals = activeSignalsRaw
+    .filter((signal) =>
+      passLocationMatchesScreenSpotPrefix(
+        {
+          tableNumber: signal.tableNumber ?? undefined,
+          roomNumber: signal.roomNumber ?? undefined,
+          sunbedNumber: signal.sunbedNumber ?? undefined,
+        },
+        spotPrefixForSignals,
+      ),
+    )
+    .map(({ station: signalStation, ...signal }) => ({
+      ...signal,
+      station: passStationDbToInput(signalStation),
+    }));
   const todayStart = startOfTodayAthens();
   const todaySignalsRaw = await prisma.passSignal.findMany({
     where: {
