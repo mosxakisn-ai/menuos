@@ -272,7 +272,7 @@ export function bumpVisitorIntentStep(opts: {
   }
   writePeakStep(opts.step);
   reportVisitorIntent(opts);
-  if (opts.step === "payment_success" || opts.step === "payment_failed") {
+  if (opts.step === "payment_success" || opts.step === "payment_failed" || opts.step === "stripe_init_failed") {
     clearPeakStep();
   }
 }

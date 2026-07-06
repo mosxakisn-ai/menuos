@@ -91,7 +91,6 @@ function resolveStepTransition(
   if (incoming === "session_end") return incoming;
   if (incoming === "heartbeat") return prev ?? "browse";
   if (!prev) return incoming;
-  if (FINAL_STEPS.has(prev) && !FINAL_STEPS.has(incoming)) return prev;
   if (
     opts?.surface === "marketing" &&
     (incoming === "browse" || incoming === "pricing") &&
@@ -100,6 +99,7 @@ function resolveStepTransition(
   ) {
     return incoming;
   }
+  if (FINAL_STEPS.has(prev) && !FINAL_STEPS.has(incoming)) return prev;
   if (stepRank(incoming) >= stepRank(prev)) return incoming;
   return prev;
 }

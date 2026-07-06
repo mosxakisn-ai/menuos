@@ -18,24 +18,32 @@ export function BillingConfirmHandler({
   const [message, setMessage] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
   const confirmStarted = useRef(false);
+  const billingOutcomeHandled = useRef<string | null>(null);
 
   useEffect(() => {
     const billing = searchParams.get("billing");
     const sessionId = searchParams.get("session_id");
 
     if (billing === "cancelled") {
-      bumpVisitorIntentStep({
-        surface: "checkout",
-        step: "payment_failed",
-        path: "/dashboard/billing",
-        visitorLabel: userEmail?.trim() || undefined,
-      });
+      if (billingOutcomeHandled.current !== "cancelled") {
+        billingOutcomeHandled.current = "cancelled";
+        bumpVisitorIntentStep({
+          surface: "checkout",
+          step: "payment_failed",
+          path: "/dashboard/billing",
+          visitorLabel: userEmail?.trim() || undefined,
+        });
+      }
       setMessage(d.billing.cancelled);
       setIsError(true);
+      router.replace("/dashboard/billing");
       return;
     }
 
     if (billing === "activated") {
+      if (billingOutcomeHandled.current !== "activated") {
+        billingOutcomeHandled.current = "activated";
+      }
       setMessage(d.billing.activatedDev);
       setIsError(false);
       router.replace("/dashboard/billing");
@@ -46,6 +54,7 @@ export function BillingConfirmHandler({
     if (billing === "confirm" && sessionId) {
       if (confirmStarted.current) return;
       confirmStarted.current = true;
+      billingOutcomeHandled.current = "confirm";
 
       setMessage(d.billing.confirming);
       setIsError(false);
@@ -104,7 +113,7 @@ export function BillingConfirmHandler({
           });
         });
     }
-  }, [organizationId, router, searchParams, userEmail]);
+  }, [organizationId, router, searchParams, userEmail, d.billing]);
 
   if (!message) return null;
 
