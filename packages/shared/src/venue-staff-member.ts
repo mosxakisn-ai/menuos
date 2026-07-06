@@ -200,9 +200,6 @@ export function staffAssignmentLabelForLang(
   if (assignment === "pass-all") {
     return staffPostPickerLabel("pass-all", lang, posts);
   }
-  if (isStaffSpecialOption(assignment)) {
-    return staffStationLabelForLang(assignment, lang);
-  }
   const post = posts?.find((row) => row.id === assignment);
   if (post) return post.label.trim();
   if (PASS_STATION_INPUTS.includes(assignment as PassStationInput)) {
