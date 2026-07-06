@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, Clock, MapPin, X } from "lucide-react";
 import {
+  applyZoneLabelOverrides,
   findZoneIdForSpot,
   formatWaiterCallLocation,
   groupVenueSpotsByZone,
@@ -57,6 +58,7 @@ type ScreenContext = {
   allQuickComments?: string[];
   allPosts?: boolean;
   spots: ScreenSpot[];
+  zoneLabels?: Record<string, string>;
   activeSignals?: ActiveSignal[];
   todayCount?: number;
 };
@@ -70,7 +72,9 @@ const COPY = {
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
-    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ). Τα μηνύματα πάνω είναι από όλα τα πόστα.",
+    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
+    messagesNeedTable: "Πρώτα διάλεξε τραπέζι — μετά πάτα το μήνυμα.",
+    messagesTapHint: "Πάτα το μήνυμα που θέλεις να στείλεις.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -94,7 +98,9 @@ const COPY = {
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
-    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ). Τα μηνύματα πάνω είναι από όλα τα πόστα.",
+    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
+    messagesNeedTable: "Πρώτα διάλεξε τραπέζι — μετά πάτα το μήνυμα.",
+    messagesTapHint: "Πάτα το μήνυμα που θέλεις να στείλεις.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -118,7 +124,9 @@ const COPY = {
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
-    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ). Τα μηνύματα πάνω είναι από όλα τα πόστα.",
+    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
+    messagesNeedTable: "Πρώτα διάλεξε τραπέζι — μετά πάτα το μήνυμα.",
+    messagesTapHint: "Πάτα το μήνυμα που θέλεις να στείλεις.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -142,7 +150,9 @@ const COPY = {
     sent: "Στάλθηκε στον σερβιτόρο!",
     pickTable: "Επίλεξε τραπέζι",
     pickPost: "Πόστο",
-    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ). Τα μηνύματα πάνω είναι από όλα τα πόστα.",
+    pickPostHint: "Από ποιο πόστο στέλνεις (π.χ. κουζίνα ή μπαρ).",
+    messagesNeedTable: "Πρώτα διάλεξε τραπέζι — μετά πάτα το μήνυμα.",
+    messagesTapHint: "Πάτα το μήνυμα που θέλεις να στείλεις.",
     noPostInZone: "Δεν υπάρχει πόστο για αυτόν τον χώρο.",
     emptyZone: "Δεν βρέθηκαν τραπέζια στη ζώνη αυτής της οθόνης.",
     invalid: "Μη έγκυρο link οθόνης.",
@@ -232,6 +242,7 @@ function QuickMessagesPanel({
   accentColor,
   fullWidth = false,
   sidebar = false,
+  stacked = false,
   hideTitle = false,
 }: {
   title: string;
@@ -245,6 +256,8 @@ function QuickMessagesPanel({
   fullWidth?: boolean;
   /** Right rail on KDS — vertical list, full-width tap targets. */
   sidebar?: boolean;
+  /** Full-width vertical stack — full message text, one per row (KDS main). */
+  stacked?: boolean;
   /** Parent renders section title (e.g. KDS header strip). */
   hideTitle?: boolean;
 }) {
@@ -304,6 +317,58 @@ function QuickMessagesPanel({
 
   if (messages.length === 0) return null;
 
+  const chipStyle = (selected: boolean) => {
+    if (!accentColor) return undefined;
+    return {
+      backgroundColor: selected ? `${accentColor}44` : `${accentColor}28`,
+      color: "#f8fafc",
+      borderColor: selected ? accentColor : `${accentColor}99`,
+      boxShadow: selected
+        ? `0 0 0 1px ${accentColor}55, inset 3px 0 0 ${accentColor}`
+        : `inset 3px 0 0 ${accentColor}`,
+    } as const;
+  };
+
+  const stackedChipClass = (selected: boolean) =>
+    cn(
+      "w-full rounded-xl border px-4 py-3.5 text-left text-base font-semibold leading-snug whitespace-normal break-words transition active:scale-[0.99] disabled:opacity-40",
+      !accentColor &&
+        (selected
+          ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
+          : "border-white/20 bg-white/10 text-slate-100 hover:border-cyan-400/50 hover:bg-cyan-500/15"),
+    );
+
+  if (stacked) {
+    return (
+      <div className="w-full space-y-2">
+        {!hideTitle ? (
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</p>
+        ) : null}
+        <div
+          ref={listRef}
+          onScroll={updateScrollState}
+          className="flex max-h-[min(55vh,26rem)] w-full flex-col gap-2 overflow-y-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {messages.map((chip, index) => {
+            const selected = selectedMessage?.trim() === chip;
+            return (
+              <button
+                key={`${index}-${chip}`}
+                type="button"
+                disabled={disabled}
+                onClick={() => onSelect(chip)}
+                className={stackedChipClass(selected)}
+                style={chipStyle(selected)}
+              >
+                {chip}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   const showArrows = hasOverflow || (horizontal ? messages.length > 3 : messages.length > 4);
 
   const chipClass = (selected: boolean) =>
@@ -319,16 +384,6 @@ function QuickMessagesPanel({
           ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
           : "border-white/20 bg-white/10 text-slate-100 hover:border-cyan-400/50 hover:bg-cyan-500/15"),
     );
-
-  const chipStyle = (selected: boolean) => {
-    if (!accentColor) return undefined;
-    return {
-      backgroundColor: selected ? `${accentColor}44` : `${accentColor}28`,
-      color: "#f8fafc",
-      borderColor: selected ? accentColor : `${accentColor}99`,
-      boxShadow: selected ? `0 0 0 1px ${accentColor}55, inset 3px 0 0 ${accentColor}` : `inset 3px 0 0 ${accentColor}`,
-    } as const;
-  };
 
   const list = (
     <div
@@ -567,10 +622,11 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     [passPosts, supportPosts],
   );
 
-  const zoneGroups = useMemo(
-    () => (ctx?.spots?.length ? groupVenueSpotsByZone(ctx.spots) : []),
-    [ctx?.spots],
-  );
+  const zoneGroups = useMemo(() => {
+    if (!ctx?.spots?.length) return [];
+    const groups = groupVenueSpotsByZone(ctx.spots);
+    return applyZoneLabelOverrides(groups, ctx.zoneLabels);
+  }, [ctx?.spots, ctx?.zoneLabels]);
 
   const postsForZone = useMemo(() => {
     if (!stationPosts.length) return [];
@@ -638,13 +694,19 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     () => spots.map((s) => `${s.type}:${s.label}`).join("|"),
     [spots],
   );
+  const zoneLabelsKey =
+    ctx?.zoneLabels && Object.keys(ctx.zoneLabels).length > 0
+      ? JSON.stringify(ctx.zoneLabels)
+      : "";
   const activeSignals = ctx?.activeSignals ?? [];
 
   useEffect(() => {
-    setActiveZoneId(pickDefaultZoneId(groupVenueSpotsByZone(spots)));
+    const spotList = ctx?.spots?.length ? ctx.spots : [];
+    const groups = applyZoneLabelOverrides(groupVenueSpotsByZone(spotList), ctx?.zoneLabels);
+    setActiveZoneId(pickDefaultZoneId(groups));
     setTable(null);
     setActivePostId(null);
-  }, [ctx?.venueId, spotsLayoutKey]);
+  }, [ctx?.venueId, spotsLayoutKey, zoneLabelsKey]);
 
   useEffect(() => {
     if (postsForZone.length === 0) {
@@ -777,31 +839,6 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 : displayStationTitle}
             </h1>
             {ctx ? <p className="mt-1 text-sm text-slate-400 sm:text-base">{ctx.venueName}</p> : null}
-            {ctx ? (
-              <div className="mt-4 border-t border-white/10 pt-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  {C.messagesTitle}
-                </p>
-                {headerMessages.length > 0 ? (
-                  <div className="mt-2">
-                    <QuickMessagesPanel
-                      title={C.messagesTitle}
-                      messages={headerMessages}
-                      selectedMessage={comment}
-                      disabled={sending || !hasSelection}
-                      onSelect={(chip) => void send(chip)}
-                      layout="horizontal"
-                      accentColor={headerMessageColor}
-                      fullWidth
-                      hideTitle
-                    />
-                    <p className="mt-2 text-xs text-slate-500">{C.messagesAllPostsHint}</p>
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-slate-500">{C.messagesEmpty}</p>
-                )}
-              </div>
-            ) : null}
           </div>
           {ctx && typeof ctx.todayCount === "number" ? (
             <p className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-300">
@@ -1007,6 +1044,26 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 className="h-16 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-2xl font-bold text-white placeholder:text-slate-500"
               />
             )}
+
+            {headerMessages.length > 0 ? (
+              <section className="space-y-2 border-t border-white/10 pt-4">
+                <QuickMessagesPanel
+                  title={C.messagesTitle}
+                  messages={headerMessages}
+                  selectedMessage={comment}
+                  disabled={sending || !hasSelection}
+                  onSelect={(chip) => void send(chip)}
+                  stacked
+                  accentColor={headerMessageColor}
+                />
+                <p className="text-xs text-slate-500">
+                  {hasSelection ? C.messagesTapHint : C.messagesNeedTable}
+                  {stationPosts.length > 1 ? ` ${C.messagesAllPostsHint}` : ""}
+                </p>
+              </section>
+            ) : (
+              <p className="border-t border-white/10 pt-4 text-sm text-slate-500">{C.messagesEmpty}</p>
+            )}
           </div>
         ) : !error ? (
           <p className="text-center text-slate-500">Φόρτωση…</p>
@@ -1030,7 +1087,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 {comment.trim() ? (
                   <span
                     className={cn(
-                      "max-w-[12rem] truncate rounded-lg px-2.5 py-1 text-center text-xs font-semibold sm:max-w-xs sm:text-sm",
+                      "max-w-full rounded-lg px-2.5 py-1 text-left text-xs font-semibold sm:text-sm",
                       !messageColor && "bg-white/10 text-slate-200",
                     )}
                     style={

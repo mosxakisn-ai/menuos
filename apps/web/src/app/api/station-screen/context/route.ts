@@ -206,6 +206,7 @@ export async function GET(request: Request) {
     supportKdsPosts,
     allQuickComments,
     spots: filtered,
+    zoneLabels: opsConfig.zoneLabels ?? undefined,
     activeSignals,
     todayCount,
   });
