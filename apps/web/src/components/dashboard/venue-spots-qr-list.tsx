@@ -384,7 +384,7 @@ export function VenueSpotsQrList({
       ) : null}
 
       <div className={dashboardCardClass}>
-        <DashboardSectionTitle title={Q.spotsTitle} description={Q.zonesDesc} />
+        <DashboardSectionTitle title={Q.spotsTitle} />
 
         <label className="mt-6 block max-w-md">
           <span className={dashboardLabelClass}>{d.venue}</span>
