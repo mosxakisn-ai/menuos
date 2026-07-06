@@ -1087,6 +1087,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
           {ctx && headerMessages.length > 0 ? (
             <QuickMessagesPanel
+              key={activePost?.id ?? "default"}
               title={C.messagesTitle}
               messages={headerMessages}
               selectedMessage={comment}
@@ -1096,13 +1097,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               accentColor={headerMessageColor}
             />
           ) : ctx ? (
-            <p className="px-3 py-3 text-xs leading-snug text-slate-500">{C.messagesEmpty}</p>
-          ) : null}
-
-          {ctx ? (
-            <p className="shrink-0 border-t border-white/10 px-2 py-2 text-[10px] leading-snug text-slate-500">
-              {hasSelection ? C.messagesTapHint : C.messagesNeedTable}
-            </p>
+            <p className="flex flex-1 items-start px-3 py-3 text-xs leading-snug text-slate-500">{C.messagesEmpty}</p>
           ) : null}
         </aside>
 
@@ -1229,8 +1224,13 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       </div>
 
       {ctx ? (
-        <footer className="shrink-0 border-t border-white/10 bg-slate-950/95 px-2.5 py-1.5 backdrop-blur-sm sm:px-3">
-          <div className="mx-auto flex max-w-4xl flex-col gap-1">
+        <footer className="flex shrink-0 border-t border-white/10 bg-slate-950/95 backdrop-blur-sm">
+          <div className="flex w-[38%] max-w-[12.5rem] shrink-0 flex-col justify-end self-stretch border-r border-white/10 px-2 py-1.5 sm:max-w-[13.5rem] sm:px-2.5">
+            <p className="text-[10px] leading-snug text-slate-500">
+              {hasSelection ? C.messagesTapHint : C.messagesNeedTable}
+            </p>
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1 px-2.5 py-1.5 sm:px-3">
             <div className="flex items-stretch gap-1.5">
               <div
                 className={cn(

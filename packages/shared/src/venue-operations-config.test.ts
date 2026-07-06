@@ -152,7 +152,7 @@ describe("migrateLegacyQuickChipsToPostIds", () => {
     expect(config.quickChips?.["bar-sala"]).toEqual([]);
   });
 
-  it("copies legacy services key to each services post without explicit chips", () => {
+  it("copies legacy services key to the first services post without explicit chips", () => {
     const config = normalizeVenueOperationsConfig({
       enabledStations: ["kitchen" as const, "bar" as const],
       posts: [
@@ -162,11 +162,11 @@ describe("migrateLegacyQuickChipsToPostIds", () => {
       quickChips: { services: ["σερβιτόρος εδώ"] },
     });
     expect(config.quickChips?.["svc-avli"]).toEqual(["σερβιτόρος εδώ"]);
-    expect(config.quickChips?.["svc-sala"]).toEqual(["σερβιτόρος εδώ"]);
+    expect(config.quickChips?.["svc-sala"]).toBeUndefined();
     expect(config.quickChips?.services).toBeUndefined();
   });
 
-  it("keeps post-id key and copies legacy kitchen chips to sibling posts", () => {
+  it("does not copy post-id quick chips to sibling posts", () => {
     const config = normalizeVenueOperationsConfig({
       enabledStations: ["kitchen" as const],
       posts: [
@@ -176,7 +176,26 @@ describe("migrateLegacyQuickChipsToPostIds", () => {
       quickChips: { kitchen: ["ετοιμο"] },
     });
     expect(config.quickChips?.kitchen).toEqual(["ετοιμο"]);
-    expect(config.quickChips?.grill).toEqual(["ετοιμο"]);
+    expect(config.quickChips?.grill).toBeUndefined();
+  });
+
+  it("keeps distinct per-post chips on re-normalize", () => {
+    const config = normalizeVenueOperationsConfig({
+      enabledStations: ["kitchen" as const, "bar" as const],
+      posts: [
+        { id: "kitchen", label: "Κουζίνα Σάλας", enabled: true, station: "kitchen" as const },
+        { id: "bar-avli", label: "Bar Αυλή", enabled: true, station: "bar" as const },
+        { id: "bar-sala", label: "Bar Σάλα", enabled: true, station: "bar" as const },
+      ],
+      quickChips: {
+        kitchen: ["ετοιμο"],
+        "bar-avli": ["bar αυλή"],
+        "bar-sala": ["bar σαλα"],
+      },
+    });
+    expect(quickChipsForPost(config, "kitchen")).toEqual(["ετοιμο"]);
+    expect(quickChipsForPost(config, "bar-avli")).toEqual(["bar αυλή"]);
+    expect(quickChipsForPost(config, "bar-sala")).toEqual(["bar σαλα"]);
   });
 });
 

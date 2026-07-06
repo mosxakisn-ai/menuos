@@ -489,21 +489,15 @@ function migrateLegacyQuickChipsToPostIds(
     const keyIsPostId = postIds.has(stationKey);
 
     if (keyIsPostId) {
-      // Keep chips on the post whose id equals the station key; copy to siblings without their own key.
-      for (const post of stationPosts) {
-        if (post.id !== stationKey && next[post.id] === undefined) {
-          next[post.id] = [...legacy];
-          changed = true;
-        }
-      }
+      // Post id equals legacy station name (e.g. id "kitchen") — keep chips on that post only.
       continue;
     }
 
     for (const post of stationPosts) {
-      if (next[post.id] === undefined) {
-        next[post.id] = [...legacy];
-        changed = true;
-      }
+      if (next[post.id] !== undefined) continue;
+      next[post.id] = [...legacy];
+      changed = true;
+      break;
     }
     if (stationPosts.length > 0) {
       delete next[stationKey];
