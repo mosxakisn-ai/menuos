@@ -109,27 +109,15 @@ export function SettingsVenuePanel({ venues }: { venues: SettingsVenue[] }) {
 export function SettingsMessagesPanel({ venues }: { venues: VenueSpotVenue[] }) {
   const { d } = useDashboardCopy();
   const T = d.pages.settings.messagesTab;
-  const { venueId, setVenueId } = useVenuePicker(venues);
 
   return (
-    <div className="space-y-5">
-      <TabIntro
-        title={T.title}
-        description={T.description}
-        hint={T.hint}
-        venues={venues}
-        venueId={venueId}
-        onVenueChange={setVenueId}
-      />
-      <VenueOperationsConfigPanel
-        venues={venues}
-        initialVenueId={venueId}
-        sections={["chips", "map"]}
-        showHeader={false}
-        messagesByPost
-        hideVenuePicker
-      />
-    </div>
+    <VenueOperationsConfigPanel
+      venues={venues}
+      sections={["chips", "map"]}
+      showHeader={false}
+      messagesByPost
+      intro={{ title: T.title, description: T.description }}
+    />
   );
 }
 

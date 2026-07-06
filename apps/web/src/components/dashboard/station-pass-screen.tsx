@@ -81,7 +81,7 @@ const COPY = {
     waitingTitle: "Σε αναμονή",
     waitingReady: "Περιμένει σερβιτόρο",
     waitingPicked: "Ο σερβιτόρος πήγε",
-    noTable: "Διάλεξε τραπέζι παραπάνω",
+    noTable: "Διάλεξε τραπέζι δεξιά",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
     messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
@@ -107,7 +107,7 @@ const COPY = {
     waitingTitle: "Σε αναμονή",
     waitingReady: "Περιμένει σερβιτόρο",
     waitingPicked: "Ο σερβιτόρος πήγε",
-    noTable: "Διάλεξε τραπέζι παραπάνω",
+    noTable: "Διάλεξε τραπέζι δεξιά",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
     messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
@@ -133,7 +133,7 @@ const COPY = {
     waitingTitle: "Σε αναμονή",
     waitingReady: "Περιμένει σερβιτόρο",
     waitingPicked: "Ο σερβιτόρος πήγε",
-    noTable: "Διάλεξε τραπέζι παραπάνω",
+    noTable: "Διάλεξε τραπέζι δεξιά",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
     messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
@@ -159,7 +159,7 @@ const COPY = {
     waitingTitle: "Σε αναμονή",
     waitingReady: "Περιμένει σερβιτόρο",
     waitingPicked: "Ο σερβιτόρος πήγε",
-    noTable: "Διάλεξε τραπέζι παραπάνω",
+    noTable: "Διάλεξε τραπέζι δεξιά",
     todayCount: (n: number) => `Σήμερα: ${n} ειδοποιήσεις`,
     messagesTitle: "Μηνύματα",
     messagesEmpty: "Δεν έχεις ρυθμίσει μηνύματα — πρόσθεσέ τα στο tab Μηνύματα (κουζίνα, μπαρ κ.λπ.).",
@@ -421,14 +421,14 @@ function QuickMessagesPanel({
 
   if (sidebar) {
     return (
-      <div className="flex h-full min-h-0 flex-col">
-        <p className="shrink-0 border-b border-white/10 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <p className="shrink-0 px-2 pt-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
           {title}
         </p>
         <div
           ref={listRef}
           onScroll={updateScrollState}
-          className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-3 pt-2 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-2 pb-2 pt-1.5 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {messages.map((chip, index) => {
             const selected = selectedMessage?.trim() === chip;
@@ -439,7 +439,13 @@ function QuickMessagesPanel({
                 disabled={disabled}
                 title={chip}
                 onClick={() => onSelect(chip)}
-                className={chipClass(selected)}
+                className={cn(
+                  "w-full rounded-lg border px-2.5 py-2 text-left text-xs font-semibold leading-snug whitespace-normal break-words transition active:scale-[0.99] disabled:opacity-40 sm:text-sm",
+                  !accentColor &&
+                    (selected
+                      ? "border-cyan-400 bg-cyan-500/20 text-white"
+                      : "border-white/15 bg-white/10 text-slate-100 hover:border-cyan-400/40"),
+                )}
                 style={chipStyle(selected)}
               >
                 {chip}
@@ -826,34 +832,13 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       : null;
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-slate-900 text-white">
-      <header className="shrink-0 border-b border-white/10 px-4 py-4 sm:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-cyan-400">MenuOS</p>
-            <h1 className="font-serif text-2xl font-bold leading-tight sm:text-3xl">
-              {ctx?.screenLabel?.trim() &&
-              displayStationTitle &&
-              ctx.screenLabel.trim() !== displayStationTitle
-                ? `${displayStationTitle} · ${ctx.screenLabel.trim()}`
-                : displayStationTitle}
-            </h1>
-            {ctx ? <p className="mt-1 text-sm text-slate-400 sm:text-base">{ctx.venueName}</p> : null}
-          </div>
-          {ctx && typeof ctx.todayCount === "number" ? (
-            <p className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-300">
-              {C.todayCount(ctx.todayCount)}
-            </p>
-          ) : null}
-        </div>
-      </header>
-
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-slate-900 text-white">
       {activeSignals.length > 0 ? (
-        <section className="shrink-0 border-b border-white/10 bg-slate-950/60 px-4 py-3 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <section className="shrink-0 border-b border-white/10 bg-slate-950/60 px-3 py-2 sm:px-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
             {C.waitingTitle} ({activeSignals.length})
           </p>
-          <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mt-1.5 flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {activeSignals.map((signal) => {
               const spot = signalToSpot(signal);
               const location = formatWaiterCallLocation(signal);
@@ -863,7 +848,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                 <div
                   key={signal.id}
                   className={cn(
-                    "relative shrink-0 rounded-xl border",
+                    "relative shrink-0 rounded-lg border",
                     spot && table && spotSelected(table, spot)
                       ? "border-cyan-400 bg-cyan-500/15"
                       : "border-white/15 bg-white/5",
@@ -872,19 +857,19 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                   <button
                     type="button"
                     onClick={() => selectFromSignal(signal)}
-                    className="rounded-xl px-3 py-2 pr-8 text-left transition active:scale-[0.98]"
+                    className="rounded-lg px-2.5 py-1.5 pr-7 text-left transition active:scale-[0.98]"
                   >
-                    <p className="text-sm font-bold text-white">{location}</p>
+                    <p className="text-xs font-bold text-white">{location}</p>
                     {signal.message ? (
-                      <p className="mt-0.5 max-w-[10rem] truncate text-xs text-slate-300">{signal.message}</p>
+                      <p className="mt-0.5 max-w-[8rem] truncate text-[10px] text-slate-300">{signal.message}</p>
                     ) : null}
                     <p
                       className={cn(
-                        "mt-1 flex items-center gap-1 text-[10px] font-medium",
+                        "mt-0.5 flex items-center gap-1 text-[9px] font-medium",
                         picked ? "text-amber-300" : "text-emerald-300",
                       )}
                     >
-                      <Clock className="h-3 w-3" />
+                      <Clock className="h-2.5 w-2.5" />
                       {picked ? C.waitingPicked : C.waitingReady} · {minutesAgo(signal.readyAt)}
                     </p>
                   </button>
@@ -894,9 +879,9 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                       title={C.cancelSignal}
                       disabled={cancellingId === signal.id}
                       onClick={() => void cancelSignal(signal.id)}
-                      className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-lg bg-red-500/20 text-red-200 hover:bg-red-500/35 disabled:opacity-50"
+                      className="absolute right-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-md bg-red-500/20 text-red-200 hover:bg-red-500/35 disabled:opacity-50"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   ) : null}
                 </div>
@@ -907,239 +892,239 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       ) : null}
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-      <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-        {error ? (
-          <p className="rounded-xl border border-red-400/40 bg-red-950/50 px-4 py-3 text-sm text-red-200">{error}</p>
-        ) : null}
-
-        {ctx ? (
-          <div className="mx-auto w-full max-w-4xl space-y-4">
-            <p className="text-base font-semibold text-white sm:text-lg">{C.pickTable}</p>
-
-            {zoneGroups.length > 1 ? (
-              <div
-                className="flex gap-2 overflow-x-auto border-t border-white/10 pt-3 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                role="tablist"
-                aria-label="Ζώνες"
-              >
-                {zoneGroups.map((zone) => (
-                  <button
-                    key={zone.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeZone?.id === zone.id}
-                    onClick={() => selectZone(zone.id)}
-                    className={cn(
-                      "shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
-                      activeZone?.id === zone.id
-                        ? "bg-cyan-500 text-slate-950"
-                        : "bg-white/10 text-slate-300 hover:bg-white/15",
-                    )}
-                  >
-                    {zone.label}
-                    <span className="ml-1.5 text-xs font-normal opacity-80">({zone.spots.length})</span>
-                  </button>
-                ))}
-              </div>
+        <aside className="flex min-h-0 w-[38%] max-w-[12.5rem] shrink-0 flex-col border-r border-white/10 bg-slate-950/50 sm:max-w-[13.5rem]">
+          <div className="shrink-0 border-b border-white/10 px-3 py-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-cyan-400">MenuOS</p>
+            <h1 className="mt-0.5 text-base font-bold leading-tight sm:text-lg">
+              {ctx?.screenLabel?.trim() &&
+              displayStationTitle &&
+              ctx.screenLabel.trim() !== displayStationTitle
+                ? `${displayStationTitle} · ${ctx.screenLabel.trim()}`
+                : displayStationTitle}
+            </h1>
+            {ctx ? <p className="mt-0.5 text-xs text-slate-400">{ctx.venueName}</p> : null}
+            {ctx && typeof ctx.todayCount === "number" ? (
+              <p className="mt-1 text-[10px] text-slate-500">{C.todayCount(ctx.todayCount)}</p>
             ) : null}
+          </div>
 
-            {stationPosts.length > 0 ? (
-              <div className="space-y-2 border-t border-white/10 pt-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{C.pickPost}</p>
-                {postsForZone.length > 0 ? (
-                  <div
-                    className="flex flex-wrap gap-2"
-                    role="tablist"
-                    aria-label={C.pickPost}
-                  >
-                    {postsForZone.map((post) => (
-                      <button
-                        key={post.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={activePost?.id === post.id}
-                        onClick={() => selectPost(post.id)}
-                        className={cn(
-                          "shrink-0 rounded-xl border-2 px-4 py-2 text-sm font-semibold transition",
-                          activePost?.id === post.id
-                            ? "border-transparent text-white"
-                            : "border-white/15 bg-white/5 text-slate-300 hover:border-white/25",
-                        )}
-                        style={
-                          activePost?.id === post.id && post.messageColor
-                            ? {
-                                backgroundColor: `${post.messageColor}33`,
-                                borderColor: post.messageColor,
-                                boxShadow: `0 0 0 1px ${post.messageColor}55`,
-                              }
-                            : undefined
-                        }
-                      >
-                        {post.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-500">{C.noPostInZone}</p>
-                )}
-                {stationPosts.length > 1 ? (
-                  <p className="text-xs text-slate-500">{C.pickPostHint}</p>
-                ) : null}
-              </div>
-            ) : null}
+          {ctx && headerMessages.length > 0 ? (
+            <QuickMessagesPanel
+              title={C.messagesTitle}
+              messages={headerMessages}
+              selectedMessage={comment}
+              disabled={sending || !hasSelection}
+              onSelect={(chip) => void send(chip)}
+              sidebar
+              accentColor={headerMessageColor}
+            />
+          ) : ctx ? (
+            <p className="px-3 py-3 text-xs leading-snug text-slate-500">{C.messagesEmpty}</p>
+          ) : null}
 
-            {spots.length > 0 ? (
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-                {visibleSpots.map(({ spot, displayLabel }) => {
-                  const selected = spotSelected(table, spot);
-                  return (
+          {ctx ? (
+            <p className="shrink-0 border-t border-white/10 px-2 py-2 text-[10px] leading-snug text-slate-500">
+              {hasSelection ? C.messagesTapHint : C.messagesNeedTable}
+            </p>
+          ) : null}
+        </aside>
+
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {error ? (
+            <p className="m-3 rounded-lg border border-red-400/40 bg-red-950/50 px-3 py-2 text-sm text-red-200">{error}</p>
+          ) : null}
+
+          {ctx ? (
+            <div className="flex min-h-0 flex-1 flex-col px-3 py-2 sm:px-4 sm:py-3">
+              <p className="shrink-0 text-sm font-semibold text-white">{C.pickTable}</p>
+
+              {zoneGroups.length > 1 ? (
+                <div
+                  className="mt-2 flex shrink-0 gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  role="tablist"
+                  aria-label="Ζώνες"
+                >
+                  {zoneGroups.map((zone) => (
                     <button
-                      key={`${spot.type}-${spot.label}`}
+                      key={zone.id}
                       type="button"
-                      onClick={() => selectSpot(spot)}
+                      role="tab"
+                      aria-selected={activeZone?.id === zone.id}
+                      onClick={() => selectZone(zone.id)}
                       className={cn(
-                        "flex min-h-[5.25rem] flex-col items-center justify-center rounded-2xl border-2 px-2 py-3 transition sm:min-h-[6rem]",
-                        selected
-                          ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
-                          : "border-white/15 bg-white/5 text-slate-100 hover:border-white/30 active:scale-[0.98]",
+                        "shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition sm:px-3 sm:text-sm",
+                        activeZone?.id === zone.id
+                          ? "bg-cyan-500 text-slate-950"
+                          : "bg-white/10 text-slate-300 hover:bg-white/15",
                       )}
                     >
-                      <span className="text-2xl font-bold tabular-nums leading-none sm:text-3xl">
-                        {displayLabel}
-                      </span>
-                      {zoneGroups.length <= 1 && spot.label !== displayLabel ? (
-                        <span className="mt-1 max-w-full truncate text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                          {spot.label}
-                        </span>
-                      ) : null}
+                      {zone.label}
+                      <span className="ml-1 text-[10px] font-normal opacity-80">({zone.spots.length})</span>
                     </button>
-                  );
-                })}
-              </div>
-            ) : ctx.spotPrefix ? (
-              <div className="space-y-3">
-                <p className="rounded-xl border border-amber-400/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-100">
-                  {C.emptyZone}
-                </p>
-                <input
-                  value={manualTable}
-                  onChange={(e) => {
-                    setManualTable(e.target.value);
-                    setTable(null);
-                  }}
-                  placeholder="12"
-                  maxLength={20}
-                  className="h-16 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-2xl font-bold text-white placeholder:text-slate-500"
-                />
-              </div>
-            ) : (
-              <input
-                value={manualTable}
-                onChange={(e) => {
-                  setManualTable(e.target.value);
-                  setTable(null);
-                }}
-                placeholder="12"
-                maxLength={20}
-                className="h-16 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-2xl font-bold text-white placeholder:text-slate-500"
-              />
-            )}
+                  ))}
+                </div>
+              ) : null}
 
-            {headerMessages.length > 0 ? (
-              <section className="space-y-2 border-t border-white/10 pt-4">
-                <QuickMessagesPanel
-                  title={C.messagesTitle}
-                  messages={headerMessages}
-                  selectedMessage={comment}
-                  disabled={sending || !hasSelection}
-                  onSelect={(chip) => void send(chip)}
-                  stacked
-                  accentColor={headerMessageColor}
-                />
-                <p className="text-xs text-slate-500">
-                  {hasSelection ? C.messagesTapHint : C.messagesNeedTable}
-                  {stationPosts.length > 1 ? ` ${C.messagesAllPostsHint}` : ""}
-                </p>
-              </section>
-            ) : (
-              <p className="border-t border-white/10 pt-4 text-sm text-slate-500">{C.messagesEmpty}</p>
-            )}
-          </div>
-        ) : !error ? (
-          <p className="text-center text-slate-500">Φόρτωση…</p>
-        ) : null}
-      </main>
+              {stationPosts.length > 0 ? (
+                <div className="mt-2 shrink-0 space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{C.pickPost}</p>
+                  {postsForZone.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={C.pickPost}>
+                      {postsForZone.map((post) => (
+                        <button
+                          key={post.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={activePost?.id === post.id}
+                          onClick={() => selectPost(post.id)}
+                          className={cn(
+                            "shrink-0 rounded-lg border px-2.5 py-1 text-xs font-semibold transition sm:px-3 sm:py-1.5 sm:text-sm",
+                            activePost?.id === post.id
+                              ? "border-transparent text-white"
+                              : "border-white/15 bg-white/5 text-slate-300 hover:border-white/25",
+                          )}
+                          style={
+                            activePost?.id === post.id && post.messageColor
+                              ? {
+                                  backgroundColor: `${post.messageColor}33`,
+                                  borderColor: post.messageColor,
+                                  boxShadow: `0 0 0 1px ${post.messageColor}55`,
+                                }
+                              : undefined
+                          }
+                        >
+                          {post.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">{C.noPostInZone}</p>
+                  )}
+                </div>
+              ) : null}
+
+              <div className="mt-2 min-h-0 flex-1 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {spots.length > 0 ? (
+                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 md:grid-cols-6">
+                    {visibleSpots.map(({ spot, displayLabel }) => {
+                      const selected = spotSelected(table, spot);
+                      return (
+                        <button
+                          key={`${spot.type}-${spot.label}`}
+                          type="button"
+                          onClick={() => selectSpot(spot)}
+                          className={cn(
+                            "flex min-h-[3.25rem] flex-col items-center justify-center rounded-xl border-2 px-1 py-2 transition sm:min-h-[3.75rem]",
+                            selected
+                              ? "border-cyan-400 bg-cyan-500/20 text-white shadow-[0_0_0_1px_rgba(34,211,238,0.35)]"
+                              : "border-white/15 bg-white/5 text-slate-100 hover:border-white/30 active:scale-[0.98]",
+                          )}
+                        >
+                          <span className="text-xl font-bold tabular-nums leading-none sm:text-2xl">
+                            {displayLabel}
+                          </span>
+                          {zoneGroups.length <= 1 && spot.label !== displayLabel ? (
+                            <span className="mt-0.5 max-w-full truncate text-[9px] font-medium uppercase tracking-wide text-slate-400">
+                              {spot.label}
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : ctx.spotPrefix ? (
+                  <div className="space-y-2">
+                    <p className="rounded-lg border border-amber-400/30 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
+                      {C.emptyZone}
+                    </p>
+                    <input
+                      value={manualTable}
+                      onChange={(e) => {
+                        setManualTable(e.target.value);
+                        setTable(null);
+                      }}
+                      placeholder="12"
+                      maxLength={20}
+                      className="h-12 w-full rounded-xl border border-white/20 bg-white/10 px-3 text-xl font-bold text-white placeholder:text-slate-500"
+                    />
+                  </div>
+                ) : (
+                  <input
+                    value={manualTable}
+                    onChange={(e) => {
+                      setManualTable(e.target.value);
+                      setTable(null);
+                    }}
+                    placeholder="12"
+                    maxLength={20}
+                    className="h-12 w-full rounded-xl border border-white/20 bg-white/10 px-3 text-xl font-bold text-white placeholder:text-slate-500"
+                  />
+                )}
+              </div>
+            </div>
+          ) : !error ? (
+            <p className="flex flex-1 items-center justify-center text-sm text-slate-500">Φόρτωση…</p>
+          ) : null}
+        </main>
       </div>
 
       {ctx ? (
-        <footer className="shrink-0 border-t border-white/10 bg-slate-950/95 px-4 py-4 backdrop-blur-sm sm:px-6">
-          <div className="mx-auto w-full max-w-4xl space-y-3">
-              <div
-                className={cn(
-                  "flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3",
-                  hasSelection ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5",
-                )}
-              >
-                <MapPin className={cn("h-5 w-5 shrink-0", hasSelection ? "text-cyan-300" : "text-slate-500")} />
-                <p className={cn("min-w-0 flex-1 text-sm font-semibold sm:text-base", hasSelection ? "text-cyan-100" : "text-slate-400")}>
-                  {selectedLabel ?? C.noTable}
-                </p>
-                {comment.trim() ? (
-                  <span
-                    className={cn(
-                      "max-w-full rounded-lg px-2.5 py-1 text-left text-xs font-semibold sm:text-sm",
-                      !messageColor && "bg-white/10 text-slate-200",
-                    )}
-                    style={
-                      messageColor
-                        ? {
-                            backgroundColor: `${messageColor}33`,
-                            color: "#f8fafc",
-                            border: `1px solid ${messageColor}`,
-                            boxShadow: `inset 3px 0 0 ${messageColor}`,
-                          }
-                        : undefined
-                    }
-                  >
-                    {comment.trim()}
-                  </span>
-                ) : null}
-              </div>
-
-              <label className="block">
-                <span className="text-xs text-slate-500">{C.comment}</span>
-                <input
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder={C.commentPh}
-                  maxLength={80}
-                  className="mt-1.5 h-11 w-full rounded-xl border border-white/15 bg-white/5 px-4 text-base text-white placeholder:text-slate-600"
-                />
-              </label>
-
-              {flash ? (
-                <p
+        <footer className="shrink-0 border-t border-white/10 bg-slate-950/95 px-3 py-2.5 backdrop-blur-sm sm:px-4">
+          <div className="mx-auto flex max-w-4xl flex-col gap-2">
+            <div
+              className={cn(
+                "flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2",
+                hasSelection ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-white/5",
+              )}
+            >
+              <MapPin className={cn("h-4 w-4 shrink-0", hasSelection ? "text-cyan-300" : "text-slate-500")} />
+              <p className={cn("min-w-0 flex-1 text-sm font-semibold", hasSelection ? "text-cyan-100" : "text-slate-400")}>
+                {selectedLabel ?? C.noTable}
+              </p>
+              {comment.trim() ? (
+                <span
                   className={cn(
-                    "rounded-xl px-4 py-2.5 text-center text-sm font-semibold",
-                    flash === C.sent ? "bg-emerald-500/20 text-emerald-200" : "bg-red-500/20 text-red-200",
+                    "max-w-[50%] truncate rounded-md px-2 py-0.5 text-left text-xs font-semibold",
+                    !messageColor && "bg-white/10 text-slate-200",
                   )}
+                  style={
+                    messageColor
+                      ? {
+                          backgroundColor: `${messageColor}33`,
+                          color: "#f8fafc",
+                          border: `1px solid ${messageColor}`,
+                        }
+                      : undefined
+                  }
                 >
-                  {flash}
-                </p>
+                  {comment.trim()}
+                </span>
               ) : null}
+            </div>
 
-              <button
-                type="button"
-                disabled={sending || !hasSelection}
-                onClick={() => void send(undefined)}
+            {flash ? (
+              <p
                 className={cn(
-                  "h-16 w-full text-lg font-bold sm:h-[4.5rem] sm:text-xl",
-                  buttonClass("primary", "lg"),
-                  "rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50",
+                  "rounded-lg px-3 py-2 text-center text-xs font-semibold",
+                  flash === C.sent ? "bg-emerald-500/20 text-emerald-200" : "bg-red-500/20 text-red-200",
                 )}
               >
-                {sending ? "…" : C.send}
-              </button>
+                {flash}
+              </p>
+            ) : null}
+
+            <button
+              type="button"
+              disabled={sending || !hasSelection}
+              onClick={() => void send(undefined)}
+              className={cn(
+                "h-12 w-full text-base font-bold sm:h-14 sm:text-lg",
+                buttonClass("primary", "lg"),
+                "rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50",
+              )}
+            >
+              {sending ? "…" : C.send}
+            </button>
           </div>
         </footer>
       ) : null}

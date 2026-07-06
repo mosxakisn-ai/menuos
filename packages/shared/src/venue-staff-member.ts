@@ -227,10 +227,10 @@ export function staffPostPickerLabel(
     return lang === "EN" ? "Waiter (add in Posts tab)" : "Σερβιτόρος (πρόσθεσε στο tab Πόστα)";
   }
   if (assignment === "all") {
-    return lang === "EN" ? "All — everywhere" : "Όλα — παντού";
+    return lang === "EN" ? "All" : "Όλα";
   }
   if (assignment === "pass-all") {
-    return lang === "EN" ? "All posts — tablet" : "Όλα τα πόστα — tablet";
+    return lang === "EN" ? "All" : "Όλα";
   }
   const post = posts?.find((row) => row.id === assignment);
   if (post) {

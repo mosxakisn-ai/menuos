@@ -46,6 +46,7 @@ import { notifyLive360Updated } from "@/lib/live360-events";
 import { confirmDestructive } from "@/lib/confirm-action";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
 import { DashboardIconButton } from "@/components/dashboard/dashboard-action-button";
+import { PostDeviceBadge } from "@/components/dashboard/post-device-badge";
 import { AlertTriangle, CheckCircle2, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -180,6 +181,7 @@ export function VenueOperationsConfigPanel({
   const M = d.pages.settings.messagesTab;
   const Z = d.pages.settings.spacesTab;
   const Posts = d.pages.settings.postsTab;
+  const Personnel = d.pages.settings.personnel;
   const P = d.pages.settings.personnel.stationLabels;
   const show = (s: OpsConfigSection) => sections.includes(s);
   const spaceMode = sections.length === 1 && sections[0] === "zones";
@@ -267,7 +269,8 @@ export function VenueOperationsConfigPanel({
   useEffect(() => {
     if (!saveFeedback) return;
     saveFeedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    const timer = window.setTimeout(() => setSaveFeedback(null), 6000);
+    const ms = saveFeedback.type === "success" ? 2200 : 8000;
+    const timer = window.setTimeout(() => setSaveFeedback(null), ms);
     return () => window.clearTimeout(timer);
   }, [saveFeedback]);
 
@@ -313,7 +316,7 @@ export function VenueOperationsConfigPanel({
           quickChipsRef.current = data.config.quickChips;
         }
         const successText = postsOnlyMode
-          ? Posts.savedNextSteps
+          ? Posts.saved
           : typeof data.message === "string"
             ? data.message
             : O.saved;
@@ -634,14 +637,12 @@ export function VenueOperationsConfigPanel({
 
       <div className={dashboardCardClass}>
         {intro ? (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <h2 className="text-base font-semibold text-brand-navy">{intro.title}</h2>
-              <p className="mt-2 text-sm text-slate-600">{intro.description}</p>
-              {intro.hint ? (
-                <p className="mt-2 text-xs leading-relaxed text-slate-500">{intro.hint}</p>
-              ) : null}
+              <p className="mt-1 text-sm text-slate-600">{intro.description}</p>
             </div>
+            {show("departments") ? (
             <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
               <button
                 type="button"
@@ -656,6 +657,7 @@ export function VenueOperationsConfigPanel({
                 <p className="text-xs text-slate-500">{O.postsMaxReached}</p>
               ) : null}
             </div>
+            ) : null}
           </div>
         ) : showHeader ? (
           <DashboardSectionTitle title={O.title} description={O.description} />
@@ -711,7 +713,7 @@ export function VenueOperationsConfigPanel({
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                       <th className="w-14 px-3 py-3 text-center">{O.postActiveLabel}</th>
-                      <th className="w-36 px-3 py-3">{O.postNameLabel}</th>
+                      <th className="w-44 px-3 py-3">{O.postNameLabel}</th>
                       <th className="w-36 px-3 py-3">{postSpaceLabel}</th>
                       <th className="w-32 px-3 py-3">{O.postTypeLabel}</th>
                       <th className="w-16 px-3 py-3 text-right">{O.postActionsLabel}</th>
@@ -740,15 +742,24 @@ export function VenueOperationsConfigPanel({
                             />
                           </td>
                           <td className="px-3 py-3 align-middle">
-                            <input
-                              value={post.label}
-                              onChange={(e) => setPostLabel(post.id, e.target.value)}
-                              maxLength={40}
-                              placeholder={
-                                postsOnlyMode ? Posts.postNamePlaceholder : P.kitchen
-                              }
-                              className={`${dashboardFieldClass} w-full max-w-[9rem] py-2 text-sm`}
-                            />
+                            <div className="flex items-center gap-2">
+                              <PostDeviceBadge
+                                station={post.station}
+                                size="sm"
+                                labelMobile={Personnel.screenMobileHint}
+                                labelTablet={Personnel.screenKdsHint}
+                                labelSupportTablet={Personnel.messagesScopeTablet}
+                              />
+                              <input
+                                value={post.label}
+                                onChange={(e) => setPostLabel(post.id, e.target.value)}
+                                maxLength={40}
+                                placeholder={
+                                  postsOnlyMode ? Posts.postNamePlaceholder : P.kitchen
+                                }
+                                className={`${dashboardFieldClass} min-w-0 flex-1 py-2 text-sm`}
+                              />
+                            </div>
                           </td>
                           <td className="px-3 py-3 align-middle">
                             <select
@@ -808,11 +819,6 @@ export function VenueOperationsConfigPanel({
 
             {show("chips") && messagesByPost ? (
             <section className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-brand-navy">{M.byPostTitle}</h3>
-                <p className="mt-1 max-w-2xl text-sm text-slate-600">{M.byPostHint}</p>
-              </div>
-
               {enabledPosts.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                   {M.noPostsHint}{" "}
@@ -901,19 +907,9 @@ export function VenueOperationsConfigPanel({
                         ) : (
                           <p className="mt-3 text-left text-sm text-slate-500">{M.previewEmpty}</p>
                         )}
-                        <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                          {M.passTabletStaffHint(post.label.trim())}{" "}
-                          <Link
-                            href="/dashboard/settings?tab=staff"
-                            className="font-semibold text-brand-blue hover:underline"
-                          >
-                            {M.assignInStaffLink}
-                          </Link>
-                        </p>
                       </div>
                     );
                   })}
-                  <p className="text-xs leading-relaxed text-slate-500">{M.messageSaveHint}</p>
                 </div>
               ) : null}
             </section>
@@ -1248,23 +1244,7 @@ export function VenueOperationsConfigPanel({
                     <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
                   )}
                   <div className="flex-1">
-                    <p className="text-base font-semibold leading-snug">{saveFeedback.text}</p>
-                    {postsOnlyMode && saveFeedback.type === "success" ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Link
-                          href="/dashboard/settings?tab=messages"
-                          className="text-sm font-semibold text-emerald-800 underline hover:text-emerald-950"
-                        >
-                          {Posts.nextMessagesLink}
-                        </Link>
-                        <Link
-                          href="/dashboard/settings?tab=staff"
-                          className="text-sm font-semibold text-emerald-800 underline hover:text-emerald-950"
-                        >
-                          {Posts.nextStaffLink}
-                        </Link>
-                      </div>
-                    ) : null}
+                    <p className="text-sm font-semibold leading-snug">{saveFeedback.text}</p>
                   </div>
                 </div>
               ) : null}

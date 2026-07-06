@@ -767,6 +767,7 @@ export const DASHBOARD_EN = {
           `«${postName}» (${stationName}) → Messages + tablet in Staff`,
         nextMessagesLink: "Messages →",
         nextStaffLink: "Staff →",
+        saved: "Saved.",
         savedNextSteps:
           "Saved. Next: add messages per post and assign employees in Staff.",
         junkRemovedHint:
@@ -806,12 +807,10 @@ export const DASHBOARD_EN = {
       messagesTab: {
         title: "Messages",
         description:
-          "Pick a post (from the Posts tab) and set the messages it can send from tablet. In Staff you choose which set each person sees.",
-        hint:
-          "First create posts in the Posts tab (e.g. Kitchen, Bar).\nThen pick a post here and add your own messages — one by one, manually.",
+          "One card per post — add messages, then Save at the bottom. (Posts → Posts tab first)",
+        hint: "",
         byPostTitle: "Messages by post",
-        byPostHint:
-          "See every post and its messages at once. Add messages in each card, then Save at the bottom.",
+        byPostHint: "",
         selectPostLabel: "Choose post",
         addMessage: "Add",
         messageCount: (n: number) => (n === 1 ? "1 message" : `${n} messages`),
@@ -928,20 +927,21 @@ export const DASHBOARD_EN = {
         messagesScopeAll:
           "All posts & spaces — calls, pass alerts and every space on phone",
         messagesScopeTablet: "Pass tablet — sends this post's quick messages",
-        colSpaceAll: "All spaces",
+        colSpaceAll: "All",
         managePostsLink: "Manage posts →",
         manageSpacesLink: "Manage spaces →",
         manageMessagesLink: "Manage messages →",
         messagesPreviewEmpty: "No messages configured for this post yet.",
         noPosts: "No active posts.",
         noSpaces: "No spaces yet.",
-        zoneRequired: "Pick a space — e.g. dining room, terrace, or All spaces.",
+        zoneRequired: "Pick a space — e.g. dining room, terrace, or All.",
         saving: "Saving...",
         colName: "Name",
         colRole: "Role",
         colRoleRequired: "Role *",
         colSpace: "Space",
         colPost: "Post",
+        colPostHint: "Icon = phone or tablet",
         colScreen: "Screen",
         colSpaceRequired: "Space *",
         colPostRequired: "Post *",
@@ -968,6 +968,8 @@ export const DASHBOARD_EN = {
         colLink: "Link",
         colLinkHint:
           "Waiter: phone link. Kitchen/Bar: tablet link — opens without login.",
+        listDeviceLegend:
+          "The icon next to the post shows where the link opens — phone or tablet.",
         colActions: "Actions",
         viewLink: "Preview",
         viewLinkTablet: "Open screen",
@@ -1155,7 +1157,7 @@ export const DASHBOARD_EN = {
         reload: "Reload",
         reloadDiscardConfirm:
           "You have unsaved changes. Discard them and reload from the server?",
-        saved: "Settings saved.",
+        saved: "Saved.",
       },
       services: {
         title: "Services",

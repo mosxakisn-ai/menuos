@@ -780,6 +780,7 @@ export const DASHBOARD_EL = {
           `«${postName}» (${stationName}) → Μηνύματα + tablet στο Προσωπικό`,
         nextMessagesLink: "Μηνύματα →",
         nextStaffLink: "Προσωπικό →",
+        saved: "Αποθηκεύτηκαν.",
         savedNextSteps:
           "Αποθηκεύτηκαν. Επόμενα: πρόσθεσε μηνύματα ανά πόστο και ανάθεσε εργαζόμενους στο Προσωπικό.",
         junkRemovedHint:
@@ -819,12 +820,10 @@ export const DASHBOARD_EL = {
       messagesTab: {
         title: "Μηνύματα",
         description:
-          "Διάλεξε πόστο (από το tab Πόστα) και όρισε τα μηνύματα που στέλνει από tablet. Στο Προσωπικό διαλέγεις ποιο σετ βλέπει κάθε άτομο.",
-        hint:
-          "Πρώτα φτιάχνεις πόστα στο tab «Πόστα» (π.χ. Κουζίνα, Bar).\nΜετά εδώ διαλέγεις πόστο και προσθέτεις τα δικά σου μηνύματα — ένα-ένα, χειροκίνητα.",
+          "Μία κάρτα ανά πόστο — πρόσθεσε μηνύματα και πάτα Αποθήκευση στο τέλος. (Πόστα → tab Πόστα)",
+        hint: "",
         byPostTitle: "Μηνύματα ανά πόστο",
-        byPostHint:
-          "Βλέπεις όλα τα πόστα και τα μηνύματά τους. Πρόσθεσε μηνύματα σε κάθε κάρτα και πάτα Αποθήκευση στο τέλος.",
+        byPostHint: "",
         selectPostLabel: "Διάλεξε πόστο",
         addMessage: "Προσθήκη",
         messageCount: (n: number) => (n === 1 ? "1 μήνυμα" : `${n} μηνύματα`),
@@ -941,20 +940,21 @@ export const DASHBOARD_EL = {
         messagesScopeAll:
           "Όλα τα πόστα & χώροι — κλήσεις, πάσος και όλοι οι χώροι στο κινητό",
         messagesScopeTablet: "Tablet πάσου — στέλνει τα μηνύματα αυτού του πόστου",
-        colSpaceAll: "Όλοι οι χώροι",
+        colSpaceAll: "Όλα",
         managePostsLink: "Ρύθμιση πόστων →",
         manageSpacesLink: "Ρύθμιση χώρων →",
         manageMessagesLink: "Ρύθμιση μηνυμάτων →",
         messagesPreviewEmpty: "Δεν έχεις ρυθμίσει μηνύματα για αυτό το πόστο.",
         noPosts: "Δεν έχεις ενεργά πόστα.",
         noSpaces: "Δεν έχεις χώρους ακόμα.",
-        zoneRequired: "Επίλεξε χώρο — π.χ. Σάλα, Αυλή ή «Όλοι οι χώροι».",
+        zoneRequired: "Επίλεξε χώρο — π.χ. Σάλα, Αυλή ή «Όλα».",
         saving: "Αποθήκευση...",
         colName: "Όνομα",
         colRole: "Ρόλος",
         colRoleRequired: "Ρόλος *",
         colSpace: "Χώρος",
         colPost: "Πόστο",
+        colPostHint: "Εικονίδιο = κινητό ή tablet",
         colScreen: "Οθόνη",
         colSpaceRequired: "Χώρος *",
         colPostRequired: "Πόστο *",
@@ -973,7 +973,7 @@ export const DASHBOARD_EL = {
           "Σερβιτόρος (Services…) → άλλαξε Οθόνη σε «Κινητό».",
         noKdsPosts: "Δεν έχεις πόστα κουζίνας/μπαρ — ρύθμισε πρώτα το tab «Πόστα».",
         noWaiterPosts:
-          "Δεν έχεις πόστο σερβιτόρου — πρόσθεσε πόστο με τύπο «Σερβιτόρος» στο tab «Πόστα» (ή διάλεξε «Όλα — παντού»).",
+          "Δεν έχεις πόστο σερβιτόρου — πρόσθεσε πόστο με τύπο «Σερβιτόρος» στο tab «Πόστα» (ή διάλεξε «Όλα»).",
         selectSpacePlaceholder: "Επίλεξε χώρο",
         selectPostPlaceholder: "Επίλεξε πόστο",
         fieldsRequiredHint:
@@ -981,6 +981,8 @@ export const DASHBOARD_EL = {
         colLink: "Link",
         colLinkHint:
           "Σερβιτόρος: link κινητού. Κουζίνα/Μπαρ: link tablet — άνοιγμα χωρίς login.",
+        listDeviceLegend:
+          "Το εικονίδιο δίπλα στο πόστο δείχνει πού ανοίγει το link — κινητό ή tablet.",
         colActions: "Ενέργειες",
         viewLink: "Προβολή",
         viewLinkTablet: "Άνοιγμα οθόνης",
@@ -1170,7 +1172,7 @@ export const DASHBOARD_EL = {
         reload: "Επαναφόρτωση",
         reloadDiscardConfirm:
           "Έχεις μη αποθηκευμένες αλλαγές. Να τις πετάξω και να φορτώσω ξανά από τον server;",
-        saved: "Οι ρυθμίσεις αποθηκεύτηκαν.",
+        saved: "Αποθηκεύτηκαν.",
       },
       services: {
         title: "Υπηρεσίες",

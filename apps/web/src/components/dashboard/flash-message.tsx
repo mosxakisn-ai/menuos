@@ -33,6 +33,8 @@ export function FlashMessages({
   const { d } = useDashboardCopy();
   const [messages, setMessages] = useState<FlashMessage[]>(initial ? [initial] : []);
   const containerRef = useRef<HTMLDivElement>(null);
+  const onClearRef = useRef(onClear);
+  onClearRef.current = onClear;
 
   useEffect(() => {
     if (initial) setMessages([initial]);
@@ -41,8 +43,16 @@ export function FlashMessages({
   useEffect(() => {
     if (messages.length === 0) return;
     const hasError = messages.some((m) => m.type === "error");
-    if (!hasError) return;
-    containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (hasError) {
+      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+    const ms = messages.some((m) => m.type === "info") ? 3500 : 2200;
+    const timer = window.setTimeout(() => {
+      setMessages([]);
+      onClearRef.current?.();
+    }, ms);
+    return () => window.clearTimeout(timer);
   }, [messages]);
 
   function dismiss(i: number) {

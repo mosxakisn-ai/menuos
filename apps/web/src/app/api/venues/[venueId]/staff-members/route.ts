@@ -116,7 +116,7 @@ export async function POST(request: Request, { params }: Params) {
   const primaryPost = parsed.data.stations[0] ?? "services";
   if (staffPostRequiresZoneAssignment(primaryPost, posts) && !parsed.data.zoneId) {
     return NextResponse.json(
-      { error: "Επίλεξε χώρο — π.χ. Σάλα, Αυλή ή «Όλοι οι χώροι»." },
+      { error: "Επίλεξε χώρο — π.χ. Σάλα, Αυλή ή «Όλα»." },
       { status: 400 },
     );
   }

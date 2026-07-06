@@ -1,7 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Check, Copy, ExternalLink, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Trash2,
+  X,
+} from "lucide-react";
+import { PostDeviceBadge } from "@/components/dashboard/post-device-badge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   applyZoneLabelOverrides,
@@ -676,6 +686,17 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     const kdsUnavailable = values.role === "pass" && postOptions.length === 0;
     const waiterPostsMissing = values.role === "waiter" && waiterPostOptions.length === 0;
     const screenDevice = staffScreenDeviceForJobRole(values.role);
+    const postHint = kdsUnavailable
+      ? "kds-unavailable"
+      : waiterPostsMissing && values.post !== "all"
+        ? "waiter-missing"
+        : chipsScope
+          ? "tablet-scope"
+          : values.post === "all"
+            ? "all-scope"
+            : values.role === "waiter"
+              ? "waiter-scope"
+              : "empty";
     return (
       <>
         <td className="px-3 py-2 align-top">
@@ -684,7 +705,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
             onChange={(e) => onChange.setName(e.target.value)}
             maxLength={60}
             placeholder={S.namePlaceholder}
-            className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
+            className={`${dashboardFieldClass} w-full text-sm`}
           />
         </td>
         <td className="px-3 py-2 align-top">
@@ -696,14 +717,14 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
               onChange.setRole(next);
               applyJobRoleChange(next, onChange.setPost, onChange.setZone, values.zone);
             }}
-            className={`${dashboardFieldClass} w-full min-w-[9rem] text-sm`}
+            className={`${dashboardFieldClass} w-full text-sm`}
           >
             <option value="waiter">{S.jobRoleWaiter}</option>
             <option value="pass">{S.jobRolePass}</option>
           </select>
-          <p className="mt-1 text-[10px] leading-snug text-slate-400">
+          <div className="mt-1 min-h-[2.5rem] text-[10px] leading-snug text-slate-400">
             {screenDevice === "mobile" ? S.screenMobileHint : S.screenKdsHint}
-          </p>
+          </div>
         </td>
         <td className="px-3 py-2 align-top">
           <select
@@ -711,7 +732,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
             onChange={(e) => onChange.setZone(e.target.value)}
             required={staffPostRequiresZoneAssignment(values.post, venuePosts)}
             disabled={values.role === "pass"}
-            className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
+            className={`${dashboardFieldClass} w-full text-sm disabled:opacity-60`}
           >
             {staffPostRequiresZoneAssignment(values.post, venuePosts) ? (
               <>
@@ -729,6 +750,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
               </option>
             ))}
           </select>
+          <div className="mt-1 min-h-[2.5rem]" aria-hidden />
         </td>
         <td className="px-3 py-2 align-top">
           <select
@@ -744,7 +766,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                 onChange.setZone("");
               }
             }}
-            className={`${dashboardFieldClass} w-full min-w-[8rem] text-sm`}
+            className={`${dashboardFieldClass} w-full text-sm disabled:opacity-60`}
           >
             {postOptions.length === 0 ? (
               <option value="">{S.noKdsPosts}</option>
@@ -756,36 +778,33 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
               ))
             )}
           </select>
-          {kdsUnavailable ? (
-            <p className="mt-1 text-[10px] text-amber-700">
-              {S.noKdsPosts}{" "}
-              <Link href="/dashboard/settings?tab=posts" className="font-semibold underline">
-                →
-              </Link>
-            </p>
-          ) : waiterPostsMissing && values.post !== "all" ? (
-            <p className="mt-1 text-[10px] text-amber-700">
-              {S.noWaiterPosts}{" "}
-              <Link href="/dashboard/settings?tab=posts" className="font-semibold underline">
-                →
-              </Link>
-            </p>
-          ) : chipsScope ? (
-            <>
-              <p className="mt-1 text-[10px] font-medium text-slate-500">{S.messagesScopeTablet}</p>
-              <StaffMessagesChips
-                config={opsConfig}
-                scopeId={chipsScope}
-                langCode={langCode}
-                compact
-                emptyHint={S.messagesPreviewEmpty}
-              />
-            </>
-          ) : values.post === "all" ? (
-            <p className="mt-1.5 text-[10px] leading-snug text-slate-400">{S.messagesScopeAll}</p>
-          ) : values.role === "waiter" ? (
-            <p className="mt-1.5 text-[10px] leading-snug text-slate-400">{S.messagesScopeWaiter}</p>
-          ) : null}
+          <div className="mt-1 min-h-[2.5rem] text-[10px] leading-snug">
+            {postHint === "kds-unavailable" ? (
+              <p className="text-amber-700">
+                {S.noKdsPosts}{" "}
+                <Link href="/dashboard/settings?tab=posts" className="font-semibold underline">
+                  →
+                </Link>
+              </p>
+            ) : postHint === "waiter-missing" ? (
+              <p className="text-amber-700">
+                {S.noWaiterPosts}{" "}
+                <Link href="/dashboard/settings?tab=posts" className="font-semibold underline">
+                  →
+                </Link>
+              </p>
+            ) : postHint === "tablet-scope" ? (
+              <p className="font-medium text-slate-500">{S.messagesScopeTablet}</p>
+            ) : postHint === "all-scope" ? (
+              <p className="text-slate-400">{S.messagesScopeAll}</p>
+            ) : postHint === "waiter-scope" ? (
+              <p className="text-slate-400">{S.messagesScopeWaiter}</p>
+            ) : (
+              <span className="invisible select-none" aria-hidden>
+                —
+              </span>
+            )}
+          </div>
         </td>
       </>
     );
@@ -840,7 +859,13 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           ) : (
             <>
               <div className="overflow-x-auto rounded-xl border border-slate-200">
-                <table className="min-w-full text-sm">
+                <table className="w-full min-w-[42rem] table-fixed text-sm">
+                  <colgroup>
+                    <col className="w-[22%]" />
+                    <col className="w-[22%]" />
+                    <col className="w-[22%]" />
+                    <col className="w-[34%]" />
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                       <th className="px-3 py-2.5">{S.colName}</th>
@@ -895,6 +920,25 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
       <div className={dashboardCardClass}>
         <h3 className="text-sm font-semibold text-brand-navy">{S.listTitle}</h3>
         <p className="mt-1 text-xs text-slate-500">{S.colLinkHint}</p>
+        <div className="mt-3 rounded-xl border border-slate-200/90 bg-gradient-to-br from-white via-slate-50/90 to-blue-50/40 px-4 py-3">
+          <p className="text-xs font-medium text-slate-600">{S.listDeviceLegend}</p>
+          <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-2">
+            <PostDeviceBadge
+              device="mobile"
+              size="sm"
+              showLabel
+              labelMobile={S.screenMobileHint}
+              labelTablet={S.screenKdsHint}
+            />
+            <PostDeviceBadge
+              device="kds"
+              size="sm"
+              showLabel
+              labelMobile={S.screenMobileHint}
+              labelTablet={S.screenKdsHint}
+            />
+          </div>
+        </div>
 
         {loading ? (
           <p className="mt-4 text-sm text-slate-500">{S.loading}</p>
@@ -908,7 +952,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                     <th className="w-[12%] px-4 py-3">{S.colName}</th>
                     <th className="w-[11%] px-4 py-3">{S.colRole}</th>
                     <th className="w-[11%] px-4 py-3">{S.colSpace}</th>
-                    <th className="min-w-[9rem] px-4 py-3">{S.colPost}</th>
+                    <th className="min-w-[11rem] px-4 py-3">
+                      <span className="block">{S.colPost}</span>
+                      <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-slate-400">
+                        {S.colPostHint}
+                      </span>
+                    </th>
                     <th className="w-[7.25rem] px-4 py-3 text-center">{S.colLink}</th>
                     <th className="w-[5.5rem] px-4 py-3 text-center">{S.colActions}</th>
                   </tr>
@@ -1004,22 +1053,31 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                           {zoneLabelForMember(member)}
                         </td>
                         <td className="px-4 py-3 align-middle text-slate-600">
-                          <p>
-                            {staffAssignmentLabelForLang(primaryPost, langCode, venuePosts)}
-                          </p>
-                          {postStationSubtitle ? (
-                            <p className="mt-0.5 text-[10px] font-medium text-slate-500">
-                              {postStationSubtitle}
-                            </p>
-                          ) : null}
-                          {chipsScope ? (
-                            <StaffMessagesChips
-                              config={opsConfig}
-                              scopeId={chipsScope}
-                              langCode={langCode}
-                              compact
+                          <div className="flex items-start gap-3">
+                            <PostDeviceBadge
+                              device={memberScreen}
+                              labelMobile={S.screenMobileHint}
+                              labelTablet={S.screenKdsHint}
                             />
-                          ) : null}
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-brand-navy">
+                                {staffAssignmentLabelForLang(primaryPost, langCode, venuePosts)}
+                              </p>
+                              {postStationSubtitle ? (
+                                <p className="mt-0.5 text-[10px] font-medium text-slate-500">
+                                  {postStationSubtitle}
+                                </p>
+                              ) : null}
+                              {chipsScope ? (
+                                <StaffMessagesChips
+                                  config={opsConfig}
+                                  scopeId={chipsScope}
+                                  langCode={langCode}
+                                  compact
+                                />
+                              ) : null}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-4 py-3 align-middle text-center">
                           {venue?.slug ? (
