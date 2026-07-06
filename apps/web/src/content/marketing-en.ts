@@ -277,9 +277,10 @@ export const MARKETING_EN = {
       hero:
         "From table QR to Live 360° coordination — every tool for modern hospitality, without complexity.",
       intro:
-        "MenuOS is not just «PDF with QR». It's a live catalog with photos, 4 languages and instant price updates — built for the Greek hospitality market. Live 360° (call waiter, live panel) comes with Pro.",
+        "MenuOS is not just «PDF with QR». It's a live catalog with photos, 4 languages and instant price updates — built for Greek hospitality. Pro adds PDF import with Gemini AI, Live 360° and call waiter.",
       introParagraphs: [
         "MenuOS combines a digital catalog and QR codes per table or room — no app for guests. Pro adds call waiter with push, live panel and kitchen/bar coordination.",
+        "Already have a printed menu? On Pro, upload a PDF — categories, dishes and prices fill in automatically. Scans and complex layouts use Gemini AI; you review everything before it goes live. Save hours of typing without losing control.",
         "Instead of reprinting every season, you change prices and items in seconds. Tourists see the menu in their language. On Pro, staff get alerts for calls — with the table number from the QR.",
       ],
     },

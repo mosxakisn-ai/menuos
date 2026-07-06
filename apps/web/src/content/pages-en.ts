@@ -35,6 +35,13 @@ export const PAGES_EN = {
         bullets: ["Ideal for hotels", "Branding per menu", "Easy categories"],
       },
       {
+        title: "PDF menu import (Pro)",
+        description:
+          "Already have a printed menu? Upload the PDF — categories, dishes and prices fill in almost on their own. Scans and tricky layouts use Gemini AI. You review everything before it goes live.",
+        bullets: ["Less typing", "OCR + Gemini AI for scans", "Review before publish"],
+        href: "/pricing",
+      },
+      {
         title: "Multiple QR languages",
         description: "Guests choose their language on the QR menu — one tap.",
         bullets: ["Multiple QR languages", "Great for tourism", "Allergens & ingredients"],
