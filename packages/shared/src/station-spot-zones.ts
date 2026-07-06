@@ -216,6 +216,23 @@ export function zoneIdForWaiterLocation(
   return resolveWaiterLocationInZones(location, groups)?.zoneId ?? null;
 }
 
+/**
+ * Zone id for UI filters — falls back to per-zone match when bare table numbers
+ * are unique in one tab (e.g. «1» in Σάλα but not Αυλή).
+ */
+export function zoneIdForWaiterLocationView(
+  location: WaiterLocationLike,
+  groups: SpotZoneGroup[],
+): string | null {
+  const direct = zoneIdForWaiterLocation(location, groups);
+  if (direct) return direct;
+  const hits: string[] = [];
+  for (const group of groups) {
+    if (resolveWaiterLocationInZone(location, group.id, groups)) hits.push(group.id);
+  }
+  return hits.length === 1 ? hits[0]! : null;
+}
+
 /** KDS / waiter card label with zone prefix, e.g. «Σάλα · Τραπέζι 1». */
 export function formatWaiterCallLocationWithZone(
   location: WaiterLocationLike,
@@ -292,7 +309,7 @@ export function filterWaiterLocationsByZone<T extends WaiterLocationLike>(
   groups: SpotZoneGroup[],
 ): T[] {
   if (zoneId === "all") return items;
-  return items.filter((item) => zoneIdForWaiterLocation(item, groups) === zoneId);
+  return items.filter((item) => zoneIdForWaiterLocationView(item, groups) === zoneId);
 }
 
 /** Zone filter — unmapped locations only appear under «Όλοι οι χώροι». */

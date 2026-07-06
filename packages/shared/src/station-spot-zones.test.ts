@@ -4,6 +4,7 @@ import {
   filterWaiterLocationsByZone,
   filterWaiterLocationsForZoneView,
   formatWaiterCallLocationWithZone,
+  zoneIdForWaiterLocationView,
   findZoneIdForSpot,
   groupVenueSpotsByZone,
   pickDefaultZoneId,
@@ -120,6 +121,20 @@ describe("zone filters for waiter", () => {
     expect(filterWaiterLocationsForZoneView(items, groups[0]!.id, groups).map((row) => row.id)).toEqual([
       "c1",
     ]);
+  });
+
+  it("filters bare table numbers into the matching zone tab", () => {
+    const groups = groupVenueSpotsByZone([
+      { type: "TABLE", label: "Σαλα-1" },
+      { type: "TABLE", label: "Αυλή-2" },
+    ]);
+    const salaId = groups.find((g) => g.label === "Σαλα")!.id;
+    expect(zoneIdForWaiterLocationView({ tableNumber: "1" }, groups)).toBe(salaId);
+    expect(
+      filterWaiterLocationsForZoneView([{ id: "p1", tableNumber: "1" }], salaId, groups).map(
+        (row) => row.id,
+      ),
+    ).toEqual(["p1"]);
   });
 
   it("formats location with zone prefix for prefixed tables", () => {

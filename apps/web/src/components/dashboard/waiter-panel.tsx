@@ -10,8 +10,7 @@ import {
   listVenuePosts,
   groupVenueSpotsByZone,
   mergeTableStateLabels,
-  zoneIdForWaiterLocation,
-  resolveWaiterLocationInZone,
+  zoneIdForWaiterLocationView,
   type OrderPayload,
   type VenueSpotType,
 } from "@menuos/shared";
@@ -49,32 +48,12 @@ type PassSignal = {
   readyAt?: string;
 };
 
-type WaiterLocationItem = {
-  tableNumber?: string | null;
-  roomNumber?: string | null;
-  sunbedNumber?: string | null;
-};
-
-/** Resolve zone tab for a call/pass — also when table number is bare but unique in one zone. */
-function itemZoneId(
-  item: WaiterLocationItem,
-  groups: ReturnType<typeof groupVenueSpotsByZone>,
-): string | null {
-  const direct = zoneIdForWaiterLocation(item, groups);
-  if (direct) return direct;
-  const hits: string[] = [];
-  for (const group of groups) {
-    if (resolveWaiterLocationInZone(item, group.id, groups)) hits.push(group.id);
-  }
-  return hits.length === 1 ? hits[0]! : null;
+function isMonitorPendingCall(call: WaiterCall): boolean {
+  return call.status === "PENDING";
 }
 
-function isActiveWaiterCall(call: WaiterCall): boolean {
-  return call.status === "PENDING" || call.status === "ACKNOWLEDGED";
-}
-
-function isActivePassSignal(pass: PassSignal): boolean {
-  return pass.status === "READY" || pass.status === "PICKED_UP";
+function isMonitorPendingPass(pass: PassSignal): boolean {
+  return pass.status === "READY";
 }
 
 export function WaiterPanel({
@@ -327,12 +306,12 @@ export function WaiterPanel({
     if (zoneGroups.length === 0) return 0;
     let count = 0;
     for (const call of calls) {
-      if (!isActiveWaiterCall(call)) continue;
-      if (!itemZoneId(call, zoneGroups)) count += 1;
+      if (!isMonitorPendingCall(call)) continue;
+      if (!zoneIdForWaiterLocationView(call, zoneGroups)) count += 1;
     }
     for (const pass of passSignals) {
-      if (!isActivePassSignal(pass)) continue;
-      if (!itemZoneId(pass, zoneGroups)) count += 1;
+      if (!isMonitorPendingPass(pass)) continue;
+      if (!zoneIdForWaiterLocationView(pass, zoneGroups)) count += 1;
     }
     return count;
   }, [calls, passSignals, zoneGroups]);
@@ -340,14 +319,14 @@ export function WaiterPanel({
   const zonePendingCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const call of calls) {
-      if (!isActiveWaiterCall(call)) continue;
-      const zoneId = itemZoneId(call, zoneGroups);
+      if (!isMonitorPendingCall(call)) continue;
+      const zoneId = zoneIdForWaiterLocationView(call, zoneGroups);
       if (!zoneId) continue;
       counts.set(zoneId, (counts.get(zoneId) ?? 0) + 1);
     }
     for (const pass of passSignals) {
-      if (!isActivePassSignal(pass)) continue;
-      const zoneId = itemZoneId(pass, zoneGroups);
+      if (!isMonitorPendingPass(pass)) continue;
+      const zoneId = zoneIdForWaiterLocationView(pass, zoneGroups);
       if (!zoneId) continue;
       counts.set(zoneId, (counts.get(zoneId) ?? 0) + 1);
     }
@@ -368,8 +347,8 @@ export function WaiterPanel({
 
   function zonePendingTotal(zoneId: string): number {
     if (zoneId === "all") {
-      const activeCalls = calls.filter(isActiveWaiterCall).length;
-      const activePasses = passSignals.filter(isActivePassSignal).length;
+      const activeCalls = calls.filter(isMonitorPendingCall).length;
+      const activePasses = passSignals.filter(isMonitorPendingPass).length;
       return activeCalls + activePasses;
     }
     return zonePendingCounts.get(zoneId) ?? 0;
