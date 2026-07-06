@@ -23,11 +23,14 @@ export function PushNotificationsPrompt({
   staffAuth,
   variant = "default",
   flat = false,
+  compact = false,
 }: {
   staffAuth?: { venueId: string; staffKey?: string };
   variant?: "default" | "settings";
   /** Render without outer Card — for embedding inside settings panel card. */
   flat?: boolean;
+  /** Staff mobile — minimal banner, hide when subscribed. */
+  compact?: boolean;
 } = {}) {
   const { d } = useDashboardCopy();
   const p = d.push;
@@ -171,6 +174,7 @@ export function PushNotificationsPrompt({
   const Shell = flat ? "div" : Card;
 
   if (state === "loading") {
+    if (compact) return null;
     if (flat) {
       return <p className="text-sm text-slate-500">{p.checking}</p>;
     }
@@ -178,6 +182,62 @@ export function PushNotificationsPrompt({
       <Card className="border-slate-200 bg-white">
         <p className="text-sm text-slate-500">{p.checking}</p>
       </Card>
+    );
+  }
+
+  if (compact && state === "subscribed" && !justEnabled) {
+    return null;
+  }
+
+  if (compact && inApp) {
+    return (
+      <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs leading-snug text-amber-950">
+        {p.compactInApp}
+      </p>
+    );
+  }
+
+  if (compact && (state === "unsupported" || state === "disabled")) {
+    return (
+      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-snug text-slate-600">
+        {state === "unsupported" ? p.unsupported : p.disabledServer}
+      </p>
+    );
+  }
+
+  if (compact && staffAuth) {
+    const compactText =
+      justEnabled || state === "subscribed"
+        ? p.compactSubscribed
+        : state === "denied"
+          ? p.denied
+          : state === "failed"
+            ? p.enableFailed
+            : p.compactPrompt;
+    const showEnable = state === "prompt" || state === "failed";
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-between gap-2 rounded-lg border px-3 py-2",
+          justEnabled || state === "subscribed"
+            ? "border-emerald-200 bg-emerald-50/80"
+            : state === "failed" || state === "denied"
+              ? "border-amber-200 bg-amber-50/80"
+              : "border-brand-blue/20 bg-brand-blue/5",
+        )}
+      >
+        <p className="min-w-0 flex-1 text-xs leading-snug text-slate-700">{compactText}</p>
+        {showEnable ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void enablePush()}
+            className={cn(buttonClass("primary", "sm"), "shrink-0 text-xs")}
+          >
+            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : p.enable}
+          </button>
+        ) : null}
+      </div>
     );
   }
 
@@ -208,7 +268,7 @@ export function PushNotificationsPrompt({
 
   return (
     <div className={flat ? undefined : "space-y-3"}>
-      {inApp ? (
+      {inApp && !compact ? (
         <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           <p className="flex items-start gap-2 font-semibold">
             <Smartphone className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
@@ -235,12 +295,12 @@ export function PushNotificationsPrompt({
               >
                 {description}
               </p>
-              {staffAuth && state === "prompt" && !inApp ? (
+              {staffAuth && state === "prompt" && !inApp && !compact ? (
                 <p className="mt-2 text-xs leading-relaxed text-slate-500">
                   {isIosDevice() ? p.iosHint : p.androidHint}
                 </p>
               ) : null}
-              {staffAuth ? (
+              {staffAuth && !compact ? (
                 <p className="mt-2 text-xs leading-relaxed text-slate-500">{p.pageOpenHint}</p>
               ) : variant === "settings" ? (
                 <p className="mt-2 text-xs leading-relaxed text-slate-500">{p.managerHint}</p>

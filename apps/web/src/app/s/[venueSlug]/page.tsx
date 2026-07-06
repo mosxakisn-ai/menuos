@@ -97,21 +97,25 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
 
   return (
     <div className="min-h-screen bg-brand-surface/40">
-      <header className="border-b border-slate-200/80 bg-white px-4 py-4">
-        <Logo href={false} markSize={32} className="gap-2.5" wordmarkClassName="text-lg leading-none" />
-        <h1 className="mt-2 font-serif text-xl font-bold text-primary">Κλήσεις σερβιτόρου</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {venue.name}
-          {staffMember ? (
-            <>
-              {" "}
-              · <span className="font-medium text-brand-navy">{staffMember.name}</span>
-            </>
-          ) : null}
-        </p>
+      <header className="border-b border-slate-200/80 bg-white px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="flex items-center justify-between gap-3">
+          <Logo href={false} markSize={28} className="gap-2" wordmarkClassName="text-base leading-none" />
+          <div className="min-w-0 text-right">
+            <h1 className="truncate text-base font-bold text-primary sm:text-lg">Κλήσεις σερβιτόρου</h1>
+            <p className="truncate text-xs text-slate-600">
+              {venue.name}
+              {staffMember ? (
+                <>
+                  {" "}
+                  · <span className="font-medium text-brand-navy">{staffMember.name}</span>
+                </>
+              ) : null}
+            </p>
+          </div>
+        </div>
       </header>
-      <main className="mx-auto max-w-2xl space-y-4 px-4 py-6">
-        <PushNotificationsPrompt staffAuth={{ venueId: venue.id }} />
+      <main className="mx-auto max-w-2xl space-y-2 px-3 py-3 sm:space-y-4 sm:px-4 sm:py-4">
+        <PushNotificationsPrompt staffAuth={{ venueId: venue.id }} compact />
         <WaiterPanel
           venues={[{ id: venue.id, name: venue.name, slug: venue.slug }]}
           initialVenueId={venue.id}

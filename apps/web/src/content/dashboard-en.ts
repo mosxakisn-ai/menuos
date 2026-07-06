@@ -478,7 +478,7 @@ export const DASHBOARD_EN = {
     staffViewBadge: (name: string, zone: string | null, stations: string) =>
       zone ? `View: ${name} · ${zone} · ${stations}` : `View: ${name} · ${stations}`,
     assignedZoneHeading: "Your space",
-    assignedZoneHint: "You only see the space assigned to you — not the whole venue.",
+    assignedZoneHint: "",
     zoneFilterAll: "All spaces",
     zonePickHeading: "Pick a space",
     zoneSpotCount: (n: number) => (n === 1 ? "1 spot" : `${n} spots`),
@@ -567,8 +567,10 @@ export const DASHBOARD_EN = {
       "iPhone: Open in Safari (not Messenger). Tap Enable → Allow notifications. For best results: Add to Home Screen.",
     androidHint:
       "Android: Open in Chrome (not Messenger). Tap Enable and allow notifications when prompted.",
-    pageOpenHint:
-      "While the page is open, you'll hear sounds and see calls automatically — even without push enabled.",
+    pageOpenHint: "With the page open you see calls live — no push needed.",
+    compactInApp: "Open in Chrome/Safari — not from Messenger.",
+    compactPrompt: "Push for calls when the page is closed.",
+    compactSubscribed: "Push on",
     managerHint:
       "You'll receive push for calls and pass from all venues in your organization on this device.",
   },

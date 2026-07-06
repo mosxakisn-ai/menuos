@@ -462,20 +462,32 @@ export function WaiterPanel({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 sm:space-y-4">
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       {assignedZoneId && assignedZoneLabel ? (
-        <section className="rounded-2xl border border-brand-blue/25 bg-gradient-to-br from-brand-blue/[0.06] to-cyan-400/[0.08] px-4 py-3 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue/80">
-            {W.assignedZoneHeading}
+        staffViaCookie ? (
+          <p className="text-sm font-semibold text-brand-navy">
+            {assignedZoneLabel}
+            <span className="font-normal text-slate-500">
+              {" "}
+              · {W.zoneSpotCount(zoneSpotCount(assignedZoneId))}
+            </span>
           </p>
-          <p className="mt-1 text-lg font-bold text-brand-navy">{assignedZoneLabel}</p>
-          <p className="mt-0.5 text-sm text-slate-600">
-            {W.zoneSpotCount(zoneSpotCount(assignedZoneId))}
-          </p>
-          <p className="mt-1 text-xs text-slate-600">{W.assignedZoneHint}</p>
-        </section>
+        ) : (
+          <section className="rounded-2xl border border-brand-blue/25 bg-gradient-to-br from-brand-blue/[0.06] to-cyan-400/[0.08] px-4 py-3 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue/80">
+              {W.assignedZoneHeading}
+            </p>
+            <p className="mt-1 text-lg font-bold text-brand-navy">{assignedZoneLabel}</p>
+            <p className="mt-0.5 text-sm text-slate-600">
+              {W.zoneSpotCount(zoneSpotCount(assignedZoneId))}
+            </p>
+            {W.assignedZoneHint ? (
+              <p className="mt-1 text-xs text-slate-600">{W.assignedZoneHint}</p>
+            ) : null}
+          </section>
+        )
       ) : showZoneFilters ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:mb-3 sm:text-sm">
@@ -497,7 +509,7 @@ export function WaiterPanel({
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
           {selectedZoneLabel ? W.managerZoneViewBadge(selectedZoneLabel) : W.managerViewBadge}
         </p>
-      ) : staffMember ? (
+      ) : staffMember && !(staffViaCookie && assignedZoneId) ? (
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm">
           {W.staffViewBadge(
             staffMember.name,

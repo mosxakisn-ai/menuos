@@ -489,7 +489,7 @@ export const DASHBOARD_EL = {
         ? `Προβολή: ${name} · ${zone} · ${stations}`
         : `Προβολή: ${name} · ${stations}`,
     assignedZoneHeading: "Ο χώρος σου",
-    assignedZoneHint: "Βλέπεις μόνο τον χώρο που σου έχει ανατεθεί — όχι όλο το κατάστημα.",
+    assignedZoneHint: "",
     zoneFilterAll: "Όλοι οι χώροι",
     zonePickHeading: "Διάλεξε χώρο",
     zoneSpotCount: (n: number) => (n === 1 ? "1 θέση" : `${n} θέσεις`),
@@ -579,7 +579,10 @@ export const DASHBOARD_EL = {
     androidHint:
       "Android: Άνοιξε σε Chrome (όχι Messenger). Πάτα «Ενεργοποίηση» και επέτρεψε ειδοποιήσεις όταν το ζητήσει.",
     pageOpenHint:
-      "Όσο η σελίδα είναι ανοιχτή, θα ακούς ήχο και θα βλέπεις κλήσεις αυτόματα — ακόμα κι αν δεν ενεργοποιήσεις push.",
+      "Με ανοιχτή σελίδα βλέπεις κλήσεις live — χωρίς push.",
+    compactInApp: "Άνοιξε σε Chrome/Safari — όχι από Messenger.",
+    compactPrompt: "Push για κλήσεις όταν κλείσει η σελίδα.",
+    compactSubscribed: "Push ενεργό",
     managerHint:
       "Λαμβάνεις push για κλήσεις και πάσο σε όλα τα καταστήματα της επιχείρησης σε αυτή τη συσκευή.",
   },
