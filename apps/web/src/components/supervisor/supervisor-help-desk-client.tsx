@@ -10,6 +10,7 @@ import {
   LifeBuoy,
   RefreshCw,
   Search,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -318,6 +319,8 @@ export function SupervisorHelpDeskClient() {
   const [noteDraft, setNoteDraft] = useState<Record<string, string>>({});
   const [showClosedReports, setShowClosedReports] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -404,11 +407,82 @@ export function SupervisorHelpDeskClient() {
     await loadCustomers();
   }
 
+  async function deleteReport(id: string, status: string) {
+    const msg =
+      status === "OPEN" || status === "ACKNOWLEDGED"
+        ? "Η αναφορά είναι ακόμα ενεργή. Να διαγραφεί μόνιμα;"
+        : "Να διαγραφεί μόνιμα αυτή η αναφορά;";
+    if (!window.confirm(msg)) return;
+
+    setActionError(null);
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/supervisor/help-desk/${id}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      if (!res.ok) {
+        setActionError("Η διαγραφή απέτυχε.");
+        return;
+      }
+      setExpandedId(null);
+      await loadReports(selectedOrgId);
+      await loadCustomers();
+    } catch {
+      setActionError("Η διαγραφή απέτυχε.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function deleteBulk(status: "RESOLVED" | "ALL") {
+    if (!selectedCustomer) return;
+    const orgParam = selectedOrgId ?? "unknown";
+    const count =
+      status === "ALL"
+        ? reports.length
+        : reports.filter((r) => r.status === "RESOLVED").length;
+    if (count === 0) return;
+
+    const msg =
+      status === "ALL"
+        ? `Διαγραφή όλων των ${count} αναφορών για αυτόν τον πελάτη; Δεν αναιρείται.`
+        : `Διαγραφή ${count} κλειστών αναφορών; Δεν αναιρείται.`;
+    if (!window.confirm(msg)) return;
+
+    setActionError(null);
+    setBulkDeleting(true);
+    try {
+      const params = new URLSearchParams({
+        organizationId: orgParam,
+        status,
+      });
+      const res = await fetch(`/api/supervisor/help-desk?${params}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      const data = (await res.json()) as { deleted?: number; summary?: Summary; error?: string };
+      if (!res.ok) {
+        setActionError(data.error ?? "Η διαγραφή απέτυχε.");
+        return;
+      }
+      if (data.summary) setSummary(data.summary);
+      setExpandedId(null);
+      await loadReports(selectedOrgId);
+      await loadCustomers();
+    } catch {
+      setActionError("Η διαγραφή απέτυχε.");
+    } finally {
+      setBulkDeleting(false);
+    }
+  }
+
   const includeClosedReports =
     showClosedReports || status === "RESOLVED" || status === "ALL";
   const visibleReports = includeClosedReports
     ? reports
     : reports.filter((r) => r.status !== "RESOLVED");
+  const closedCount = reports.filter((r) => r.status === "RESOLVED").length;
 
   return (
     <DashboardPage wide>
@@ -561,6 +635,36 @@ export function SupervisorHelpDeskClient() {
                   ) : null}
                   {actionError ? (
                     <p className="mt-2 text-xs text-red-600">{actionError}</p>
+                  ) : null}
+                  {reports.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {closedCount > 0 ? (
+                        <button
+                          type="button"
+                          disabled={bulkDeleting}
+                          className={cn(
+                            buttonClass("secondary", "sm"),
+                            "inline-flex items-center gap-1.5 text-red-700 ring-red-100 hover:bg-red-50",
+                          )}
+                          onClick={() => void deleteBulk("RESOLVED")}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Διαγραφή κλειστών ({closedCount})
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={bulkDeleting}
+                        className={cn(
+                          buttonClass("secondary", "sm"),
+                          "inline-flex items-center gap-1.5 text-red-700 ring-red-100 hover:bg-red-50",
+                        )}
+                        onClick={() => void deleteBulk("ALL")}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Διαγραφή όλων ({reports.length})
+                      </button>
+                    </div>
                   ) : null}
                 </div>
                 {loadingReports ? (
@@ -727,6 +831,18 @@ export function SupervisorHelpDeskClient() {
                                     «Κλείσιμο» = τέλος, βγαίνει από ενεργά
                                   </span>
                                 ) : null}
+                                <button
+                                  type="button"
+                                  disabled={deletingId === report.id || bulkDeleting}
+                                  className={cn(
+                                    buttonClass("secondary", "sm"),
+                                    "ml-auto inline-flex items-center gap-1.5 text-red-700 ring-red-100 hover:bg-red-50",
+                                  )}
+                                  onClick={() => void deleteReport(report.id, report.status)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  {deletingId === report.id ? "Διαγραφή…" : "Διαγραφή"}
+                                </button>
                               </div>
                             </div>
                           ) : null}

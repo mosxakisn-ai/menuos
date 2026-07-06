@@ -334,3 +334,22 @@ export async function updateHelpDeskReport(
     internalNote: row.internalNote,
   };
 }
+
+export async function deleteHelpDeskReport(id: string): Promise<boolean> {
+  const result = await prisma.clientDiagnosticReport.deleteMany({ where: { id } });
+  return result.count > 0;
+}
+
+export async function deleteHelpDeskReportsForOrganization(input: {
+  organizationId: string | null;
+  status?: DiagnosticStatus | "ALL";
+}): Promise<number> {
+  const where: { organizationId: string | null; status?: DiagnosticStatus } = {
+    organizationId: input.organizationId,
+  };
+  if (input.status && input.status !== "ALL") {
+    where.status = input.status;
+  }
+  const result = await prisma.clientDiagnosticReport.deleteMany({ where });
+  return result.count;
+}

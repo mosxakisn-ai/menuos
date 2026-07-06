@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSupervisor } from "@/lib/api-auth";
 import { helpDeskReportUpdateSchema } from "@/lib/client-diagnostics-schemas";
-import { updateHelpDeskReport } from "@/lib/client-diagnostics-service";
+import { deleteHelpDeskReport, updateHelpDeskReport } from "@/lib/client-diagnostics-service";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -35,5 +35,22 @@ export async function PATCH(request: Request, { params }: Params) {
   } catch (err) {
     console.error("[menuos-supervisor] help-desk update", err);
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
+  }
+}
+
+export async function DELETE(_request: Request, { params }: Params) {
+  const auth = await requireSupervisor();
+  if (auth.response) return auth.response;
+
+  const { id } = await params;
+  try {
+    const deleted = await deleteHelpDeskReport(id);
+    if (!deleted) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    return NextResponse.json({ ok: true, deleted: 1 });
+  } catch (err) {
+    console.error("[menuos-supervisor] help-desk delete", err);
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }
 }
