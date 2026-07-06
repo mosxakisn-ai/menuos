@@ -17,6 +17,7 @@ import {
   passScreenToPostStation,
   passSendTableNumber,
   pickDefaultZoneId,
+  resolveWaiterLocationInZone,
   venuePostMatchesZone,
   type PassStationInput,
   type VenuePostStationInput,
@@ -176,6 +177,52 @@ const COPY = {
     quickComments: ["Με παγωτό", "Χωρίς ζάχαρη", "Ξέχασες κουταλάκι", "Επείγον"],
   },
 };
+
+function signalLocationLabel(
+  signal: ActiveSignal,
+  zoneGroups: ReturnType<typeof groupVenueSpotsByZone>,
+  activeZoneId: string | null,
+  activeZone: ReturnType<typeof groupVenueSpotsByZone>[number] | undefined,
+): string {
+  const withZone = formatWaiterCallLocationWithZone(signal, zoneGroups, { activeZoneId });
+  if (zoneGroups.length <= 1 || !activeZone || withZone.includes(" · ")) return withZone;
+
+  const resolved = resolveWaiterLocationInZone(signal, activeZoneId, zoneGroups);
+  if (resolved) {
+    const entry = activeZone.spots.find(
+      (row) => row.spot.type === resolved.spot.type && row.spot.label === resolved.spot.label,
+    );
+    const spotLocation =
+      resolved.spot.type === "TABLE"
+        ? { tableNumber: entry?.displayLabel ?? resolved.spot.label }
+        : resolved.spot.type === "ROOM"
+          ? { roomNumber: resolved.spot.label }
+          : { sunbedNumber: resolved.spot.label };
+    return `${activeZone.label} · ${formatWaiterCallLocation(spotLocation)}`;
+  }
+
+  return `${activeZone.label} · ${formatWaiterCallLocation(signal)}`;
+}
+
+function selectedTableLabel(
+  table: ScreenSpot | null,
+  manualTable: string,
+  zoneGroups: ReturnType<typeof groupVenueSpotsByZone>,
+  activeZoneId: string | null,
+): string | null {
+  if (table) {
+    const location =
+      table.type === "TABLE"
+        ? { tableNumber: table.label }
+        : table.type === "ROOM"
+          ? { roomNumber: table.label }
+          : { sunbedNumber: table.label };
+    return formatWaiterCallLocationWithZone(location, zoneGroups, { activeZoneId });
+  }
+  const manual = manualTable.trim();
+  if (!manual) return null;
+  return formatWaiterCallLocationWithZone({ tableNumber: manual }, zoneGroups, { activeZoneId });
+}
 
 export type StationScreenKind = keyof typeof COPY;
 
@@ -825,7 +872,10 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   useScreenWakeLock();
 
-  const passPosts = ctx?.allKdsPosts?.length ? ctx.allKdsPosts : (ctx?.stationPosts ?? []);
+  const passPosts = useMemo(() => {
+    if (allPostsMode || ctx?.allPosts) return ctx?.allKdsPosts ?? ctx?.stationPosts ?? [];
+    return ctx?.stationPosts ?? [];
+  }, [allPostsMode, ctx?.allPosts, ctx?.allKdsPosts, ctx?.stationPosts]);
   const supportPosts = ctx?.supportKdsPosts ?? [];
   const tabletPosts = useMemo(
     () => [...passPosts, ...supportPosts.filter((post) => !passPosts.some((row) => row.id === post.id))],
@@ -960,6 +1010,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     setActiveZoneId(zoneId);
     if (table && findZoneIdForSpot(zoneGroups, table) !== zoneId) {
       setTable(null);
+      setComment("");
     }
     if (activePostId) {
       const current = tabletPosts.find((post) => post.id === activePostId);
@@ -1018,7 +1069,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
             : { sunbedNumber: table.label }
         : { tableNumber };
 
-      const sendingPost = resolveKdsSendingPost(messageText, activePost, tabletPosts);
+      const sendingPost = resolveKdsSendingPost(messageText, activePost, postsForZone.length ? postsForZone : tabletPosts);
       const sendStation = passStationForSend(sendingPost, station);
       const outboundMessage = formatPassMessageForSend(messageText, sendingPost, tabletPosts);
       const res = await fetch("/api/pass-signals", {
@@ -1049,100 +1100,97 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     }
   }
 
-  const selectedLabel = table
-    ? formatWaiterCallLocation(
-        table.type === "TABLE"
-          ? { tableNumber: table.label }
-          : table.type === "ROOM"
-            ? { roomNumber: table.label }
-            : { sunbedNumber: table.label },
-      )
-    : manualTable.trim()
-      ? `Τραπέζι ${manualTable.trim()}`
-      : null;
+  const selectedLabel = selectedTableLabel(table, manualTable, zoneGroups, activeZoneId);
+
+  const waitingHeading =
+    zoneGroups.length > 1 && activeZone
+      ? `${C.waitingTitle} · ${activeZone.label}${zoneFilteredSignals.length > 0 ? ` (${zoneFilteredSignals.length})` : ""}`
+      : zoneFilteredSignals.length > 0
+        ? `${C.waitingTitle} (${zoneFilteredSignals.length})`
+        : C.waitingTitle;
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-slate-900 text-white">
-      {zoneFilteredSignals.length > 0 ? (
-        <section className="shrink-0 border-b border-white/10 bg-slate-950/60 px-3 py-2 sm:px-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-            {C.waitingTitle} ({zoneFilteredSignals.length})
-          </p>
-          <div className="mt-1.5 flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {zoneFilteredSignals.map((signal) => {
-              const spot = signalToSpot(signal);
-              const location = formatWaiterCallLocationWithZone(signal, zoneGroups, {
-                activeZoneId,
-              });
-              const picked = signal.status === "PICKED_UP";
-              const canCancel = signal.status === "READY" || signal.status === "PICKED_UP";
-              return (
-                <div
-                  key={signal.id}
-                  className={cn(
-                    "relative shrink-0 rounded-lg border",
-                    spot && table && spotSelected(table, spot)
-                      ? "border-cyan-400 bg-cyan-500/15"
-                      : "border-white/15 bg-white/5",
-                  )}
-                >
-                  <button
-                    type="button"
-                    onClick={() => selectFromSignal(signal)}
-                    className="rounded-lg px-2.5 py-1.5 pr-7 text-left transition active:scale-[0.98]"
+      <header className="flex shrink-0 items-stretch gap-2 border-b border-white/10 bg-slate-950/80 sm:gap-3">
+        <div className="flex w-[38%] max-w-[12.5rem] shrink-0 flex-col justify-center border-r border-white/10 px-3 py-2 sm:max-w-[13.5rem] sm:px-3.5 sm:py-2.5">
+          <div aria-label="MenuOS">
+            <Logo
+              href={false}
+              dark
+              markSize={30}
+              className="gap-2"
+              markClassName="drop-shadow-[0_4px_14px_rgba(6,182,212,0.32)]"
+              wordmarkClassName="text-sm leading-none sm:text-[15px]"
+            />
+          </div>
+          <h1 className="mt-1.5 text-sm font-bold leading-tight sm:text-base">{C.title}</h1>
+          {ctx ? <p className="mt-0.5 truncate text-[11px] text-slate-400 sm:text-xs">{ctx.venueName}</p> : null}
+          {ctx && typeof ctx.todayCount === "number" ? (
+            <p className="mt-0.5 text-[10px] text-slate-500">{C.todayCount(ctx.todayCount)}</p>
+          ) : null}
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col justify-center py-2 pr-3 sm:py-2.5 sm:pr-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{waitingHeading}</p>
+          {zoneFilteredSignals.length > 0 ? (
+            <div className="mt-1 flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {zoneFilteredSignals.map((signal) => {
+                const spot = signalToSpot(signal);
+                const location = signalLocationLabel(signal, zoneGroups, activeZoneId, activeZone);
+                const picked = signal.status === "PICKED_UP";
+                const canCancel = signal.status === "READY" || signal.status === "PICKED_UP";
+                return (
+                  <div
+                    key={signal.id}
+                    className={cn(
+                      "relative shrink-0 rounded-lg border",
+                      spot && table && spotSelected(table, spot)
+                        ? "border-cyan-400 bg-cyan-500/15"
+                        : "border-white/15 bg-white/5",
+                    )}
                   >
-                    <p className="text-xs font-bold text-white">{location}</p>
-                    {signal.message ? (
-                      <p className="mt-0.5 max-w-[8rem] truncate text-[10px] text-slate-300">{signal.message}</p>
-                    ) : null}
-                    <p
-                      className={cn(
-                        "mt-0.5 flex items-center gap-1 text-[9px] font-medium",
-                        picked ? "text-amber-300" : "text-emerald-300",
-                      )}
-                    >
-                      <Clock className="h-2.5 w-2.5" />
-                      {picked ? C.waitingPicked : C.waitingReady} · {minutesAgo(signal.readyAt)}
-                    </p>
-                  </button>
-                  {canCancel ? (
                     <button
                       type="button"
-                      title={C.cancelSignal}
-                      disabled={cancellingId === signal.id}
-                      onClick={() => void cancelSignal(signal.id)}
-                      className="absolute right-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-md bg-red-500/20 text-red-200 hover:bg-red-500/35 disabled:opacity-50"
+                      onClick={() => selectFromSignal(signal)}
+                      className="rounded-lg px-2.5 py-1.5 pr-7 text-left transition active:scale-[0.98]"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <p className="text-xs font-bold text-white">{location}</p>
+                      {signal.message ? (
+                        <p className="mt-0.5 max-w-[8rem] truncate text-[10px] text-slate-300">{signal.message}</p>
+                      ) : null}
+                      <p
+                        className={cn(
+                          "mt-0.5 flex items-center gap-1 text-[9px] font-medium",
+                          picked ? "text-amber-300" : "text-emerald-300",
+                        )}
+                      >
+                        <Clock className="h-2.5 w-2.5" />
+                        {picked ? C.waitingPicked : C.waitingReady} · {minutesAgo(signal.readyAt)}
+                      </p>
                     </button>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
+                    {canCancel ? (
+                      <button
+                        type="button"
+                        title={C.cancelSignal}
+                        disabled={cancellingId === signal.id}
+                        onClick={() => void cancelSignal(signal.id)}
+                        className="absolute right-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-md bg-red-500/20 text-red-200 hover:bg-red-500/35 disabled:opacity-50"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : ctx ? (
+            <p className="mt-0.5 text-[10px] text-slate-600">Καμία ενεργή ειδοποίηση σε αυτόν τον χώρο.</p>
+          ) : null}
+        </div>
+      </header>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside className="flex min-h-0 w-[38%] max-w-[12.5rem] shrink-0 flex-col border-r border-white/10 bg-slate-950/50 sm:max-w-[13.5rem]">
-          <div className="shrink-0 border-b border-white/10 px-3.5 py-3">
-            <div aria-label="MenuOS">
-              <Logo
-                href={false}
-                dark
-                markSize={34}
-                className="gap-2.5"
-                markClassName="drop-shadow-[0_4px_14px_rgba(6,182,212,0.32)]"
-                wordmarkClassName="text-[15px] leading-none sm:text-base"
-              />
-            </div>
-            <h1 className="mt-2 text-sm font-bold leading-tight sm:text-base">{C.title}</h1>
-            {ctx ? <p className="mt-0.5 text-xs text-slate-400">{ctx.venueName}</p> : null}
-            {ctx && typeof ctx.todayCount === "number" ? (
-              <p className="mt-1 text-[10px] text-slate-500">{C.todayCount(ctx.todayCount)}</p>
-            ) : null}
-          </div>
-
           {ctx && headerMessages.length > 0 ? (
             <QuickMessagesPanel
               key={activePost?.id ?? "default"}
