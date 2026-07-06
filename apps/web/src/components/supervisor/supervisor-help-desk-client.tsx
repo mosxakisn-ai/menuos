@@ -444,9 +444,12 @@ export function SupervisorHelpDeskClient() {
         : reports.filter((r) => r.status === "RESOLVED").length;
     if (count === 0) return;
 
+    const openCount = reports.filter((r) => r.status === "OPEN").length;
     const msg =
       status === "ALL"
-        ? `Διαγραφή όλων των ${count} αναφορών για αυτόν τον πελάτη; Δεν αναιρείται.`
+        ? openCount > 0
+          ? `Προσοχή: ${openCount} από ${count} αναφορές είναι ακόμα ανοιχτές. Διαγραφή όλων; Δεν αναιρείται.`
+          : `Διαγραφή όλων των ${count} αναφορών για αυτόν τον πελάτη; Δεν αναιρείται.`
         : `Διαγραφή ${count} κλειστών αναφορών; Δεν αναιρείται.`;
     if (!window.confirm(msg)) return;
 

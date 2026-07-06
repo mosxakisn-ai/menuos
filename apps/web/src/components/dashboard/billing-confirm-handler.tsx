@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
-import { reportVisitorIntent } from "@/lib/visitor-intent-client";
+import { bumpVisitorIntentStep } from "@/lib/visitor-intent-client";
 
 export function BillingConfirmHandler({
   organizationId,
@@ -24,7 +24,7 @@ export function BillingConfirmHandler({
     const sessionId = searchParams.get("session_id");
 
     if (billing === "cancelled") {
-      reportVisitorIntent({
+      bumpVisitorIntentStep({
         surface: "checkout",
         step: "payment_failed",
         path: "/dashboard/billing",
@@ -62,7 +62,7 @@ export function BillingConfirmHandler({
           if (!res.ok) {
             setMessage(data.error ?? d.billing.confirmFailed);
             setIsError(true);
-            reportVisitorIntent({
+            bumpVisitorIntentStep({
               surface: "checkout",
               step: "payment_failed",
               path: "/dashboard/billing",
@@ -73,7 +73,7 @@ export function BillingConfirmHandler({
           if (data.subscription?.status !== "ACTIVE") {
             setMessage(d.billing.confirmFailed);
             setIsError(true);
-            reportVisitorIntent({
+            bumpVisitorIntentStep({
               surface: "checkout",
               step: "payment_failed",
               path: "/dashboard/billing",
@@ -81,7 +81,7 @@ export function BillingConfirmHandler({
             });
             return;
           }
-          reportVisitorIntent({
+          bumpVisitorIntentStep({
             surface: "checkout",
             step: "payment_success",
             path: "/dashboard/billing",
@@ -96,6 +96,12 @@ export function BillingConfirmHandler({
         .catch(() => {
           setMessage(d.billing.confirmFailed);
           setIsError(true);
+          bumpVisitorIntentStep({
+            surface: "checkout",
+            step: "payment_failed",
+            path: "/dashboard/billing",
+            visitorLabel: userEmail?.trim() || undefined,
+          });
         });
     }
   }, [organizationId, router, searchParams, userEmail]);

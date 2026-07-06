@@ -324,16 +324,16 @@ export const MARKETING_EN = {
       ],
     },
     about: {
-      badge: "Our team",
-      hero: "We build digital tools that respect your time and improve the guest experience.",
+      badge: "About us",
+      hero: "The modern digital menu platform for Greek hospitality",
       introParagraphs: [
-        "MenuOS was born from Greek hospitality needs: a digital menu that works for restaurants, hotels and beach bars — with tourism, multilingual menus and seasonality at the core, not as a generic foreign template.",
-        "We believe technology should be invisible to guests and simple for you. That's why we don't require a guest app, we don't hide fees, and we offer support in Greek — from your first QR to daily operations through the season.",
+        "MenuOS is a Greek cloud platform for digital menus, built for modern hospitality.",
+        "Our goal: simplify daily operations and deliver a modern guest experience — no apps, no complicated setup.",
       ],
       values: [
-        { title: "Simplicity", text: "What the guest sees must be easy. What you see in the dashboard too." },
+        { title: "Simplicity", text: "What the guest sees must be easy. What you manage online too." },
         { title: "Greek market", text: "Seasonality, tourism, multilingual needs — not a generic foreign template." },
-        { title: "Transparency", text: "Clear pricing, honest communication, no hidden fees or jargon." },
+        { title: "Cloud, no hardware", text: "Online service, quick launch, access from any device." },
       ],
     },
     pricing: {

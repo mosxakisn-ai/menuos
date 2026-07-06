@@ -12,7 +12,7 @@ import { formatPlanPriceDisplay } from "@/lib/plan-catalog-types";
 import { displayPlanFeature } from "@/lib/plan-feature-display";
 import { formatDashboardDate } from "@/content/dashboard-i18n";
 import type { SubscriptionDisplaySummary } from "@/lib/subscription-display";
-import { reportVisitorIntent, getVisitorSessionId } from "@/lib/visitor-intent-client";
+import { getVisitorSessionId, bumpVisitorIntentStep } from "@/lib/visitor-intent-client";
 import { cn } from "@/lib/utils";
 
 type Subscription = {
@@ -67,7 +67,7 @@ export function BillingPlans({
     setError(null);
     const visitorLabel = userEmail?.trim() || undefined;
     const visitorSid = getVisitorSessionId();
-    reportVisitorIntent({
+    bumpVisitorIntentStep({
       surface: "checkout",
       step: "pay_clicked",
       path: "/dashboard/billing",
@@ -91,7 +91,7 @@ export function BillingPlans({
       };
       if (!res.ok) {
         setError(data.error ?? B.checkoutFailed);
-        reportVisitorIntent({
+        bumpVisitorIntentStep({
           surface: "checkout",
           step: "stripe_init_failed",
           path: "/dashboard/billing",
@@ -102,7 +102,7 @@ export function BillingPlans({
       }
       if (data.checkoutUrl) {
         if (data.mode === "mock") {
-          reportVisitorIntent({
+          bumpVisitorIntentStep({
             surface: "checkout",
             step: "payment_success",
             path: "/dashboard/billing",
@@ -113,7 +113,7 @@ export function BillingPlans({
           router.refresh();
           return;
         }
-        reportVisitorIntent({
+        bumpVisitorIntentStep({
           surface: "checkout",
           step: "stripe_redirect",
           path: "/dashboard/billing",
@@ -124,7 +124,7 @@ export function BillingPlans({
       }
     } catch {
       setError(B.networkError);
-      reportVisitorIntent({
+      bumpVisitorIntentStep({
         surface: "checkout",
         step: "stripe_init_failed",
         path: "/dashboard/billing",

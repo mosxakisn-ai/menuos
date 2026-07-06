@@ -180,17 +180,60 @@ export const PAGES_EN = {
     ],
   },
   about: {
-    heroTitle: "About us",
-    paragraphs: [
-      "MenuOS is a Greek digital QR menu platform with Live 360° coordination for your team. Our goal: every restaurant, hotel or bar offers a modern mobile menu — without building their own app.",
-      "We know Greek hospitality: seasonality, tourists, multiple QR languages, fast price changes.",
-      "We don't sell hardware. We give you an online service: build menu, print QR, guests scan.",
+    heroTitle: "MenuOS",
+    intro: [
+      "MenuOS is a Greek cloud platform for digital menus, built specifically for modern hospitality. Our goal is to simplify daily operations and deliver a fast, modern experience for guests — no apps, no complicated setup.",
+      "We didn't build another generic solution. We developed a platform that meets the real needs of the Greek market: restaurants, hotels, cafés, beach bars and every business serving visitors from around the world.",
     ],
-    valuesTitle: "Our values",
-    valuesDesc: "What guides every feature and every support conversation.",
-    missionTitle: "Our mission",
-    missionBody:
-      "Digital menu should be as easy as changing a price — but more beautiful and guest-friendly.",
+    hospitality: {
+      title: "Built for Greek hospitality",
+      lead: "Hospitality businesses face every day:",
+      bullets: [
+        "Strong seasonality",
+        "Frequent product and price changes",
+        "Need for multiple languages",
+        "Fast service without delays",
+        "Easy management without technical skills",
+      ],
+      closing:
+        "MenuOS was created to meet these needs: simple to use, quick to launch, accessible from any device.",
+    },
+    philosophy: {
+      title: "Our philosophy",
+      tagline: "Technology should make things easier — not harder.",
+      paragraphs: [
+        "The guest scans a QR code and sees the menu on their phone instantly — no app install, no account required.",
+        "The business manages everything online: products, prices, availability, photos, QR codes. Everything updates in real time.",
+      ],
+    },
+    offers: {
+      title: "What MenuOS offers",
+      bullets: [
+        "Digital QR menus without an app",
+        "Multiple languages for international guests",
+        "Instant product and price updates",
+        "Online management from desktop, tablet or phone",
+        "Cloud service — no hardware or on-site setup",
+        "Greek support before and after launch",
+      ],
+    },
+    atGlance: {
+      title: "At a glance",
+      bullets: [
+        "Multiple languages",
+        "Free {trialDaysAdj} trial",
+        "Setup in about 60 minutes",
+        "No app — just the guest's phone",
+        "Cloud platform with secure access from anywhere",
+      ],
+    },
+    mission: {
+      title: "Our mission",
+      paragraphs: [
+        "We want to help every hospitality business offer a modern digital experience to its guests.",
+        "MenuOS keeps evolving, adding capabilities that match the needs of the Greek market — today and tomorrow.",
+      ],
+    },
     missionNote: "Support in Greece — phone, email, personal contact.",
     trialButton: "{trialDaysAdj} trial",
     cta: {

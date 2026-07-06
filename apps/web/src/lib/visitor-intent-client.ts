@@ -162,6 +162,11 @@ export function reportVisitorIntent(opts: {
   });
 }
 
+function funnelStepInProgress(): boolean {
+  const step = heartbeatCtx?.step ?? readPeakStep();
+  return step === "pay_clicked" || step === "stripe_redirect";
+}
+
 function emitSessionEnd() {
   if (!heartbeatCtx) return;
   postPayload(
@@ -180,8 +185,10 @@ function registerUnloadHooks() {
   if (unloadHooksRegistered || typeof window === "undefined") return;
   unloadHooksRegistered = true;
   const onLeave = () => {
-    emitSessionEnd();
-    clearPeakStep();
+    if (!funnelStepInProgress()) {
+      emitSessionEnd();
+      clearPeakStep();
+    }
     stopVisitorIntentHeartbeat();
   };
   window.addEventListener("pagehide", onLeave);
@@ -190,7 +197,12 @@ function registerUnloadHooks() {
 
 export function startVisitorIntentHeartbeat(ctx: IntentCtx) {
   if (typeof window === "undefined") return;
-  const mergedStep = mergeFunnelStep(heartbeatCtx?.step, ctx.step);
+  const prevCtx = heartbeatCtx;
+  if (ctx.surface === "marketing") {
+    clearPeakStep();
+  }
+  const mergedStep =
+    ctx.surface === "marketing" ? ctx.step : mergeFunnelStep(prevCtx?.step, ctx.step);
   const mergedCtx: IntentCtx = {
     ...ctx,
     step: mergedStep,
@@ -260,6 +272,9 @@ export function bumpVisitorIntentStep(opts: {
   }
   writePeakStep(opts.step);
   reportVisitorIntent(opts);
+  if (opts.step === "payment_success" || opts.step === "payment_failed") {
+    clearPeakStep();
+  }
 }
 
 /** Update label/plan on active heartbeat without changing step. */

@@ -45,9 +45,9 @@ export const SEO_PAGES_EN = {
     breadcrumbLabel: "Pricing",
   },
   about: {
-    title: "About — MenuOS & Live 360° for the Greek market",
+    title: "About — MenuOS, digital menus for Greek hospitality",
     description:
-      "MenuOS was built for restaurants and hotels in Greece: QR menu, Live 360° coordination and simple management without complexity.",
+      "MenuOS is a Greek cloud platform for digital menus for restaurants, hotels and bars. QR without an app, multiple languages, online management and a free 7-day trial.",
     path: "/sxetika",
     breadcrumbLabel: "About",
   },

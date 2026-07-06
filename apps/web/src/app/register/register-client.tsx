@@ -14,7 +14,7 @@ import {
   registerSubmitLabel,
   registerSubtitle,
 } from "@/lib/register-plan-intent";
-import { bumpVisitorIntentStep, reportVisitorIntent, getVisitorSessionId } from "@/lib/visitor-intent-client";
+import { bumpVisitorIntentStep, getVisitorSessionId } from "@/lib/visitor-intent-client";
 
 export default function RegisterPageClient({
   trialDaysGen,
@@ -185,7 +185,7 @@ export default function RegisterPageClient({
         });
         const billingData = (await billingRes.json()) as { checkoutUrl?: string; error?: string };
         if (billingRes.ok && billingData.checkoutUrl) {
-          reportVisitorIntent({
+          bumpVisitorIntentStep({
             surface: "checkout",
             step: "stripe_redirect",
             path: "/register",
@@ -195,7 +195,7 @@ export default function RegisterPageClient({
           window.location.href = billingData.checkoutUrl;
           return;
         }
-        reportVisitorIntent({
+        bumpVisitorIntentStep({
           surface: "checkout",
           step: "stripe_init_failed",
           path: "/register",

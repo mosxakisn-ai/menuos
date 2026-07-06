@@ -98,9 +98,9 @@ export const SEO_PAGES = {
     keywords: ["τιμές QR menu", "Live 360 τιμή", "κόστος ψηφιακού menu", "MenuOS pricing"],
   },
   about: {
-    title: "Σχετικά — MenuOS & Live 360° για την ελληνική αγορά",
+    title: "Σχετικά — MenuOS, ψηφιακά menus για την ελληνική φιλοξενία",
     description:
-      "Το MenuOS φτιάχτηκε για εστιατόρια και ξενοδοχεία στην Ελλάδα: QR menu, live συντονισμός 360° και απλή διαχείριση χωρίς πολυπλοκότητα.",
+      "Το MenuOS είναι ελληνική cloud πλατφόρμα ψηφιακών menus για εστιατόρια, ξενοδοχεία και bars. QR χωρίς app, πολλαπλές γλώσσες, online διαχείριση και δωρεάν δοκιμή 7 ημερών.",
     path: "/sxetika",
     breadcrumbLabel: "Σχετικά",
     keywords: ["MenuOS", "ψηφιακό menu Ελλάδα"],

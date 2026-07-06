@@ -146,7 +146,7 @@ export function sanitizePlanCatalogUpdate(
     }
   }
 
-  if (planId === "TRIAL") {
+  if (planId === "TRIAL" && Object.keys(out).length > 0) {
     out.priceMonthly = 0;
     out.priceDisplay = "€0";
     out.maxGeminiTokensPerMonth = 0;
@@ -155,7 +155,7 @@ export function sanitizePlanCatalogUpdate(
     }
   }
 
-  if (planId === "BASIC") {
+  if (planId === "BASIC" && Object.keys(out).length > 0) {
     out.maxGeminiTokensPerMonth = 0;
   }
 

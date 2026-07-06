@@ -86,11 +86,20 @@ export function peakFunnelStep(row: {
 function resolveStepTransition(
   prev: VisitorIntentStep | undefined,
   incoming: VisitorIntentStep,
+  opts?: { surface?: VisitorIntentSurface; prevSurface?: VisitorIntentSurface },
 ): VisitorIntentStep {
   if (incoming === "session_end") return incoming;
   if (incoming === "heartbeat") return prev ?? "browse";
   if (!prev) return incoming;
   if (FINAL_STEPS.has(prev) && !FINAL_STEPS.has(incoming)) return prev;
+  if (
+    opts?.surface === "marketing" &&
+    (incoming === "browse" || incoming === "pricing") &&
+    opts.prevSurface &&
+    (opts.prevSurface === "checkout" || opts.prevSurface === "register")
+  ) {
+    return incoming;
+  }
   if (stepRank(incoming) >= stepRank(prev)) return incoming;
   return prev;
 }
@@ -341,7 +350,10 @@ export async function recordVisitorIntent(input: {
   if (existing && input.step === "heartbeat") {
     resolvedStep = prevStep ?? "browse";
   } else if (existing && prevStep) {
-    resolvedStep = resolveStepTransition(prevStep, resolvedStep);
+    resolvedStep = resolveStepTransition(prevStep, resolvedStep, {
+      surface: input.surface,
+      prevSurface: existing.surface as VisitorIntentSurface,
+    });
   }
 
   const stepSince =
