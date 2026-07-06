@@ -11,7 +11,7 @@ import {
   groupVenueSpotsByZone,
   mergeTableStateLabels,
   zoneIdForWaiterLocation,
-  resolveWaiterLocationInZones,
+  resolveWaiterLocationInZone,
   type OrderPayload,
   type VenueSpotType,
 } from "@menuos/shared";
@@ -48,6 +48,34 @@ type PassSignal = {
   message?: string | null;
   readyAt?: string;
 };
+
+type WaiterLocationItem = {
+  tableNumber?: string | null;
+  roomNumber?: string | null;
+  sunbedNumber?: string | null;
+};
+
+/** Resolve zone tab for a call/pass — also when table number is bare but unique in one zone. */
+function itemZoneId(
+  item: WaiterLocationItem,
+  groups: ReturnType<typeof groupVenueSpotsByZone>,
+): string | null {
+  const direct = zoneIdForWaiterLocation(item, groups);
+  if (direct) return direct;
+  const hits: string[] = [];
+  for (const group of groups) {
+    if (resolveWaiterLocationInZone(item, group.id, groups)) hits.push(group.id);
+  }
+  return hits.length === 1 ? hits[0]! : null;
+}
+
+function isActiveWaiterCall(call: WaiterCall): boolean {
+  return call.status === "PENDING" || call.status === "ACKNOWLEDGED";
+}
+
+function isActivePassSignal(pass: PassSignal): boolean {
+  return pass.status === "READY" || pass.status === "PICKED_UP";
+}
 
 export function WaiterPanel({
   venues,
@@ -287,11 +315,6 @@ export function WaiterPanel({
     [passSignals, zoneFilterId, zoneGroups],
   );
 
-  const readyPassSignals = useMemo(
-    () => passSignals.filter((pass) => pass.status === "READY"),
-    [passSignals],
-  );
-
   const visibleActiveCount = useMemo(() => {
     const activeCalls = displayCalls.filter(
       (call) => call.status === "PENDING" || call.status === "ACKNOWLEDGED",
@@ -304,12 +327,12 @@ export function WaiterPanel({
     if (zoneGroups.length === 0) return 0;
     let count = 0;
     for (const call of calls) {
-      if (call.status !== "PENDING" && call.status !== "ACKNOWLEDGED") continue;
-      if (!resolveWaiterLocationInZones(call, zoneGroups)) count += 1;
+      if (!isActiveWaiterCall(call)) continue;
+      if (!itemZoneId(call, zoneGroups)) count += 1;
     }
     for (const pass of passSignals) {
-      if (pass.status !== "READY") continue;
-      if (!resolveWaiterLocationInZones(pass, zoneGroups)) count += 1;
+      if (!isActivePassSignal(pass)) continue;
+      if (!itemZoneId(pass, zoneGroups)) count += 1;
     }
     return count;
   }, [calls, passSignals, zoneGroups]);
@@ -317,27 +340,37 @@ export function WaiterPanel({
   const zonePendingCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const call of calls) {
-      if (call.status !== "PENDING" && call.status !== "ACKNOWLEDGED") continue;
-      const zoneId = zoneIdForWaiterLocation(call, zoneGroups);
+      if (!isActiveWaiterCall(call)) continue;
+      const zoneId = itemZoneId(call, zoneGroups);
       if (!zoneId) continue;
       counts.set(zoneId, (counts.get(zoneId) ?? 0) + 1);
     }
     for (const pass of passSignals) {
-      if (pass.status !== "READY") continue;
-      const zoneId = zoneIdForWaiterLocation(pass, zoneGroups);
+      if (!isActivePassSignal(pass)) continue;
+      const zoneId = itemZoneId(pass, zoneGroups);
       if (!zoneId) continue;
       counts.set(zoneId, (counts.get(zoneId) ?? 0) + 1);
     }
     return counts;
   }, [calls, passSignals, zoneGroups]);
 
+  const zonePendingBreakdown = useMemo(() => {
+    const parts: string[] = [];
+    for (const zone of activeZoneGroups) {
+      const n = zonePendingCounts.get(zone.id) ?? 0;
+      if (n > 0) parts.push(`${zone.label} (${n})`);
+    }
+    if (unmappedActiveCount > 0) {
+      parts.push(W.unmappedZoneLabel(unmappedActiveCount));
+    }
+    return parts;
+  }, [activeZoneGroups, zonePendingCounts, unmappedActiveCount, W]);
+
   function zonePendingTotal(zoneId: string): number {
     if (zoneId === "all") {
-      const activeCalls = calls.filter(
-        (call) => call.status === "PENDING" || call.status === "ACKNOWLEDGED",
-      ).length;
-      const readyPasses = readyPassSignals.length;
-      return activeCalls + readyPasses;
+      const activeCalls = calls.filter(isActiveWaiterCall).length;
+      const activePasses = passSignals.filter(isActivePassSignal).length;
+      return activeCalls + activePasses;
     }
     return zonePendingCounts.get(zoneId) ?? 0;
   }
@@ -369,50 +402,67 @@ export function WaiterPanel({
     const selected = zoneFilterId === zoneId;
     const activePending = zonePendingTotal(zoneId);
     const spotCount = zoneSpotCount(zoneId);
+    const hasMessages = activePending > 0;
     return (
       <button
         key={zoneId}
         type="button"
         onClick={() => setZoneFilterId(zoneId)}
         className={cn(
-          "relative flex min-h-[4rem] w-[calc(50%-0.25rem)] max-w-[9.5rem] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 px-3 py-3 text-center transition sm:min-h-[4.25rem] sm:w-[calc(33.333%-0.5rem)] sm:px-4 lg:w-[calc(25%-0.5rem)]",
+          "relative flex min-h-[4.5rem] w-[calc(50%-0.25rem)] max-w-[9.5rem] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 px-3 py-3 text-center transition sm:min-h-[4.75rem] sm:w-[calc(33.333%-0.5rem)] sm:px-4 lg:w-[calc(25%-0.5rem)]",
           selected
             ? "border-brand-blue bg-brand-blue text-white shadow-md shadow-brand-blue/20"
-            : activePending > 0
+            : hasMessages
               ? "border-amber-300 bg-amber-50 text-brand-navy hover:border-amber-400"
               : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
         )}
       >
-        {activePending > 0 ? (
+        {hasMessages && !selected ? (
           <DashboardCountBadge
             count={activePending}
             className="absolute -right-1.5 -top-1.5 min-h-[1.35rem] min-w-[1.35rem] border-2 border-white text-[11px] shadow-md"
           />
         ) : null}
-        <span className={cn("text-base font-bold leading-tight sm:text-lg", selected && "text-white")}>
+        <span className={cn("text-sm font-bold leading-tight sm:text-base", selected && "text-white")}>
           {label}
         </span>
-        <span
-          className={cn(
-            "text-2xl font-extrabold tabular-nums leading-none sm:text-3xl",
-            selected ? "text-white" : "text-brand-navy",
-          )}
-        >
-          {spotCount}
-        </span>
-        <span className={cn("text-[10px] sm:text-xs", selected ? "text-white/85" : "text-slate-500")}>
-          {W.zoneSpotCount(spotCount)}
-        </span>
-        {activePending > 0 ? (
-          <span
-            className={cn(
-              "mt-0.5 text-[10px] font-semibold sm:text-xs",
-              selected ? "text-amber-100" : "text-amber-700",
-            )}
-          >
-            {W.zoneActiveCount(activePending)}
-          </span>
-        ) : null}
+        {hasMessages ? (
+          <>
+            <span
+              className={cn(
+                "text-2xl font-extrabold tabular-nums leading-none sm:text-3xl",
+                selected ? "text-white" : "text-amber-700",
+              )}
+            >
+              {activePending}
+            </span>
+            <span
+              className={cn(
+                "text-[10px] font-semibold sm:text-xs",
+                selected ? "text-amber-100" : "text-amber-800",
+              )}
+            >
+              {W.zoneMessageCount(activePending)}
+            </span>
+            <span className={cn("text-[10px] sm:text-xs", selected ? "text-white/75" : "text-slate-400")}>
+              {W.zoneSpotCount(spotCount)}
+            </span>
+          </>
+        ) : (
+          <>
+            <span
+              className={cn(
+                "text-2xl font-extrabold tabular-nums leading-none sm:text-3xl",
+                selected ? "text-white" : "text-brand-navy",
+              )}
+            >
+              {spotCount}
+            </span>
+            <span className={cn("text-[10px] sm:text-xs", selected ? "text-white/85" : "text-slate-500")}>
+              {W.zoneSpotCount(spotCount)}
+            </span>
+          </>
+        )}
       </button>
     );
   }
@@ -497,7 +547,11 @@ export function WaiterPanel({
             {renderZoneButton("all", W.zoneFilterAll)}
             {activeZoneGroups.map((zone) => renderZoneButton(zone.id, zone.label))}
           </div>
-          {unmappedActiveCount > 0 ? (
+          {zonePendingBreakdown.length > 0 ? (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-950 sm:text-sm">
+              {W.zonePendingBreakdown(zonePendingBreakdown)}
+            </p>
+          ) : unmappedActiveCount > 0 ? (
             <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 sm:text-sm">
               {W.unmappedActiveHint(unmappedActiveCount)}
             </p>

@@ -494,6 +494,10 @@ export const DASHBOARD_EL = {
     zonePickHeading: "Διάλεξε χώρο",
     zoneSpotCount: (n: number) => (n === 1 ? "1 θέση" : `${n} θέσεις`),
     zoneActiveCount: (n: number) => (n === 1 ? "1 ενεργό" : `${n} ενεργά`),
+    zoneMessageCount: (n: number) => (n === 1 ? "1 μήνυμα" : `${n} μηνύματα`),
+    zonePendingBreakdown: (parts: string[]) =>
+      parts.length > 0 ? `Σε αναμονή ανά χώρο: ${parts.join(" · ")}` : "",
+    unmappedZoneLabel: (n: number) => (n === 1 ? "Άλλο (1)" : `Άλλο (${n})`),
     unmappedActiveHint: (n: number) =>
       n === 1
         ? "1 κλήση/μήνυμα χωρίς σαφή χώρο — δες «Όλοι οι χώροι» ή έλεγξε τον αριθμό τραπεζιού."

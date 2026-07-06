@@ -483,6 +483,10 @@ export const DASHBOARD_EN = {
     zonePickHeading: "Pick a space",
     zoneSpotCount: (n: number) => (n === 1 ? "1 spot" : `${n} spots`),
     zoneActiveCount: (n: number) => (n === 1 ? "1 active" : `${n} active`),
+    zoneMessageCount: (n: number) => (n === 1 ? "1 message" : `${n} messages`),
+    zonePendingBreakdown: (parts: string[]) =>
+      parts.length > 0 ? `Waiting by space: ${parts.join(" · ")}` : "",
+    unmappedZoneLabel: (n: number) => (n === 1 ? "Other (1)" : `Other (${n})`),
     unmappedActiveHint: (n: number) =>
       n === 1
         ? "1 call/message with no clear zone — open «All areas» or check the table number."
