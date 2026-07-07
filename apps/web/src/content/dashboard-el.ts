@@ -1200,16 +1200,20 @@ export const DASHBOARD_EL = {
       },
       services: {
         title: "Υπηρεσίες",
-        description: "Link σερβιτόρου, push ειδοποιήσεις και live πάσα — κλήσεις πελάτη + μηνύματα τμημάτων.",
+        description: "Link σερβιτόρου, push ειδοποιήσεις και ρυθμίσεις ειδοποιήσεων — κλήσεις πελάτη, παραγγελίες και φωνή.",
         pushSectionTitle: "Push ειδοποιήσεις",
         pushHint:
           "Ενεργοποίησε push σε αυτή τη συσκευή (π.χ. tablet manager). Ισχύει για όλα τα καταστήματα της επιχείρησης — Chrome/Safari, όχι Messenger ή Instagram.",
         staffPushHint:
           "Κάθε σερβιτόρος ενεργοποιεί push στο δικό του κινητό — ανοίγει το προσωπικό link και πατά «Ενεργοποίηση».",
-        passTitle: "Live πάσα",
-        passHint: "Μένει μέχρι ο σερβιτόρος πατήσει «Έτοιμο». Ο χάρτης θέσεων ενημερώνεται live.",
-        livePanelLink: "Άνοιγμα live οθονών →",
-        historyLink: "Ιστορικό παραδόσεων →",
+        notifications: {
+          title: "Ειδοποιήσεις",
+          customerOrder: "Ενεργοποίηση παραγγελίας από πελάτη",
+          waiterCall: "Ενεργοποίηση κλήσης σερβιτόρου",
+          voiceMessages: "Ενεργοποίηση φωνητικών μηνυμάτων",
+          yes: "Ναι",
+          no: "Όχι",
+        },
         staffLinksHint: "Links σερβιτόρων: Ρυθμίσεις → Προσωπικό (ένα link ανά άτομο).",
         minutesAgo: (n: number) => `πριν ${n} λεπ.`,
         tableLabel: (n: string) => `Τραπέζι ${n}`,

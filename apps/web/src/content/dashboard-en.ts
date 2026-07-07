@@ -1184,16 +1184,20 @@ export const DASHBOARD_EN = {
       },
       services: {
         title: "Services",
-        description: "Waiter link, push alerts and live pass — guest calls plus department messages.",
+        description: "Waiter link, push alerts and notification settings — guest calls, orders and voice.",
         pushSectionTitle: "Push notifications",
         pushHint:
           "Enable push on this device (e.g. manager tablet). Applies to all venues in your organization — use Chrome/Safari, not Messenger or Instagram.",
         staffPushHint:
           "Each waiter enables push on their own phone — open their personal link and tap Enable.",
-        passTitle: "Live pass",
-        passHint: "Stays visible until the waiter taps Done. The spot map updates live.",
-        livePanelLink: "Open live screens →",
-        historyLink: "Delivery history →",
+        notifications: {
+          title: "Notifications",
+          customerOrder: "Customer order activation",
+          waiterCall: "Waiter call activation",
+          voiceMessages: "Voice message activation",
+          yes: "Yes",
+          no: "No",
+        },
         staffLinksHint: "Waiter links: Settings → Staff (one link per staff member).",
         minutesAgo: (n: number) => `${n} min ago`,
         tableLabel: (n: string) => `Table ${n}`,

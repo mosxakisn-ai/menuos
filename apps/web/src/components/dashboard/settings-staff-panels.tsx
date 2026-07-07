@@ -1,6 +1,5 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
@@ -11,6 +10,7 @@ import {
 } from "@/components/dashboard/venue-operations-config-panel";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { cn } from "@/lib/utils";
 
 type VenueSpotVenue = { id: string; name: string; slug: string; staffToken?: string };
 
@@ -179,9 +179,92 @@ export function SettingsSpacesPanel({
   );
 }
 
+function YesNoToggle({
+  value,
+  onChange,
+  yesLabel,
+  noLabel,
+  ariaLabelledBy,
+}: {
+  value: boolean;
+  onChange: (next: boolean) => void;
+  yesLabel: string;
+  noLabel: string;
+  ariaLabelledBy?: string;
+}) {
+  return (
+    <div
+      className="flex shrink-0 items-center gap-0.5 self-end rounded-full border border-slate-200/90 bg-white p-0.5 shadow-sm sm:self-auto"
+      role="group"
+      aria-labelledby={ariaLabelledBy}
+    >
+      <button
+        type="button"
+        onClick={() => onChange(true)}
+        aria-pressed={value}
+        className={cn(
+          "min-w-[2.75rem] rounded-full px-3 py-1.5 text-xs font-bold transition",
+          value
+            ? "bg-brand-gradient text-white shadow-sm"
+            : "text-slate-500 hover:bg-slate-50 hover:text-primary",
+        )}
+      >
+        {yesLabel}
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(false)}
+        aria-pressed={!value}
+        className={cn(
+          "min-w-[2.75rem] rounded-full px-3 py-1.5 text-xs font-bold transition",
+          !value
+            ? "bg-brand-gradient text-white shadow-sm"
+            : "text-slate-500 hover:bg-slate-50 hover:text-primary",
+        )}
+      >
+        {noLabel}
+      </button>
+    </div>
+  );
+}
+
+function NotificationToggleRow({
+  label,
+  value,
+  onChange,
+  yesLabel,
+  noLabel,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (next: boolean) => void;
+  yesLabel: string;
+  noLabel: string;
+}) {
+  const labelId = `notification-${label.replace(/\s+/g, "-").toLowerCase()}`;
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-slate-50/60 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <p id={labelId} className="min-w-0 flex-1 text-sm font-medium text-primary">
+        {label}
+      </p>
+      <YesNoToggle
+        value={value}
+        onChange={onChange}
+        yesLabel={yesLabel}
+        noLabel={noLabel}
+        ariaLabelledBy={labelId}
+      />
+    </div>
+  );
+}
+
 export function SettingsGeneralExtrasPanel() {
   const { d } = useDashboardCopy();
   const S = d.pages.settings;
+  const N = S.services.notifications;
+  const [customerOrdersEnabled, setCustomerOrdersEnabled] = useState(true);
+  const [waiterCallEnabled, setWaiterCallEnabled] = useState(true);
+  const [voiceMessagesEnabled, setVoiceMessagesEnabled] = useState(true);
 
   return (
     <div className="grid gap-5 md:grid-cols-2">
@@ -195,26 +278,30 @@ export function SettingsGeneralExtrasPanel() {
       </div>
 
       <div className={`${dashboardCardClass} flex h-full flex-col`}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-primary">{S.services.passTitle}</h2>
-          <a
-            href="/dashboard/waiter"
-            className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-brand-blue hover:underline"
-          >
-            {S.services.livePanelLink}
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
+        <h2 className="text-sm font-semibold text-primary">{N.title}</h2>
+        <div className="mt-4 flex flex-1 flex-col gap-3">
+          <NotificationToggleRow
+            label={N.customerOrder}
+            value={customerOrdersEnabled}
+            onChange={setCustomerOrdersEnabled}
+            yesLabel={N.yes}
+            noLabel={N.no}
+          />
+          <NotificationToggleRow
+            label={N.waiterCall}
+            value={waiterCallEnabled}
+            onChange={setWaiterCallEnabled}
+            yesLabel={N.yes}
+            noLabel={N.no}
+          />
+          <NotificationToggleRow
+            label={N.voiceMessages}
+            value={voiceMessagesEnabled}
+            onChange={setVoiceMessagesEnabled}
+            yesLabel={N.yes}
+            noLabel={N.no}
+          />
         </div>
-        <p className="mt-2 flex-1 text-sm text-slate-600">{S.services.passHint}</p>
-        <p className="mt-3">
-          <a
-            href="/dashboard/history"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-brand-blue hover:underline"
-          >
-            {S.services.historyLink}
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        </p>
       </div>
     </div>
   );
