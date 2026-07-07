@@ -106,6 +106,9 @@ export function WaiterPanel({
   const passBaselineSetRef = useRef(false);
   const autoZoneAppliedRef = useRef(false);
   const loadGenerationRef = useRef(0);
+  const zoneFilterIdRef = useRef(zoneFilterId);
+  const spotsRef = useRef<VenueSpot[]>([]);
+  zoneFilterIdRef.current = zoneFilterId;
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const { config: opsConfig } = useVenueOperationsConfig(venueId);
 
@@ -146,6 +149,7 @@ export function WaiterPanel({
       prevCallsRef.current = newCalls;
       setCalls(newCalls);
       setSpots((data.spots ?? []) as VenueSpot[]);
+      spotsRef.current = (data.spots ?? []) as VenueSpot[];
       const nextPending = data.pendingCount ?? 0;
       if (!pendingBaselineSetRef.current) {
         prevPendingRef.current = nextPending;
@@ -155,6 +159,7 @@ export function WaiterPanel({
     } else {
       setCalls([]);
       setSpots([]);
+      spotsRef.current = [];
       prevCallsRef.current = [];
       if (!pendingBaselineSetRef.current) {
         prevPendingRef.current = 0;
@@ -186,14 +191,23 @@ export function WaiterPanel({
               const bTime = b.readyAt ? Date.parse(b.readyAt) : 0;
               return bTime - aTime;
             })[0];
-            if (latest?.message?.trim()) {
+            if (latest) {
+              const loadedSpots = callsRes.ok
+                ? ((data.spots ?? []) as VenueSpot[])
+                : spotsRef.current;
+              const spotInputs = loadedSpots.map((spot) => ({
+                type: spot.type,
+                label: spot.label,
+              }));
+              const announcementGroups = groupVenueSpotsByZone(spotInputs);
+              const activeZone =
+                zoneFilterIdRef.current !== "all" ? zoneFilterIdRef.current : null;
               speakPassMessage({
-                message: latest.message,
-                tableNumber: latest.tableNumber,
-                roomNumber: latest.roomNumber,
-                sunbedNumber: latest.sunbedNumber,
-                station: latest.station,
-                stationScreenLabel: latest.stationScreenLabel,
+                tableNumber: latest.tableNumber ?? undefined,
+                roomNumber: latest.roomNumber ?? undefined,
+                sunbedNumber: latest.sunbedNumber ?? undefined,
+                zoneGroups: announcementGroups,
+                activeZoneId: activeZone,
               });
             }
           }
@@ -228,6 +242,7 @@ export function WaiterPanel({
     setCalls([]);
     setPassSignals([]);
     setSpots([]);
+    spotsRef.current = [];
     setPendingCount(0);
     prevPendingRef.current = null;
     prevCallsRef.current = [];

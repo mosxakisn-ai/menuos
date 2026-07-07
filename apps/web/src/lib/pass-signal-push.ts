@@ -1,9 +1,15 @@
 import type { PassSignal, PassStation } from "@menuos/db";
-import { formatWaiterCallLocation, passPushTitle, passStationDbToInput, stationDisplayLabel } from "@menuos/shared";
+import {
+  buildPassSignalPushCopy,
+  groupVenueSpotsByZone,
+  passStationDbToInput,
+  stationDisplayLabel,
+} from "@menuos/shared";
 import { fireStaffPushNotify } from "@/lib/staff-push-notify";
 import { pushPassSignalToStaff } from "@/lib/staff-push-dispatch";
 import { buildStaffWaiterUrl } from "@/lib/staff-auth";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
+import { prisma } from "@menuos/db";
 
 export function pushStaffPassSignal(
   venue: { id: string; name: string; slug: string; staffToken: string; organizationId: string },
@@ -28,14 +34,13 @@ async function notifyStaffPassSignal(
   },
   opts?: { notifyStaffMemberIds?: string[] },
 ) {
-  const opsConfig = await getVenueOperationsConfig(venue.id);
-  const stationInput = passStationDbToInput(signal.station);
-  const loc = formatWaiterCallLocation(signal);
-  const screenName = signal.stationScreen?.label?.trim();
-  const baseTitle = passPushTitle(opsConfig, stationInput);
-  const title = screenName ? `${baseTitle} (${screenName})` : baseTitle;
-  const detail = signal.message?.trim();
-  const body = detail ? `${loc} · ${detail}` : `${venue.name} · ${loc}`;
+  const spots = await prisma.venueSpot.findMany({
+    where: { venueId: venue.id },
+    select: { type: true, label: true },
+    orderBy: { sortOrder: "asc" },
+  });
+  const zoneGroups = groupVenueSpotsByZone(spots);
+  const { title, body } = buildPassSignalPushCopy(signal, { zoneGroups });
   const payload = JSON.stringify({
     title,
     body,
@@ -50,7 +55,7 @@ async function notifyStaffPassSignal(
     station: signal.station,
     payload,
     signalId: signal.id,
-    location: loc,
+    location: body,
     notifyStaffMemberIds: opts?.notifyStaffMemberIds,
   });
 }

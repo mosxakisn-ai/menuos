@@ -47,4 +47,4 @@ export * from "./venue-operations-config";
 export * from "./kds-station-screen";
 export * from "./cuisine-type";
 export * from "./organization-notifications";
-export * from "./pass-message-voice";
+export * from "./pass-signal-announcement";

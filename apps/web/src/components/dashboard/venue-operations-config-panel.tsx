@@ -893,7 +893,6 @@ export function VenueOperationsConfigPanel({
                             addLabel={M.addMessage}
                             color={postColor}
                             listLabel={M.messagesListLabel}
-                            voicePreviewLabel={M.messageVoicePreview}
                           />
                         </div>
 

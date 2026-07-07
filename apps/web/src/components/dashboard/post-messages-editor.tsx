@@ -1,11 +1,10 @@
 "use client";
 
-import { Plus, Trash2, Volume2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { dashboardFieldClass } from "@/components/dashboard/dashboard-page";
 import { buttonClass } from "@/components/ui/button";
-import { DEFAULT_POST_MESSAGE_COLORS, canTranslateMessageForVoice } from "@menuos/shared";
-import { primeWaiterVoice, speakMessagePreview } from "@/lib/waiter-voice";
+import { DEFAULT_POST_MESSAGE_COLORS } from "@menuos/shared";
 
 const COLOR_PRESETS = [...DEFAULT_POST_MESSAGE_COLORS, "#0F172A", "#DC2626"];
 
@@ -117,7 +116,6 @@ export const MessageChipList = forwardRef<
     /** Post colour — chips styled like pass tablet, left-aligned in settings. */
     color?: string;
     listLabel?: string;
-    voicePreviewLabel?: string;
   }
 >(function MessageChipList(
   {
@@ -131,7 +129,6 @@ export const MessageChipList = forwardRef<
     hideAddRow = false,
     color,
     listLabel,
-    voicePreviewLabel = "Listen in English",
   },
   ref,
 ) {
@@ -142,10 +139,6 @@ export const MessageChipList = forwardRef<
   const addInputRef = useRef<HTMLInputElement>(null);
   const itemsRef = useRef(items);
   itemsRef.current = items;
-
-  useEffect(() => {
-    primeWaiterVoice();
-  }, []);
 
   useEffect(() => {
     if (!focusAdd) return;
@@ -218,16 +211,6 @@ export const MessageChipList = forwardRef<
     },
   }));
 
-  function previewVoice(index: number) {
-    const text = editingIndex === index ? editDraft : items[index];
-    if (!text?.trim() || !canTranslateMessageForVoice(text)) return;
-    speakMessagePreview(text);
-  }
-
-  function previewText(index: number) {
-    return editingIndex === index ? editDraft : items[index] ?? "";
-  }
-
   const colored = Boolean(color);
   const chipInputClass = colored
     ? "w-full min-w-0 border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold outline-none placeholder:font-normal placeholder:opacity-60"
@@ -279,17 +262,6 @@ export const MessageChipList = forwardRef<
                   style={colored ? { color } : undefined}
                 />
               </div>
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => previewVoice(index)}
-                disabled={!canTranslateMessageForVoice(previewText(index))}
-                className="inline-flex shrink-0 items-center justify-center self-center rounded-lg border border-slate-200 p-2 text-brand-blue transition hover:border-brand-blue/30 hover:bg-brand-blue/5 disabled:pointer-events-none disabled:opacity-40"
-                aria-label={voicePreviewLabel}
-                title={voicePreviewLabel}
-              >
-                <Volume2 className="h-4 w-4" />
-              </button>
               <button
                 type="button"
                 onClick={() => removeAt(index)}

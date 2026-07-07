@@ -1,16 +1,20 @@
-import { buildPassVoiceAnnouncement, translateMessageForVoice, type PassVoiceInput } from "@menuos/shared";
+import {
+  buildPassSignalAnnouncement,
+  type PassAnnouncementOptions,
+  type PassAnnouncementLocation,
+} from "@menuos/shared";
 
-function pickEnglishVoice(): SpeechSynthesisVoice | null {
+function pickGreekVoice(): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
   return (
-    voices.find((voice) => voice.lang === "en-US") ??
-    voices.find((voice) => voice.lang.startsWith("en")) ??
+    voices.find((voice) => voice.lang === "el-GR") ??
+    voices.find((voice) => voice.lang.startsWith("el")) ??
     null
   );
 }
 
 function startSpeech(synth: SpeechSynthesis, utterance: SpeechSynthesisUtterance) {
-  const voice = pickEnglishVoice();
+  const voice = pickGreekVoice();
   if (voice) {
     utterance.voice = voice;
     synth.speak(utterance);
@@ -21,7 +25,7 @@ function startSpeech(synth: SpeechSynthesis, utterance: SpeechSynthesisUtterance
   const speakOnce = () => {
     if (spoke) return;
     spoke = true;
-    const loaded = pickEnglishVoice();
+    const loaded = pickGreekVoice();
     if (loaded) utterance.voice = loaded;
     synth.speak(utterance);
   };
@@ -34,8 +38,8 @@ function startSpeech(synth: SpeechSynthesis, utterance: SpeechSynthesisUtterance
   }, 400);
 }
 
-/** Speak a short English line on the waiter phone (Web Speech API). */
-export function speakEnglishLine(text: string): void {
+/** Speak a short Greek line on the waiter phone (Web Speech API). */
+export function speakGreekLine(text: string): void {
   if (typeof window === "undefined") return;
   const trimmed = text.trim();
   if (!trimmed) return;
@@ -45,7 +49,7 @@ export function speakEnglishLine(text: string): void {
     if (!synth) return;
     synth.cancel();
     const utterance = new SpeechSynthesisUtterance(trimmed);
-    utterance.lang = "en-US";
+    utterance.lang = "el-GR";
     utterance.rate = 1;
     utterance.pitch = 1;
     startSpeech(synth, utterance);
@@ -54,18 +58,15 @@ export function speakEnglishLine(text: string): void {
   }
 }
 
-/** Preview how a Greek preset will sound in English (settings → Μηνύματα). */
-export function speakMessagePreview(greekMessage: string): void {
-  const english = translateMessageForVoice(greekMessage);
-  if (!english) return;
-  speakEnglishLine(english);
-}
+export type SpeakPassMessageInput = PassAnnouncementLocation & PassAnnouncementOptions;
 
-/** Speak a pass alert with table/spot context. */
-export function speakPassMessage(input: PassVoiceInput): void {
-  const text = buildPassVoiceAnnouncement(input);
-  if (!text) return;
-  speakEnglishLine(text);
+/** Speak a pass alert: new message + space + table (Greek). */
+export function speakPassMessage(input: SpeakPassMessageInput): void {
+  const text = buildPassSignalAnnouncement(input, {
+    zoneGroups: input.zoneGroups,
+    activeZoneId: input.activeZoneId,
+  });
+  speakGreekLine(text);
 }
 
 /** iOS loads voices async — warm up once after user gesture elsewhere on page. */
