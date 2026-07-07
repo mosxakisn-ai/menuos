@@ -108,6 +108,7 @@ export function WaiterPanel({
   const autoZoneAppliedRef = useRef(false);
   const loadGenerationRef = useRef(0);
   const zoneFilterIdRef = useRef(zoneFilterId);
+  const assignedZoneIdRef = useRef<string | null>(null);
   const spotsRef = useRef<VenueSpot[]>([]);
   const opsConfigRef = useRef<ReturnType<typeof useVenueOperationsConfig>["config"]>(undefined);
   const notificationSettingsRef = useRef(notificationSettings);
@@ -199,32 +200,41 @@ export function WaiterPanel({
         const freshPasses = newSignals.filter(
           (signal) => !prevPassIdsRef.current.has(signal.id) && isMonitorPendingPass(signal),
         );
-        const hasNewPass = freshPasses.length > 0;
+        const loadedSpots = callsRes.ok
+          ? ((data.spots ?? []) as VenueSpot[])
+          : spotsRef.current;
+        const spotInputs = loadedSpots.map((spot) => ({
+          type: spot.type,
+          label: spot.label,
+        }));
+        const announcementGroups = applyZoneLabelOverrides(
+          groupVenueSpotsByZone(spotInputs),
+          opsConfigRef.current?.zoneLabels,
+        );
+        const alertZoneId =
+          assignedZoneIdRef.current ||
+          (zoneFilterIdRef.current !== "all" ? zoneFilterIdRef.current : null);
+        const alertablePasses = alertZoneId
+          ? freshPasses.filter((signal) => {
+              const signalZone =
+                signal.zoneId?.trim() ||
+                zoneIdForWaiterLocationView(signal, announcementGroups);
+              return signalZone === alertZoneId;
+            })
+          : freshPasses;
+        const hasNewPass = alertablePasses.length > 0;
         if (hasNewPass) {
           alertNewWaiterCall();
           if (notificationSettingsRef.current.voiceMessagesEnabled) {
-            const latest = [...freshPasses].sort((a, b) => {
+            const latest = [...alertablePasses].sort((a, b) => {
               const aTime = a.readyAt ? Date.parse(a.readyAt) : 0;
               const bTime = b.readyAt ? Date.parse(b.readyAt) : 0;
               return bTime - aTime;
             })[0];
             if (latest) {
-              const loadedSpots = callsRes.ok
-                ? ((data.spots ?? []) as VenueSpot[])
-                : spotsRef.current;
-              const spotInputs = loadedSpots.map((spot) => ({
-                type: spot.type,
-                label: spot.label,
-              }));
-              const announcementGroups = applyZoneLabelOverrides(
-                groupVenueSpotsByZone(spotInputs),
-                opsConfigRef.current?.zoneLabels,
-              );
               const passZoneId =
                 latest.zoneId?.trim() ||
-                (zoneFilterIdRef.current !== "all"
-                  ? zoneFilterIdRef.current
-                  : zoneIdForWaiterLocationView(latest, announcementGroups));
+                zoneIdForWaiterLocationView(latest, announcementGroups);
               speakPassMessage({
                 tableNumber: latest.tableNumber ?? undefined,
                 roomNumber: latest.roomNumber ?? undefined,
@@ -240,8 +250,11 @@ export function WaiterPanel({
       passBaselineSetRef.current = true;
       setPassSignals(newSignals);
     } else {
-      setPassSignals([]);
-      prevPassIdsRef.current = new Set();
+      if (passRes.status === 401) {
+        setPassSignals([]);
+        prevPassIdsRef.current = new Set();
+        passBaselineSetRef.current = false;
+      }
       if (callsRes.ok && passRes.status >= 400) {
         const passError = typeof passData.error === "string" ? passData.error : null;
         if (passError) setFlash({ type: "error", text: passError });
@@ -361,6 +374,7 @@ export function WaiterPanel({
     if (!staffMember && !staffViaCookie && !staffKey) return null;
     return zoneGroups.some((zone) => zone.id === raw) ? raw : null;
   }, [staffMember, staffViaCookie, staffKey, initialZoneId, zoneGroups]);
+  assignedZoneIdRef.current = assignedZoneId;
 
   useEffect(() => {
     if (initialZoneId?.trim() === "all") {

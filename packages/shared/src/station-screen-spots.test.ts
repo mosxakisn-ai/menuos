@@ -141,5 +141,20 @@ describe("passLocationMatchesZoneOrScreenPrefix", () => {
       passLocationMatchesZoneOrScreenPrefix({ tableNumber: "Αυλή-2" }, { spotPrefix: "Αυλή" }),
     ).toBe(true);
   });
+
+  it("allows room and sunbed when KDS sends matching zoneId", () => {
+    expect(
+      passLocationMatchesZoneOrScreenPrefix(
+        { roomNumber: "101" },
+        { spotPrefix: "Αυλή", zoneId: "room" },
+      ),
+    ).toBe(true);
+    expect(
+      passLocationMatchesZoneOrScreenPrefix(
+        { sunbedNumber: "A1" },
+        { spotPrefix: MAIN_HALL_SPOT_PREFIX, zoneId: "sunbed" },
+      ),
+    ).toBe(true);
+  });
 });
 

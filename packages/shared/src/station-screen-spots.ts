@@ -110,8 +110,16 @@ export function passLocationMatchesZoneOrScreenPrefix(
     zoneLabels?: Record<string, string>;
   },
 ): boolean {
-  const zonePrefix = options.zoneId?.trim()
-    ? spotPrefixForVenuePost({ zoneId: options.zoneId.trim() }, options.zoneLabels)
+  const zoneId = options.zoneId?.trim();
+  if (location.roomNumber?.trim()) {
+    return zoneId === "room" || !options.spotPrefix?.trim();
+  }
+  if (location.sunbedNumber?.trim()) {
+    return zoneId === "sunbed" || !options.spotPrefix?.trim();
+  }
+
+  const zonePrefix = zoneId
+    ? spotPrefixForVenuePost({ zoneId }, options.zoneLabels)
     : null;
   const effectivePrefix = zonePrefix ?? options.spotPrefix?.trim() ?? null;
   if (!effectivePrefix) return true;
