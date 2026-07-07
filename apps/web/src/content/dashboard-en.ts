@@ -980,9 +980,9 @@ export const DASHBOARD_EN = {
         selectPostPlaceholder: "Choose post",
         fieldsRequiredHint:
           "Name, role, space (waiter) and post are required. Posts are filtered by role.",
-        colLink: "Link",
+        colLink: "Link & QR",
         colLinkHint:
-          "Waiter: phone link. Kitchen/Bar: tablet link — opens without login.",
+          "Waiter: phone link or QR. Kitchen/Bar: tablet link or QR — opens without login.",
         listDeviceLegend:
           "Blue = mobile · teal = tablet (pass or messages). The post column icon uses the same colors.",
         colActions: "Actions",
@@ -1000,6 +1000,12 @@ export const DASHBOARD_EN = {
           "Links for KDS/Bar — opens without login. Screen name = post name.",
         copyLink: "Copy",
         copied: "Copied!",
+        qrLink: "QR",
+        qrTitle: (name: string) => `QR — ${name}`,
+        qrHintMobile: "Scan on their phone — opens the waiter panel directly.",
+        qrHintTablet: "Scan on the tablet — opens the pass screen without login.",
+        downloadQr: "Download QR",
+        qrLoading: "Loading QR…",
         rotateLink: "New link",
         rotateConfirm: (name: string) =>
           `New link for “${name}”? The old one will stop working.`,

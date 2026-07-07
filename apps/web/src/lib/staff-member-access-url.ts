@@ -14,6 +14,11 @@ export type StaffScreensByStation = Partial<
   Record<PassStationInput, ReadonlyArray<Pick<StationScreenRow, "label" | "screenToken">>>
 >;
 
+export type StaffMemberAccessResult =
+  | { kind: "url"; url: string; device: "mobile" | "tablet" }
+  | { kind: "missing-screen"; station: PassStationInput }
+  | { kind: "invalid-assignment" };
+
 const PASS_STATIONS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
 
 export async function loadStaffScreensByStation(venueId: string): Promise<StaffScreensByStation> {
@@ -42,6 +47,40 @@ export function staffMemberTabletUrlFromScreens(
   });
 }
 
+export function resolveStaffMemberAccessLink(input: {
+  venueSlug: string;
+  memberToken: string;
+  zoneId?: string | null;
+  stations: string[];
+  posts: VenuePost[];
+  screensByStation: StaffScreensByStation;
+}): StaffMemberAccessResult {
+  if (input.stations.length === 0) return { kind: "invalid-assignment" };
+  const assignment = staffPrimaryAssignment(input.stations);
+  const linkKind = staffAssignmentLinkKind(assignment, input.posts);
+  if (linkKind === "invalid") return { kind: "invalid-assignment" };
+
+  const station = resolveStaffAssignmentToPassInput(assignment, input.posts);
+  if (station) {
+    const screens = input.screensByStation[station] ?? [];
+    const picked = pickStationScreenForStaffAssignment(assignment, input.posts, screens);
+    if (!picked) return { kind: "missing-screen", station };
+    return {
+      kind: "url",
+      device: "tablet",
+      url: buildStationScreenUrl(stationScreenPath(picked.station), input.venueSlug, picked.screenToken, {
+        allPosts: assignment === "pass-all",
+      }),
+    };
+  }
+
+  return {
+    kind: "url",
+    device: "mobile",
+    url: buildStaffShareUrlAbsolute(APP_URL, input.venueSlug, input.memberToken, input.zoneId),
+  };
+}
+
 export function staffMemberAccessUrlFromScreens(input: {
   venueSlug: string;
   memberToken: string;
@@ -50,14 +89,8 @@ export function staffMemberAccessUrlFromScreens(input: {
   posts: VenuePost[];
   screensByStation: StaffScreensByStation;
 }): string {
-  const assignment = staffPrimaryAssignment(input.stations);
-  const tablet = staffMemberTabletUrlFromScreens(
-    input.venueSlug,
-    assignment,
-    input.posts,
-    input.screensByStation,
-  );
-  if (tablet) return tablet;
+  const resolved = resolveStaffMemberAccessLink(input);
+  if (resolved.kind === "url") return resolved.url;
   return buildStaffShareUrlAbsolute(APP_URL, input.venueSlug, input.memberToken, input.zoneId);
 }
 

@@ -994,9 +994,9 @@ export const DASHBOARD_EL = {
         selectPostPlaceholder: "Επίλεξε πόστο",
         fieldsRequiredHint:
           "Όνομα, ρόλος, χώρος (σερβιτόρος) και πόστο είναι υποχρεωτικά. Τα πόστα φιλτράρονται από τον ρόλο.",
-        colLink: "Link",
+        colLink: "Link & QR",
         colLinkHint:
-          "Σερβιτόρος: link κινητού. Κουζίνα/Μπαρ: link tablet — άνοιγμα χωρίς login.",
+          "Σερβιτόρος: link ή QR για κινητό. Κουζίνα/Μπαρ: link ή QR για tablet — άνοιγμα χωρίς login.",
         listDeviceLegend:
           "Μπλε = κινητό · πράσινο = tablet (πάσου ή μηνυμάτων). Το ίδιο χρώμα έχει και το εικονίδιο στη στήλη «Πόστο».",
         colActions: "Ενέργειες",
@@ -1014,6 +1014,12 @@ export const DASHBOARD_EL = {
           "Links για KDS/Bar — άνοιγμα χωρίς login. Όνομα οθόνης = όνομα πόστου.",
         copyLink: "Αντιγραφή",
         copied: "Αντιγράφηκε!",
+        qrLink: "QR",
+        qrTitle: (name: string) => `QR — ${name}`,
+        qrHintMobile: "Σκανάρισε από το κινητό — ανοίγει απευθείας το panel σερβιτόρου.",
+        qrHintTablet: "Σκανάρισε στο tablet — ανοίγει η οθόνη πάσου χωρίς login.",
+        downloadQr: "Κατέβασμα QR",
+        qrLoading: "Φόρτωση QR…",
         rotateLink: "Νέο link",
         rotateConfirm: (name: string) =>
           `Νέο link για «${name}»; Το παλιό θα σταματήσει να λειτουργεί.`,

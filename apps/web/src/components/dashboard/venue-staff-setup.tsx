@@ -4,9 +4,11 @@ import Link from "next/link";
 import {
   Check,
   Copy,
+  Download,
   ExternalLink,
   Pencil,
   Plus,
+  QrCode,
   RefreshCw,
   Trash2,
   X,
@@ -176,6 +178,175 @@ function memberAccessLink(
   };
 }
 
+function StaffAccessQrButton({
+  venueId,
+  memberId,
+  memberName,
+  device,
+  labels,
+  disabled,
+}: {
+  venueId: string;
+  memberId: string;
+  memberName: string;
+  device: "mobile" | "tablet";
+  labels: {
+    qrLink: string;
+    qrTitle: (name: string) => string;
+    qrHintMobile: string;
+    qrHintTablet: string;
+    downloadQr: string;
+    qrLoading: string;
+    copyLink: string;
+    copied: string;
+    viewLink: string;
+    viewLinkTablet: string;
+  };
+  disabled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [accessUrl, setAccessUrl] = useState("");
+  const [pngDataUrl, setPngDataUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  async function openQr() {
+    setOpen(true);
+    setLoading(true);
+    setError(null);
+    setAccessUrl("");
+    setPngDataUrl("");
+    try {
+      const res = await fetch(`/api/venues/${venueId}/staff-members/${memberId}/qr`);
+      const data = (await res.json()) as {
+        accessUrl?: string;
+        pngDataUrl?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.accessUrl || !data.pngDataUrl) {
+        setError(data.error ?? "Αποτυχία.");
+        return;
+      }
+      setAccessUrl(data.accessUrl);
+      setPngDataUrl(data.pngDataUrl);
+    } catch {
+      setError("Σφάλμα δικτύου.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copyUrl() {
+    if (!accessUrl) return;
+    try {
+      await navigator.clipboard.writeText(accessUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  function downloadPng() {
+    if (!pngDataUrl) return;
+    const a = document.createElement("a");
+    a.href = pngDataUrl;
+    a.download = `menuos-staff-${memberName.replace(/\s+/g, "-").toLowerCase()}.png`;
+    a.click();
+  }
+
+  if (!open) {
+    return (
+      <DashboardIconButton
+        variant="neutral"
+        disabled={disabled}
+        onClick={() => void openQr()}
+        label={labels.qrLink}
+      >
+        <QrCode className="h-4 w-4" />
+      </DashboardIconButton>
+    );
+  }
+
+  return (
+    <>
+      <DashboardIconButton
+        variant="neutral"
+        disabled={disabled}
+        onClick={() => void openQr()}
+        label={labels.qrLink}
+      >
+        <QrCode className="h-4 w-4" />
+      </DashboardIconButton>
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
+        <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-card border border-brand-blue/20 bg-white p-5 shadow-xl sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-bold text-brand-navy">{labels.qrTitle(memberName)}</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                {device === "mobile" ? labels.qrHintMobile : labels.qrHintTablet}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              aria-label="Κλείσιμο"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="mt-5 flex flex-col items-center text-center">
+            {loading ? (
+              <p className="py-12 text-sm text-slate-500">{labels.qrLoading}</p>
+            ) : error ? (
+              <p className="py-8 text-sm text-red-600">{error}</p>
+            ) : pngDataUrl ? (
+              <>
+                <img
+                  src={pngDataUrl}
+                  alt={labels.qrTitle(memberName)}
+                  className="h-52 w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
+                />
+                <p className="mt-4 w-full break-all text-left text-xs text-slate-600">{accessUrl}</p>
+                <div className="mt-4 flex w-full flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={downloadPng}
+                    className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "sm")}`}
+                  >
+                    <Download className="h-4 w-4" />
+                    {labels.downloadQr}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void copyUrl()}
+                    className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? labels.copied : labels.copyLink}
+                  </button>
+                  <a
+                    href={accessUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-1.5 ${buttonClass("secondary", "sm")}`}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {device === "mobile" ? labels.viewLink : labels.viewLinkTablet}
+                  </a>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function StaffMemberLinkActions({
   venueId,
   venueSlug,
@@ -201,6 +372,12 @@ function StaffMemberLinkActions({
     rotateConfirm: (name: string) => string;
     missingScreen: string;
     invalidAssignment: string;
+    qrLink: string;
+    qrTitle: (name: string) => string;
+    qrHintMobile: string;
+    qrHintTablet: string;
+    downloadQr: string;
+    qrLoading: string;
   };
   busy: boolean;
   onTokenRotated: (memberId: string, memberToken: string) => void;
@@ -277,7 +454,7 @@ function StaffMemberLinkActions({
   }
 
   return compact ? (
-    <div className="mx-auto flex w-[7.25rem] items-center justify-center gap-1">
+    <div className="mx-auto flex w-[9.5rem] items-center justify-center gap-1">
       <a
         href={url}
         target="_blank"
@@ -299,6 +476,14 @@ function StaffMemberLinkActions({
       >
         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
       </DashboardIconButton>
+      <StaffAccessQrButton
+        venueId={venueId}
+        memberId={member.id}
+        memberName={member.name}
+        device={access.kind === "pass" ? "tablet" : "mobile"}
+        labels={labels}
+        disabled={busy}
+      />
       {access.kind === "waiter" ? (
         <DashboardIconButton
           variant="warning"
@@ -353,6 +538,14 @@ function StaffMemberLinkActions({
             {labels.rotateLink}
           </button>
         ) : null}
+        <StaffAccessQrButton
+          venueId={venueId}
+          memberId={member.id}
+          memberName={member.name}
+          device={access.kind === "pass" ? "tablet" : "mobile"}
+          labels={labels}
+          disabled={busy}
+        />
       </div>
     </div>
   );
@@ -729,6 +922,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     rotateConfirm: S.rotateConfirm,
     missingScreen: S.missingScreen,
     invalidAssignment: S.invalidAssignment,
+    qrLink: S.qrLink,
+    qrTitle: S.qrTitle,
+    qrHintMobile: S.qrHintMobile,
+    qrHintTablet: S.qrHintTablet,
+    downloadQr: S.downloadQr,
+    qrLoading: S.qrLoading,
   };
   const screenCopy = staffScreenCopyFromPersonnel(S);
 
@@ -1044,7 +1243,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                         {S.colPostHint}
                       </span>
                     </th>
-                    <th className="w-[7.25rem] px-4 py-3 text-center">{S.colLink}</th>
+                    <th className="w-[9.5rem] px-4 py-3 text-center">{S.colLink}</th>
                     <th className="w-[5.5rem] px-4 py-3 text-center">{S.colActions}</th>
                   </tr>
                 </thead>
