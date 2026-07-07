@@ -398,6 +398,7 @@ model PassSignal {
   tableNumber      String?
   roomNumber       String?
   sunbedNumber     String?
+  zoneId           String?          @db.VarChar(60)
   message          String?          @db.VarChar(80)
   status           PassSignalStatus @default(READY)
   readyAt          DateTime         @default(now())

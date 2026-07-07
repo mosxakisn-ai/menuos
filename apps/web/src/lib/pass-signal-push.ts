@@ -16,7 +16,7 @@ export function pushStaffPassSignal(
   venue: { id: string; name: string; slug: string; staffToken: string; organizationId: string },
   signal: Pick<
     PassSignal,
-    "id" | "station" | "tableNumber" | "roomNumber" | "sunbedNumber" | "message"
+    "id" | "station" | "tableNumber" | "roomNumber" | "sunbedNumber" | "zoneId" | "message"
   > & {
     stationScreen?: { label: string } | null;
   },
@@ -29,7 +29,7 @@ async function notifyStaffPassSignal(
   venue: { id: string; name: string; slug: string; staffToken: string; organizationId: string },
   signal: Pick<
     PassSignal,
-    "id" | "station" | "tableNumber" | "roomNumber" | "sunbedNumber" | "message"
+    "id" | "station" | "tableNumber" | "roomNumber" | "sunbedNumber" | "zoneId" | "message"
   > & {
     stationScreen?: { label: string } | null;
   },
@@ -47,7 +47,7 @@ async function notifyStaffPassSignal(
   );
   const { title, body } = buildPassSignalPushCopy(signal, {
     zoneGroups,
-    activeZoneId: opts?.zoneId ?? null,
+    activeZoneId: opts?.zoneId ?? signal.zoneId ?? null,
   });
   const payload = JSON.stringify({
     title,

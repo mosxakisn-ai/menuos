@@ -21,7 +21,7 @@ import { useVenueOperationsConfig } from "@/components/dashboard/venue-operation
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
-import { primeWaiterVoice, speakPassMessage } from "@/lib/waiter-voice";
+import { speakPassMessage, unlockWaiterAudio } from "@/lib/waiter-voice";
 import type { OrganizationNotificationSettings } from "@menuos/shared";
 import { DEFAULT_ORGANIZATION_NOTIFICATION_SETTINGS } from "@menuos/shared";
 import { cn } from "@/lib/utils";
@@ -47,6 +47,7 @@ type PassSignal = {
   tableNumber?: string | null;
   roomNumber?: string | null;
   sunbedNumber?: string | null;
+  zoneId?: string | null;
   message?: string | null;
   readyAt?: string;
 };
@@ -115,7 +116,13 @@ export function WaiterPanel({
   opsConfigRef.current = opsConfig;
 
   useEffect(() => {
-    primeWaiterVoice();
+    const unlock = () => unlockWaiterAudio();
+    window.addEventListener("pointerdown", unlock, { once: true, passive: true });
+    window.addEventListener("touchstart", unlock, { once: true, passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
   }, []);
 
   const load = useCallback(async () => {
@@ -206,9 +213,10 @@ export function WaiterPanel({
                 opsConfigRef.current?.zoneLabels,
               );
               const passZoneId =
-                zoneFilterIdRef.current !== "all"
+                latest.zoneId?.trim() ||
+                (zoneFilterIdRef.current !== "all"
                   ? zoneFilterIdRef.current
-                  : zoneIdForWaiterLocationView(latest, announcementGroups);
+                  : zoneIdForWaiterLocationView(latest, announcementGroups));
               speakPassMessage({
                 tableNumber: latest.tableNumber ?? undefined,
                 roomNumber: latest.roomNumber ?? undefined,
@@ -503,7 +511,10 @@ export function WaiterPanel({
       <button
         key={zoneId}
         type="button"
-        onClick={() => setZoneFilterId(zoneId)}
+        onClick={() => {
+          unlockWaiterAudio();
+          setZoneFilterId(zoneId);
+        }}
         className={cn(
           "relative flex min-h-[4.5rem] w-[calc(50%-0.25rem)] max-w-[9.5rem] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 px-3 py-3 text-center transition sm:min-h-[4.75rem] sm:w-[calc(33.333%-0.5rem)] sm:px-4 lg:w-[calc(25%-0.5rem)]",
           selected
@@ -613,7 +624,7 @@ export function WaiterPanel({
   );
 
   return (
-    <div className="space-y-2 sm:space-y-4">
+    <div className="space-y-2 sm:space-y-4" onPointerDown={() => unlockWaiterAudio()}>
       <FlashMessages initial={flash} onClear={() => setFlash(null)} />
 
       {assignedZoneId && assignedZoneLabel ? (

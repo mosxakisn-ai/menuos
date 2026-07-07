@@ -2,6 +2,7 @@ import {
   parseTableSpotLabel,
   resolveWaiterLocationInZone,
   resolveWaiterLocationInZones,
+  spotZoneDisplayLabel,
   zoneIdForWaiterLocationView,
   type SpotZoneGroup,
 } from "./station-spot-zones";
@@ -87,6 +88,15 @@ function tableAnnouncementFromResolved(
   return tableAnnouncement(tableNum, zoneLabel || null);
 }
 
+function zoneLabelForHint(
+  groups: SpotZoneGroup[],
+  zoneId: string,
+): string | null {
+  const fromGroup = groups.find((row) => row.id === zoneId)?.label?.trim();
+  if (fromGroup) return fromGroup;
+  return spotZoneDisplayLabel(zoneId);
+}
+
 function resolveTableAnnouncement(
   location: PassAnnouncementLocation,
   groups: SpotZoneGroup[],
@@ -108,14 +118,24 @@ function resolveTableAnnouncement(
       ? resolveWaiterLocationInZones(location, groups)
       : null;
 
-  if (!resolved) return null;
+  if (resolved?.spot.type === "TABLE") {
+    const group = groups.find((row) => row.id === resolved.zoneId);
+    const entry = group?.spots.find(
+      (row) => row.spot.type === resolved.spot.type && row.spot.label === resolved.spot.label,
+    );
+    return tableAnnouncementFromResolved(groups, resolved, entry?.displayLabel);
+  }
 
-  const group = groups.find((row) => row.id === resolved.zoneId);
-  const entry = group?.spots.find(
-    (row) => row.spot.type === resolved.spot.type && row.spot.label === resolved.spot.label,
-  );
+  // Bare table number on a known zone tab (KDS zoneId) — even when spot list has no match
+  if (zoneHint && zoneHint !== MAIN_ZONE_ID) {
+    const zoneLabel = zoneLabelForHint(groups, zoneHint);
+    if (zoneLabel) {
+      const displayNum = /^[0-9]+$/.test(table) ? table : (parseTableSpotLabel(table)?.displayLabel ?? table);
+      return tableAnnouncement(displayNum, zoneLabel);
+    }
+  }
 
-  return tableAnnouncementFromResolved(groups, resolved, entry?.displayLabel);
+  return null;
 }
 
 /** Greek TTS/push line — space + table + «έχετε νέο μήνυμα» (no message body). */

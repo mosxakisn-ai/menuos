@@ -174,6 +174,7 @@ export async function POST(request: Request) {
         tableNumber: location.tableNumber,
         roomNumber: location.roomNumber,
         sunbedNumber: location.sunbedNumber,
+        zoneId: parsed.data.zoneId?.trim() || null,
         message,
       },
       include: {

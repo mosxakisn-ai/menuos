@@ -129,6 +129,19 @@ export function pickDefaultZoneId(groups: SpotZoneGroup[]): string | null {
   return groups[0]?.id ?? null;
 }
 
+/** Display label for a zone id when spots are not resolved (e.g. prefix:σαλα → «σαλα»). */
+export function spotZoneDisplayLabel(zoneId: string): string | null {
+  const id = zoneId?.trim();
+  if (!id || id === MAIN_ZONE_ID || id === "all") return null;
+  if (id === SUNBED_ZONE_ID) return SUNBED_ZONE_LABEL;
+  if (id === ROOM_ZONE_ID) return ROOM_ZONE_LABEL;
+  if (id.startsWith("prefix:")) {
+    const name = id.slice("prefix:".length).trim();
+    return name || null;
+  }
+  return null;
+}
+
 /** Human hint for where a zone comes from (settings UI). */
 export function zoneSourceHint(zone: SpotZoneGroup, lang: "GR" | "EN" = "GR"): string {
   if (zone.id.startsWith("prefix:")) {

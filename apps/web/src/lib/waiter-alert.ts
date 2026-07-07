@@ -1,26 +1,34 @@
+import { getWaiterAudioContext, unlockWaiterAudio } from "@/lib/waiter-voice";
+
 /** Short beep for new waiter calls (works while page is open). */
 export function playWaiterAlertSound() {
   if (typeof window === "undefined") return;
   try {
-    const AudioCtx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const playTone = (freq: number, start: number, duration: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      gain.gain.value = 0.12;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(start);
-      osc.stop(start + duration);
+    unlockWaiterAudio();
+    const ctx = getWaiterAudioContext();
+    if (!ctx) return;
+    const run = () => {
+      const playTone = (freq: number, start: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.value = 0.12;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + duration);
+      };
+      playTone(880, ctx.currentTime, 0.12);
+      playTone(988, ctx.currentTime + 0.18, 0.18);
     };
-    playTone(880, ctx.currentTime, 0.12);
-    playTone(988, ctx.currentTime + 0.18, 0.18);
-    window.setTimeout(() => void ctx.close().catch(() => undefined), 600);
+    if (ctx.state === "suspended") {
+      void ctx.resume().then(run).catch(() => undefined);
+      return;
+    }
+    run();
   } catch {
-    /* autoplay may be blocked until user gesture — page-open polling still shows calls */
+    /* autoplay may be blocked until user gesture */
   }
 }
 

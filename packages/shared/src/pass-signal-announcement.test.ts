@@ -46,6 +46,15 @@ describe("buildPassSignalAnnouncement", () => {
     ).toBe("στον κήπο στο τραπέζι 10 έχετε νέο μήνυμα");
   });
 
+  it("announces bare table on zone tab even without matching spots", () => {
+    expect(
+      buildPassSignalAnnouncement(
+        { tableNumber: "10" },
+        { zoneGroups: [], activeZoneId: "prefix:σαλα" },
+      ),
+    ).toBe("στη σάλα στο τραπέζι 10 έχετε νέο μήνυμα");
+  });
+
   it("resolves bare table number inside active zone", () => {
     expect(
       buildPassSignalAnnouncement(
