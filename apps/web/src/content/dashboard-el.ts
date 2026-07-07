@@ -1020,6 +1020,8 @@ export const DASHBOARD_EL = {
         qrHintTablet: "Σκανάρισε στο tablet — ανοίγει η οθόνη πάσου χωρίς login.",
         downloadQr: "Κατέβασμα QR",
         qrLoading: "Φόρτωση QR…",
+        qrFailed: "Αποτυχία.",
+        qrNetworkError: "Σφάλμα δικτύου.",
         rotateLink: "Νέο link",
         rotateConfirm: (name: string) =>
           `Νέο link για «${name}»; Το παλιό θα σταματήσει να λειτουργεί.`,

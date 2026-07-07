@@ -182,6 +182,7 @@ function StaffAccessQrButton({
   venueId,
   memberId,
   memberName,
+  memberToken,
   device,
   labels,
   disabled,
@@ -189,6 +190,7 @@ function StaffAccessQrButton({
   venueId: string;
   memberId: string;
   memberName: string;
+  memberToken: string;
   device: "mobile" | "tablet";
   labels: {
     qrLink: string;
@@ -197,6 +199,8 @@ function StaffAccessQrButton({
     qrHintTablet: string;
     downloadQr: string;
     qrLoading: string;
+    qrFailed: string;
+    qrNetworkError: string;
     copyLink: string;
     copied: string;
     viewLink: string;
@@ -211,8 +215,7 @@ function StaffAccessQrButton({
   const [pngDataUrl, setPngDataUrl] = useState("");
   const [copied, setCopied] = useState(false);
 
-  async function openQr() {
-    setOpen(true);
+  const loadQr = useCallback(async () => {
     setLoading(true);
     setError(null);
     setAccessUrl("");
@@ -225,17 +228,22 @@ function StaffAccessQrButton({
         error?: string;
       };
       if (!res.ok || !data.accessUrl || !data.pngDataUrl) {
-        setError(data.error ?? "Αποτυχία.");
+        setError(data.error ?? labels.qrFailed);
         return;
       }
       setAccessUrl(data.accessUrl);
       setPngDataUrl(data.pngDataUrl);
     } catch {
-      setError("Σφάλμα δικτύου.");
+      setError(labels.qrNetworkError);
     } finally {
       setLoading(false);
     }
-  }
+  }, [venueId, memberId, labels.qrFailed, labels.qrNetworkError]);
+
+  useEffect(() => {
+    if (!open) return;
+    void loadQr();
+  }, [open, memberToken, loadQr]);
 
   async function copyUrl() {
     if (!accessUrl) return;
@@ -261,7 +269,7 @@ function StaffAccessQrButton({
       <DashboardIconButton
         variant="neutral"
         disabled={disabled}
-        onClick={() => void openQr()}
+        onClick={() => void setOpen(true)}
         label={labels.qrLink}
       >
         <QrCode className="h-4 w-4" />
@@ -274,13 +282,19 @@ function StaffAccessQrButton({
       <DashboardIconButton
         variant="neutral"
         disabled={disabled}
-        onClick={() => void openQr()}
+        onClick={() => void setOpen(true)}
         label={labels.qrLink}
       >
         <QrCode className="h-4 w-4" />
       </DashboardIconButton>
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-        <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-card border border-brand-blue/20 bg-white p-5 shadow-xl sm:p-6">
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+        onClick={() => setOpen(false)}
+      >
+        <div
+          className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-card border border-brand-blue/20 bg-white p-5 shadow-xl sm:p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-bold text-brand-navy">{labels.qrTitle(memberName)}</h3>
@@ -378,6 +392,8 @@ function StaffMemberLinkActions({
     qrHintTablet: string;
     downloadQr: string;
     qrLoading: string;
+    qrFailed: string;
+    qrNetworkError: string;
   };
   busy: boolean;
   onTokenRotated: (memberId: string, memberToken: string) => void;
@@ -480,6 +496,7 @@ function StaffMemberLinkActions({
         venueId={venueId}
         memberId={member.id}
         memberName={member.name}
+        memberToken={member.memberToken}
         device={access.kind === "pass" ? "tablet" : "mobile"}
         labels={labels}
         disabled={busy}
@@ -542,6 +559,7 @@ function StaffMemberLinkActions({
           venueId={venueId}
           memberId={member.id}
           memberName={member.name}
+          memberToken={member.memberToken}
           device={access.kind === "pass" ? "tablet" : "mobile"}
           labels={labels}
           disabled={busy}
@@ -928,6 +946,8 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     qrHintTablet: S.qrHintTablet,
     downloadQr: S.downloadQr,
     qrLoading: S.qrLoading,
+    qrFailed: S.qrFailed,
+    qrNetworkError: S.qrNetworkError,
   };
   const screenCopy = staffScreenCopyFromPersonnel(S);
 

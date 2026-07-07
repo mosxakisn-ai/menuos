@@ -1006,6 +1006,8 @@ export const DASHBOARD_EN = {
         qrHintTablet: "Scan on the tablet — opens the pass screen without login.",
         downloadQr: "Download QR",
         qrLoading: "Loading QR…",
+        qrFailed: "Failed.",
+        qrNetworkError: "Network error.",
         rotateLink: "New link",
         rotateConfirm: (name: string) =>
           `New link for “${name}”? The old one will stop working.`,
