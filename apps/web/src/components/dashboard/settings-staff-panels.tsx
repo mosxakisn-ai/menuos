@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { OrganizationNotificationSettings } from "@menuos/shared";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
@@ -277,13 +277,28 @@ export function SettingsGeneralExtrasPanel({
   const [settings, setSettings] = useState(initialNotifications);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const settingsRef = useRef(initialNotifications);
+  const saveGenerationRef = useRef(0);
 
   useEffect(() => {
     setSettings(initialNotifications);
+    settingsRef.current = initialNotifications;
   }, [initialNotifications]);
 
+  async function reloadSettingsFromServer() {
+    const res = await fetch("/api/organization/notification-settings", {
+      credentials: "include",
+    });
+    if (!res.ok) return;
+    const data = await res.json().catch(() => ({}));
+    if (!data.settings) return;
+    settingsRef.current = data.settings;
+    setSettings(data.settings);
+  }
+
   async function persistSettings(next: OrganizationNotificationSettings) {
-    const previous = settings;
+    const generation = ++saveGenerationRef.current;
+    settingsRef.current = next;
     setSettings(next);
     setSaving(true);
     try {
@@ -295,18 +310,22 @@ export function SettingsGeneralExtrasPanel({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "save failed");
-      setSettings(data.settings ?? next);
+      if (generation !== saveGenerationRef.current) return;
+      const saved = data.settings ?? next;
+      settingsRef.current = saved;
+      setSettings(saved);
       setSavedFlash(true);
       window.setTimeout(() => setSavedFlash(false), 2000);
     } catch {
-      setSettings(previous);
+      if (generation !== saveGenerationRef.current) return;
+      await reloadSettingsFromServer();
     } finally {
-      setSaving(false);
+      if (generation === saveGenerationRef.current) setSaving(false);
     }
   }
 
   function updateSetting(key: keyof OrganizationNotificationSettings, value: boolean) {
-    void persistSettings({ ...settings, [key]: value });
+    void persistSettings({ ...settingsRef.current, [key]: value });
   }
 
   return (

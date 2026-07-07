@@ -9,6 +9,31 @@ function pickEnglishVoice(): SpeechSynthesisVoice | null {
   );
 }
 
+function startSpeech(synth: SpeechSynthesis, utterance: SpeechSynthesisUtterance) {
+  const voice = pickEnglishVoice();
+  if (voice) {
+    utterance.voice = voice;
+    synth.speak(utterance);
+    return;
+  }
+
+  let spoke = false;
+  const speakOnce = () => {
+    if (spoke) return;
+    spoke = true;
+    const loaded = pickEnglishVoice();
+    if (loaded) utterance.voice = loaded;
+    synth.speak(utterance);
+  };
+
+  synth.addEventListener("voiceschanged", speakOnce);
+  synth.getVoices();
+  window.setTimeout(() => {
+    synth.removeEventListener("voiceschanged", speakOnce);
+    speakOnce();
+  }, 400);
+}
+
 /** Speak a short English line on the waiter phone (Web Speech API). */
 export function speakPassMessage(input: PassVoiceInput): void {
   if (typeof window === "undefined") return;
@@ -23,9 +48,7 @@ export function speakPassMessage(input: PassVoiceInput): void {
     utterance.lang = "en-US";
     utterance.rate = 1;
     utterance.pitch = 1;
-    const voice = pickEnglishVoice();
-    if (voice) utterance.voice = voice;
-    synth.speak(utterance);
+    startSpeech(synth, utterance);
   } catch {
     /* autoplay / unsupported browser */
   }
@@ -35,7 +58,10 @@ export function speakPassMessage(input: PassVoiceInput): void {
 export function primeWaiterVoice(): void {
   if (typeof window === "undefined") return;
   try {
-    window.speechSynthesis.getVoices();
+    const synth = window.speechSynthesis;
+    synth.getVoices();
+    const onVoices = () => synth.removeEventListener("voiceschanged", onVoices);
+    synth.addEventListener("voiceschanged", onVoices);
   } catch {
     /* ignore */
   }

@@ -181,7 +181,11 @@ export function WaiterPanel({
         if (hasNewPass) {
           alertNewWaiterCall();
           if (notificationSettings.voiceMessagesEnabled) {
-            const latest = freshPasses[0];
+            const latest = [...freshPasses].sort((a, b) => {
+              const aTime = a.readyAt ? Date.parse(a.readyAt) : 0;
+              const bTime = b.readyAt ? Date.parse(b.readyAt) : 0;
+              return bTime - aTime;
+            })[0];
             if (latest?.message?.trim()) {
               speakPassMessage({
                 message: latest.message,
