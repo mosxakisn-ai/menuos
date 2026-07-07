@@ -229,6 +229,8 @@ export function OnboardingWizard({
   const [acknowledgingQr, setAcknowledgingQr] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [qrError, setQrError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
 
   const showSeededCatalogPreview = state.hasVenue && !state.hasItem;
 
@@ -285,9 +287,13 @@ export function OnboardingWizard({
 
   async function confirmOnboarding() {
     setConfirming(true);
+    setConfirmError(null);
     try {
       const res = await fetch("/api/onboarding/confirm", { method: "POST" });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setConfirmError(O.steps.done.failed);
+        return;
+      }
       router.refresh();
     } finally {
       setConfirming(false);
@@ -311,9 +317,13 @@ export function OnboardingWizard({
 
   async function acknowledgeQr() {
     setAcknowledgingQr(true);
+    setQrError(null);
     try {
       const res = await fetch("/api/onboarding/mark-qr", { method: "POST" });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setQrError(O.steps.qr.failed);
+        return;
+      }
       router.refresh();
     } finally {
       setAcknowledgingQr(false);
@@ -472,6 +482,10 @@ export function OnboardingWizard({
                 </li>
               </ul>
 
+              {confirmError ? (
+                <p className="mt-3 text-sm font-medium text-red-600">{confirmError}</p>
+              ) : null}
+
               <button
                 type="button"
                 disabled={confirming}
@@ -540,6 +554,9 @@ export function OnboardingWizard({
 
                     {catalogError ? (
                       <p className="mt-3 text-sm font-medium text-red-600">{catalogError}</p>
+                    ) : null}
+                    {qrError ? (
+                      <p className="mt-3 text-sm font-medium text-red-600">{qrError}</p>
                     ) : null}
 
                     {!isVenueStep ? (

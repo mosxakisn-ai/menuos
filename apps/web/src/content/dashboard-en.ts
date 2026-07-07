@@ -1315,6 +1315,7 @@ export const DASHBOARD_EN = {
         cta: "View QR codes",
         ctaContinue: "Continue",
         acknowledging: "One moment...",
+        failed: "Could not save this step. Try again or contact us.",
       },
       done: {
         title: "Congratulations!",
@@ -1329,6 +1330,7 @@ export const DASHBOARD_EN = {
         summaryQr: "QR codes — ready to print",
         cta: "OK",
         confirming: "One moment...",
+        failed: "Could not finish setup. Try again or contact us.",
       },
     },
   },

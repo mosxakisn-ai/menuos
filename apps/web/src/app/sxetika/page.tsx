@@ -35,6 +35,7 @@ export default async function AboutPage() {
         <StatStrip items={[...marketing.stats]} />
       </MarketingSection>
       <MarketingAboutContent
+        locale={locale}
         content={{
           hospitality: ui.hospitality,
           philosophy: ui.philosophy,

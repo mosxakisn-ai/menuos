@@ -11,7 +11,12 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SectionHeader } from "@/components/marketing/marketing-blocks";
+import type { Locale } from "@/i18n/types";
 import { cn } from "@/lib/utils";
+
+function philosophyQuoteMarks(locale: Locale): [string, string] {
+  return locale === "el" ? ["«", "»"] : ["\u201c", "\u201d"];
+}
 
 export type AboutPageContent = {
   hospitality: {
@@ -56,7 +61,14 @@ function AboutSectionShell({
   );
 }
 
-export function MarketingAboutContent({ content }: { content: AboutPageContent }) {
+export function MarketingAboutContent({
+  content,
+  locale = "el",
+}: {
+  content: AboutPageContent;
+  locale?: Locale;
+}) {
+  const [quoteOpen, quoteClose] = philosophyQuoteMarks(locale);
   return (
     <>
       <AboutSectionShell>
@@ -100,7 +112,9 @@ export function MarketingAboutContent({ content }: { content: AboutPageContent }
           />
           <blockquote className="relative text-center">
             <p className="text-balance font-serif text-2xl font-semibold leading-snug tracking-tight text-brand-navy sm:text-3xl lg:text-[2rem]">
-              «{content.philosophy.tagline}»
+              {quoteOpen}
+              {content.philosophy.tagline}
+              {quoteClose}
             </p>
           </blockquote>
         </figure>

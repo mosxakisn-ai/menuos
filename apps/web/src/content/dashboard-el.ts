@@ -1331,6 +1331,7 @@ export const DASHBOARD_EL = {
         cta: "Δες τα QR codes",
         ctaContinue: "Συνέχεια",
         acknowledging: "Λίγο ακόμα...",
+        failed: "Δεν αποθηκεύτηκε το βήμα. Δοκίμασε ξανά ή στείλε μας μήνυμα.",
       },
       done: {
         title: "Συγχαρητήρια!",
@@ -1345,6 +1346,7 @@ export const DASHBOARD_EL = {
         summaryQr: "QR codes — έτοιμα για εκτύπωση",
         cta: "Εντάξει",
         confirming: "Λίγο ακόμα...",
+        failed: "Δεν ολοκληρώθηκε η εκκίνηση. Δοκίμασε ξανά ή στείλε μας μήνυμα.",
       },
     },
   },
