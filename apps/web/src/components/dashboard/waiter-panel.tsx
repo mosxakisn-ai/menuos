@@ -108,9 +108,11 @@ export function WaiterPanel({
   const loadGenerationRef = useRef(0);
   const zoneFilterIdRef = useRef(zoneFilterId);
   const spotsRef = useRef<VenueSpot[]>([]);
+  const opsConfigRef = useRef<ReturnType<typeof useVenueOperationsConfig>["config"]>(undefined);
   zoneFilterIdRef.current = zoneFilterId;
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const { config: opsConfig } = useVenueOperationsConfig(venueId);
+  opsConfigRef.current = opsConfig;
 
   useEffect(() => {
     primeWaiterVoice();
@@ -199,7 +201,10 @@ export function WaiterPanel({
                 type: spot.type,
                 label: spot.label,
               }));
-              const announcementGroups = groupVenueSpotsByZone(spotInputs);
+              const announcementGroups = applyZoneLabelOverrides(
+                groupVenueSpotsByZone(spotInputs),
+                opsConfigRef.current?.zoneLabels,
+              );
               const passZoneId =
                 zoneFilterIdRef.current !== "all"
                   ? zoneFilterIdRef.current

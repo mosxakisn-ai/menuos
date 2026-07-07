@@ -39,21 +39,6 @@ function tileDisplayLabel(tile: TableGridTile, lang: "GR" | "EN"): string {
   return sample ? formatWaiterCallLocationForLang(sample, lang) : tile.label;
 }
 
-function passStationLabel(station: string, passStation: Record<string, string>): string {
-  switch (station) {
-    case "KITCHEN":
-      return passStation.kitchen;
-    case "BAR":
-      return passStation.bar;
-    case "COLD":
-      return passStation.cold;
-    case "DESSERT":
-      return passStation.dessert;
-    default:
-      return station;
-  }
-}
-
 function isUnmappedTile(tile: TableGridTile): boolean {
   return tile.spotId.startsWith(UNMAPPED_SPOT_ID_PREFIX);
 }
@@ -85,7 +70,6 @@ function WaiterSpotTile({
   callTypeLabels,
   callStatusLabels,
   passStatusLabels,
-  passStationLabels,
   stateLabels,
   labels,
   lang,
@@ -98,7 +82,6 @@ function WaiterSpotTile({
   callTypeLabels: Record<string, string>;
   callStatusLabels: Record<string, string>;
   passStatusLabels: Record<string, string>;
-  passStationLabels: Record<string, string>;
   stateLabels: Record<TableTileState, string>;
   labels: {
     goButton: string;
@@ -106,6 +89,7 @@ function WaiterSpotTile({
     newItems: string;
     guestCall: string;
     unmappedSpotBadge: string;
+    passNewMessage: string;
     passPickedUp: string;
     passDelivered: string;
   };
@@ -209,7 +193,7 @@ function WaiterSpotTile({
               >
                 <div className="flex flex-wrap items-center gap-1">
                   <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-900">
-                    {passStationLabel(pass.station, passStationLabels)}
+                    {labels.passNewMessage}
                   </span>
                   {pass.status ? (
                     <span className="text-[10px] text-slate-500">
@@ -217,9 +201,6 @@ function WaiterSpotTile({
                     </span>
                   ) : null}
                 </div>
-                {pass.message ? (
-                  <p className="mt-1.5 line-clamp-3 text-[11px] leading-snug text-slate-700">{pass.message}</p>
-                ) : null}
                 {pass.id ? (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {pass.status === "READY" ? (
@@ -318,7 +299,6 @@ export function WaiterTableGrid({
             callTypeLabels={W.callType}
             callStatusLabels={W.callStatus}
             passStatusLabels={W.passStatus}
-            passStationLabels={W.passStation}
             stateLabels={stateLabels}
             labels={{
               goButton: W.goButton,
@@ -326,6 +306,7 @@ export function WaiterTableGrid({
               newItems: W.newItems,
               guestCall: stateLabels.guest_call,
               unmappedSpotBadge: W.unmappedSpotBadge,
+              passNewMessage: W.passNewMessage,
               passPickedUp: W.passPickedUp,
               passDelivered: W.passDelivered,
             }}

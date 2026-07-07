@@ -1,6 +1,7 @@
 import type { PassSignal, PassStation } from "@menuos/db";
 import {
   buildPassSignalPushCopy,
+  applyZoneLabelOverrides,
   groupVenueSpotsByZone,
   passStationDbToInput,
   stationDisplayLabel,
@@ -34,12 +35,16 @@ async function notifyStaffPassSignal(
   },
   opts?: { notifyStaffMemberIds?: string[]; zoneId?: string | null },
 ) {
+  const opsConfig = await getVenueOperationsConfig(venue.id);
   const spots = await prisma.venueSpot.findMany({
     where: { venueId: venue.id },
     select: { type: true, label: true },
     orderBy: { sortOrder: "asc" },
   });
-  const zoneGroups = groupVenueSpotsByZone(spots);
+  const zoneGroups = applyZoneLabelOverrides(
+    groupVenueSpotsByZone(spots),
+    opsConfig.zoneLabels,
+  );
   const { title, body } = buildPassSignalPushCopy(signal, {
     zoneGroups,
     activeZoneId: opts?.zoneId ?? null,

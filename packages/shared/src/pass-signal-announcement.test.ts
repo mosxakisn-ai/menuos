@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { groupVenueSpotsByZone } from "./station-spot-zones";
+import { applyZoneLabelOverrides } from "./venue-operations-config";
 import {
   buildPassSignalAnnouncement,
   buildPassSignalPushCopy,
@@ -74,6 +75,16 @@ describe("buildPassSignalAnnouncement", () => {
     expect(buildPassSignalAnnouncement({ tableNumber: "5" })).toBe(
       "στο τραπέζι 5 έχετε νέο μήνυμα",
     );
+  });
+
+  it("uses renamed zone labels from settings", () => {
+    const groups = applyZoneLabelOverrides(
+      groupVenueSpotsByZone([{ type: "TABLE", label: "Κήπο-10" }]),
+      { "prefix:κήπο": "Κήπος" },
+    );
+    expect(
+      buildPassSignalAnnouncement({ tableNumber: "Κήπο-10" }, { zoneGroups: groups }),
+    ).toBe("στον κήπος στο τραπέζι 10 έχετε νέο μήνυμα");
   });
 
   it("splits push title and location body", () => {

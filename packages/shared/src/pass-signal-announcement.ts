@@ -59,16 +59,32 @@ function tableAnnouncement(tableNum: string, zoneLabel?: string | null): string 
   return `${tablePart} ${PASS_ALERT_SUFFIX}`;
 }
 
+function zoneLabelFromGroups(
+  groups: SpotZoneGroup[],
+  zoneId: string | null | undefined,
+  fallback: string,
+): string {
+  if (!zoneId) return fallback;
+  return groups.find((row) => row.id === zoneId)?.label?.trim() || fallback;
+}
+
+function tableDisplayNumber(spotLabel: string, entryDisplayLabel?: string): string {
+  if (entryDisplayLabel?.trim()) return entryDisplayLabel.trim();
+  return parseTableSpotLabel(spotLabel)?.displayLabel ?? spotLabel;
+}
+
 function tableAnnouncementFromResolved(
   groups: SpotZoneGroup[],
   resolved: { zoneId: string; spot: { type: string; label: string } },
   entryDisplayLabel?: string,
 ): string | null {
   if (resolved.spot.type !== "TABLE") return null;
-  const group = groups.find((row) => row.id === resolved.zoneId);
-  const tableNum = entryDisplayLabel ?? resolved.spot.label;
-  const zoneLabel = group && resolved.zoneId !== MAIN_ZONE_ID ? group.label : null;
-  return tableAnnouncement(tableNum, zoneLabel);
+  const tableNum = tableDisplayNumber(resolved.spot.label, entryDisplayLabel);
+  const zoneLabel =
+    resolved.zoneId !== MAIN_ZONE_ID
+      ? zoneLabelFromGroups(groups, resolved.zoneId, "")
+      : null;
+  return tableAnnouncement(tableNum, zoneLabel || null);
 }
 
 function resolveTableAnnouncement(
@@ -81,7 +97,8 @@ function resolveTableAnnouncement(
 
   const fromLabel = parseTableSpotLabel(table);
   if (fromLabel) {
-    return tableAnnouncement(fromLabel.displayLabel, fromLabel.zoneLabel);
+    const zoneLabel = zoneLabelFromGroups(groups, fromLabel.zoneId, fromLabel.zoneLabel);
+    return tableAnnouncement(fromLabel.displayLabel, zoneLabel);
   }
 
   const zoneHint = activeZoneId?.trim() || (groups.length ? zoneIdForWaiterLocationView(location, groups) : null);

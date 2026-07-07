@@ -527,6 +527,7 @@ export const DASHBOARD_EN = {
     passSection: "Department pass",
     passEmpty: "No active pass notifications.",
     passCount: (n: number) => `${n} pass`,
+    passNewMessage: "New message",
     passPickedUp: "OK",
     passDelivered: "Done",
     passStatus: {
