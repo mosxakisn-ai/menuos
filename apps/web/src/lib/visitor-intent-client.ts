@@ -119,7 +119,14 @@ export function getVisitorSessionId() {
   return sid;
 }
 
+function isAutomatedBrowser(): boolean {
+  if (typeof navigator === "undefined") return true;
+  if (navigator.webdriver) return true;
+  return false;
+}
+
 function postPayload(payload: Record<string, unknown>, keepalive = false) {
+  if (isAutomatedBrowser()) return;
   const url = "/api/visitor-intent";
   const body = JSON.stringify(payload);
   try {

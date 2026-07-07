@@ -34,6 +34,7 @@ export async function POST(request: Request) {
   }
 
   const ip = clientIpFromRequest(request, parsed.data.clientIp);
+  const userAgent = request.headers.get("user-agent");
 
   const stored = await recordVisitorIntent({
     sessionId: parsed.data.sid,
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
     clientIp: ip || parsed.data.clientIp,
     referrer: parsed.data.referrer ?? request.headers.get("referer"),
     source: parsed.data.source,
+    userAgent,
   });
 
   return NextResponse.json({ ok: true, stored });

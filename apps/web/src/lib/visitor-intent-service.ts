@@ -1,6 +1,7 @@
 import { prisma } from "@menuos/db";
 import { checkRateLimitOutcome } from "@/lib/rate-limit";
 import { startOfTodayAthens } from "@/lib/athens-day";
+import { isAutomatedUserAgent, isRealCustomerVisitor } from "@/lib/visitor-intent-real";
 
 export const VISITOR_INTENT_SURFACES = ["marketing", "register", "checkout"] as const;
 export type VisitorIntentSurface = (typeof VISITOR_INTENT_SURFACES)[number];
@@ -341,11 +342,15 @@ export async function recordVisitorIntent(input: {
   clientIp?: string | null;
   referrer?: string | null;
   source?: string;
+  userAgent?: string | null;
+  automatedBrowser?: boolean;
 }): Promise<boolean> {
   const sessionId = normalizeSid(input.sessionId);
   if (!sessionId) return false;
   if (!VISITOR_INTENT_SURFACES.includes(input.surface)) return false;
   if (!VISITOR_INTENT_STEPS.includes(input.step)) return false;
+  if (input.automatedBrowser) return false;
+  if (isAutomatedUserAgent(input.userAgent)) return false;
 
   const rate = await checkRateLimitOutcome(`visitor-intent:${sessionId}`, 30, 60_000);
   if (rate === "limited") return false;
@@ -459,6 +464,7 @@ export async function listLiveVisitorIntents(opts?: {
     mapped = mapped.filter((row) => !row.sessionId.startsWith("test-"));
   }
   mapped = mapped.filter((row) => !row.clientIp || !INFRA_IPS.has(row.clientIp));
+  mapped = mapped.filter((row) => isRealCustomerVisitor(row));
 
   const enriched = await enrichRowsWithGeo(mapped);
   return enriched.map((row) => enrichLiveRow(row, now));
@@ -498,6 +504,7 @@ export async function listVisitorIntentLog(opts?: {
     .map(rowFromDb)
     .filter((row) => !row.sessionId.startsWith("test-"))
     .filter((row) => !row.clientIp || !INFRA_IPS.has(row.clientIp))
+    .filter((row) => isRealCustomerVisitor(row))
     .map((row) => enrichLogRow(row, now, liveSids));
 
   return enrichRowsWithGeo(mapped);
@@ -523,7 +530,7 @@ export function countPaymentsTodayFromLog(rows: VisitorIntentRow[]): number {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens" }).format(new Date());
   const dayOf = (ms: number) =>
     new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Athens" }).format(new Date(ms));
-  return rows.filter((row) => {
+  return rows.filter((row) => isRealCustomerVisitor(row)).filter((row) => {
     if (row.step === "payment_success" && dayOf(row.lastSeenAt.getTime()) === today) return true;
     return row.stepTrail.some((t) => t.step === "payment_success" && dayOf(t.at) === today);
   }).length;
@@ -540,12 +547,33 @@ export async function countVisitorsToday(opts?: {
       firstSeenAt: { gte: start },
       ...(opts?.surface ? { surface: opts.surface } : {}),
     },
-    select: { sessionId: true, clientIp: true },
+    select: {
+      sessionId: true,
+      clientIp: true,
+      surface: true,
+      step: true,
+      path: true,
+      visitorLabel: true,
+      stepTrail: true,
+    },
   });
 
   return rows
     .filter((row) => (opts?.excludeTest !== false ? !row.sessionId.startsWith("test-") : true))
-    .filter((row) => !row.clientIp || !INFRA_IPS.has(row.clientIp)).length;
+    .filter((row) => !row.clientIp || !INFRA_IPS.has(row.clientIp))
+    .filter((row) =>
+      isRealCustomerVisitor({
+        sessionId: row.sessionId,
+        surface: row.surface,
+        step: row.step,
+        path: row.path,
+        visitorLabel: row.visitorLabel,
+        clientIp: row.clientIp,
+        stepTrail: Array.isArray(row.stepTrail)
+          ? (row.stepTrail as { step: string; at: number }[])
+          : [],
+      }),
+    ).length;
 }
 
 export async function recordVisitorIntentPaymentSuccess(input: {

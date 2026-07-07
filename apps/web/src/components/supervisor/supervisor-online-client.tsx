@@ -380,7 +380,8 @@ export function SupervisorOnlineClient() {
 
       <p className="mb-3 text-[11px] text-slate-500">
         IPv4 = διεύθυνση επισκέπτη · Πόλη/χώρα από geo · «Αναμονή» = ίδιο στάδιο &gt;{" "}
-        {Math.round(stuckThreshold / 60)} λεπτά
+        {Math.round(stuckThreshold / 60)} λεπτά · Εμφανίζονται μόνο πραγματικοί επισκέπτες (όχι bots/blog
+        crawlers)
       </p>
 
       <div className="mb-4 flex flex-wrap gap-1.5" role="tablist">
