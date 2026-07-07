@@ -149,11 +149,18 @@ export function WaiterPanel({
 
   useEffect(() => {
     function onServiceWorkerMessage(event: MessageEvent) {
-      const data = event.data as { type?: string; announcement?: string } | null;
-      if (data?.type !== "MENUOS_PASS_VOICE") return;
+      const data = event.data as {
+        type?: string;
+        announcement?: string;
+        voiceEnabled?: boolean;
+        passId?: string;
+      } | null;
+      if (data?.type !== "MENUOS_PASS_ALERT") return;
+      if (document.visibilityState !== "visible") return;
+      alertNewWaiterCall();
+      if (!data.voiceEnabled) return;
       const text = data.announcement?.trim();
       if (!text || !notificationSettingsRef.current.voiceMessagesEnabled) return;
-      if (document.visibilityState !== "visible") return;
       speakGreekLine(text);
     }
     navigator.serviceWorker?.addEventListener("message", onServiceWorkerMessage);
@@ -265,12 +272,9 @@ export function WaiterPanel({
             })
           : freshPasses;
         const hasNewPass = alertablePasses.length > 0;
-        if (hasNewPass && !hasPushSubscriptionRef.current) {
+        if (hasNewPass && document.visibilityState === "visible") {
           alertNewWaiterCall();
-          if (
-            notificationSettingsRef.current.voiceMessagesEnabled &&
-            document.visibilityState === "visible"
-          ) {
+          if (notificationSettingsRef.current.voiceMessagesEnabled) {
             const latest = [...alertablePasses].sort((a, b) => {
               const aTime = a.readyAt ? Date.parse(a.readyAt) : 0;
               const bTime = b.readyAt ? Date.parse(b.readyAt) : 0;

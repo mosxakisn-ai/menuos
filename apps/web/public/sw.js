@@ -1,3 +1,23 @@
+function isWaiterPanelPath(pathname) {
+  return pathname.startsWith("/s/") || pathname.startsWith("/dashboard/waiter");
+}
+
+async function findWaiterClients() {
+  const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  return clients.filter((client) => {
+    try {
+      return isWaiterPanelPath(new URL(client.url).pathname);
+    } catch {
+      return false;
+    }
+  });
+}
+
+async function isWaiterPanelVisible() {
+  const waiterClients = await findWaiterClients();
+  return waiterClients.some((client) => client.visibilityState === "visible");
+}
+
 function playBeepInSw() {
   try {
     const AudioCtx = self.AudioContext || self.webkitAudioContext;
@@ -33,11 +53,6 @@ function playBeepInSw() {
   }
 }
 
-async function hasVisibleClient() {
-  const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-  return clients.some((client) => client.visibilityState === "visible");
-}
-
 async function playAnnouncementInSw(announcement) {
   const text = typeof announcement === "string" ? announcement.trim() : "";
   if (!text) return;
@@ -47,44 +62,47 @@ async function playAnnouncementInSw(announcement) {
       { credentials: "same-origin" },
     );
     if (!res.ok) return;
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    await new Promise((resolve, reject) => {
-      const audio = new Audio(url);
-      audio.volume = 1;
-      audio.onended = () => {
-        URL.revokeObjectURL(url);
+    const arrayBuffer = await res.arrayBuffer();
+    const AudioCtx = self.AudioContext || self.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === "suspended") await ctx.resume();
+    const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+    await new Promise((resolve) => {
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.onended = () => {
+        void ctx.close().catch(() => undefined);
         resolve();
       };
-      audio.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(audio.error);
-      };
-      const played = audio.play();
-      if (played && typeof played.then === "function") {
-        played.catch(reject);
-      }
+      source.start(0);
     });
   } catch {
     /* background audio may be blocked on some OEM skins */
   }
 }
 
-async function handlePassVoice(data) {
-  if (!data.voiceEnabled || !data.announcement) return;
-  const visible = await hasVisibleClient();
-  if (visible) {
-    const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    for (const client of clients) {
+async function handlePassAlert(data) {
+  const waiterVisible = await isWaiterPanelVisible();
+  const waiterClients = await findWaiterClients();
+
+  if (waiterVisible) {
+    for (const client of waiterClients) {
       client.postMessage({
-        type: "MENUOS_PASS_VOICE",
+        type: "MENUOS_PASS_ALERT",
+        passId: data.passId,
         announcement: data.announcement,
+        voiceEnabled: Boolean(data.voiceEnabled),
       });
     }
     return;
   }
+
   await playBeepInSw();
-  await playAnnouncementInSw(data.announcement);
+  if (data.voiceEnabled && data.announcement) {
+    await playAnnouncementInSw(data.announcement);
+  }
 }
 
 self.addEventListener("push", (event) => {
@@ -108,7 +126,7 @@ self.addEventListener("push", (event) => {
         silent: false,
         data: { url: data.url },
       }),
-      handlePassVoice(data),
+      handlePassAlert(data),
     ]),
   );
 });

@@ -64,6 +64,7 @@ async function notifyStaffPassSignal(
     tag: `pass-${signal.id}`,
     voiceEnabled,
     announcement: announcement?.trim() || undefined,
+    passId: signal.id,
   });
 
   await pushPassSignalToStaff({
