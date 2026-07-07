@@ -485,7 +485,6 @@ export function SupervisorPlansClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [editing, setEditing] = useState<PlanCatalogEntry | null>(null);
-  const [editorSeed, setEditorSeed] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -590,13 +589,12 @@ export function SupervisorPlansClient() {
           </div>
           {editing ? (
             <PlanEditor
-              key={`${editing.id}:${editorSeed}`}
+              key={editing.id}
               plan={editing}
               onClose={() => setEditing(null)}
               onSaved={(updated) => {
                 setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
                 setEditing(updated);
-                setEditorSeed((seed) => seed + 1);
               }}
             />
           ) : null}

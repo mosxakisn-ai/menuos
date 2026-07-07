@@ -123,7 +123,9 @@ export function BillingPlans({
         });
         keepLoading = true;
         window.location.href = data.checkoutUrl;
+        return;
       }
+      setError(B.checkoutFailed);
     } catch {
       setError(B.networkError);
       bumpVisitorIntentStep({

@@ -53,7 +53,9 @@ async function stripePost<T>(
 }
 
 function isUnsupportedBrandingError(message: string): boolean {
-  return /branding_settings|logo URL path must end|image URL path must end/i.test(message);
+  return /branding_settings|logo URL path must end|image URL path must end|unable to (download|retrieve|fetch).*image|invalid image url/i.test(
+    message,
+  );
 }
 
 export async function stripeGetSession(sessionId: string) {

@@ -2,7 +2,7 @@
 export function userFacingCheckoutError(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err);
 
-  if (/logo URL path must end|image URL path must end/i.test(message)) {
+  if (/logo URL path must end|image URL path must end|unable to (download|retrieve|fetch).*image/i.test(message)) {
     return "Προσωρινό πρόβλημα με τη σελίδα πληρωμής. Δοκίμασε ξανά σε λίγο.";
   }
   if (/branding_settings/i.test(message)) {
