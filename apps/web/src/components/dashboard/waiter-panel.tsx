@@ -11,7 +11,6 @@ import {
   groupVenueSpotsByZone,
   zoneIdForWaiterLocationView,
   mergeTableStateLabels,
-  zoneIdForWaiterLocationView,
   type OrderPayload,
   type VenueSpotType,
 } from "@menuos/shared";
