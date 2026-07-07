@@ -1,6 +1,31 @@
-import { prisma } from "@menuos/db";
+import { prisma, type SupportedLanguage } from "@menuos/db";
 import { appendPhotoSignature } from "@/lib/photo-signing";
 import { enrichPublicMenuTranslations } from "@/lib/enrich-public-menu-translations";
+
+function mapNameTranslations(rows: { language: string; name: string }[]) {
+  return rows.map((row) => ({
+    language: row.language as SupportedLanguage,
+    name: row.name,
+  }));
+}
+
+function mapItemTranslations(
+  rows: Array<{
+    language: string;
+    name: string;
+    description?: string | null;
+    ingredients?: string | null;
+    allergens?: string | null;
+  }>,
+) {
+  return rows.map((row) => ({
+    language: row.language as SupportedLanguage,
+    name: row.name,
+    description: row.description ?? null,
+    ingredients: row.ingredients ?? null,
+    allergens: row.allergens ?? null,
+  }));
+}
 
 export async function loadPublicVenueMenu(venueSlug: string) {
   return prisma.venue.findUnique({
@@ -48,14 +73,14 @@ export async function buildPublicVenuePayload(venue: LoadedVenue) {
         .filter((category) => category.items.length > 0)
         .map((category) => ({
           id: category.id,
-          translations: category.translations,
+          translations: mapNameTranslations(category.translations),
           items: category.items.map((item) => ({
             id: item.id,
             price: item.price,
             photoUrl: appendPhotoSignature(item.photoUrl as string | null),
             label: item.label as string | null,
             extras: item.extras,
-            translations: item.translations,
+            translations: mapItemTranslations(item.translations),
           })),
         })),
     })),
