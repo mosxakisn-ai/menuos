@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   ArrowDown,
   Building2,
@@ -57,15 +57,22 @@ const MarketingTestimonials = dynamic(
 
 const serviceIcons = [QrCode, Globe, Orbit, UtensilsCrossed, Building2, Smartphone];
 
-function HeroShowcaseSlot() {
+function useIsDesktop() {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const mq = window.matchMedia("(min-width: 1024px)");
+      mq.addEventListener("change", onStoreChange);
+      return () => mq.removeEventListener("change", onStoreChange);
+    },
+    () => window.matchMedia("(min-width: 1024px)").matches,
+    () => false,
+  );
+}
+
+function MobileDeferredHeroShowcase() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const desktop = window.matchMedia("(min-width: 1024px)").matches;
-    if (desktop) {
-      setReady(true);
-      return;
-    }
     const run = () => setReady(true);
     if (typeof requestIdleCallback !== "undefined") {
       requestIdleCallback(run, { timeout: 2500 });
@@ -79,6 +86,12 @@ function HeroShowcaseSlot() {
   }
 
   return <HeroShowcase />;
+}
+
+function HeroShowcaseSlot() {
+  const isDesktop = useIsDesktop();
+  if (isDesktop) return <HeroShowcase />;
+  return <MobileDeferredHeroShowcase />;
 }
 
 export function MarketingHome() {

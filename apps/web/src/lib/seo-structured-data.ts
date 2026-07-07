@@ -171,13 +171,17 @@ export function buildPricingOffersSchema(
   const isEn = locale === "en";
   return {
     "@context": "https://schema.org",
-    "@type": "Product",
-    name: isEn ? `${APP_NAME} — Subscription` : `${APP_NAME} — Συνδρομή`,
+    "@type": "SoftwareApplication",
+    "@id": `${APP_URL}/pricing#software`,
+    name: APP_NAME,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
     description: isEn
       ? "Digital QR menu platform for hospitality businesses"
       : "Πλατφόρμα ψηφιακού menu με QR για επιχειρήσεις φιλοξενίας",
-    brand: { "@type": "Brand", name: APP_NAME },
     inLanguage: schemaLanguage(locale),
+    url: absoluteUrl("/pricing"),
+    provider: { "@id": `${APP_URL}/#organization` },
     offers: offers.map((offer) => ({
       "@type": "Offer",
       name: offer.name,

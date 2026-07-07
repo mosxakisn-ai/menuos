@@ -4,7 +4,7 @@ import { VisitorIntentTracker } from "@/components/visitor-intent-tracker";
 import { I18nProvider } from "@/i18n/context";
 import { getMessages } from "@/i18n/get-messages";
 import { getServerLocale } from "@/i18n/server";
-import { manropeClassForLocale } from "@/lib/fonts";
+import { manrope } from "@/lib/fonts";
 import { buildRootMetadata } from "@/lib/seo";
 import "./globals.css";
 
@@ -22,10 +22,8 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getServerLocale();
   const messages = await getMessages(locale);
-  const manropeClass = await manropeClassForLocale(locale);
-
   return (
-    <html lang={locale} className={manropeClass}>
+    <html lang={locale} className={manrope.variable}>
       <body className="min-h-screen font-sans">
         <RootJsonLd />
         <I18nProvider initialLocale={locale} initialMessages={messages}>
