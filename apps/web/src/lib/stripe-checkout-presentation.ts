@@ -2,8 +2,8 @@ import type { PlanDefinition } from "@menuos/shared";
 import { APP_URL } from "@/lib/config";
 import { displayPlanFeature } from "@/lib/plan-feature-display";
 
-export const MENUOS_CHECKOUT_IMAGE = `${APP_URL}/checkout-brand`;
-export const MENUOS_CHECKOUT_LOGO = `${APP_URL}/checkout-logo`;
+export const MENUOS_CHECKOUT_IMAGE = `${APP_URL}/checkout-brand.png`;
+export const MENUOS_CHECKOUT_LOGO = `${APP_URL}/checkout-logo.png`;
 
 export const CHECKOUT_INVOICE_FOOTER =
   "MenuOS · Premium QR menus for hospitality · menuos.gr";

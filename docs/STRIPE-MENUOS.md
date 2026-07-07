@@ -90,7 +90,7 @@ Upgrade: `/dashboard/billing`
 Each checkout session sets MenuOS branding (logo, colors, display name) so the shared CloudEra Stripe account does not show GoFleet/MatchWork on the payment page.
 
 Assets (public, HTTPS):
-- `https://menuos.gr/checkout-logo` — header logo
-- `https://menuos.gr/checkout-brand` — product image
+- `https://menuos.gr/checkout-logo.png` — header logo
+- `https://menuos.gr/checkout-brand.png` — product image
 
 Optional: **Stripe Dashboard → Settings → Branding** → set business name **MenuOS** as account default.

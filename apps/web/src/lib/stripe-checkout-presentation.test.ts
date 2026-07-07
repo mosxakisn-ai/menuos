@@ -3,6 +3,8 @@ import { getPlan } from "@menuos/shared";
 import {
   buildSubscriptionCheckoutCopy,
   formatCheckoutFeatureLine,
+  MENUOS_CHECKOUT_IMAGE,
+  MENUOS_CHECKOUT_LOGO,
 } from "./stripe-checkout-presentation";
 
 describe("formatCheckoutFeatureLine", () => {
@@ -18,6 +20,13 @@ describe("formatCheckoutFeatureLine", () => {
     expect(line).toContain("Κλήση σερβιτόρου");
     expect(line).not.toContain("Gemini");
     expect(line).not.toContain("Προτεραιότητα");
+  });
+});
+
+describe("checkout branding URLs", () => {
+  it("uses image paths Stripe accepts", () => {
+    expect(MENUOS_CHECKOUT_LOGO).toMatch(/\.png$/);
+    expect(MENUOS_CHECKOUT_IMAGE).toMatch(/\.png$/);
   });
 });
 
