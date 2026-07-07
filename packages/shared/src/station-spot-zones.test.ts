@@ -158,6 +158,9 @@ describe("zone filters for waiter", () => {
     ]);
     expect(passSendTableNumber(null, "1", "prefix:σαλα", groups)).toBe("Σαλα-1");
     expect(passSendTableNumber(null, "1", "prefix:αυλή", groups)).toBe("Αυλή-1");
+    expect(
+      passSendTableNumber({ type: "TABLE", label: "1" }, "", "prefix:αυλή", groups),
+    ).toBe("Αυλή-1");
     expect(zoneIdForWaiterLocation({ tableNumber: "1" }, groups)).toBeNull();
   });
 });

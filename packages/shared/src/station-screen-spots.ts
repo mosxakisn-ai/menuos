@@ -101,3 +101,28 @@ export function passLocationMatchesScreenSpotPrefix(
   return spotMatchesScreenPrefix({ type: "TABLE", label: table }, prefix);
 }
 
+/** Validate pass location for KDS send — prefers active zone tab over screen spotPrefix. */
+export function passLocationMatchesZoneOrScreenPrefix(
+  location: PassSignalLocation,
+  options: {
+    spotPrefix?: string | null;
+    zoneId?: string | null;
+    zoneLabels?: Record<string, string>;
+  },
+): boolean {
+  const zonePrefix = options.zoneId?.trim()
+    ? spotPrefixForVenuePost({ zoneId: options.zoneId.trim() }, options.zoneLabels)
+    : null;
+  const effectivePrefix = zonePrefix ?? options.spotPrefix?.trim() ?? null;
+  if (!effectivePrefix) return true;
+  if (passLocationMatchesScreenSpotPrefix(location, effectivePrefix)) return true;
+
+  const table = location.tableNumber?.trim();
+  if (!table || !zonePrefix) return false;
+  if (!/^[0-9]+$/.test(table)) return false;
+  return passLocationMatchesScreenSpotPrefix(
+    { tableNumber: `${zonePrefix}-${table}` },
+    effectivePrefix,
+  );
+}
+

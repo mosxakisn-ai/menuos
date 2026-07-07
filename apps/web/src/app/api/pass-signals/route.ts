@@ -3,7 +3,7 @@ import { prisma } from "@menuos/db";
 import {
   formatWaiterCallLocation,
   normalizeWaiterCallLocation,
-  passLocationMatchesScreenSpotPrefix,
+  passLocationMatchesZoneOrScreenPrefix,
   passSignalCreateSchema,
   passDbStationsForStaffMember,
   passSignalVisibleToStaffMember,
@@ -142,10 +142,12 @@ export async function POST(request: Request) {
   const location = normalizeWaiterCallLocation(parsed.data);
   const message = parsed.data.message?.trim() || null;
 
-  const screenPrefix = auth.stationScreen?.spotPrefix;
   if (
-    screenPrefix &&
-    !passLocationMatchesScreenSpotPrefix(location, screenPrefix)
+    !passLocationMatchesZoneOrScreenPrefix(location, {
+      spotPrefix: auth.stationScreen?.spotPrefix,
+      zoneId: parsed.data.zoneId ?? null,
+      zoneLabels: opsConfig.zoneLabels,
+    })
   ) {
     return NextResponse.json(
       { error: "Το τραπέζι δεν ανήκει στη ζώνη αυτής της οθόνης.", code: "spot_out_of_zone" },

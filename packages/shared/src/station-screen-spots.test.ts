@@ -4,6 +4,7 @@ import {
   MAIN_HALL_SPOT_PREFIX,
   normalizeStationScreenSpotPrefix,
   passLocationMatchesScreenSpotPrefix,
+  passLocationMatchesZoneOrScreenPrefix,
   spotPrefixForVenuePost,
 } from "./station-screen-spots";
 
@@ -102,6 +103,43 @@ describe("passLocationMatchesScreenSpotPrefix", () => {
   it("allows only numeric tables for main hall prefix", () => {
     expect(passLocationMatchesScreenSpotPrefix({ tableNumber: "8" }, MAIN_HALL_SPOT_PREFIX)).toBe(true);
     expect(passLocationMatchesScreenSpotPrefix({ tableNumber: "Αυλή-1" }, MAIN_HALL_SPOT_PREFIX)).toBe(false);
+  });
+});
+
+describe("passLocationMatchesZoneOrScreenPrefix", () => {
+  it("uses zone tab prefix instead of screen prefix when zoneId is sent", () => {
+    expect(
+      passLocationMatchesZoneOrScreenPrefix(
+        { tableNumber: "Αυλή-1" },
+        {
+          spotPrefix: MAIN_HALL_SPOT_PREFIX,
+          zoneId: "prefix:αυλή",
+          zoneLabels: { "prefix:αυλή": "Αυλή" },
+        },
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts bare table number in active prefixed zone", () => {
+    expect(
+      passLocationMatchesZoneOrScreenPrefix(
+        { tableNumber: "1" },
+        {
+          spotPrefix: MAIN_HALL_SPOT_PREFIX,
+          zoneId: "prefix:αυλή",
+          zoneLabels: { "prefix:αυλή": "Αυλή" },
+        },
+      ),
+    ).toBe(true);
+  });
+
+  it("falls back to screen prefix when zoneId is absent", () => {
+    expect(
+      passLocationMatchesZoneOrScreenPrefix({ tableNumber: "5" }, { spotPrefix: "Αυλή" }),
+    ).toBe(false);
+    expect(
+      passLocationMatchesZoneOrScreenPrefix({ tableNumber: "Αυλή-2" }, { spotPrefix: "Αυλή" }),
+    ).toBe(true);
   });
 });
 

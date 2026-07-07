@@ -317,7 +317,16 @@ export function passSendTableNumber(
   activeZoneId: string | null | undefined,
   groups: SpotZoneGroup[],
 ): string {
-  if (table) return table.label;
+  if (table) {
+    const label = table.label.trim();
+    const zoneId = activeZoneId?.trim();
+    if (zoneId && zoneId !== MAIN_ZONE_ID && !parseTableSpotLabel(label) && /^[0-9]+$/.test(label)) {
+      const zone = groups.find((group) => group.id === zoneId);
+      const zoneLabel = zone?.label.trim();
+      if (zoneLabel) return `${zoneLabel}-${label}`;
+    }
+    return table.label;
+  }
   const trimmed = manual.trim();
   if (!trimmed) return trimmed;
   const resolved = resolveWaiterLocationInZone({ tableNumber: trimmed }, activeZoneId, groups);
