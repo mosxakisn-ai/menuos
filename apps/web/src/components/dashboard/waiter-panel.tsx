@@ -21,7 +21,7 @@ import { useVenueOperationsConfig } from "@/components/dashboard/venue-operation
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
-import { speakPassMessage, unlockWaiterAudio } from "@/lib/waiter-voice";
+import { speakGreekLine, speakPassMessage, unlockWaiterAudio } from "@/lib/waiter-voice";
 import type { OrganizationNotificationSettings } from "@menuos/shared";
 import { DEFAULT_ORGANIZATION_NOTIFICATION_SETTINGS } from "@menuos/shared";
 import { cn } from "@/lib/utils";
@@ -112,6 +112,7 @@ export function WaiterPanel({
   const spotsRef = useRef<VenueSpot[]>([]);
   const opsConfigRef = useRef<ReturnType<typeof useVenueOperationsConfig>["config"]>(undefined);
   const notificationSettingsRef = useRef(notificationSettings);
+  const hasPushSubscriptionRef = useRef(false);
   zoneFilterIdRef.current = zoneFilterId;
   notificationSettingsRef.current = notificationSettings;
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -125,6 +126,39 @@ export function WaiterPanel({
     return () => {
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function detectPush() {
+      try {
+        if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+        const reg = await navigator.serviceWorker.getRegistration("/sw.js");
+        const sub = await reg?.pushManager.getSubscription();
+        if (!cancelled) hasPushSubscriptionRef.current = Boolean(sub);
+      } catch {
+        if (!cancelled) hasPushSubscriptionRef.current = false;
+      }
+    }
+    void detectPush();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    function onServiceWorkerMessage(event: MessageEvent) {
+      const data = event.data as { type?: string; announcement?: string } | null;
+      if (data?.type !== "MENUOS_PASS_VOICE") return;
+      const text = data.announcement?.trim();
+      if (!text || !notificationSettingsRef.current.voiceMessagesEnabled) return;
+      if (document.visibilityState !== "visible") return;
+      speakGreekLine(text);
+    }
+    navigator.serviceWorker?.addEventListener("message", onServiceWorkerMessage);
+    return () => {
+      navigator.serviceWorker?.removeEventListener("message", onServiceWorkerMessage);
     };
   }, []);
 
@@ -189,6 +223,14 @@ export function WaiterPanel({
     }
 
     if (passRes.ok) {
+      try {
+        if ("serviceWorker" in navigator && "PushManager" in window) {
+          const reg = await navigator.serviceWorker.getRegistration("/sw.js");
+          hasPushSubscriptionRef.current = Boolean(await reg?.pushManager.getSubscription());
+        }
+      } catch {
+        /* ignore */
+      }
       const newSignals = (passData.signals ?? []) as PassSignal[];
       if (typeof passData.voiceMessagesEnabled === "boolean") {
         notificationSettingsRef.current = {
@@ -223,9 +265,12 @@ export function WaiterPanel({
             })
           : freshPasses;
         const hasNewPass = alertablePasses.length > 0;
-        if (hasNewPass) {
+        if (hasNewPass && !hasPushSubscriptionRef.current) {
           alertNewWaiterCall();
-          if (notificationSettingsRef.current.voiceMessagesEnabled) {
+          if (
+            notificationSettingsRef.current.voiceMessagesEnabled &&
+            document.visibilityState === "visible"
+          ) {
             const latest = [...alertablePasses].sort((a, b) => {
               const aTime = a.readyAt ? Date.parse(a.readyAt) : 0;
               const bTime = b.readyAt ? Date.parse(b.readyAt) : 0;

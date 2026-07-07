@@ -1,5 +1,6 @@
 import type { PassSignal, PassStation } from "@menuos/db";
 import {
+  buildPassSignalAnnouncement,
   buildPassSignalPushCopy,
   applyZoneLabelOverrides,
   groupVenueSpotsByZone,
@@ -10,6 +11,7 @@ import { fireStaffPushNotify } from "@/lib/staff-push-notify";
 import { pushPassSignalToStaff } from "@/lib/staff-push-dispatch";
 import { buildStaffWaiterUrl } from "@/lib/staff-auth";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
+import { getOrganizationNotificationSettings } from "@/lib/organization-notification-settings";
 import { prisma } from "@menuos/db";
 
 export function pushStaffPassSignal(
@@ -45,15 +47,23 @@ async function notifyStaffPassSignal(
     groupVenueSpotsByZone(spots),
     opsConfig.zoneLabels,
   );
+  const activeZoneId = opts?.zoneId ?? signal.zoneId ?? null;
   const { title, body } = buildPassSignalPushCopy(signal, {
     zoneGroups,
-    activeZoneId: opts?.zoneId ?? signal.zoneId ?? null,
+    activeZoneId,
   });
+  const orgNotifications = await getOrganizationNotificationSettings(venue.organizationId);
+  const voiceEnabled = orgNotifications.voiceMessagesEnabled;
+  const announcement = voiceEnabled
+    ? buildPassSignalAnnouncement(signal, { zoneGroups, activeZoneId })
+    : undefined;
   const payload = JSON.stringify({
     title,
     body,
     url: buildStaffWaiterUrl(venue.slug, venue.staffToken),
     tag: `pass-${signal.id}`,
+    voiceEnabled,
+    announcement: announcement?.trim() || undefined,
   });
 
   await pushPassSignalToStaff({
