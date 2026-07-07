@@ -185,7 +185,9 @@ export const PAGES_EN = {
       "MenuOS is a Greek cloud platform for digital menus, built specifically for modern hospitality. Our goal is to simplify daily operations and deliver a fast, modern experience for guests — no apps, no complicated setup.",
       "We didn't build another generic solution. We developed a platform that meets the real needs of the Greek market: restaurants, hotels, cafés, beach bars and every business serving visitors from around the world.",
     ],
+    valuesTitle: "Our values",
     hospitality: {
+      eyebrow: "Greek hospitality",
       title: "Built for Greek hospitality",
       lead: "Hospitality businesses face every day:",
       bullets: [
