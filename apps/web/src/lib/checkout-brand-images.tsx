@@ -33,14 +33,15 @@ export function CheckoutLogoImage() {
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <div
           style={{
+            display: "flex",
             fontSize: 44,
             fontWeight: 800,
-            color: "#0F172A",
             fontFamily: "system-ui, sans-serif",
             letterSpacing: -1,
           }}
         >
-          Menu<span style={{ color: "#2563EB" }}>OS</span>
+          <span style={{ color: "#0F172A" }}>Menu</span>
+          <span style={{ color: "#2563EB" }}>OS</span>
         </div>
         <div
           style={{
