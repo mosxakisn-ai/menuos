@@ -6,12 +6,47 @@ const VOICE_PHRASE_EL_TO_EN: Record<string, string> = {
   "ακυρωση απο πελατη": "customer cancellation",
   "φέρε πάγο": "bring ice",
   "φερε παγο": "bring ice",
+  "πάρε πάγο": "get ice",
+  "παρε παγο": "get ice",
+  "έτοιμο ποτό": "drink ready",
+  "ετοιμο ποτο": "drink ready",
+  "αλλαγή ποτού": "drink change",
+  "αλλαγη ποτου": "drink change",
   "έτοιμο": "ready",
   ετοιμο: "ready",
   "πήγαινε": "go now",
   πηγαινε: "go now",
   "λογαριασμός": "bill please",
   λογαριασμος: "bill please",
+};
+
+/** Common single-word tokens for composed phrases. */
+const VOICE_WORD_EL_TO_EN: Record<string, string> = {
+  έτοιμο: "ready",
+  ετοιμο: "ready",
+  ποτό: "drink",
+  ποτο: "drink",
+  ποτού: "drink",
+  ποτου: "drink",
+  πάγο: "ice",
+  παγο: "ice",
+  πάρε: "get",
+  παρε: "get",
+  φέρε: "bring",
+  φερε: "bring",
+  αλλαγή: "change",
+  αλλαγη: "change",
+  σερβιρίστηκε: "served",
+  σερβιριστηκε: "served",
+  κουζίνα: "kitchen",
+  κουζινα: "kitchen",
+  μπαρ: "bar",
+  τραπέζι: "table",
+  τραπεζι: "table",
+  πελάτη: "customer",
+  πελατη: "customer",
+  ακύρωση: "cancellation",
+  ακυρωση: "cancellation",
 };
 
 const STATION_VOICE_EN: Record<string, string> = {
@@ -26,11 +61,46 @@ function normalizeLookupKey(value: string): string {
   return value.trim().toLocaleLowerCase("el-GR");
 }
 
-function translateVoicePhrase(text: string): string {
-  const key = normalizeLookupKey(text);
+function normalizeWordKey(word: string): string {
+  return normalizeLookupKey(word.replace(/^[^A-Za-zΑ-Ωα-ωά-ώΆ-Ώ0-9]+|[^A-Za-zΑ-Ωα-ωά-ώΆ-Ώ0-9]+$/g, ""));
+}
+
+function translateWords(text: string): string | null {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+  const translated = words.map((word) => {
+    const key = normalizeWordKey(word);
+    if (!key) return null;
+    return VOICE_WORD_EL_TO_EN[key] ?? VOICE_PHRASE_EL_TO_EN[key] ?? null;
+  });
+  if (translated.some((part) => !part)) return null;
+  return translated.join(" ");
+}
+
+/** Greek (or ASCII) message → short English for waiter earpiece TTS. */
+export function translateMessageForVoice(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  const key = normalizeLookupKey(trimmed.replace(/[.!?,;:]+$/g, ""));
   if (VOICE_PHRASE_EL_TO_EN[key]) return VOICE_PHRASE_EL_TO_EN[key]!;
-  if (/^[\x00-\x7F]+$/.test(text.trim())) return text.trim();
+  if (/^[\x00-\x7F]+$/.test(trimmed)) return trimmed;
+  const fromWords = translateWords(trimmed);
+  if (fromWords) return fromWords;
   return "new message";
+}
+
+/** Whether we can speak a useful English preview (not generic fallback). */
+export function canTranslateMessageForVoice(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  if (/^[\x00-\x7F]+$/.test(trimmed)) return true;
+  const key = normalizeLookupKey(trimmed.replace(/[.!?,;:]+$/g, ""));
+  if (VOICE_PHRASE_EL_TO_EN[key]) return true;
+  return translateWords(trimmed) !== null;
+}
+
+function translateVoicePhrase(text: string): string {
+  return translateMessageForVoice(text);
 }
 
 function parsePrefixedMessage(message: string): { source?: string; body: string } {

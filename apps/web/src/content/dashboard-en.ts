@@ -828,6 +828,7 @@ export const DASHBOARD_EN = {
         addMessage: "Add",
         messageCount: (n: number) => (n === 1 ? "1 message" : `${n} messages`),
         messagePlaceholder: "Type your message…",
+        messageVoicePreview: "Listen in English",
         messageSaveHint:
           "Press Save at the bottom. To show on the tablet, assign the same post in Staff — not «Waiter».",
         passTabletStaffHint: (postName: string) =>

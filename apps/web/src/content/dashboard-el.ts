@@ -842,6 +842,7 @@ export const DASHBOARD_EL = {
         addMessage: "Προσθήκη",
         messageCount: (n: number) => (n === 1 ? "1 μήνυμα" : `${n} μηνύματα`),
         messagePlaceholder: "Γράψε το μήνυμά σου…",
+        messageVoicePreview: "Άκου στα αγγλικά",
         messageSaveHint:
           "Πάτα Αποθήκευση στο τέλος. Για να φανούν στο tablet, στο Προσωπικό διάλεξε το ίδιο πόστο — όχι «Σερβιτόρος».",
         passTabletStaffHint: (postName: string) =>
