@@ -71,6 +71,22 @@ describe("buildPassSignalAnnouncement", () => {
     );
   });
 
+  it("announces main zone (Σάλα) when venue has multiple spaces", () => {
+    const groups = applyZoneLabelOverrides(
+      groupVenueSpotsByZone([
+        { type: "TABLE", label: "5" },
+        { type: "TABLE", label: "Αυλή-1" },
+      ]),
+      { main: "Σάλα" },
+    );
+    expect(
+      buildPassSignalAnnouncement(
+        { tableNumber: "5" },
+        { zoneGroups: groups, activeZoneId: "main" },
+      ),
+    ).toBe("στη σάλα στο τραπέζι 5 έχετε νέο μήνυμα");
+  });
+
   it("announces room and sunbed", () => {
     expect(buildPassSignalAnnouncement({ roomNumber: "101" }, { zoneGroups: groups })).toBe(
       "στο δωμάτιο 101 έχετε νέο μήνυμα",

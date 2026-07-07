@@ -81,11 +81,8 @@ function tableAnnouncementFromResolved(
 ): string | null {
   if (resolved.spot.type !== "TABLE") return null;
   const tableNum = tableDisplayNumber(resolved.spot.label, entryDisplayLabel);
-  const zoneLabel =
-    resolved.zoneId !== MAIN_ZONE_ID
-      ? zoneLabelFromGroups(groups, resolved.zoneId, "")
-      : null;
-  return tableAnnouncement(tableNum, zoneLabel || null);
+  const zoneLabel = zoneLabelForAnnouncement(groups, resolved.zoneId);
+  return tableAnnouncement(tableNum, zoneLabel);
 }
 
 function zoneLabelForHint(
@@ -95,6 +92,15 @@ function zoneLabelForHint(
   const fromGroup = groups.find((row) => row.id === zoneId)?.label?.trim();
   if (fromGroup) return fromGroup;
   return spotZoneDisplayLabel(zoneId);
+}
+
+/** Include space name in TTS when the venue has multiple zones (Σάλα + Αυλή κ.λπ.). */
+function zoneLabelForAnnouncement(
+  groups: SpotZoneGroup[],
+  zoneId: string,
+): string | null {
+  if (zoneId === MAIN_ZONE_ID && groups.length <= 1) return null;
+  return zoneLabelForHint(groups, zoneId);
 }
 
 function resolveTableAnnouncement(
@@ -126,9 +132,9 @@ function resolveTableAnnouncement(
     return tableAnnouncementFromResolved(groups, resolved, entry?.displayLabel);
   }
 
-  // Bare table number on a known zone tab (KDS zoneId) — even when spot list has no match
-  if (zoneHint && zoneHint !== MAIN_ZONE_ID) {
-    const zoneLabel = zoneLabelForHint(groups, zoneHint);
+  // Bare table number on active KDS zone tab — even when spot list has no match
+  if (zoneHint) {
+    const zoneLabel = zoneLabelForAnnouncement(groups, zoneHint);
     if (zoneLabel) {
       const displayNum = /^[0-9]+$/.test(table) ? table : (parseTableSpotLabel(table)?.displayLabel ?? table);
       return tableAnnouncement(displayNum, zoneLabel);
