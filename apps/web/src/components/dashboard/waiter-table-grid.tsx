@@ -186,14 +186,16 @@ function WaiterSpotTile({
                 ) : null}
               </div>
             ))}
-            {visiblePasses.map((pass, index) => (
+            {visiblePasses.map((pass, index) => {
+              const passText = pass.message?.trim();
+              return (
               <div
                 key={pass.id ?? `pass-${index}`}
                 className="rounded-lg border border-emerald-200/80 bg-white/70 p-2"
               >
                 <div className="flex flex-wrap items-center gap-1">
-                  <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-900">
-                    {labels.passNewMessage}
+                  <span className="inline-flex max-w-full rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-900">
+                    {passText || labels.passNewMessage}
                   </span>
                   {pass.status ? (
                     <span className="text-[10px] text-slate-500">
@@ -230,7 +232,8 @@ function WaiterSpotTile({
                   </div>
                 ) : null}
               </div>
-            ))}
+            );
+            })}
           </div>
         </>
       ) : (

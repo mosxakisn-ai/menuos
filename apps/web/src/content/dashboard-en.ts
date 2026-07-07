@@ -1197,7 +1197,7 @@ export const DASHBOARD_EN = {
           waiterCall: "Waiter call activation",
           voiceMessages: "Voice message activation",
           voiceHint:
-            "Voice plays in English on the waiter's phone — clearer on iPhone and Android.",
+            "Voice plays in Greek on the waiter's phone — space, table, and «you have a new message». Tap the screen once to unlock sound.",
           yes: "Yes",
           no: "No",
           saving: "Saving…",

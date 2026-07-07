@@ -110,7 +110,9 @@ export function WaiterPanel({
   const zoneFilterIdRef = useRef(zoneFilterId);
   const spotsRef = useRef<VenueSpot[]>([]);
   const opsConfigRef = useRef<ReturnType<typeof useVenueOperationsConfig>["config"]>(undefined);
+  const notificationSettingsRef = useRef(notificationSettings);
   zoneFilterIdRef.current = zoneFilterId;
+  notificationSettingsRef.current = notificationSettings;
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const { config: opsConfig } = useVenueOperationsConfig(venueId);
   opsConfigRef.current = opsConfig;
@@ -187,6 +189,12 @@ export function WaiterPanel({
 
     if (passRes.ok) {
       const newSignals = (passData.signals ?? []) as PassSignal[];
+      if (typeof passData.voiceMessagesEnabled === "boolean") {
+        notificationSettingsRef.current = {
+          ...notificationSettingsRef.current,
+          voiceMessagesEnabled: passData.voiceMessagesEnabled,
+        };
+      }
       if (passBaselineSetRef.current) {
         const freshPasses = newSignals.filter(
           (signal) => !prevPassIdsRef.current.has(signal.id) && isMonitorPendingPass(signal),
@@ -194,7 +202,7 @@ export function WaiterPanel({
         const hasNewPass = freshPasses.length > 0;
         if (hasNewPass) {
           alertNewWaiterCall();
-          if (notificationSettings.voiceMessagesEnabled) {
+          if (notificationSettingsRef.current.voiceMessagesEnabled) {
             const latest = [...freshPasses].sort((a, b) => {
               const aTime = a.readyAt ? Date.parse(a.readyAt) : 0;
               const bTime = b.readyAt ? Date.parse(b.readyAt) : 0;
@@ -250,7 +258,7 @@ export function WaiterPanel({
     } else if (managerView && generation === loadGenerationRef.current) {
       setPendingByVenue({});
     }
-  }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash, notificationSettings]);
+  }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash]);
 
   useEffect(() => {
     loadGenerationRef.current += 1;

@@ -19,6 +19,7 @@ import { logPassSignalCreated } from "@/lib/push-diagnostics";
 import { validateKdsPassNotifyTargets } from "@/lib/kds-pass-recipients";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
+import { getOrganizationNotificationSettings } from "@/lib/organization-notification-settings";
 
 export async function GET(request: Request) {
   const venueId = new URL(request.url).searchParams.get("venueId");
@@ -32,6 +33,15 @@ export async function GET(request: Request) {
   try {
     await expireStaleActivePassSignals({ venueId });
 
+    const venue = await prisma.venue.findUnique({
+      where: { id: venueId },
+      select: { organizationId: true },
+    });
+    const orgNotifications = venue
+      ? await getOrganizationNotificationSettings(venue.organizationId)
+      : null;
+    const voiceMessagesEnabled = orgNotifications?.voiceMessagesEnabled ?? true;
+
     const member = auth.access.staffMember;
     const opsConfig = await getVenueOperationsConfig(venueId);
     const venueEnabledStations = opsConfig.enabledStations.map(passStationInputToDb);
@@ -42,6 +52,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         signals: [],
         activeCount: 0,
+        voiceMessagesEnabled,
         staffMember: { id: member.id, name: member.name },
       });
     }
@@ -57,6 +68,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         signals: [],
         activeCount: 0,
+        voiceMessagesEnabled,
         staffMember: member ? { id: member.id, name: member.name } : null,
       });
     }
@@ -86,6 +98,7 @@ export async function GET(request: Request) {
         stationScreenLabel: stationScreen?.label ?? null,
       })),
       activeCount: signals.length,
+      voiceMessagesEnabled,
       staffMember: member ? { id: member.id, name: member.name } : null,
     });
   } catch (err) {
