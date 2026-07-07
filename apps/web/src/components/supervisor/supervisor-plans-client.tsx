@@ -28,16 +28,27 @@ function formatLimit(value: number | null, unlimited = "Απεριόριστο")
   return value === null ? unlimited : String(value);
 }
 
-function parseOptionalLimit(raw: string): number | null | "invalid" {
+function parseOptionalLimit(raw: string, options?: { allowZero?: boolean }): number | null | "invalid" {
   const trimmed = raw.trim();
   if (!trimmed) return null;
   const parsed = Number.parseInt(trimmed, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) return "invalid";
+  if (!Number.isFinite(parsed)) return "invalid";
+  const min = options?.allowZero ? 0 : 1;
+  if (parsed < min) return "invalid";
   return parsed;
 }
 
 function formControlClass(locked: boolean, extra?: string) {
   return cn(dashboardFieldClass, "!mt-0", lockedFieldClass(locked), extra);
+}
+
+function formTextareaClass(locked: boolean, extra?: string) {
+  return cn(
+    dashboardFieldClass,
+    "!mt-0 !h-auto",
+    lockedFieldClass(locked),
+    extra,
+  );
 }
 
 function fieldLocked(planId: PlanCatalogEntry["id"], field: PlanCatalogEditableField) {
@@ -113,6 +124,25 @@ function PlanEditor({
     return isPlanCatalogFieldEditable(plan.id, field);
   }
 
+  useEffect(() => {
+    setName(plan.name);
+    setPriceMonthly(String(plan.priceMonthly));
+    setPriceDisplay(plan.priceDisplay ?? "");
+    setPeriodLabel(plan.periodLabel);
+    setDescription(plan.description ?? "");
+    setFeaturesText(plan.features.join("\n"));
+    setMaxVenues(String(plan.maxVenues));
+    setMaxMenus(plan.maxMenusPerVenue === null ? "" : String(plan.maxMenusPerVenue));
+    setMaxItems(plan.maxItems === null ? "" : String(plan.maxItems));
+    setMaxGeminiTokens(plan.maxGeminiTokensPerMonth === null ? "" : String(plan.maxGeminiTokensPerMonth));
+    setCtaLabel(plan.ctaLabel ?? "");
+    setBadge(plan.badge ?? "");
+    setHighlighted(plan.highlighted);
+    setVisibleOnPricing(plan.visibleOnPricing);
+    setTrialDays(plan.trialDays === null ? "" : String(plan.trialDays));
+    setSortOrder(String(plan.sortOrder));
+  }, [plan]);
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -155,14 +185,19 @@ function PlanEditor({
       setSaving(false);
       return;
     }
-    const parsedGeminiTokens = parseOptionalLimit(maxGeminiTokens);
+    const parsedGeminiTokens = parseOptionalLimit(maxGeminiTokens, { allowZero: true });
     if (canEdit("maxGeminiTokensPerMonth") && parsedGeminiTokens === "invalid") {
       setError("Μη έγκυρο όριο Gemini tokens.");
       setSaving(false);
       return;
     }
     let parsedTrialDays: number | null = null;
-    if (canEdit("trialDays") && trialDays.trim()) {
+    if (canEdit("trialDays")) {
+      if (!trialDays.trim()) {
+        setError("Συμπλήρωσε τις ημέρες δοκιμής.");
+        setSaving(false);
+        return;
+      }
       parsedTrialDays = Number.parseInt(trialDays, 10);
       if (!Number.isFinite(parsedTrialDays) || parsedTrialDays < 1) {
         setError("Μη έγκυρες ημέρες δοκιμής.");
@@ -190,6 +225,12 @@ function PlanEditor({
       if (canEdit("trialDays")) payload.trialDays = parsedTrialDays;
       if (canEdit("sortOrder")) payload.sortOrder = Number.parseInt(sortOrder, 10) || 0;
 
+      if (!Object.keys(payload).length) {
+        setError("Δεν υπάρχουν επεξεργάσιμα πεδία.");
+        setSaving(false);
+        return;
+      }
+
       const res = await fetch(`/api/supervisor/plans/${plan.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -198,10 +239,6 @@ function PlanEditor({
       const data = (await res.json()) as { plan?: PlanCatalogEntry; error?: string; message?: string };
       if (!res.ok) {
         setError(data.error ?? "Αποτυχία.");
-        return;
-      }
-      if (!Object.keys(payload).length) {
-        setError("Δεν υπάρχουν επεξεργάσιμα πεδία.");
         return;
       }
       setMessage(data.message ?? "Ενημερώθηκε.");
@@ -292,7 +329,7 @@ function PlanEditor({
               </FormField>
               <FormField label="Περιγραφή" lockReason={fieldLocked(plan.id, "description")} className="lg:col-span-4">
                 <textarea
-                  className={formControlClass(!canEdit("description"), "min-h-[80px] resize-y")}
+                  className={formTextareaClass(!canEdit("description"), "min-h-[80px] resize-y")}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={FORM_PLACEHOLDERS.planDescription}
@@ -305,7 +342,7 @@ function PlanEditor({
                 className="lg:col-span-4"
               >
                 <textarea
-                  className={formControlClass(
+                  className={formTextareaClass(
                     !canEdit("features"),
                     "min-h-[140px] resize-y font-mono text-xs leading-relaxed",
                   )}
