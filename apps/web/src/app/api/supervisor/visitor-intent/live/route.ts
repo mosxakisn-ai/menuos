@@ -5,6 +5,7 @@ import {
   VISITOR_INTENT_STUCK_STEP_SECONDS,
   VISITOR_INTENT_SURFACES,
   countPaymentsTodayFromLog,
+  countVisitorsToday,
   listLiveVisitorIntents,
   listVisitorIntentLog,
   serializeVisitorIntentRow,
@@ -36,12 +37,19 @@ export async function GET(request: Request) {
   });
 
   const logRows = await listVisitorIntentLog({ hours: 24, limit: 300, activeWithinSeconds: activeWithin });
-  const paymentsToday = countPaymentsTodayFromLog(logRows);
+  const [paymentsToday, visitorsToday] = await Promise.all([
+    Promise.resolve(countPaymentsTodayFromLog(logRows)),
+    countVisitorsToday({
+      surface,
+      excludeTest: url.searchParams.get("exclude_test") !== "0",
+    }),
+  ]);
 
   return NextResponse.json({
     sessions: rows.map(serializeVisitorIntentRow),
     summary: summarizeVisitorIntents(rows),
     payments_today: paymentsToday,
+    visitors_today: visitorsToday,
     active_within_seconds: activeWithin,
     stuck_threshold_seconds: VISITOR_INTENT_STUCK_STEP_SECONDS,
     fetched_at: new Date().toISOString(),

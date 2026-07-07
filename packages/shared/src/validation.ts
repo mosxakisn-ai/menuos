@@ -1,6 +1,21 @@
 import { z } from "zod";
 import { CUISINE_TYPES } from "./cuisine-type";
 import { itemExtrasSchema } from "./item-extras";
+import { SUPPORTED_LANGUAGES } from "./menu-languages";
+
+const supportedLanguageSchema = z.enum(SUPPORTED_LANGUAGES);
+
+const optionalTranslatedMenuNameFields = {
+  nameEn: z.string().max(120).optional(),
+  nameDe: z.string().max(120).optional(),
+  nameFr: z.string().max(120).optional(),
+  namePl: z.string().max(120).optional(),
+  nameCs: z.string().max(120).optional(),
+  nameIt: z.string().max(120).optional(),
+  nameSv: z.string().max(120).optional(),
+  nameFi: z.string().max(120).optional(),
+  nameTr: z.string().max(120).optional(),
+};
 
 export const registerOtpSendSchema = z.object({
   email: z.string().email().max(254),
@@ -47,7 +62,7 @@ export const venueSchema = z.object({
 
 export const categorySchema = z.object({
   name: z.string().min(1).max(120),
-  language: z.enum(["GR", "EN", "DE", "FR"]),
+  language: supportedLanguageSchema,
 });
 
 export const itemSchema = z.object({
@@ -56,7 +71,7 @@ export const itemSchema = z.object({
   ingredients: z.string().max(500).optional(),
   allergens: z.string().max(500).optional(),
   price: z.number().min(0).max(99999),
-  language: z.enum(["GR", "EN", "DE", "FR"]),
+  language: supportedLanguageSchema,
   available: z.boolean().optional(),
 });
 
@@ -176,26 +191,15 @@ export type ItemInput = z.infer<typeof itemSchema>;
 export const categoryCreateSchema = z.object({
   menuId: z.string().min(1),
   nameGr: z.string().min(1).max(120),
-  nameEn: z.string().max(120).optional(),
-  nameDe: z.string().max(120).optional(),
-  nameFr: z.string().max(120).optional(),
+  ...optionalTranslatedMenuNameFields,
 });
 
 export const categoryPatchSchema = z
   .object({
     nameGr: z.string().min(1).max(120).optional(),
-    nameEn: z.string().max(120).optional(),
-    nameDe: z.string().max(120).optional(),
-    nameFr: z.string().max(120).optional(),
+    ...optionalTranslatedMenuNameFields,
   })
-  .refine(
-    (d) =>
-      d.nameGr !== undefined ||
-      d.nameEn !== undefined ||
-      d.nameDe !== undefined ||
-      d.nameFr !== undefined,
-    { message: "Nothing to update" },
-  );
+  .refine((d) => Object.values(d).some((v) => v !== undefined), { message: "Nothing to update" });
 
 export const itemLabelSchema = z.enum(["OFFER", "BEST", "NEW"]).nullable();
 
@@ -203,9 +207,7 @@ export const itemCreateSchema = z.object({
   categoryId: z.string().min(1),
   price: z.number().min(0).max(99999),
   nameGr: z.string().min(1).max(120),
-  nameEn: z.string().max(120).optional(),
-  nameDe: z.string().max(120).optional(),
-  nameFr: z.string().max(120).optional(),
+  ...optionalTranslatedMenuNameFields,
   label: itemLabelSchema.optional(),
   photoUrl: z
     .union([z.string().url().max(2048), z.literal(""), z.null()])
@@ -291,24 +293,10 @@ export const itemPatchSchema = z
       .union([z.string().url().max(2048), z.literal(""), z.null()])
       .optional(),
     nameGr: z.string().min(1).max(120).optional(),
-    nameEn: z.string().max(120).optional(),
-    nameDe: z.string().max(120).optional(),
-    nameFr: z.string().max(120).optional(),
+    ...optionalTranslatedMenuNameFields,
     extras: itemExtrasSchema.optional(),
   })
-  .refine(
-    (d) =>
-      d.available !== undefined ||
-      d.price !== undefined ||
-      d.label !== undefined ||
-      d.photoUrl !== undefined ||
-      d.nameGr !== undefined ||
-      d.nameEn !== undefined ||
-      d.nameDe !== undefined ||
-      d.nameFr !== undefined ||
-      d.extras !== undefined,
-    { message: "Nothing to update" },
-  );
+  .refine((d) => Object.values(d).some((v) => v !== undefined), { message: "Nothing to update" });
 
 export type ItemPatchInput = z.infer<typeof itemPatchSchema>;
 export type MenuCreateInput = z.infer<typeof menuCreateSchema>;

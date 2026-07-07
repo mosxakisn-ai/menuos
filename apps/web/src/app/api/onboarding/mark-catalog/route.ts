@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import { requireSession } from "@/lib/api-auth";
+import { backfillOrganizationMenuTranslations } from "@/lib/catalog-backfill-translations";
 import { seedOnboardingVenueInTransaction } from "@/lib/seed-onboarding-venue";
 import { serializableTransaction } from "@/lib/plan-limits";
 
@@ -54,6 +55,8 @@ export async function POST() {
   if (itemCount === 0) {
     return NextResponse.json({ code: "seed_failed" }, { status: 422 });
   }
+
+  void backfillOrganizationMenuTranslations(session.organizationId).catch(() => undefined);
 
   return NextResponse.json({ ok: true, itemCount });
 }

@@ -2,8 +2,8 @@ export const APP_NAME = "MenuOS";
 export const APP_DOMAIN = "menuos.gr";
 export const APP_URL = process.env.APP_URL ?? process.env.NEXTAUTH_URL ?? "https://menuos.gr";
 
-export const SUPPORTED_LANGUAGES = ["GR", "EN", "DE", "FR"] as const;
-export type SupportedLanguageCode = (typeof SUPPORTED_LANGUAGES)[number];
+export type { QrMenuLanguage as SupportedLanguageCode } from "./menu-languages";
+export { QR_MENU_LANGUAGES, SUPPORTED_LANGUAGES } from "./menu-languages";
 
 export const MARKETING_LOCALES = ["el", "en"] as const;
 export type MarketingLocale = (typeof MARKETING_LOCALES)[number];
@@ -24,6 +24,8 @@ export * from "./trial";
 export * from "./item-labels";
 export * from "./menu-languages";
 export * from "./menu-auto-translate";
+export * from "./menu-translation-langs";
+export { getQrMenuUi } from "./qr-menu-ui-extended";
 export * from "./menu-pdf-parser";
 export * from "./menu-import-document";
 export * from "./menu-pdf-parse-quality";

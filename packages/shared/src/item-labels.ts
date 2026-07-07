@@ -9,7 +9,7 @@ export const ITEM_LABEL_OPTIONS: { value: ItemLabel; dashboardGr: string }[] = [
   { value: "NEW", dashboardGr: "Νέο πιάτο" },
 ];
 
-export const ITEM_LABEL_UI: Record<ItemLabel, Record<QrMenuLanguage, string>> = {
+export const ITEM_LABEL_UI: Record<ItemLabel, Partial<Record<QrMenuLanguage, string>>> = {
   OFFER: { GR: "Προσφορά", EN: "Offer", DE: "Angebot", FR: "Offre" },
   BEST: { GR: "Best seller", EN: "Best seller", DE: "Bestseller", FR: "Best seller" },
   NEW: { GR: "Νέο", EN: "New", DE: "Neu", FR: "Nouveau" },
@@ -23,7 +23,8 @@ export const ITEM_LABEL_STYLES: Record<ItemLabel, string> = {
 };
 
 export function itemLabelText(label: ItemLabel, lang: QrMenuLanguage): string {
-  return ITEM_LABEL_UI[label][lang];
+  const row = ITEM_LABEL_UI[label];
+  return row[lang] ?? row.EN ?? row.GR ?? label;
 }
 
 export function isItemLabel(value: string | null | undefined): value is ItemLabel {

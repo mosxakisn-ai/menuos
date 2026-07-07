@@ -6,7 +6,7 @@ import type { SupportedLanguage } from "@menuos/db";
 import {
   QR_MENU_LANGUAGE_LABELS,
   QR_MENU_LANGUAGES,
-  QR_MENU_UI,
+  getQrMenuUi,
   cuisineTypeQrLabel,
   isCuisineType,
   buildOrderPayload,
@@ -153,7 +153,7 @@ export function PublicMenuView({
   const [isInIframe, setIsInIframe] = useState(false);
   const isEmbedded = embedMode || isInIframe;
 
-  const ui = QR_MENU_UI[lang];
+  const ui = getQrMenuUi(lang);
   const activeMenu = venue.menus.find((m) => m.id === activeMenuId) ?? venue.menus[0];
   const cuisineLabel =
     venue.cuisineType && isCuisineType(venue.cuisineType)
@@ -826,7 +826,7 @@ export function PublicMenuView({
             <div
               className={cn(
                 "flex items-center gap-0.5 overflow-x-auto menu-touch-scroll-x rounded-button bg-white/10 p-1 backdrop-blur-sm",
-                isEmbedded ? "w-full max-w-none self-start" : "max-w-[11rem] shrink-0",
+                isEmbedded ? "w-full max-w-none self-start" : "max-w-[min(100%,20rem)] shrink-0",
               )}
               role="group"
               aria-label={ui.language}

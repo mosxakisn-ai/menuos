@@ -6,6 +6,10 @@ import { requireActiveSubscription } from "@/lib/api-auth";
 import { autoFillMenuNames } from "@/lib/menu-translation-service";
 import { getCategoryForOrganization } from "@/lib/venue-access";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
+import {
+  patchProvidedAnyTranslatedName,
+  upsertEntityNameTranslation,
+} from "@/lib/menu-name-upsert";
 
 type Params = { params: Promise<{ categoryId: string }> };
 
@@ -51,30 +55,31 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: A.invalidCategoryName }, { status: 400 });
   }
 
-  let { nameGr, nameEn, nameDe, nameFr } = parsed.data;
+  const { nameGr, ...namePatch } = parsed.data;
 
   if (nameGr !== undefined) {
-    const filled = await autoFillMenuNames({ nameGr, nameEn, nameDe, nameFr });
-    nameGr = filled.nameGr;
-    const retranslateAll = nameEn === undefined && nameDe === undefined && nameFr === undefined;
-    nameEn = retranslateAll ? (filled.nameEn ?? "") : (filled.nameEn ?? undefined);
-    nameDe = retranslateAll ? (filled.nameDe ?? "") : (filled.nameDe ?? undefined);
-    nameFr = retranslateAll ? (filled.nameFr ?? "") : (filled.nameFr ?? undefined);
+    const filled = await autoFillMenuNames({ nameGr, ...namePatch });
+    await upsertEntityNameTranslation(
+      (language, name) => upsertCategoryName(categoryId, language, name),
+      filled,
+    );
+  } else if (patchProvidedAnyTranslatedName(parsed.data as Record<string, unknown>)) {
+    await upsertEntityNameTranslation(
+      (language, name) => upsertCategoryName(categoryId, language, name),
+      { nameGr: "", ...namePatch },
+    );
   }
-
-  await upsertCategoryName(categoryId, "GR", nameGr);
-  await upsertCategoryName(categoryId, "EN", nameEn);
-  await upsertCategoryName(categoryId, "DE", nameDe);
-  await upsertCategoryName(categoryId, "FR", nameFr);
 
   const category = await prisma.category.findUnique({
     where: { id: categoryId },
     include: { translations: true, items: { include: { translations: true } } },
   });
 
+  const grName = category?.translations.find((t) => t.language === "GR")?.name;
+
   return NextResponse.json({
     category,
-    message: nameGr ? A.categoryRenamed(nameGr) : A.categoryUpdated,
+    message: grName ? A.categoryRenamed(grName) : A.categoryUpdated,
   });
 }
 

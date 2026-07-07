@@ -7,6 +7,7 @@ import {
   Clock3,
   Radio,
   RefreshCw,
+  Users,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
@@ -141,6 +142,15 @@ function fmtDuration(sec: number) {
   return s ? `${m} λεπ. ${s} δευτ.` : `${m} λεπ.`;
 }
 
+/** Σταθερή διάρκεια επίσκεψης — δεν τρέχει μετά το «Έφυγε». */
+function visitDurationSeconds(row: SessionRow, online: boolean): number {
+  if (online) return row.step_seconds;
+  if (row.left_at && row.first_seen) return Math.max(0, row.left_at - row.first_seen);
+  if (row.duration_seconds > 0) return row.duration_seconds;
+  if (row.last_seen && row.first_seen) return Math.max(0, row.last_seen - row.first_seen);
+  return 0;
+}
+
 function displayLocation(row: SessionRow) {
   if (row.ip_city && row.ip_country) return `${row.ip_city}, ${row.ip_country}`;
   if (row.ip_country) return row.ip_country;
@@ -215,7 +225,7 @@ function SessionCard({ row, compact }: { row: SessionRow; compact?: boolean }) {
           <Clock3 className="h-3 w-3" />
           {online
             ? `Στάδιο ${fmtDuration(row.step_seconds)}`
-            : `Επίσκεψη ${fmtDuration(row.duration_seconds || row.step_seconds)}`}
+            : `Επίσκεψη ${fmtDuration(visitDurationSeconds(row, false))}`}
         </p>
       </div>
     </Card>
@@ -226,6 +236,7 @@ export function SupervisorOnlineClient() {
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [logEntries, setLogEntries] = useState<SessionRow[]>([]);
   const [paymentsToday, setPaymentsToday] = useState(0);
+  const [visitorsToday, setVisitorsToday] = useState(0);
   const [stuckThreshold, setStuckThreshold] = useState(120);
   const [surfaceFilter, setSurfaceFilter] = useState("");
   const [loading, setLoading] = useState(true);
@@ -261,6 +272,7 @@ export function SupervisorOnlineClient() {
       if (!liveRes.ok) throw new Error(typeof liveJson.error === "string" ? liveJson.error : "Αποτυχία φόρτωσης");
       setSessions(Array.isArray(liveJson.sessions) ? liveJson.sessions : []);
       setPaymentsToday(typeof liveJson.payments_today === "number" ? liveJson.payments_today : 0);
+      setVisitorsToday(typeof liveJson.visitors_today === "number" ? liveJson.visitors_today : 0);
       setStuckThreshold(liveJson.stuck_threshold_seconds ?? 120);
       setLastUpdated(liveJson.fetched_at ?? new Date().toISOString());
       if (logRes.ok && Array.isArray(logJson.entries)) {
@@ -297,6 +309,7 @@ export function SupervisorOnlineClient() {
       : merged;
     return filtered
       .filter((row) => row.status === "left" || !liveSids.has(row.sid))
+      .sort((a, b) => b.first_seen - a.first_seen)
       .slice(0, 80);
   }, [logEntries, scoped, surfaceFilter]);
 
@@ -335,6 +348,12 @@ export function SupervisorOnlineClient() {
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
             <AlertTriangle className="h-3 w-3" />
             {stuckTotal} σε αναμονή
+          </span>
+        ) : null}
+        {!loading ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-900">
+            <Users className="h-3 w-3" />
+            Μπήκαν σήμερα: {visitorsToday}
           </span>
         ) : null}
         {!loading ? (
@@ -416,7 +435,7 @@ export function SupervisorOnlineClient() {
               <li className="py-6 text-center text-xs text-slate-400">Κενό ιστορικό</li>
             ) : (
               logScoped.map((row) => (
-                <li key={`log-${row.sid}-${row.last_seen}`}>
+                <li key={`log-${row.sid}`}>
                   <SessionCard row={row} compact />
                 </li>
               ))

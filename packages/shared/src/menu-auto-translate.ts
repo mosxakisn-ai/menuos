@@ -1,38 +1,41 @@
-export type MenuNameFields = {
-  nameGr: string;
-  nameEn?: string | null;
-  nameDe?: string | null;
-  nameFr?: string | null;
-};
+import {
+  MENU_AUTO_TRANSLATE_LANGS,
+  MENU_NAME_FIELD_BY_LANG,
+  readMenuNameField,
+  type MenuAutoTranslateLang,
+  type MenuNameFields,
+} from "./menu-translation-langs";
 
-export type MenuNameLang = "EN" | "DE" | "FR";
+export type { MenuNameFields, MenuAutoTranslateLang };
+export { MENU_AUTO_TRANSLATE_LANGS };
 
-const LANG_TO_FIELD: Record<MenuNameLang, keyof MenuNameFields> = {
-  EN: "nameEn",
-  DE: "nameDe",
-  FR: "nameFr",
-};
+/** @deprecated use MenuAutoTranslateLang */
+export type MenuNameLang = MenuAutoTranslateLang;
 
 /** Γλώσσες που λείπουν και πρέπει να συμπληρωθούν αυτόματα. */
-export function missingMenuNameLanguages(input: MenuNameFields): MenuNameLang[] {
+export function missingMenuNameLanguages(input: MenuNameFields): MenuAutoTranslateLang[] {
   const gr = input.nameGr.trim();
   if (!gr) return [];
 
-  return (["EN", "DE", "FR"] as const).filter((lang) => {
-    const field = LANG_TO_FIELD[lang];
-    return !input[field]?.trim();
-  });
+  return MENU_AUTO_TRANSLATE_LANGS.filter((lang) => !readMenuNameField(input, lang));
 }
 
 export function mergeAutoTranslatedNames(
   input: MenuNameFields,
-  translated: Partial<Record<MenuNameLang, string>>,
-): Required<Pick<MenuNameFields, "nameGr">> &
-  Pick<MenuNameFields, "nameEn" | "nameDe" | "nameFr"> {
-  return {
+  translated: Partial<Record<MenuAutoTranslateLang, string>>,
+): Required<Pick<MenuNameFields, "nameGr">> & Omit<MenuNameFields, "nameGr"> {
+  const out: Required<Pick<MenuNameFields, "nameGr">> & Omit<MenuNameFields, "nameGr"> = {
     nameGr: input.nameGr.trim(),
-    nameEn: input.nameEn?.trim() || translated.EN?.trim() || undefined,
-    nameDe: input.nameDe?.trim() || translated.DE?.trim() || undefined,
-    nameFr: input.nameFr?.trim() || translated.FR?.trim() || undefined,
   };
+
+  for (const lang of MENU_AUTO_TRANSLATE_LANGS) {
+    const field = MENU_NAME_FIELD_BY_LANG[lang];
+    const manual = readMenuNameField(input, lang);
+    const auto = translated[lang]?.trim();
+    if (manual || auto) {
+      (out as Record<string, string | undefined>)[field] = manual ?? auto;
+    }
+  }
+
+  return out;
 }

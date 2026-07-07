@@ -6,6 +6,12 @@ export const itemExtraLabelsSchema = z.object({
   EN: z.string().trim().max(60).optional(),
   DE: z.string().trim().max(60).optional(),
   FR: z.string().trim().max(60).optional(),
+  PL: z.string().trim().max(60).optional(),
+  CS: z.string().trim().max(60).optional(),
+  IT: z.string().trim().max(60).optional(),
+  SV: z.string().trim().max(60).optional(),
+  FI: z.string().trim().max(60).optional(),
+  TR: z.string().trim().max(60).optional(),
 });
 
 export const itemExtraSchema = z.object({
@@ -31,10 +37,20 @@ export function parseItemExtras(raw: unknown): ItemExtrasConfig {
 
 export function pickItemExtraLabel(extra: ItemExtra, lang: QrMenuLanguage): string {
   const l = extra.labels;
-  if (lang === "EN" && l.EN) return l.EN;
-  if (lang === "DE" && l.DE) return l.DE;
-  if (lang === "FR" && l.FR) return l.FR;
-  return l.GR;
+  const byLang: Partial<Record<QrMenuLanguage, string | undefined>> = {
+    GR: l.GR,
+    EN: l.EN,
+    DE: l.DE,
+    FR: l.FR,
+    PL: l.PL,
+    CS: l.CS,
+    IT: l.IT,
+    SV: l.SV,
+    FI: l.FI,
+    TR: l.TR,
+  };
+  if (byLang[lang]?.trim()) return byLang[lang]!.trim();
+  return l.EN?.trim() || l.GR;
 }
 
 export function resolveExtraLabels(

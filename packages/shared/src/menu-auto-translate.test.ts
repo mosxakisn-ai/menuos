@@ -1,15 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { mergeAutoTranslatedNames, missingMenuNameLanguages } from "./menu-auto-translate";
+import {
+  MENU_AUTO_TRANSLATE_LANGS,
+  mergeAutoTranslatedNames,
+  missingMenuNameLanguages,
+} from "./menu-auto-translate";
 
 describe("missingMenuNameLanguages", () => {
   it("returns all targets when only Greek is set", () => {
-    expect(missingMenuNameLanguages({ nameGr: "Κυρίως πιάτα" })).toEqual(["EN", "DE", "FR"]);
+    expect(missingMenuNameLanguages({ nameGr: "Κυρίως πιάτα" })).toEqual([
+      ...MENU_AUTO_TRANSLATE_LANGS,
+    ]);
   });
 
   it("skips languages already provided", () => {
     expect(
       missingMenuNameLanguages({ nameGr: "Σαλάτες", nameEn: "Salads", nameDe: "Salate" }),
-    ).toEqual(["FR"]);
+    ).toEqual(["FR", "PL", "CS", "IT", "SV", "FI", "TR"]);
   });
 
   it("returns empty when Greek is blank", () => {

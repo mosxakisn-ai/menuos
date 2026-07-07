@@ -1,27 +1,39 @@
 import {
   mergeAutoTranslatedNames,
   missingMenuNameLanguages,
+  type MenuAutoTranslateLang,
   type MenuNameFields,
-  type MenuNameLang,
 } from "@menuos/shared";
 
-const DEEPL_TARGET: Record<MenuNameLang, string> = {
+const DEEPL_TARGET: Record<MenuAutoTranslateLang, string> = {
   EN: "EN",
   DE: "DE",
   FR: "FR",
+  PL: "PL",
+  CS: "CS",
+  IT: "IT",
+  SV: "SV",
+  FI: "FI",
+  TR: "TR",
 };
 
-const MYMEMORY_TARGET: Record<MenuNameLang, string> = {
+const MYMEMORY_TARGET: Record<MenuAutoTranslateLang, string> = {
   EN: "en",
   DE: "de",
   FR: "fr",
+  PL: "pl",
+  CS: "cs",
+  IT: "it",
+  SV: "sv",
+  FI: "fi",
+  TR: "tr",
 };
 
 function deeplApiUrl(): string {
   return process.env.DEEPL_API_URL?.trim() || "https://api-free.deepl.com/v2/translate";
 }
 
-async function translateWithDeepL(text: string, target: MenuNameLang): Promise<string | null> {
+async function translateWithDeepL(text: string, target: MenuAutoTranslateLang): Promise<string | null> {
   const apiKey = process.env.DEEPL_API_KEY?.trim();
   if (!apiKey) return null;
 
@@ -46,7 +58,7 @@ async function translateWithDeepL(text: string, target: MenuNameLang): Promise<s
   return translated || null;
 }
 
-async function translateWithMyMemory(text: string, target: MenuNameLang): Promise<string | null> {
+async function translateWithMyMemory(text: string, target: MenuAutoTranslateLang): Promise<string | null> {
   const langpair = `el|${MYMEMORY_TARGET[target]}`;
   const url = new URL("https://api.mymemory.translated.net/get");
   url.searchParams.set("q", text);
@@ -64,12 +76,11 @@ async function translateWithMyMemory(text: string, target: MenuNameLang): Promis
 
   const translated = data.responseData?.translatedText?.trim();
   if (!translated) return null;
-  // MyMemory sometimes returns the source text when it cannot translate.
   if (translated.toUpperCase() === text.toUpperCase()) return null;
   return translated;
 }
 
-async function translateOne(text: string, target: MenuNameLang): Promise<string | null> {
+async function translateOne(text: string, target: MenuAutoTranslateLang): Promise<string | null> {
   try {
     const deepl = await translateWithDeepL(text, target);
     if (deepl) return deepl;
@@ -84,12 +95,12 @@ async function translateOne(text: string, target: MenuNameLang): Promise<string 
   }
 }
 
-/** Μετάφραση ενός κειμένου από ελληνικά σε EN / DE / FR (μόνο για τα requested targets). */
+/** Μετάφραση ενός κειμένου από ελληνικά (μόνο για τα requested targets). */
 export async function translateMenuTextFromGreek(
   text: string,
-  targets: MenuNameLang[],
+  targets: MenuAutoTranslateLang[],
   maxLength = 120,
-): Promise<Partial<Record<MenuNameLang, string>>> {
+): Promise<Partial<Record<MenuAutoTranslateLang, string>>> {
   const trimmed = text.trim();
   if (!trimmed || targets.length === 0) return {};
 
@@ -102,14 +113,14 @@ export async function translateMenuTextFromGreek(
     }),
   );
 
-  return Object.fromEntries(entries.filter(Boolean) as Array<[MenuNameLang, string]>) as Partial<
-    Record<MenuNameLang, string>
+  return Object.fromEntries(entries.filter(Boolean) as Array<[MenuAutoTranslateLang, string]>) as Partial<
+    Record<MenuAutoTranslateLang, string>
   >;
 }
 
-/** Συμπληρώνει κενά nameEn/De/Fr από αυτόματη μετάφραση του nameGr. */
+/** Συμπληρώνει κενά name* από αυτόματη μετάφραση του nameGr. */
 export async function autoFillMenuNames(input: MenuNameFields): Promise<
-  Required<Pick<MenuNameFields, "nameGr">> & Pick<MenuNameFields, "nameEn" | "nameDe" | "nameFr">
+  Required<Pick<MenuNameFields, "nameGr">> & Omit<MenuNameFields, "nameGr">
 > {
   const missing = missingMenuNameLanguages(input);
   if (missing.length === 0) {
@@ -118,4 +129,12 @@ export async function autoFillMenuNames(input: MenuNameFields): Promise<
 
   const translated = await translateMenuTextFromGreek(input.nameGr, missing);
   return mergeAutoTranslatedNames(input, translated);
+}
+
+/** Backfill missing translation rows for one Greek name. */
+export async function autoFillMenuNamesFromGreek(
+  nameGr: string,
+  existing?: Partial<MenuNameFields>,
+): Promise<Required<Pick<MenuNameFields, "nameGr">> & Omit<MenuNameFields, "nameGr">> {
+  return autoFillMenuNames({ nameGr, ...existing });
 }

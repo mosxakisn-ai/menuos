@@ -95,6 +95,12 @@ enum SupportedLanguage {
   EN
   DE
   FR
+  PL
+  CS
+  IT
+  SV
+  FI
+  TR
 }
 
 enum OrganizationActivity {

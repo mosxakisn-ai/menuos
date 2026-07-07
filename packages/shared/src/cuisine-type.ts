@@ -16,7 +16,7 @@ export const CUISINE_TYPES = [
 
 export type CuisineType = (typeof CUISINE_TYPES)[number];
 
-const QR_LABELS: Record<CuisineType, Record<QrMenuLanguage, string>> = {
+const QR_LABELS: Record<CuisineType, Partial<Record<QrMenuLanguage, string>>> = {
   MEDITERRANEAN: {
     GR: "Μεσογειακή κουζίνα",
     EN: "Mediterranean cuisine",
@@ -93,5 +93,6 @@ export function cuisineTypeQrLabel(
   type: CuisineType,
   language: QrMenuLanguage,
 ): string {
-  return QR_LABELS[type][language];
+  const labels = QR_LABELS[type];
+  return labels[language] ?? labels.EN ?? labels.GR ?? type;
 }

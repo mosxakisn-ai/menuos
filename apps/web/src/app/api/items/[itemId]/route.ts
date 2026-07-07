@@ -7,14 +7,14 @@ import { autoFillMenuNames } from "@/lib/menu-translation-service";
 import { getItemForOrganization } from "@/lib/venue-access";
 import { normalizeStoredPhotoUrl } from "@/lib/photo-signing";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
+import {
+  patchProvidedAnyTranslatedName,
+  upsertEntityNameTranslation,
+} from "@/lib/menu-name-upsert";
 
 type Params = { params: Promise<{ itemId: string }> };
 
-async function upsertItemName(
-  itemId: string,
-  language: SupportedLanguage,
-  name: string | undefined,
-) {
+async function upsertItemName(itemId: string, language: SupportedLanguage, name: string | undefined) {
   if (name === undefined) return;
   const trimmed = name.trim();
   if (!trimmed) {
@@ -53,15 +53,19 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: catalogEntry.invalidData }, { status: 400 });
   }
 
-  let { nameGr, nameEn, nameDe, nameFr, available, price, label, photoUrl, extras } = parsed.data;
+  const { available, price, label, photoUrl, extras, nameGr, ...namePatch } = parsed.data;
 
   if (nameGr !== undefined) {
-    const filled = await autoFillMenuNames({ nameGr, nameEn, nameDe, nameFr });
-    nameGr = filled.nameGr;
-    const retranslateAll = nameEn === undefined && nameDe === undefined && nameFr === undefined;
-    nameEn = retranslateAll ? (filled.nameEn ?? "") : (filled.nameEn ?? undefined);
-    nameDe = retranslateAll ? (filled.nameDe ?? "") : (filled.nameDe ?? undefined);
-    nameFr = retranslateAll ? (filled.nameFr ?? "") : (filled.nameFr ?? undefined);
+    const filled = await autoFillMenuNames({ nameGr, ...namePatch });
+    await upsertEntityNameTranslation(
+      (language, name) => upsertItemName(itemId, language, name),
+      filled,
+    );
+  } else if (patchProvidedAnyTranslatedName(parsed.data as Record<string, unknown>)) {
+    await upsertEntityNameTranslation(
+      (language, name) => upsertItemName(itemId, language, name),
+      { nameGr: "", ...namePatch },
+    );
   }
 
   const normalizedPhoto =
@@ -84,11 +88,6 @@ export async function PATCH(request: Request, { params }: Params) {
       ...(normalizedExtras !== undefined ? { extras: normalizedExtras } : {}),
     },
   });
-
-  await upsertItemName(itemId, "GR", nameGr);
-  await upsertItemName(itemId, "EN", nameEn);
-  await upsertItemName(itemId, "DE", nameDe);
-  await upsertItemName(itemId, "FR", nameFr);
 
   const item = await prisma.item.findUnique({
     where: { id: itemId },

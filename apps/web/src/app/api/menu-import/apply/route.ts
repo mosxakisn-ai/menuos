@@ -3,6 +3,7 @@ import { prisma } from "@menuos/db";
 import { menuImportApplySchema, buildMenuNameTranslations } from "@menuos/shared";
 import { requirePdfImportPlan } from "@/lib/api-auth";
 import { dashboardCopyFromRequest } from "@/lib/dashboard-request-locale";
+import { autoFillMenuNames } from "@/lib/menu-translation-service";
 import {
   assertCanAddItemsInTransaction,
   planLimitErrorResponse,
@@ -59,6 +60,41 @@ export async function POST(request: Request) {
   });
   let nextCatSort = (maxSortCat._max.sortOrder ?? -1) + 1;
 
+  type PreparedItem = {
+    item: (typeof selectedCategories)[number]["items"][number];
+    names: Awaited<ReturnType<typeof autoFillMenuNames>>;
+  };
+  type PreparedCategory = {
+    cat: (typeof selectedCategories)[number];
+    categoryNames: Awaited<ReturnType<typeof autoFillMenuNames>>;
+    items: PreparedItem[];
+  };
+
+  const prepared: PreparedCategory[] = [];
+  for (const cat of selectedCategories) {
+    const items = cat.items.filter((i) => i.selected !== false);
+    if (items.length === 0) continue;
+
+    const categoryNames = await autoFillMenuNames({
+      nameGr: cat.nameGr.trim(),
+      nameEn: cat.nameEn,
+      nameDe: cat.nameDe,
+      nameFr: cat.nameFr,
+    });
+
+    const preparedItems: PreparedItem[] = [];
+    for (const item of items) {
+      const names = await autoFillMenuNames({
+        nameGr: item.nameGr.trim(),
+        nameEn: item.nameEn,
+        nameDe: item.nameDe,
+        nameFr: item.nameFr,
+      });
+      preparedItems.push({ item, names });
+    }
+    prepared.push({ cat, categoryNames, items: preparedItems });
+  }
+
   let createdCategories = 0;
   let createdItems = 0;
 
@@ -70,40 +106,21 @@ export async function POST(request: Request) {
         selectedItems.length,
       );
 
-      for (const cat of selectedCategories) {
-        const items = cat.items.filter((i) => i.selected !== false);
-        if (items.length === 0) continue;
-
+      for (const { categoryNames, items } of prepared) {
         const category = await tx.category.create({
           data: {
             menuId: parsed.data.menuId,
             sortOrder: nextCatSort++,
             translations: {
-              create: [
-                { language: "GR", name: cat.nameGr.trim() },
-                ...(cat.nameEn?.trim()
-                  ? [{ language: "EN" as const, name: cat.nameEn.trim() }]
-                  : []),
-                ...(cat.nameDe?.trim()
-                  ? [{ language: "DE" as const, name: cat.nameDe.trim() }]
-                  : []),
-                ...(cat.nameFr?.trim()
-                  ? [{ language: "FR" as const, name: cat.nameFr.trim() }]
-                  : []),
-              ],
+              create: buildMenuNameTranslations(categoryNames),
             },
           },
         });
         createdCategories += 1;
 
         let itemSort = 0;
-        for (const item of items) {
-          const nameRows = buildMenuNameTranslations({
-            nameGr: item.nameGr.trim(),
-            nameEn: item.nameEn,
-            nameDe: item.nameDe,
-            nameFr: item.nameFr,
-          });
+        for (const { item, names } of items) {
+          const nameRows = buildMenuNameTranslations(names);
           await tx.item.create({
             data: {
               categoryId: category.id,

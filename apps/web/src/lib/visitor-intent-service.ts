@@ -1,5 +1,6 @@
 import { prisma } from "@menuos/db";
 import { checkRateLimitOutcome } from "@/lib/rate-limit";
+import { startOfTodayAthens } from "@/lib/athens-day";
 
 export const VISITOR_INTENT_SURFACES = ["marketing", "register", "checkout"] as const;
 export type VisitorIntentSurface = (typeof VISITOR_INTENT_SURFACES)[number];
@@ -245,21 +246,39 @@ async function enrichRowsWithGeo(rows: VisitorIntentRow[]): Promise<VisitorInten
 function enrichLogRow(row: VisitorIntentRow, now: Date, liveSids: Set<string>): VisitorIntentRow {
   const first = row.firstSeenAt.getTime();
   const last = row.lastSeenAt.getTime();
-  const end = row.leftAt?.getTime() ?? last;
+  const online = liveSids.has(row.sessionId);
+  const leftAt = online ? null : row.leftAt ?? row.lastSeenAt;
+  const end = leftAt?.getTime() ?? last;
   let durationSeconds = Math.max(0, Math.floor((end - first) / 1000));
   durationSeconds = Math.min(durationSeconds, 6 * 3600);
-  const online = liveSids.has(row.sessionId);
+  const stepSeconds = online
+    ? Math.max(0, Math.floor((now.getTime() - row.stepSince.getTime()) / 1000))
+    : durationSeconds;
   return {
     ...row,
-    status: online ? "online" : row.status === "left" ? "left" : "left",
-    leftAt: online ? null : row.leftAt ?? row.lastSeenAt,
+    status: online ? "online" : "left",
+    leftAt,
     durationSeconds,
-    stepSeconds: Math.max(0, Math.floor((now.getTime() - row.stepSince.getTime()) / 1000)),
+    stepSeconds,
     stuck:
+      online &&
       (STUCK_STEPS.has(row.step) || STUCK_STEPS.has(peakFunnelStep(row) as VisitorIntentStep)) &&
-      Math.max(0, Math.floor((now.getTime() - row.stepSince.getTime()) / 1000)) >=
-        VISITOR_INTENT_STUCK_STEP_SECONDS,
+      stepSeconds >= VISITOR_INTENT_STUCK_STEP_SECONDS,
   };
+}
+
+/** Κλείνει sessions χωρίς heartbeat > active window — σταματάει ο χρόνος επίσκεψης. */
+export async function markStaleVisitorSessionsLeft(
+  now = new Date(),
+  activeWithinSeconds = VISITOR_INTENT_ACTIVE_WITHIN_SECONDS,
+): Promise<number> {
+  const cutoff = new Date(now.getTime() - activeWithinSeconds * 1000);
+  const result = await prisma.$executeRaw`
+    UPDATE "VisitorIntentSession"
+    SET status = 'left', "leftAt" = COALESCE("leftAt", "lastSeenAt")
+    WHERE status = 'online' AND "lastSeenAt" < ${cutoff}
+  `;
+  return Number(result);
 }
 
 function rowFromDb(row: {
@@ -419,6 +438,7 @@ export async function listLiveVisitorIntents(opts?: {
   const now = new Date();
   await pruneOldVisitorIntentSessions(now);
   const activeWithin = opts?.activeWithinSeconds ?? VISITOR_INTENT_ACTIVE_WITHIN_SECONDS;
+  await markStaleVisitorSessionsLeft(now, activeWithin);
   const cutoff = new Date(now.getTime() - activeWithin * 1000);
 
   const rows = await prisma.visitorIntentSession.findMany({
@@ -456,6 +476,7 @@ export async function listVisitorIntentLog(opts?: {
   const limit = Math.min(Math.max(opts?.limit ?? 200, 1), 400);
   const minSeen = new Date(now.getTime() - hours * 3600 * 1000);
   const activeWithin = opts?.activeWithinSeconds ?? VISITOR_INTENT_ACTIVE_WITHIN_SECONDS;
+  await markStaleVisitorSessionsLeft(now, activeWithin);
   const liveCutoff = new Date(now.getTime() - activeWithin * 1000);
 
   const liveRows = await prisma.visitorIntentSession.findMany({
@@ -469,7 +490,7 @@ export async function listVisitorIntentLog(opts?: {
       lastSeenAt: { gte: minSeen },
       ...(opts?.surface ? { surface: opts.surface } : {}),
     },
-    orderBy: { lastSeenAt: "desc" },
+    orderBy: { firstSeenAt: "desc" },
     take: limit,
   });
 
@@ -506,6 +527,25 @@ export function countPaymentsTodayFromLog(rows: VisitorIntentRow[]): number {
     if (row.step === "payment_success" && dayOf(row.lastSeenAt.getTime()) === today) return true;
     return row.stepTrail.some((t) => t.step === "payment_success" && dayOf(t.at) === today);
   }).length;
+}
+
+/** Μοναδικοί επισκέπτες που μπήκαν σήμερα (Europe/Athens). */
+export async function countVisitorsToday(opts?: {
+  surface?: VisitorIntentSurface | "";
+  excludeTest?: boolean;
+}): Promise<number> {
+  const start = startOfTodayAthens();
+  const rows = await prisma.visitorIntentSession.findMany({
+    where: {
+      firstSeenAt: { gte: start },
+      ...(opts?.surface ? { surface: opts.surface } : {}),
+    },
+    select: { sessionId: true, clientIp: true },
+  });
+
+  return rows
+    .filter((row) => (opts?.excludeTest !== false ? !row.sessionId.startsWith("test-") : true))
+    .filter((row) => !row.clientIp || !INFRA_IPS.has(row.clientIp)).length;
 }
 
 export async function recordVisitorIntentPaymentSuccess(input: {

@@ -1,6 +1,9 @@
-/** Γλώσσες στο public QR menu — ίδιες με τη βάση (GR, EN, DE, FR). */
-export const QR_MENU_LANGUAGES = ["GR", "EN", "DE", "FR"] as const;
+/** Γλώσσες στο public QR menu — ίδιες με τη βάση (SupportedLanguage). */
+export const QR_MENU_LANGUAGES = ["GR", "EN", "DE", "FR", "PL", "CS", "IT", "SV", "FI", "TR"] as const;
 export type QrMenuLanguage = (typeof QR_MENU_LANGUAGES)[number];
+
+/** Same codes as DB SupportedLanguage enum. */
+export const SUPPORTED_LANGUAGES = QR_MENU_LANGUAGES;
 
 export const QR_MENU_LANGUAGE_LABELS: Record<
   QrMenuLanguage,
@@ -10,6 +13,12 @@ export const QR_MENU_LANGUAGE_LABELS: Record<
   EN: { short: "EN", name: "English", ariaLabel: "English" },
   DE: { short: "DE", name: "Deutsch", ariaLabel: "Deutsch" },
   FR: { short: "FR", name: "Français", ariaLabel: "Français" },
+  PL: { short: "PL", name: "Polski", ariaLabel: "Polski" },
+  CS: { short: "CS", name: "Čeština", ariaLabel: "Čeština" },
+  IT: { short: "IT", name: "Italiano", ariaLabel: "Italiano" },
+  SV: { short: "SV", name: "Svenska", ariaLabel: "Svenska" },
+  FI: { short: "FI", name: "Suomi", ariaLabel: "Suomi" },
+  TR: { short: "TR", name: "Türkçe", ariaLabel: "Türkçe" },
 };
 
 const LANG_ALIASES: Record<string, QrMenuLanguage> = {
@@ -27,6 +36,26 @@ const LANG_ALIASES: Record<string, QrMenuLanguage> = {
   french: "FR",
   francais: "FR",
   français: "FR",
+  pl: "PL",
+  polish: "PL",
+  polski: "PL",
+  cs: "CS",
+  cz: "CS",
+  czech: "CS",
+  cesky: "CS",
+  it: "IT",
+  italian: "IT",
+  italiano: "IT",
+  sv: "SV",
+  swedish: "SV",
+  svenska: "SV",
+  fi: "FI",
+  finnish: "FI",
+  suomi: "FI",
+  tr: "TR",
+  turkish: "TR",
+  turkce: "TR",
+  türkçe: "TR",
 };
 
 export function parseQrMenuLanguage(raw?: string | null): QrMenuLanguage {
@@ -298,38 +327,60 @@ export const QR_MENU_UI = {
   },
 } as const;
 
-export type QrMenuUiStrings = (typeof QR_MENU_UI)[QrMenuLanguage];
+export type QrMenuUiStrings = (typeof QR_MENU_UI)["EN"];
 
-const QR_MENU_FALLBACK_ORDER: QrMenuLanguage[] = ["GR", "EN", "DE", "FR"];
+function translationWithName<T extends { language: string; name?: string | null }>(
+  translations: T[],
+  code: QrMenuLanguage,
+): T | undefined {
+  const hit = translations.find((t) => t.language === code);
+  return hit?.name?.trim() ? hit : undefined;
+}
 
-/** Επιλογή μετάφρασης πιάτου/κατηγορίας με fallback GR → EN → DE → FR. */
-export function pickQrMenuTranslation<T extends { language: string }>(
+/** Σειρά fallback όταν λείπει η επιλεγμένη γλώσσα — EN πριν το GR για τουρίστες. */
+function qrMenuTranslationFallbackOrder(lang: QrMenuLanguage): QrMenuLanguage[] {
+  if (lang === "GR") return ["GR", "EN", "DE", "FR", "IT", "PL", "CS", "TR", "SV", "FI"];
+  const rest = QR_MENU_LANGUAGES.filter((code) => code !== lang && code !== "EN" && code !== "GR");
+  return ["EN", ...rest, "GR"];
+}
+
+/** Επιλογή μετάφρασης πιάτου/κατηγορίας — προτιμά την επιλεγμένη γλώσσα, μετά EN, όχι αμέσως GR. */
+export function pickQrMenuTranslation<T extends { language: string; name?: string | null }>(
   translations: T[],
   lang: QrMenuLanguage,
 ): T | undefined {
-  const direct = translations.find((t) => t.language === lang);
+  const direct = translationWithName(translations, lang);
   if (direct) return direct;
 
-  for (const code of QR_MENU_FALLBACK_ORDER) {
-    const hit = translations.find((t) => t.language === code);
+  for (const code of qrMenuTranslationFallbackOrder(lang)) {
+    const hit = translationWithName(translations, code);
     if (hit) return hit;
   }
 
-  return translations[0];
+  return translations.find((t) => t.name?.trim()) ?? translations[0];
 }
 
 /** Δημιουργία μεταφράσεων κατηγορίας/πιάτου από φόρμα dashboard. */
-export function buildMenuNameTranslations(input: {
-  nameGr: string;
-  nameEn?: string | null;
-  nameDe?: string | null;
-  nameFr?: string | null;
-}): Array<{ language: QrMenuLanguage; name: string }> {
+export function buildMenuNameTranslations(
+  input: import("./menu-translation-langs").MenuNameFields,
+): Array<{ language: QrMenuLanguage; name: string }> {
   const rows: Array<{ language: QrMenuLanguage; name: string }> = [
     { language: "GR", name: input.nameGr.trim() },
   ];
-  if (input.nameEn?.trim()) rows.push({ language: "EN", name: input.nameEn.trim() });
-  if (input.nameDe?.trim()) rows.push({ language: "DE", name: input.nameDe.trim() });
-  if (input.nameFr?.trim()) rows.push({ language: "FR", name: input.nameFr.trim() });
+  const pairs: Array<[QrMenuLanguage, string | null | undefined]> = [
+    ["EN", input.nameEn],
+    ["DE", input.nameDe],
+    ["FR", input.nameFr],
+    ["PL", input.namePl],
+    ["CS", input.nameCs],
+    ["IT", input.nameIt],
+    ["SV", input.nameSv],
+    ["FI", input.nameFi],
+    ["TR", input.nameTr],
+  ];
+  for (const [language, name] of pairs) {
+    const trimmed = name?.trim();
+    if (trimmed) rows.push({ language, name: trimmed });
+  }
   return rows;
 }
