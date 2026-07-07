@@ -13,6 +13,7 @@ export const VISITOR_INTENT_STEPS = [
   "pay_clicked",
   "stripe_redirect",
   "payment_success",
+  "payment_cancelled",
   "payment_failed",
   "stripe_init_failed",
   "heartbeat",
@@ -33,6 +34,7 @@ const HOT_STEPS = new Set<VisitorIntentStep>([
   "pay_clicked",
   "stripe_redirect",
   "payment_success",
+  "payment_cancelled",
   "payment_failed",
   "stripe_init_failed",
 ]);
@@ -46,6 +48,7 @@ const STUCK_STEPS = new Set<VisitorIntentStep>([
 
 const FINAL_STEPS = new Set<VisitorIntentStep>([
   "payment_success",
+  "payment_cancelled",
   "payment_failed",
   "stripe_init_failed",
 ]);
@@ -59,6 +62,7 @@ export const VISITOR_INTENT_STEP_RANK: Partial<Record<VisitorIntentStep, number>
   checkout_opened: 5,
   pay_clicked: 6,
   stripe_redirect: 7,
+  payment_cancelled: 7,
   payment_failed: 7,
   stripe_init_failed: 7,
   payment_success: 10,

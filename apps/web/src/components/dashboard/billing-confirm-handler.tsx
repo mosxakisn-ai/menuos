@@ -29,7 +29,7 @@ export function BillingConfirmHandler({
         billingOutcomeHandled.current = "cancelled";
         bumpVisitorIntentStep({
           surface: "checkout",
-          step: "payment_failed",
+          step: "payment_cancelled",
           path: "/dashboard/billing",
           visitorLabel: userEmail?.trim() || undefined,
         });

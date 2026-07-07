@@ -36,7 +36,8 @@ const STEP_LABELS: Record<string, string> = {
   pay_clicked: "Πάτησε πληρωμή",
   stripe_redirect: "Στο Stripe",
   payment_success: "Πλήρωσε ✓",
-  payment_failed: "Απέτυχε",
+  payment_cancelled: "Ακύρωσε πληρωμή",
+  payment_failed: "Απέτυχε η πληρωμή",
   stripe_init_failed: "Σφάλμα checkout",
   heartbeat: "Περιήγηση",
 };
@@ -67,6 +68,7 @@ const PAYMENT_STEPS = new Set([
   "pay_clicked",
   "stripe_redirect",
   "payment_success",
+  "payment_cancelled",
   "payment_failed",
   "stripe_init_failed",
 ]);
@@ -110,6 +112,7 @@ function stepLabel(step: string) {
 
 function stepBadgeClass(step: string) {
   if (step === "payment_success") return "bg-emerald-100 text-emerald-900";
+  if (step === "payment_cancelled") return "bg-orange-100 text-orange-900";
   if (step === "payment_failed" || step === "stripe_init_failed") return "bg-red-100 text-red-900";
   if (step === "pay_clicked" || step === "stripe_redirect") return "bg-amber-100 text-amber-900";
   if (step === "checkout_opened") return "bg-sky-100 text-sky-800";
@@ -119,6 +122,16 @@ function stepBadgeClass(step: string) {
 
 function fmtWhen(iso: string) {
   return new Date(iso).toLocaleTimeString("el-GR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function fmtFirstSeen(unixSec: number) {
+  if (!unixSec) return "—";
+  return new Date(unixSec * 1000).toLocaleString("el-GR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function fmtDuration(sec: number) {
@@ -197,6 +210,7 @@ function SessionCard({ row, compact }: { row: SessionRow; compact?: boolean }) {
             {displayLocation(row) !== "—" ? ` · ${displayLocation(row)}` : ""}
           </p>
         ) : null}
+        <p className="text-slate-500">Μπήκε: {fmtFirstSeen(row.first_seen)}</p>
         <p className="inline-flex items-center gap-1 text-slate-500">
           <Clock3 className="h-3 w-3" />
           {online
