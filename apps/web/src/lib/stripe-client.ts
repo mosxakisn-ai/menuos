@@ -102,6 +102,7 @@ function buildCheckoutSessionParams(input: {
   copy: ReturnType<typeof buildSubscriptionCheckoutCopy>;
   metadata: Record<string, string>;
   branding: boolean;
+  includeProductImage?: boolean;
 }): URLSearchParams {
   const safeReturn = safeReturnPath(input.returnPath);
   const sep = safeReturn.includes("?") ? "&" : "?";
@@ -129,6 +130,7 @@ function buildCheckoutSessionParams(input: {
     invoiceDescription: input.copy.invoiceDescription,
     invoiceCreation: false,
     branding: input.branding,
+    includeProductImage: input.includeProductImage,
   });
   params.set(
     "line_items[0][price_data][unit_amount]",
@@ -195,7 +197,11 @@ export async function createPlanCheckoutSession(input: {
     if (!isUnsupportedBrandingError(message)) throw err;
     session = await stripePost<{ id: string; url: string }>(
       "/checkout/sessions",
-      buildCheckoutSessionParams({ ...sessionInput, branding: false }),
+      buildCheckoutSessionParams({
+        ...sessionInput,
+        branding: false,
+        includeProductImage: false,
+      }),
     );
   }
 

@@ -95,6 +95,7 @@ export function appendStripeCheckoutPresentation(
     collectBillingAddress?: boolean;
     invoiceCreation?: boolean;
     branding?: boolean;
+    includeProductImage?: boolean;
   },
 ) {
   params.set("locale", options.locale ?? "el");
@@ -112,6 +113,8 @@ export function appendStripeCheckoutPresentation(
     appendMenuOsCheckoutBranding(params);
   }
 
-  const prefix = options.lineItemPrefix ?? "line_items[0][price_data][product_data]";
-  params.set(`${prefix}[images][0]`, options.productImageUrl ?? MENUOS_CHECKOUT_IMAGE);
+  if (options.includeProductImage !== false) {
+    const prefix = options.lineItemPrefix ?? "line_items[0][price_data][product_data]";
+    params.set(`${prefix}[images][0]`, options.productImageUrl ?? MENUOS_CHECKOUT_IMAGE);
+  }
 }

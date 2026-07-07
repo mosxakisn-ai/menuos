@@ -124,25 +124,6 @@ function PlanEditor({
     return isPlanCatalogFieldEditable(plan.id, field);
   }
 
-  useEffect(() => {
-    setName(plan.name);
-    setPriceMonthly(String(plan.priceMonthly));
-    setPriceDisplay(plan.priceDisplay ?? "");
-    setPeriodLabel(plan.periodLabel);
-    setDescription(plan.description ?? "");
-    setFeaturesText(plan.features.join("\n"));
-    setMaxVenues(String(plan.maxVenues));
-    setMaxMenus(plan.maxMenusPerVenue === null ? "" : String(plan.maxMenusPerVenue));
-    setMaxItems(plan.maxItems === null ? "" : String(plan.maxItems));
-    setMaxGeminiTokens(plan.maxGeminiTokensPerMonth === null ? "" : String(plan.maxGeminiTokensPerMonth));
-    setCtaLabel(plan.ctaLabel ?? "");
-    setBadge(plan.badge ?? "");
-    setHighlighted(plan.highlighted);
-    setVisibleOnPricing(plan.visibleOnPricing);
-    setTrialDays(plan.trialDays === null ? "" : String(plan.trialDays));
-    setSortOrder(String(plan.sortOrder));
-  }, [plan]);
-
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -504,6 +485,7 @@ export function SupervisorPlansClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [editing, setEditing] = useState<PlanCatalogEntry | null>(null);
+  const [editorSeed, setEditorSeed] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -525,7 +507,7 @@ export function SupervisorPlansClient() {
   }, [load]);
 
   return (
-    <DashboardPage wide>
+    <DashboardPage wide className="max-w-none">
       <DashboardPageHeader
         title="Πακέτα συνδρομής"
         description={
@@ -608,11 +590,13 @@ export function SupervisorPlansClient() {
           </div>
           {editing ? (
             <PlanEditor
+              key={`${editing.id}:${editorSeed}`}
               plan={editing}
               onClose={() => setEditing(null)}
               onSaved={(updated) => {
                 setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
                 setEditing(updated);
+                setEditorSeed((seed) => seed + 1);
               }}
             />
           ) : null}

@@ -10,6 +10,7 @@ import { fireAdminNotify, notifyAdminStripePayment } from "@/lib/admin-notify";
 import { getPlanFromCatalog } from "@/lib/plan-catalog-service";
 import { isBillingMockAllowed } from "@/lib/stripe-config";
 import { createPlanCheckoutSession, isStripeEnabled } from "@/lib/stripe-client";
+import { userFacingCheckoutError } from "@/lib/stripe-checkout-errors";
 import { safeReturnPath } from "@/lib/safe-return-path";
 import type { PaidSubscriptionPlanId } from "@menuos/shared";
 
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Σφάλμα χρέωσης." },
+      { error: userFacingCheckoutError(err) },
       { status: 500 },
     );
   }

@@ -74,6 +74,7 @@ export function BillingPlans({
       planId,
       visitorLabel,
     });
+    let keepLoading = false;
     try {
       const res = await fetch("/api/billing", {
         method: "POST",
@@ -120,6 +121,7 @@ export function BillingPlans({
           planId,
           visitorLabel,
         });
+        keepLoading = true;
         window.location.href = data.checkoutUrl;
       }
     } catch {
@@ -132,7 +134,7 @@ export function BillingPlans({
         visitorLabel,
       });
     } finally {
-      setLoadingPlan(null);
+      if (!keepLoading) setLoadingPlan(null);
     }
   }
 
