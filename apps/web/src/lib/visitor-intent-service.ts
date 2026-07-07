@@ -558,7 +558,7 @@ export async function countVisitorsToday(opts?: {
     },
   });
 
-  return rows
+  const filtered = rows
     .filter((row) => (opts?.excludeTest !== false ? !row.sessionId.startsWith("test-") : true))
     .filter((row) => !row.clientIp || !INFRA_IPS.has(row.clientIp))
     .filter((row) =>
@@ -573,7 +573,20 @@ export async function countVisitorsToday(opts?: {
           ? (row.stepTrail as { step: string; at: number }[])
           : [],
       }),
-    ).length;
+    );
+
+  const seen = new Set<string>();
+  let count = 0;
+  for (const row of filtered) {
+    const key =
+      row.visitorLabel?.trim().toLowerCase() ||
+      row.clientIp?.trim() ||
+      row.sessionId;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    count += 1;
+  }
+  return count;
 }
 
 export async function recordVisitorIntentPaymentSuccess(input: {

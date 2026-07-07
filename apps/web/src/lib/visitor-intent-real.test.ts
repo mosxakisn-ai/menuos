@@ -95,4 +95,15 @@ describe("isRealCustomerVisitor", () => {
       }),
     ).toBe(true);
   });
+
+  it("rejects internal owner test account", () => {
+    expect(
+      isRealCustomerVisitor({
+        ...base,
+        visitorLabel: "mosxakisn@gmail.com",
+        surface: "checkout",
+        step: "payment_failed",
+      }),
+    ).toBe(false);
+  });
 });

@@ -64,7 +64,8 @@ curl -s https://menuos.gr/api/billing
 | `metadata.platform` | `menuos.gr` |
 | `metadata.source` | `menuos_subscription` |
 | `client_reference_id` | `menuos:sub:{organizationId}:{planId}` |
-| Product name | `MenuOS — Basic (monthly)` |
+| Product name | `MenuOS Pro` |
+| Checkout branding | MenuOS logo + colors via `branding_settings` |
 | Statement suffix | `MENUOS` |
 
 **Stripe Dashboard → Payments → Filter → Metadata → `app` = `menuos`**
@@ -81,3 +82,15 @@ curl -s https://menuos.gr/api/billing
 | Enterprise | Custom | Contact sales |
 
 Upgrade: `/dashboard/billing`
+
+---
+
+## Checkout appearance
+
+Each checkout session sets MenuOS branding (logo, colors, display name) so the shared CloudEra Stripe account does not show GoFleet/MatchWork on the payment page.
+
+Assets (public, HTTPS):
+- `https://menuos.gr/checkout-logo` — header logo
+- `https://menuos.gr/checkout-brand` — product image
+
+Optional: **Stripe Dashboard → Settings → Branding** → set business name **MenuOS** as account default.

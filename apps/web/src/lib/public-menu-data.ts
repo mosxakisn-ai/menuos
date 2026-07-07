@@ -1,5 +1,6 @@
 import { prisma } from "@menuos/db";
 import { appendPhotoSignature } from "@/lib/photo-signing";
+import { enrichPublicMenuTranslations } from "@/lib/enrich-public-menu-translations";
 
 export async function loadPublicVenueMenu(venueSlug: string) {
   return prisma.venue.findUnique({
@@ -27,9 +28,11 @@ export async function loadPublicVenueMenu(venueSlug: string) {
   });
 }
 
-export function toPublicVenuePayload(
-  venue: NonNullable<Awaited<ReturnType<typeof loadPublicVenueMenu>>>,
-) {
+type LoadedVenue = NonNullable<Awaited<ReturnType<typeof loadPublicVenueMenu>>>;
+
+export async function buildPublicVenuePayload(venue: LoadedVenue) {
+  const enrichedMenus = await enrichPublicMenuTranslations(venue.menus);
+
   return {
     name: venue.name,
     slug: venue.slug,
@@ -37,15 +40,22 @@ export function toPublicVenuePayload(
     primaryColor: venue.primaryColor,
     description: venue.description,
     cuisineType: venue.cuisineType,
-    menus: venue.menus.map((menu) => ({
-      ...menu,
+    menus: enrichedMenus.map((menu) => ({
+      id: menu.id,
+      name: menu.name,
+      translations: menu.translations,
       categories: menu.categories
         .filter((category) => category.items.length > 0)
         .map((category) => ({
-          ...category,
+          id: category.id,
+          translations: category.translations,
           items: category.items.map((item) => ({
-            ...item,
-            photoUrl: appendPhotoSignature(item.photoUrl),
+            id: item.id,
+            price: item.price,
+            photoUrl: appendPhotoSignature(item.photoUrl as string | null),
+            label: item.label as string | null,
+            extras: item.extras,
+            translations: item.translations,
           })),
         })),
     })),

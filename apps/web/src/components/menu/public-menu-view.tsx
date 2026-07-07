@@ -65,6 +65,7 @@ type Category = {
 type Menu = {
   id: string;
   name: string;
+  translations: { language: SupportedLanguage; name: string }[];
   categories: Category[];
 };
 
@@ -865,7 +866,7 @@ export function PublicMenuView({
                   activeMenu?.id === menu.id ? "bg-white text-primary" : "bg-white/15 text-white",
                 )}
               >
-                {menu.name}
+                {tName(menu.translations.length > 0 ? menu.translations : [{ language: "GR", name: menu.name }])}
               </button>
             ))}
           </div>

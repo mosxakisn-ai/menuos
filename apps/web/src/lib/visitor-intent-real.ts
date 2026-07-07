@@ -72,6 +72,31 @@ const FUNNEL_STEPS = new Set([
   "stripe_init_failed",
 ]);
 
+/** Default owner/dev account — δεν εμφανίζεται στα analytics επισκεπτών. */
+const DEFAULT_EXCLUDED_VISITOR_LABELS = ["mosxakisn@gmail.com"] as const;
+
+let excludedVisitorLabelsCache: Set<string> | null = null;
+
+function buildExcludedVisitorLabels(): Set<string> {
+  const labels = new Set<string>(DEFAULT_EXCLUDED_VISITOR_LABELS);
+  for (const raw of [process.env.VISITOR_INTENT_EXCLUDE_LABELS, process.env.SEED_MASTER_EMAIL]) {
+    if (!raw?.trim()) continue;
+    for (const part of raw.split(",")) {
+      const email = part.trim().toLowerCase();
+      if (email) labels.add(email);
+    }
+  }
+  return labels;
+}
+
+/** Εσωτερικός λογαριασμός (dev/owner) — κρύβεται από supervisor analytics. */
+export function isExcludedInternalVisitorLabel(label: string | null | undefined): boolean {
+  const norm = label?.trim().toLowerCase();
+  if (!norm) return false;
+  excludedVisitorLabelsCache ??= buildExcludedVisitorLabels();
+  return excludedVisitorLabelsCache.has(norm);
+}
+
 export type VisitorIntentLike = {
   sessionId: string;
   surface: string;
@@ -104,10 +129,11 @@ function isBlogOnlySession(row: VisitorIntentLike): boolean {
   return !sessionReachedFunnel(row);
 }
 
-/** Πραγματικός ενδιαφερόμενος πελάτης — όχι bot/crawler/blog-only scrape. */
+/** Πραγματικός ενδιαφερόμενος πελάτης — όχι bot/crawler/blog-only scrape/εσωτερικός λογαριασμός. */
 export function isRealCustomerVisitor(row: VisitorIntentLike): boolean {
   if (row.sessionId.startsWith("test-")) return false;
   if (isKnownCrawlerIp(row.clientIp)) return false;
+  if (isExcludedInternalVisitorLabel(row.visitorLabel)) return false;
 
   if (row.surface === "register" || row.surface === "checkout") return true;
   if (row.visitorLabel?.trim()) return true;

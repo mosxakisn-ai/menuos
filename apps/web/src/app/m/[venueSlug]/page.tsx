@@ -5,7 +5,7 @@ import { buildPrivatePageMetadata } from "@/lib/seo";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { organizationCanUseLive360 } from "@/lib/billing";
 import { ensureMenuTranslationsBeforeRender } from "@/lib/ensure-menu-translations";
-import { loadPublicVenueMenu, toPublicVenuePayload } from "@/lib/public-menu-data";
+import { loadPublicVenueMenu, buildPublicVenuePayload } from "@/lib/public-menu-data";
 import { PublicMenuView } from "@/components/menu/public-menu-view";
 import { PublicMenuUnavailable } from "@/components/menu/public-menu-unavailable";
 
@@ -57,7 +57,7 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
     return t || undefined;
   };
 
-  const publicVenue = toPublicVenuePayload(venue);
+  const publicVenue = await buildPublicVenuePayload(venue);
   const live360Enabled = organizationCanUseLive360(venue.organization.subscription?.plan ?? "TRIAL");
 
   return (

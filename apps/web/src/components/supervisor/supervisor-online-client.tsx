@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
-  CheckCircle2,
   Clock3,
   Radio,
   RefreshCw,
@@ -335,31 +334,43 @@ export function SupervisorOnlineClient() {
         description="Ποιος είναι στο menuos.gr, στην εγγραφή ή στη συνδρομή — με IP, πόλη και ιστορικό 24 ωρών. Ανανέωση κάθε 3 δευτερόλεπτα."
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      {!loading ? (
+        <div className="mb-4 overflow-hidden rounded-2xl border border-brand-blue/20 bg-gradient-to-br from-brand-blue via-[#1d4ed8] to-cyan-500 p-6 shadow-lg shadow-brand-blue/25">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-white/75">
+                <Users className="h-4 w-4" aria-hidden />
+                Μπήκαν σήμερα
+              </p>
+              <p className="mt-1 font-serif text-5xl font-bold tabular-nums leading-none text-white sm:text-6xl">
+                {visitorsToday}
+              </p>
+              <p className="mt-2 text-sm text-white/70">Μοναδικές επισκέψεις · ώρα Ελλάδας</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-white/70">Πληρωμές σήμερα</p>
+                <p className="mt-0.5 text-2xl font-bold tabular-nums text-white">{paymentsToday}</p>
+              </div>
+              {scoped.length > 0 ? (
+                <div className="rounded-xl border border-emerald-200/30 bg-emerald-500/20 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-50/90">Εδώ τώρα</p>
+                  <p className="mt-0.5 text-2xl font-bold tabular-nums text-white">{scoped.length}</p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mb-4 flex flex-wrap items-center gap-2 border-t border-slate-200/80 pt-4">
         <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
           Live
         </span>
-        {!loading && scoped.length > 0 ? (
-          <span className="rounded-full bg-cyan-100 px-2.5 py-0.5 text-[10px] font-bold text-cyan-900">
-            {scoped.length} εδώ τώρα
-          </span>
-        ) : null}
         {!loading && stuckTotal > 0 ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
             <AlertTriangle className="h-3 w-3" />
             {stuckTotal} σε αναμονή
-          </span>
-        ) : null}
-        {!loading ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-900">
-            <Users className="h-3 w-3" />
-            Μπήκαν σήμερα: {visitorsToday}
-          </span>
-        ) : null}
-        {!loading ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-700">
-            <CheckCircle2 className="h-3 w-3" />
-            Σήμερα πληρωμές: {paymentsToday}
           </span>
         ) : null}
         {!loading && checkoutFunnelToday > 0 ? (
