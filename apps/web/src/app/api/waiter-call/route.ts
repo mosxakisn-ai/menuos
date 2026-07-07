@@ -13,6 +13,7 @@ import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { organizationCanUseLive360 } from "@/lib/billing";
 import { checkRateLimitOutcome, clientIp, RATE_LIMIT_SERVER_ERROR } from "@/lib/rate-limit";
 import { validateOrderItemsForVenue } from "@/lib/validate-order-items";
+import { getOrganizationNotificationSettings } from "@/lib/organization-notification-settings";
 import { pushStaffWaiterCall } from "@/lib/waiter-call-push";
 import { requireWaiterVenueAccess } from "@/lib/staff-auth";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
@@ -205,6 +206,21 @@ export async function POST(request: Request) {
       );
     }
 
+    const notificationSettings = await getOrganizationNotificationSettings(venue.organizationId);
+    const callType = parsed.data.type as WaiterCallType;
+    if (callType === "ORDER" && !notificationSettings.customerOrdersEnabled) {
+      return NextResponse.json(
+        { error: "Οι παραγγελίες από πελάτη είναι απενεργοποιημένες.", code: "orders_disabled" },
+        { status: 403 },
+      );
+    }
+    if ((callType === "WAITER" || callType === "BILL") && !notificationSettings.waiterCallEnabled) {
+      return NextResponse.json(
+        { error: "Η κλήση σερβιτόρου είναι απενεργοποιημένη.", code: "waiter_calls_disabled" },
+        { status: 403 },
+      );
+    }
+
     if (!parsed.data.tableNumber && !parsed.data.roomNumber && !parsed.data.sunbedNumber) {
       return NextResponse.json(
         { error: "Απαιτείται τραπέζι, δωμάτιο ή ξαπλώστρα.", code: "location_required" },
@@ -214,7 +230,6 @@ export async function POST(request: Request) {
 
     const location = normalizeWaiterCallLocation(parsed.data);
 
-    const callType = parsed.data.type as WaiterCallType;
     let validatedOrder: OrderPayload | null = null;
     if (callType === "ORDER") {
       if (!parsed.data.orderItems?.lines.length) {

@@ -114,6 +114,8 @@ export function PublicMenuView({
   sunbedNumber,
   embedMode = false,
   live360Enabled = false,
+  waiterCallEnabled = true,
+  customerOrdersEnabled = true,
 }: {
   venue: Venue;
   language: QrMenuLanguage;
@@ -122,6 +124,8 @@ export function PublicMenuView({
   sunbedNumber?: string;
   embedMode?: boolean;
   live360Enabled?: boolean;
+  waiterCallEnabled?: boolean;
+  customerOrdersEnabled?: boolean;
 }) {
   const [lang, setLang] = useState<QrMenuLanguage>(language);
   const [activeMenuId, setActiveMenuId] = useState(venue.menus[0]?.id);
@@ -499,7 +503,7 @@ export function PublicMenuView({
   }
 
   function addToCart() {
-    if (!selectedItem || !canUseCallActions) return;
+    if (!selectedItem || !orderActionsEnabled) return;
     const tr = pickQrMenuTranslation(selectedItem.translations, lang);
     const itemExtras = parseItemExtras(selectedItem.extras);
     const extraIds = selectedExtraIds.filter((id) => itemExtras.some((e) => e.id === id));
@@ -525,7 +529,7 @@ export function PublicMenuView({
   }
 
   async function sendOrder() {
-    if (!canUseCallActions || cartLines.length === 0) return;
+    if (!orderActionsEnabled || cartLines.length === 0) return;
     setOrderErrorCode(null);
     setOrderState("loading");
     setCartOpen(false);
@@ -678,8 +682,10 @@ export function PublicMenuView({
   const cancelTarget = cancellableCalls[0] ?? null;
   const hasCancellableCall = cancellableCalls.length > 0;
   const multipleCancellable = cancellableCalls.length > 1;
-  const canUseCallActions =
-    live360Enabled && Boolean(tableNumber || roomNumber || sunbedNumber);
+  const hasSpotContext = Boolean(tableNumber || roomNumber || sunbedNumber);
+  const waiterActionsEnabled = live360Enabled && waiterCallEnabled && hasSpotContext;
+  const orderActionsEnabled = live360Enabled && customerOrdersEnabled && hasSpotContext;
+  const canUseCallActions = waiterActionsEnabled || orderActionsEnabled;
 
   useEffect(() => {
     if (!live360Enabled) return;
@@ -1005,7 +1011,7 @@ export function PublicMenuView({
       ) : null}
       </div>
 
-      {canUseCallActions && hasSentOrder && sentOrder ? (
+      {orderActionsEnabled && hasSentOrder && sentOrder ? (
         <div
           className={cn(
             shell,
@@ -1058,7 +1064,7 @@ export function PublicMenuView({
         </div>
       ) : null}
 
-      {canUseCallActions && hasCart ? (
+      {orderActionsEnabled && hasCart ? (
         <div
           className={cn(
             "relative z-50 w-full max-w-full shrink-0 border-t border-slate-200/80 bg-white/95 backdrop-blur",
@@ -1105,7 +1111,7 @@ export function PublicMenuView({
         </div>
       ) : null}
 
-      {canUseCallActions ? (
+      {waiterActionsEnabled ? (
       <div
         className={cn(
           "relative z-50 w-full max-w-full shrink-0 border-t border-slate-200/80 bg-white/95 backdrop-blur",
@@ -1330,7 +1336,7 @@ export function PublicMenuView({
                       </div>
                     );
                   })()}
-                  {canUseCallActions ? (
+                  {orderActionsEnabled ? (
                     <label className="mt-4 block">
                       <span className="text-sm font-semibold text-slate-700">{ui.orderNote}</span>
                       <input
@@ -1343,7 +1349,7 @@ export function PublicMenuView({
                       />
                     </label>
                   ) : null}
-                  {canUseCallActions ? (
+                  {orderActionsEnabled ? (
                     <>
                       <div className="mt-6 flex items-center justify-between">
                         <span className="text-sm font-semibold text-slate-700">{ui.quantity}</span>

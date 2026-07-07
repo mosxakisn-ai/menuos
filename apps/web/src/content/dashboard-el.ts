@@ -1211,8 +1211,12 @@ export const DASHBOARD_EL = {
           customerOrder: "Ενεργοποίηση παραγγελίας από πελάτη",
           waiterCall: "Ενεργοποίηση κλήσης σερβιτόρου",
           voiceMessages: "Ενεργοποίηση φωνητικών μηνυμάτων",
+          voiceHint:
+            "Η φωνή ακούγεται στα αγγλικά στο κινητό του σερβιτόρου — πιο καθαρά σε iPhone και Android.",
           yes: "Ναι",
           no: "Όχι",
+          saving: "Αποθήκευση…",
+          saved: "Αποθηκεύτηκαν.",
         },
         staffLinksHint: "Links σερβιτόρων: Ρυθμίσεις → Προσωπικό (ένα link ανά άτομο).",
         minutesAgo: (n: number) => `πριν ${n} λεπ.`,

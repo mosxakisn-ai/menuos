@@ -9,6 +9,7 @@ import { getOrganizationPlanContext, organizationCanUseLive360 } from "@/lib/bil
 import { resolveStaffAuthByKey, resolveStaffAuthBySlug, type StaffMemberContext } from "@/lib/staff-auth";
 import { clearStaffSessionCookie, readStaffSessionFromCookies } from "@/lib/staff-session";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
+import { getOrganizationNotificationSettings } from "@/lib/organization-notification-settings";
 import {
   resolvePassStaffAccessResult,
   type StaffPassStaffAccessResult,
@@ -96,6 +97,8 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   const invalid = passStaffInvalidLink(venue.slug, passAccess);
   if (invalid) return invalid;
 
+  const notificationSettings = await getOrganizationNotificationSettings(venue.organizationId);
+
   return (
     <div className="min-h-screen bg-brand-surface/40">
       <header className="border-b border-slate-200/80 bg-white px-3 py-2.5 sm:px-4 sm:py-3">
@@ -127,6 +130,7 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
               ? { name: staffMember.name, stations: staffMember.stations }
               : null
           }
+          notificationSettings={notificationSettings}
         />
       </main>
     </div>

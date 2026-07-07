@@ -5,6 +5,7 @@ import { SettingsPageContent } from "@/components/dashboard/settings-page-conten
 import { getSession } from "@/lib/auth";
 import { organizationHasLive360 } from "@/lib/billing";
 import { canManageVenueSecrets } from "@/lib/dashboard-roles";
+import { getOrganizationNotificationSettings } from "@/lib/organization-notification-settings";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,6 +40,9 @@ export default async function SettingsPage() {
   });
 
   const live360Enabled = await organizationHasLive360(session!.organizationId);
+  const notificationSettings = canManage
+    ? await getOrganizationNotificationSettings(session!.organizationId)
+    : undefined;
 
   return (
     <SettingsPageContent
@@ -48,6 +52,7 @@ export default async function SettingsPage() {
       canManageVenue={canManage}
       venues={venuesRaw}
       live360Enabled={live360Enabled}
+      notificationSettings={notificationSettings}
     />
   );
 }

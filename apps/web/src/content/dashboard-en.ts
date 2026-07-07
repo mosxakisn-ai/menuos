@@ -1195,8 +1195,12 @@ export const DASHBOARD_EN = {
           customerOrder: "Customer order activation",
           waiterCall: "Waiter call activation",
           voiceMessages: "Voice message activation",
+          voiceHint:
+            "Voice plays in English on the waiter's phone — clearer on iPhone and Android.",
           yes: "Yes",
           no: "No",
+          saving: "Saving…",
+          saved: "Saved.",
         },
         staffLinksHint: "Waiter links: Settings → Staff (one link per staff member).",
         minutesAgo: (n: number) => `${n} min ago`,

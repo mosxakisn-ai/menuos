@@ -15,6 +15,8 @@ import {
 } from "@/components/dashboard/settings-staff-panels";
 import { Live360FeatureGate } from "@/components/dashboard/live360-feature-gate";
 import { SettingsTabs, type SettingsTabId, SETTINGS_TAB_IDS, isSettingsTabLocked } from "@/components/dashboard/settings-tabs";
+import type { OrganizationNotificationSettings } from "@menuos/shared";
+import { DEFAULT_ORGANIZATION_NOTIFICATION_SETTINGS } from "@menuos/shared";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 
 export type SettingsVenueFull = SettingsVenue & {
@@ -32,12 +34,14 @@ function SettingsGeneralTab({
   role,
   showManagerExtras,
   live360Enabled,
+  notificationSettings,
 }: {
   email: string;
   name: string;
   role: string;
   showManagerExtras: boolean;
   live360Enabled: boolean;
+  notificationSettings: OrganizationNotificationSettings;
 }) {
   const { d, roleLabel } = useDashboardCopy();
 
@@ -68,7 +72,9 @@ function SettingsGeneralTab({
         </div>
       </div>
 
-      {showManagerExtras && live360Enabled ? <SettingsGeneralExtrasPanel /> : null}
+      {showManagerExtras && live360Enabled ? (
+        <SettingsGeneralExtrasPanel initialNotifications={notificationSettings} />
+      ) : null}
     </div>
   );
 }
@@ -80,6 +86,7 @@ function SettingsPageBody({
   canManageVenue,
   venues,
   live360Enabled,
+  notificationSettings,
 }: {
   email: string;
   name: string;
@@ -87,6 +94,7 @@ function SettingsPageBody({
   canManageVenue: boolean;
   venues: SettingsVenueFull[];
   live360Enabled: boolean;
+  notificationSettings: OrganizationNotificationSettings;
 }) {
   const { d } = useDashboardCopy();
   const spotVenues = venues.map((v) => ({ id: v.id, name: v.name, slug: v.slug }));
@@ -103,6 +111,7 @@ function SettingsPageBody({
             role={role}
             showManagerExtras={canManageVenue}
             live360Enabled={live360Enabled}
+            notificationSettings={notificationSettings}
           />
         );
         break;
@@ -173,6 +182,7 @@ export function SettingsPageContent({
   canManageVenue,
   venues,
   live360Enabled,
+  notificationSettings = DEFAULT_ORGANIZATION_NOTIFICATION_SETTINGS,
 }: {
   email: string;
   name: string;
@@ -180,6 +190,7 @@ export function SettingsPageContent({
   canManageVenue: boolean;
   venues: SettingsVenueFull[];
   live360Enabled: boolean;
+  notificationSettings?: OrganizationNotificationSettings;
 }) {
   return (
     <Suspense fallback={null}>
@@ -190,6 +201,7 @@ export function SettingsPageContent({
         canManageVenue={canManageVenue}
         venues={venues}
         live360Enabled={live360Enabled}
+        notificationSettings={notificationSettings}
       />
     </Suspense>
   );

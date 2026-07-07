@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { OrganizationNotificationSettings } from "@menuos/shared";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { SettingsForm, type SettingsVenue } from "@/components/dashboard/settings-form";
 import { VenueTablesBySpacePanel } from "@/components/dashboard/venue-tables-by-space-panel";
@@ -185,12 +186,14 @@ function YesNoToggle({
   yesLabel,
   noLabel,
   ariaLabelledBy,
+  disabled = false,
 }: {
   value: boolean;
   onChange: (next: boolean) => void;
   yesLabel: string;
   noLabel: string;
   ariaLabelledBy?: string;
+  disabled?: boolean;
 }) {
   return (
     <div
@@ -201,6 +204,7 @@ function YesNoToggle({
       <button
         type="button"
         onClick={() => onChange(true)}
+        disabled={disabled}
         aria-pressed={value}
         className={cn(
           "min-w-[2.75rem] rounded-full px-3 py-1.5 text-xs font-bold transition",
@@ -214,6 +218,7 @@ function YesNoToggle({
       <button
         type="button"
         onClick={() => onChange(false)}
+        disabled={disabled}
         aria-pressed={!value}
         className={cn(
           "min-w-[2.75rem] rounded-full px-3 py-1.5 text-xs font-bold transition",
@@ -234,12 +239,14 @@ function NotificationToggleRow({
   onChange,
   yesLabel,
   noLabel,
+  disabled = false,
 }: {
   label: string;
   value: boolean;
   onChange: (next: boolean) => void;
   yesLabel: string;
   noLabel: string;
+  disabled?: boolean;
 }) {
   const labelId = `notification-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
@@ -253,18 +260,54 @@ function NotificationToggleRow({
         yesLabel={yesLabel}
         noLabel={noLabel}
         ariaLabelledBy={labelId}
+        disabled={disabled}
       />
     </div>
   );
 }
 
-export function SettingsGeneralExtrasPanel() {
+export function SettingsGeneralExtrasPanel({
+  initialNotifications,
+}: {
+  initialNotifications: OrganizationNotificationSettings;
+}) {
   const { d } = useDashboardCopy();
   const S = d.pages.settings;
   const N = S.services.notifications;
-  const [customerOrdersEnabled, setCustomerOrdersEnabled] = useState(true);
-  const [waiterCallEnabled, setWaiterCallEnabled] = useState(true);
-  const [voiceMessagesEnabled, setVoiceMessagesEnabled] = useState(true);
+  const [settings, setSettings] = useState(initialNotifications);
+  const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+
+  useEffect(() => {
+    setSettings(initialNotifications);
+  }, [initialNotifications]);
+
+  async function persistSettings(next: OrganizationNotificationSettings) {
+    const previous = settings;
+    setSettings(next);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/organization/notification-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ settings: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "save failed");
+      setSettings(data.settings ?? next);
+      setSavedFlash(true);
+      window.setTimeout(() => setSavedFlash(false), 2000);
+    } catch {
+      setSettings(previous);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function updateSetting(key: keyof OrganizationNotificationSettings, value: boolean) {
+    void persistSettings({ ...settings, [key]: value });
+  }
 
   return (
     <div className="grid gap-5 md:grid-cols-2">
@@ -278,30 +321,41 @@ export function SettingsGeneralExtrasPanel() {
       </div>
 
       <div className={`${dashboardCardClass} flex h-full flex-col`}>
-        <h2 className="text-sm font-semibold text-primary">{N.title}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-primary">{N.title}</h2>
+          {saving ? (
+            <span className="text-xs font-medium text-slate-500">{N.saving}</span>
+          ) : savedFlash ? (
+            <span className="text-xs font-semibold text-emerald-600">{N.saved}</span>
+          ) : null}
+        </div>
         <div className="mt-4 flex flex-1 flex-col gap-3">
           <NotificationToggleRow
             label={N.customerOrder}
-            value={customerOrdersEnabled}
-            onChange={setCustomerOrdersEnabled}
+            value={settings.customerOrdersEnabled}
+            onChange={(value) => updateSetting("customerOrdersEnabled", value)}
             yesLabel={N.yes}
             noLabel={N.no}
+            disabled={saving}
           />
           <NotificationToggleRow
             label={N.waiterCall}
-            value={waiterCallEnabled}
-            onChange={setWaiterCallEnabled}
+            value={settings.waiterCallEnabled}
+            onChange={(value) => updateSetting("waiterCallEnabled", value)}
             yesLabel={N.yes}
             noLabel={N.no}
+            disabled={saving}
           />
           <NotificationToggleRow
             label={N.voiceMessages}
-            value={voiceMessagesEnabled}
-            onChange={setVoiceMessagesEnabled}
+            value={settings.voiceMessagesEnabled}
+            onChange={(value) => updateSetting("voiceMessagesEnabled", value)}
             yesLabel={N.yes}
             noLabel={N.no}
+            disabled={saving}
           />
         </div>
+        <p className="mt-3 text-xs leading-relaxed text-slate-500">{N.voiceHint}</p>
       </div>
     </div>
   );

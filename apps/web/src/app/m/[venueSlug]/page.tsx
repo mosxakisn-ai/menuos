@@ -4,6 +4,7 @@ import { parseQrMenuLanguage, cuisineTypeQrLabel, isCuisineType } from "@menuos/
 import { buildPrivatePageMetadata } from "@/lib/seo";
 import { organizationIsPubliclyActive } from "@/lib/organization-access";
 import { organizationCanUseLive360 } from "@/lib/billing";
+import { getOrganizationNotificationSettings } from "@/lib/organization-notification-settings";
 import { ensureMenuTranslationsBeforeRender } from "@/lib/ensure-menu-translations";
 import { loadPublicVenueMenu, buildPublicVenuePayload } from "@/lib/public-menu-data";
 import { PublicMenuView } from "@/components/menu/public-menu-view";
@@ -59,6 +60,7 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
 
   const publicVenue = await buildPublicVenuePayload(venue);
   const live360Enabled = organizationCanUseLive360(venue.organization.subscription?.plan ?? "TRIAL");
+  const notificationSettings = await getOrganizationNotificationSettings(venue.organizationId);
 
   return (
     <PublicMenuView
@@ -69,6 +71,8 @@ export default async function PublicMenuPage({ params, searchParams }: Props) {
       sunbedNumber={trimParam(sp.sunbed)}
       embedMode={sp.embed === "1"}
       live360Enabled={live360Enabled}
+      waiterCallEnabled={notificationSettings.waiterCallEnabled}
+      customerOrdersEnabled={notificationSettings.customerOrdersEnabled}
     />
   );
 }

@@ -7,6 +7,7 @@ import { SubscriptionInactiveBanner } from "@/components/dashboard/subscription-
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { getSession } from "@/lib/auth";
 import { organizationHasLive360 } from "@/lib/billing";
+import { getOrganizationNotificationSettings } from "@/lib/organization-notification-settings";
 import { buildDashboardPageMetadata } from "@/lib/dashboard-page-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -25,6 +26,7 @@ export default async function WaiterPage({ searchParams }: Props) {
     select: { id: true, name: true, slug: true },
     orderBy: { createdAt: "asc" },
   });
+  const notificationSettings = await getOrganizationNotificationSettings(session!.organizationId);
 
   return (
     <DashboardPage wide>
@@ -40,6 +42,7 @@ export default async function WaiterPage({ searchParams }: Props) {
           initialVenueId={
             sp.venue && venues.some((v) => v.id === sp.venue) ? sp.venue : undefined
           }
+          notificationSettings={notificationSettings}
         />
       </Live360FeatureGate>
     </DashboardPage>

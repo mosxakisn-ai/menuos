@@ -21,6 +21,9 @@ import { useVenueOperationsConfig } from "@/components/dashboard/venue-operation
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
+import { primeWaiterVoice, speakPassMessage } from "@/lib/waiter-voice";
+import type { OrganizationNotificationSettings } from "@menuos/shared";
+import { DEFAULT_ORGANIZATION_NOTIFICATION_SETTINGS } from "@menuos/shared";
 import { cn } from "@/lib/utils";
 
 type Venue = { id: string; name: string; slug?: string };
@@ -71,6 +74,7 @@ export function WaiterPanel({
   staffKey,
   staffViaCookie = false,
   staffMember,
+  notificationSettings = DEFAULT_ORGANIZATION_NOTIFICATION_SETTINGS,
 }: {
   venues: Venue[];
   initialVenueId?: string;
@@ -78,6 +82,7 @@ export function WaiterPanel({
   staffKey?: string;
   staffViaCookie?: boolean;
   staffMember?: { name: string; stations: string[] } | null;
+  notificationSettings?: OrganizationNotificationSettings;
 }) {
   const { d, lang } = useDashboardCopy();
   const W = d.waiter;
@@ -103,6 +108,10 @@ export function WaiterPanel({
   const loadGenerationRef = useRef(0);
   const { flash, setFlash, showFromResponse } = useFlashMessage();
   const { config: opsConfig } = useVenueOperationsConfig(venueId);
+
+  useEffect(() => {
+    primeWaiterVoice();
+  }, []);
 
   const load = useCallback(async () => {
     if (!venueId) return;
@@ -165,8 +174,26 @@ export function WaiterPanel({
     if (passRes.ok) {
       const newSignals = (passData.signals ?? []) as PassSignal[];
       if (passBaselineSetRef.current) {
-        const hasNewPass = newSignals.some((signal) => !prevPassIdsRef.current.has(signal.id));
-        if (hasNewPass) alertNewWaiterCall();
+        const freshPasses = newSignals.filter(
+          (signal) => !prevPassIdsRef.current.has(signal.id) && isMonitorPendingPass(signal),
+        );
+        const hasNewPass = freshPasses.length > 0;
+        if (hasNewPass) {
+          alertNewWaiterCall();
+          if (notificationSettings.voiceMessagesEnabled) {
+            const latest = freshPasses[0];
+            if (latest?.message?.trim()) {
+              speakPassMessage({
+                message: latest.message,
+                tableNumber: latest.tableNumber,
+                roomNumber: latest.roomNumber,
+                sunbedNumber: latest.sunbedNumber,
+                station: latest.station,
+                stationScreenLabel: latest.stationScreenLabel,
+              });
+            }
+          }
+        }
       }
       prevPassIdsRef.current = new Set(newSignals.map((signal) => signal.id));
       passBaselineSetRef.current = true;
@@ -190,7 +217,7 @@ export function WaiterPanel({
     } else if (managerView && generation === loadGenerationRef.current) {
       setPendingByVenue({});
     }
-  }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash]);
+  }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash, notificationSettings]);
 
   useEffect(() => {
     loadGenerationRef.current += 1;
