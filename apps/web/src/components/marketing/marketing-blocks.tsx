@@ -264,9 +264,15 @@ export function ValuePill({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function PricingFeatureList({ features }: { features: string[] }) {
+export function PricingFeatureList({
+  features,
+  className,
+}: {
+  features: string[];
+  className?: string;
+}) {
   return (
-    <ul className="mt-6 space-y-3">
+    <ul className={cn("mt-6 space-y-3", className)}>
       {features.map((f) => (
         <li key={f} className="flex gap-2.5 text-sm text-slate-600">
           <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" aria-hidden />
@@ -318,10 +324,10 @@ export function PricingCard({
         <span className="text-base font-normal text-slate-500">{period}</span>
       </p>
       {description ? <p className="mt-3 text-sm leading-relaxed text-slate-600">{description}</p> : null}
-      <PricingFeatureList features={features} />
+      <PricingFeatureList features={features} className="flex-1" />
       <Link
         href={href}
-        className={`mt-8 block w-full text-center ${buttonClass(highlighted ? "primary" : "secondary")}`}
+        className={`mt-8 shrink-0 block w-full text-center ${buttonClass(highlighted ? "primary" : "secondary")}`}
       >
         {cta}
       </Link>
