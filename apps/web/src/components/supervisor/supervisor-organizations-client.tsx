@@ -2,15 +2,26 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
+import { ORGANIZATION_ACTIVITY_LABELS, type OrganizationActivity } from "@menuos/shared";
 import { Card } from "@/components/ui/card";
 import { buttonClass } from "@/components/ui/button";
-import { DashboardPage, DashboardPageHeader } from "@/components/dashboard/dashboard-page";
-import { dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
+import {
+  DashboardPage,
+  DashboardPageHeader,
+  dashboardFieldClass,
+  dashboardLabelClass,
+} from "@/components/dashboard/dashboard-page";
 import { SupervisorOrganizationEditor } from "@/components/supervisor/supervisor-organization-editor";
 import { stripeCustomerDashboardUrl } from "@/lib/stripe-dashboard-urls";
 import type { SupervisorOrganizationRow } from "@/lib/supervisor-service";
 import { formatGeminiTokenCount } from "@/lib/gemini-usage-service";
 import { FORM_PLACEHOLDERS } from "@/content/form-placeholders";
+import { cn } from "@/lib/utils";
+
+const TH =
+  "px-3 py-3 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 whitespace-nowrap";
+const TD = "px-3 py-3 align-middle text-sm text-slate-700";
+const TD_CENTER = cn(TD, "text-center tabular-nums");
 
 function formatGeminiUsageCell(row: SupervisorOrganizationRow): string {
   const used = formatGeminiTokenCount(row.geminiTokensThisMonth);
@@ -21,6 +32,44 @@ function formatGeminiUsageCell(row: SupervisorOrganizationRow): string {
 function formatDate(iso: string | null) {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("el-GR");
+}
+
+function formatActivity(activity: OrganizationActivity | null) {
+  if (!activity) return "—";
+  return ORGANIZATION_ACTIVITY_LABELS[activity] ?? activity;
+}
+
+function formatPhone(row: SupervisorOrganizationRow) {
+  const phone = row.phone?.trim();
+  const mobile = row.mobile?.trim();
+  if (phone && mobile && phone !== mobile) return { primary: phone, secondary: mobile };
+  if (phone) return { primary: phone, secondary: null };
+  if (mobile) return { primary: mobile, secondary: null };
+  return { primary: "—", secondary: null };
+}
+
+function PlanBadge({ plan }: { plan: string }) {
+  return (
+    <span className="inline-flex rounded-full bg-brand-blue/10 px-2.5 py-0.5 text-[11px] font-bold text-brand-blue">
+      {plan}
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const tone =
+    status === "ACTIVE"
+      ? "bg-emerald-100 text-emerald-800"
+      : status === "TRIALING"
+        ? "bg-amber-100 text-amber-900"
+        : status === "PAST_DUE"
+          ? "bg-red-100 text-red-800"
+          : "bg-slate-100 text-slate-600";
+  return (
+    <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold", tone)}>
+      {status}
+    </span>
+  );
 }
 
 export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscriptions" }) {
@@ -62,7 +111,7 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
   }, [load]);
 
   return (
-    <DashboardPage wide>
+    <DashboardPage className="max-w-none">
       <DashboardPageHeader
         title={mode === "subscriptions" ? "Συνδρομές" : "Πελάτες"}
         description={
@@ -72,126 +121,151 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
         }
       />
 
-      <Card className="grid gap-4 border-brand-blue/10 p-4 sm:grid-cols-2 lg:grid-cols-3">
-        <label className="block text-sm">
-          <span className={dashboardLabelClass}>Αναζήτηση</span>
-          <input
-            className={dashboardFieldClass}
-            placeholder={FORM_PLACEHOLDERS.searchOrganizations}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </label>
-        <label className="block text-sm">
-          <span className={dashboardLabelClass}>Πακέτο</span>
-          <select className={dashboardFieldClass} value={plan} onChange={(e) => setPlan(e.target.value)}>
-            <option value="">Όλα</option>
-            <option value="TRIAL">TRIAL</option>
-            <option value="BASIC">BASIC</option>
-            <option value="PRO">PRO</option>
-            <option value="ENTERPRISE">ENTERPRISE</option>
-          </select>
-        </label>
-        <label className="block text-sm">
-          <span className={dashboardLabelClass}>Κατάσταση</span>
-          <select className={dashboardFieldClass} value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">Όλες</option>
-            <option value="TRIALING">TRIALING</option>
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="PAST_DUE">PAST_DUE</option>
-            <option value="CANCELED">CANCELED</option>
-          </select>
-        </label>
+      <Card className="border-brand-blue/10 p-4 sm:p-5">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <label className="block min-w-0 text-sm">
+            <span className={dashboardLabelClass}>Αναζήτηση</span>
+            <input
+              className={dashboardFieldClass}
+              placeholder={FORM_PLACEHOLDERS.searchOrganizations}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+          <label className="block min-w-0 text-sm">
+            <span className={dashboardLabelClass}>Πακέτο</span>
+            <select className={dashboardFieldClass} value={plan} onChange={(e) => setPlan(e.target.value)}>
+              <option value="">Όλα</option>
+              <option value="TRIAL">TRIAL</option>
+              <option value="BASIC">BASIC</option>
+              <option value="PRO">PRO</option>
+              <option value="ENTERPRISE">ENTERPRISE</option>
+            </select>
+          </label>
+          <label className="block min-w-0 text-sm">
+            <span className={dashboardLabelClass}>Κατάσταση</span>
+            <select className={dashboardFieldClass} value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="">Όλες</option>
+              <option value="TRIALING">TRIALING</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="PAST_DUE">PAST_DUE</option>
+              <option value="CANCELED">CANCELED</option>
+            </select>
+          </label>
+        </div>
       </Card>
 
       {error ? (
-        <p className="text-sm text-red-600">Αποτυχία φόρτωσης.</p>
+        <p className="text-center text-sm text-red-600">Αποτυχία φόρτωσης.</p>
       ) : loading ? (
-        <p className="text-sm text-slate-500">Φόρτωση…</p>
+        <p className="text-center text-sm text-slate-500">Φόρτωση…</p>
       ) : rows.length ? (
         <>
-          <div className="overflow-x-auto rounded-card border border-slate-200 bg-white shadow-card">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-100 bg-brand-surface text-xs uppercase text-slate-500">
-                <tr>
-                  <th className="w-12 px-3 py-3">#</th>
-                  <th className="px-4 py-3">Επιχείρηση</th>
-                  <th className="px-4 py-3">Admin</th>
-                  <th className="px-4 py-3">Πακέτο</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Trial / Λήξη</th>
+          <div className="overflow-x-auto rounded-xl border border-slate-200/90 bg-white shadow-card">
+            <table className="w-full min-w-[1100px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-brand-surface/80">
+                  <th className={cn(TH, "w-12 text-center")}>#</th>
+                  <th className={cn(TH, "min-w-[140px]")}>Επιχείρηση</th>
+                  <th className={cn(TH, "min-w-[100px]")}>Πόλη</th>
+                  <th className={cn(TH, "min-w-[110px]")}>Επάγγελμα</th>
+                  <th className={cn(TH, "min-w-[120px]")}>Τηλέφωνο</th>
+                  <th className={cn(TH, "min-w-[160px]")}>Admin</th>
+                  <th className={cn(TH, "text-center")}>Πακέτο</th>
+                  <th className={cn(TH, "text-center")}>Status</th>
+                  <th className={cn(TH, "text-center")}>Trial / Λήξη</th>
                   {mode === "subscriptions" ? (
-                    <th className="px-4 py-3">Stripe</th>
+                    <th className={cn(TH, "text-center")}>Stripe</th>
                   ) : (
                     <>
-                      <th className="px-4 py-3">Venues</th>
-                      <th className="px-4 py-3">Πιάτα</th>
-                      <th className="px-4 py-3">Gemini</th>
+                      <th className={cn(TH, "text-center")}>Καταστ.</th>
+                      <th className={cn(TH, "text-center")}>Είδη</th>
+                      <th className={cn(TH, "text-center")}>Gemini</th>
                     </>
                   )}
-                  <th className="px-4 py-3 text-right">Ενέργειες</th>
+                  <th className={cn(TH, "text-right pr-4")}>Ενέργειες</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, index) => (
-                  <tr
-                    key={row.id}
-                    className={`border-b border-slate-50 last:border-0 hover:bg-brand-blue/5 ${
-                      editing?.id === row.id ? "bg-brand-blue/10" : ""
-                    }`}
-                  >
-                    <td className="px-3 py-3 font-medium tabular-nums text-slate-400">
-                      #{index + 1}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-brand-navy">{row.name}</p>
-                      {row.isDemo ? (
-                        <span className="text-xs font-medium text-brand-blue">Demo</span>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      <p>{row.adminName}</p>
-                      <p className="text-xs">{row.adminEmail}</p>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{row.plan}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.status}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {formatDate(row.trialEndsAt || row.currentPeriodEnd)}
-                    </td>
-                    {mode === "subscriptions" ? (
-                      <td className="px-4 py-3 text-slate-600">
-                        {row.stripeCustomerId ? (
-                          <a
-                            href={stripeCustomerDashboardUrl(row.stripeCustomerId)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-brand-blue hover:underline"
-                          >
-                            Stripe
-                            <ExternalLink className="h-3 w-3" aria-hidden />
-                          </a>
-                        ) : (
-                          "—"
-                        )}
+                {rows.map((row, index) => {
+                  const phone = formatPhone(row);
+                  return (
+                    <tr
+                      key={row.id}
+                      className={cn(
+                        "border-b border-slate-50 last:border-0 transition-colors hover:bg-brand-blue/[0.04]",
+                        editing?.id === row.id && "bg-brand-blue/10",
+                      )}
+                    >
+                      <td className={cn(TD_CENTER, "font-medium text-slate-400")}>#{index + 1}</td>
+                      <td className={TD}>
+                        <p className="font-semibold text-brand-navy">{row.name}</p>
+                        {row.isDemo ? (
+                          <span className="mt-0.5 inline-flex rounded-full bg-brand-blue/10 px-2 py-0.5 text-[10px] font-bold text-brand-blue">
+                            Demo
+                          </span>
+                        ) : null}
                       </td>
-                    ) : (
-                      <>
-                        <td className="px-4 py-3 text-slate-600">{row.venueCount}</td>
-                        <td className="px-4 py-3 text-slate-600">{row.itemCount}</td>
-                        <td className="px-4 py-3 tabular-nums text-slate-600">{formatGeminiUsageCell(row)}</td>
-                      </>
-                    )}
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        className={buttonClass("secondary", "sm")}
-                        onClick={() => setEditing(row)}
-                      >
-                        Επεξεργασία
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      <td className={TD}>
+                        <span className="text-slate-700">{row.city?.trim() || "—"}</span>
+                      </td>
+                      <td className={TD}>
+                        <span className="text-slate-700">{formatActivity(row.activity)}</span>
+                      </td>
+                      <td className={TD}>
+                        <p className="whitespace-nowrap text-slate-700">{phone.primary}</p>
+                        {phone.secondary ? (
+                          <p className="text-xs text-slate-500">{phone.secondary}</p>
+                        ) : null}
+                      </td>
+                      <td className={TD}>
+                        <p className="font-medium text-slate-800">{row.adminName}</p>
+                        <p className="truncate text-xs text-slate-500">{row.adminEmail}</p>
+                      </td>
+                      <td className={cn(TD, "text-center")}>
+                        <PlanBadge plan={row.plan} />
+                      </td>
+                      <td className={cn(TD, "text-center")}>
+                        <StatusBadge status={row.status} />
+                      </td>
+                      <td className={TD_CENTER}>
+                        {formatDate(row.trialEndsAt || row.currentPeriodEnd)}
+                      </td>
+                      {mode === "subscriptions" ? (
+                        <td className={cn(TD, "text-center")}>
+                          {row.stripeCustomerId ? (
+                            <a
+                              href={stripeCustomerDashboardUrl(row.stripeCustomerId)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-1 text-brand-blue hover:underline"
+                            >
+                              Stripe
+                              <ExternalLink className="h-3 w-3" aria-hidden />
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      ) : (
+                        <>
+                          <td className={TD_CENTER}>{row.venueCount}</td>
+                          <td className={TD_CENTER}>{row.itemCount}</td>
+                          <td className={cn(TD_CENTER, "text-xs")}>{formatGeminiUsageCell(row)}</td>
+                        </>
+                      )}
+                      <td className={cn(TD, "pr-4 text-right")}>
+                        <button
+                          type="button"
+                          className={buttonClass("secondary", "sm")}
+                          onClick={() => setEditing(row)}
+                        >
+                          Επεξεργασία
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -209,7 +283,7 @@ export function SupervisorOrganizationsClient({ mode }: { mode: "all" | "subscri
         </>
       ) : (
         <Card className="border-brand-blue/10">
-          <p className="text-sm text-slate-600">Δεν βρέθηκαν εγγραφές.</p>
+          <p className="text-center text-sm text-slate-600">Δεν βρέθηκαν εγγραφές.</p>
         </Card>
       )}
     </DashboardPage>

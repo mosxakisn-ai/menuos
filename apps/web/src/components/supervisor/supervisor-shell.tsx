@@ -82,8 +82,8 @@ export function SupervisorShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </aside>
-        <main className="flex-1 lg:pl-56">
-          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div>
+        <main className="min-w-0 flex-1 lg:pl-56">
+          <div className="mx-auto w-full max-w-[1680px] px-4 py-6 sm:px-6 lg:px-10 lg:py-8">{children}</div>
         </main>
       </div>
     </div>

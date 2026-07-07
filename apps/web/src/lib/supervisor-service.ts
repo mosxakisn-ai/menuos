@@ -4,6 +4,7 @@ import {
   getPlan,
   isPaidPlan,
   organizationHasPaidPlan,
+  ORGANIZATION_ACTIVITY_LABELS,
   type OrganizationActivity,
 } from "@menuos/shared";
 import { getPlanPriceMap, getTrialDaysFromCatalog, listPlanCatalogEntries } from "@/lib/plan-catalog-service";
@@ -327,6 +328,7 @@ export async function listOrganizationsForSupervisor(input?: {
         row.mobile,
         row.vatNumber,
         row.city,
+        row.activity ? ORGANIZATION_ACTIVITY_LABELS[row.activity as OrganizationActivity] : null,
       ].some((v) => v?.toLowerCase().includes(search)),
     );
   }
