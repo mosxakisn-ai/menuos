@@ -199,6 +199,7 @@ export async function POST(request: Request) {
       });
       pushStaffPassSignal(venueFull, signal, {
         notifyStaffMemberIds: notifyIds && notifyIds.length > 0 ? notifyIds : undefined,
+        zoneId: parsed.data.zoneId ?? null,
       });
     }
 

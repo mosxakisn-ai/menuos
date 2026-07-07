@@ -24,16 +24,25 @@ describe("buildPassSignalAnnouncement", () => {
     { type: "SUNBED", label: "7" },
   ]);
 
-  it("matches natural Greek TTS phrase for garden table", () => {
-    expect(
-      buildPassSignalAnnouncement({ tableNumber: "Κήπο-10" }, { zoneGroups: groups }),
-    ).toBe("στον κήπο στο τραπέζι 10 έχετε νέο μήνυμα");
+  it("parses prefixed table label without configured spots", () => {
+    expect(buildPassSignalAnnouncement({ tableNumber: "Κήπο-10" })).toBe(
+      "στον κήπο στο τραπέζι 10 έχετε νέο μήνυμα",
+    );
   });
 
-  it("announces zone and table in Greek", () => {
+  it("announces zone and table from spot config", () => {
     expect(
       buildPassSignalAnnouncement({ tableNumber: "Σαλα-12" }, { zoneGroups: groups }),
     ).toBe("στη σάλα στο τραπέζι 12 έχετε νέο μήνυμα");
+  });
+
+  it("uses KDS zone hint for bare table numbers", () => {
+    expect(
+      buildPassSignalAnnouncement(
+        { tableNumber: "10" },
+        { zoneGroups: groups, activeZoneId: "prefix:κήπο" },
+      ),
+    ).toBe("στον κήπο στο τραπέζι 10 έχετε νέο μήνυμα");
   });
 
   it("resolves bare table number inside active zone", () => {

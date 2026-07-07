@@ -19,7 +19,7 @@ export function pushStaffPassSignal(
   > & {
     stationScreen?: { label: string } | null;
   },
-  opts?: { notifyStaffMemberIds?: string[] },
+  opts?: { notifyStaffMemberIds?: string[]; zoneId?: string | null },
 ) {
   fireStaffPushNotify(() => notifyStaffPassSignal(venue, signal, opts));
 }
@@ -32,7 +32,7 @@ async function notifyStaffPassSignal(
   > & {
     stationScreen?: { label: string } | null;
   },
-  opts?: { notifyStaffMemberIds?: string[] },
+  opts?: { notifyStaffMemberIds?: string[]; zoneId?: string | null },
 ) {
   const spots = await prisma.venueSpot.findMany({
     where: { venueId: venue.id },
@@ -40,7 +40,10 @@ async function notifyStaffPassSignal(
     orderBy: { sortOrder: "asc" },
   });
   const zoneGroups = groupVenueSpotsByZone(spots);
-  const { title, body } = buildPassSignalPushCopy(signal, { zoneGroups });
+  const { title, body } = buildPassSignalPushCopy(signal, {
+    zoneGroups,
+    activeZoneId: opts?.zoneId ?? null,
+  });
   const payload = JSON.stringify({
     title,
     body,

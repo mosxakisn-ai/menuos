@@ -9,6 +9,7 @@ import {
   formatStaffAssignmentsForLang,
   listVenuePosts,
   groupVenueSpotsByZone,
+  zoneIdForWaiterLocationView,
   mergeTableStateLabels,
   zoneIdForWaiterLocationView,
   type OrderPayload,
@@ -200,14 +201,16 @@ export function WaiterPanel({
                 label: spot.label,
               }));
               const announcementGroups = groupVenueSpotsByZone(spotInputs);
-              const activeZone =
-                zoneFilterIdRef.current !== "all" ? zoneFilterIdRef.current : null;
+              const passZoneId =
+                zoneFilterIdRef.current !== "all"
+                  ? zoneFilterIdRef.current
+                  : zoneIdForWaiterLocationView(latest, announcementGroups);
               speakPassMessage({
                 tableNumber: latest.tableNumber ?? undefined,
                 roomNumber: latest.roomNumber ?? undefined,
                 sunbedNumber: latest.sunbedNumber ?? undefined,
                 zoneGroups: announcementGroups,
-                activeZoneId: activeZone,
+                activeZoneId: passZoneId,
               });
             }
           }

@@ -43,6 +43,23 @@ function tableZoneFromLabel(label: string): { id: string; label: string; display
   return { id: MAIN_ZONE_ID, label: MAIN_ZONE_LABEL, displayLabel: trimmed };
 }
 
+/** Parse prefixed table label (e.g. «Κήπο-10») into zone + display number. */
+export function parseTableSpotLabel(label: string): {
+  zoneId: string;
+  zoneLabel: string;
+  displayLabel: string;
+} | null {
+  const trimmed = label.trim();
+  if (!trimmed || trimmed.indexOf("-") <= 0) return null;
+  const parsed = tableZoneFromLabel(trimmed);
+  if (parsed.id === MAIN_ZONE_ID) return null;
+  return {
+    zoneId: parsed.id,
+    zoneLabel: parsed.label,
+    displayLabel: parsed.displayLabel,
+  };
+}
+
 function compareSpotLabels(a: string, b: string): number {
   const na = Number(a);
   const nb = Number(b);

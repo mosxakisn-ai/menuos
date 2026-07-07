@@ -1,6 +1,8 @@
 import {
+  parseTableSpotLabel,
   resolveWaiterLocationInZone,
   resolveWaiterLocationInZones,
+  zoneIdForWaiterLocationView,
   type SpotZoneGroup,
 } from "./station-spot-zones";
 import { formatWaiterCallLocationForLang, type WaiterCallLocation } from "./venue-spots";
@@ -57,34 +59,69 @@ function tableAnnouncement(tableNum: string, zoneLabel?: string | null): string 
   return `${tablePart} ${PASS_ALERT_SUFFIX}`;
 }
 
+function tableAnnouncementFromResolved(
+  groups: SpotZoneGroup[],
+  resolved: { zoneId: string; spot: { type: string; label: string } },
+  entryDisplayLabel?: string,
+): string | null {
+  if (resolved.spot.type !== "TABLE") return null;
+  const group = groups.find((row) => row.id === resolved.zoneId);
+  const tableNum = entryDisplayLabel ?? resolved.spot.label;
+  const zoneLabel = group && resolved.zoneId !== MAIN_ZONE_ID ? group.label : null;
+  return tableAnnouncement(tableNum, zoneLabel);
+}
+
+function resolveTableAnnouncement(
+  location: PassAnnouncementLocation,
+  groups: SpotZoneGroup[],
+  activeZoneId?: string | null,
+): string | null {
+  const table = location.tableNumber?.trim();
+  if (!table) return null;
+
+  const fromLabel = parseTableSpotLabel(table);
+  if (fromLabel) {
+    return tableAnnouncement(fromLabel.displayLabel, fromLabel.zoneLabel);
+  }
+
+  const zoneHint = activeZoneId?.trim() || (groups.length ? zoneIdForWaiterLocationView(location, groups) : null);
+  const resolved = zoneHint
+    ? resolveWaiterLocationInZone(location, zoneHint, groups)
+    : groups.length
+      ? resolveWaiterLocationInZones(location, groups)
+      : null;
+
+  if (!resolved) return null;
+
+  const group = groups.find((row) => row.id === resolved.zoneId);
+  const entry = group?.spots.find(
+    (row) => row.spot.type === resolved.spot.type && row.spot.label === resolved.spot.label,
+  );
+
+  return tableAnnouncementFromResolved(groups, resolved, entry?.displayLabel);
+}
+
 /** Greek TTS/push line — space + table + «έχετε νέο μήνυμα» (no message body). */
 export function buildPassSignalAnnouncement(
   location: PassAnnouncementLocation,
   options?: PassAnnouncementOptions,
 ): string {
   const groups = options?.zoneGroups ?? [];
+  const activeZoneId = options?.activeZoneId ?? null;
+
+  const tableLine = resolveTableAnnouncement(location, groups, activeZoneId);
+  if (tableLine) return tableLine;
+
   const resolved = groups.length
-    ? options?.activeZoneId?.trim()
-      ? resolveWaiterLocationInZone(location, options.activeZoneId, groups)
+    ? activeZoneId?.trim()
+      ? resolveWaiterLocationInZone(location, activeZoneId, groups)
       : resolveWaiterLocationInZones(location, groups)
     : null;
 
   if (resolved && groups.length) {
-    const group = groups.find((row) => row.id === resolved.zoneId);
-    const entry = group?.spots.find(
-      (row) => row.spot.type === resolved.spot.type && row.spot.label === resolved.spot.label,
-    );
-
-    if (resolved.spot.type === "TABLE") {
-      const tableNum = entry?.displayLabel ?? resolved.spot.label;
-      const zoneLabel = group && resolved.zoneId !== MAIN_ZONE_ID ? group.label : null;
-      return tableAnnouncement(tableNum, zoneLabel);
-    }
-
     if (resolved.spot.type === "ROOM") {
       return `στο δωμάτιο ${resolved.spot.label} ${PASS_ALERT_SUFFIX}`;
     }
-
     if (resolved.spot.type === "SUNBED") {
       return `στη ξαπλώστρα ${resolved.spot.label} ${PASS_ALERT_SUFFIX}`;
     }
