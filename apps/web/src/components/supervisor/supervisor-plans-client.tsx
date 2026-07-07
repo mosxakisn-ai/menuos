@@ -36,6 +36,10 @@ function parseOptionalLimit(raw: string): number | null | "invalid" {
   return parsed;
 }
 
+function formControlClass(locked: boolean, extra?: string) {
+  return cn(dashboardFieldClass, "!mt-0", lockedFieldClass(locked), extra);
+}
+
 function fieldLocked(planId: PlanCatalogEntry["id"], field: PlanCatalogEditableField) {
   return planCatalogFieldLockReason(planId, field);
 }
@@ -47,6 +51,26 @@ function lockedFieldClass(locked: boolean) {
 function FieldHint({ reason }: { reason: string | null }) {
   if (!reason) return null;
   return <p className="mt-1 text-[11px] leading-snug text-slate-500">{reason}</p>;
+}
+
+function FormField({
+  label,
+  lockReason,
+  className,
+  children,
+}: {
+  label: string;
+  lockReason?: string | null;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className={cn("flex h-full min-w-0 flex-col text-sm", className)}>
+      <span className={dashboardLabelClass}>{label}</span>
+      <FieldHint reason={lockReason ?? null} />
+      <div className="mt-auto pt-1.5">{children}</div>
+    </label>
+  );
 }
 
 function PlanEditor({
@@ -190,131 +214,123 @@ function PlanEditor({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <Card className="max-h-[90vh] w-full max-w-2xl overflow-y-auto border-brand-blue/20 p-5 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center sm:p-6">
+      <Card className="max-h-[92vh] w-full max-w-4xl overflow-y-auto border-brand-blue/20 p-5 shadow-xl sm:p-6 lg:p-8">
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-blue">{plan.id}</p>
-            <h2 className="text-xl font-bold text-brand-navy">Επεξεργασία πακέτου</h2>
+            <h2 className="text-xl font-bold text-brand-navy sm:text-2xl">Επεξεργασία πακέτου</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
             aria-label="Κλείσιμο"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+        <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
           {planCatalogEditSummary(plan.id)}
         </p>
 
-        <form onSubmit={(e) => void save(e)} className="mt-5 space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm sm:col-span-2">
-              <span className={dashboardLabelClass}>Όνομα εμφάνισης</span>
-              <FieldHint reason={fieldLocked(plan.id, "name")} />
-              <input
-                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("name")))}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.planDisplayName}
-                required
-                disabled={!canEdit("name")}
-              />
-            </label>
-            <label className="block text-sm">
-              <span className={dashboardLabelClass}>Τιμή / μήνα (€)</span>
-              <FieldHint reason={fieldLocked(plan.id, "priceMonthly")} />
-              <input
-                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("priceMonthly")))}
-                inputMode="decimal"
-                value={priceMonthly}
-                onChange={(e) => setPriceMonthly(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.planPriceMonthly}
-                required
-                disabled={!canEdit("priceMonthly")}
-              />
-            </label>
-            <label className="block text-sm">
-              <span className={dashboardLabelClass}>Εμφάνιση τιμής (προαιρετικό)</span>
-              <FieldHint reason={fieldLocked(plan.id, "priceDisplay")} />
-              <input
-                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("priceDisplay")))}
-                placeholder="π.χ. €9.99"
-                value={priceDisplay}
-                onChange={(e) => setPriceDisplay(e.target.value)}
-                disabled={!canEdit("priceDisplay")}
-              />
-            </label>
-            <label className="block text-sm">
-              <span className={dashboardLabelClass}>Περίοδος</span>
-              <FieldHint reason={fieldLocked(plan.id, "periodLabel")} />
-              <input
-                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("periodLabel")))}
-                placeholder="/μήνα ή / 7 ημέρες"
-                value={canEdit("periodLabel") ? periodLabel : trialPeriodPreview}
-                onChange={(e) => setPeriodLabel(e.target.value)}
-                required
-                disabled={!canEdit("periodLabel")}
-              />
-            </label>
-            <label className="block text-sm">
-              <span className={dashboardLabelClass}>Σειρά εμφάνισης</span>
-              <FieldHint reason={fieldLocked(plan.id, "sortOrder")} />
-              <input
-                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("sortOrder")))}
-                type="number"
-                min={0}
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.planSortOrder}
-                disabled={!canEdit("sortOrder")}
-              />
-            </label>
-            <label className="block text-sm sm:col-span-2">
-              <span className={dashboardLabelClass}>Περιγραφή</span>
-              <FieldHint reason={fieldLocked(plan.id, "description")} />
-              <textarea
-                className={cn(dashboardFieldClass, "min-h-[72px] resize-y", lockedFieldClass(!canEdit("description")))}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.planDescription}
-                disabled={!canEdit("description")}
-              />
-            </label>
-            <label className="block text-sm sm:col-span-2">
-              <span className={dashboardLabelClass}>Features (μία γραμμή = ένα feature)</span>
-              <FieldHint reason={fieldLocked(plan.id, "features")} />
-              <textarea
-                className={cn(
-                  dashboardFieldClass,
-                  "min-h-[140px] resize-y font-mono text-xs",
-                  lockedFieldClass(!canEdit("features")),
-                )}
-                value={featuresText}
-                onChange={(e) => setFeaturesText(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.planFeatures}
-                required
-                disabled={!canEdit("features")}
-              />
-            </label>
-          </div>
+        <form onSubmit={(e) => void save(e)} className="mt-6 space-y-8">
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold text-brand-navy">Βασικά στοιχεία</h3>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <FormField label="Όνομα εμφάνισης" lockReason={fieldLocked(plan.id, "name")} className="lg:col-span-4">
+                <input
+                  className={formControlClass(!canEdit("name"))}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={FORM_PLACEHOLDERS.planDisplayName}
+                  required
+                  disabled={!canEdit("name")}
+                />
+              </FormField>
+              <FormField label="Τιμή / μήνα (€)" lockReason={fieldLocked(plan.id, "priceMonthly")}>
+                <input
+                  className={formControlClass(!canEdit("priceMonthly"))}
+                  inputMode="decimal"
+                  value={priceMonthly}
+                  onChange={(e) => setPriceMonthly(e.target.value)}
+                  placeholder={FORM_PLACEHOLDERS.planPriceMonthly}
+                  required
+                  disabled={!canEdit("priceMonthly")}
+                />
+              </FormField>
+              <FormField label="Εμφάνιση τιμής" lockReason={fieldLocked(plan.id, "priceDisplay")}>
+                <input
+                  className={formControlClass(!canEdit("priceDisplay"))}
+                  placeholder="π.χ. €9.99"
+                  value={priceDisplay}
+                  onChange={(e) => setPriceDisplay(e.target.value)}
+                  disabled={!canEdit("priceDisplay")}
+                />
+              </FormField>
+              <FormField label="Περίοδος" lockReason={fieldLocked(plan.id, "periodLabel")}>
+                <input
+                  className={formControlClass(!canEdit("periodLabel"))}
+                  placeholder="/μήνα ή / 7 ημέρες"
+                  value={canEdit("periodLabel") ? periodLabel : trialPeriodPreview}
+                  onChange={(e) => setPeriodLabel(e.target.value)}
+                  required
+                  disabled={!canEdit("periodLabel")}
+                />
+              </FormField>
+              <FormField label="Σειρά εμφάνισης" lockReason={fieldLocked(plan.id, "sortOrder")}>
+                <input
+                  className={formControlClass(!canEdit("sortOrder"))}
+                  type="number"
+                  min={0}
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  placeholder={FORM_PLACEHOLDERS.planSortOrder}
+                  disabled={!canEdit("sortOrder")}
+                />
+              </FormField>
+              <FormField label="Περιγραφή" lockReason={fieldLocked(plan.id, "description")} className="lg:col-span-4">
+                <textarea
+                  className={formControlClass(!canEdit("description"), "min-h-[80px] resize-y")}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={FORM_PLACEHOLDERS.planDescription}
+                  disabled={!canEdit("description")}
+                />
+              </FormField>
+              <FormField
+                label="Features (μία γραμμή = ένα feature)"
+                lockReason={fieldLocked(plan.id, "features")}
+                className="lg:col-span-4"
+              >
+                <textarea
+                  className={formControlClass(
+                    !canEdit("features"),
+                    "min-h-[140px] resize-y font-mono text-xs leading-relaxed",
+                  )}
+                  value={featuresText}
+                  onChange={(e) => setFeaturesText(e.target.value)}
+                  placeholder={FORM_PLACEHOLDERS.planFeatures}
+                  required
+                  disabled={!canEdit("features")}
+                />
+              </FormField>
+            </div>
+          </section>
 
           {planHasEditableLimits(plan.id) ? (
-            <div>
-              <p className={dashboardLabelClass}>Όρια πλάνου</p>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Αυτά εφαρμόζονται στο προϊόν — όχι μόνο στο marketing κείμενο.
-              </p>
-              <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <label className="block text-sm">
-                  <span className="text-xs text-slate-500">Καταστήματα</span>
-                  <FieldHint reason={fieldLocked(plan.id, "maxVenues")} />
+            <section className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+              <div>
+                <h3 className="text-sm font-semibold text-brand-navy">Όρια πλάνου</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Εφαρμόζονται στο προϊόν — όχι μόνο στο marketing κείμενο. Κενό = απεριόριστο.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <FormField label="Καταστήματα" lockReason={fieldLocked(plan.id, "maxVenues")}>
                   <input
-                    className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("maxVenues")))}
+                    className={formControlClass(!canEdit("maxVenues"))}
                     type="number"
                     min={1}
                     value={maxVenues}
@@ -323,39 +339,30 @@ function PlanEditor({
                     required={canEdit("maxVenues")}
                     disabled={!canEdit("maxVenues")}
                   />
-                </label>
-                <label className="block text-sm">
-                  <span className="text-xs text-slate-500">Κατάλογοι / μαγαζί (κενό = απεριόριστο)</span>
-                  <FieldHint reason={fieldLocked(plan.id, "maxMenusPerVenue")} />
+                </FormField>
+                <FormField label="Κατάλογοι / μαγαζί" lockReason={fieldLocked(plan.id, "maxMenusPerVenue")}>
                   <input
-                    className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("maxMenusPerVenue")))}
+                    className={formControlClass(!canEdit("maxMenusPerVenue"))}
                     type="number"
                     min={1}
                     value={maxMenus}
                     onChange={(e) => setMaxMenus(e.target.value)}
                     disabled={!canEdit("maxMenusPerVenue")}
                   />
-                </label>
-                <label className="block text-sm">
-                  <span className="text-xs text-slate-500">Πιάτα (κενό = απεριόριστο)</span>
-                  <FieldHint reason={fieldLocked(plan.id, "maxItems")} />
+                </FormField>
+                <FormField label="Είδη" lockReason={fieldLocked(plan.id, "maxItems")}>
                   <input
-                    className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("maxItems")))}
+                    className={formControlClass(!canEdit("maxItems"))}
                     type="number"
                     min={1}
                     value={maxItems}
                     onChange={(e) => setMaxItems(e.target.value)}
                     disabled={!canEdit("maxItems")}
                   />
-                </label>
-                <label className="block text-sm">
-                  <span className="text-xs text-slate-500">Gemini tokens/μήνα (κενό = απεριόριστο)</span>
-                  <FieldHint reason={fieldLocked(plan.id, "maxGeminiTokensPerMonth")} />
+                </FormField>
+                <FormField label="Gemini tokens / μήνα" lockReason={fieldLocked(plan.id, "maxGeminiTokensPerMonth")}>
                   <input
-                    className={cn(
-                      dashboardFieldClass,
-                      lockedFieldClass(!canEdit("maxGeminiTokensPerMonth")),
-                    )}
+                    className={formControlClass(!canEdit("maxGeminiTokensPerMonth"))}
                     type="number"
                     min={0}
                     value={maxGeminiTokens}
@@ -363,86 +370,91 @@ function PlanEditor({
                     placeholder="π.χ. 500000"
                     disabled={!canEdit("maxGeminiTokensPerMonth")}
                   />
-                </label>
+                </FormField>
               </div>
-            </div>
+            </section>
           ) : (
-            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
               {fieldLocked(plan.id, "maxVenues") ?? "Τα όρια δεν επεξεργάζονται από εδώ."}
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className={dashboardLabelClass}>Κουμπί CTA</span>
-              <FieldHint reason={fieldLocked(plan.id, "ctaLabel")} />
-              <input
-                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("ctaLabel")))}
-                value={ctaLabel}
-                onChange={(e) => setCtaLabel(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.planCta}
-                disabled={!canEdit("ctaLabel")}
-              />
-            </label>
-            <label className="block text-sm">
-              <span className={dashboardLabelClass}>Badge (π.χ. Δημοφιλές)</span>
-              <FieldHint reason={fieldLocked(plan.id, "badge")} />
-              <input
-                className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("badge")))}
-                value={badge}
-                onChange={(e) => setBadge(e.target.value)}
-                placeholder={FORM_PLACEHOLDERS.planBadge}
-                disabled={!canEdit("badge")}
-              />
-            </label>
-            {planShowsTrialDays(plan.id) ? (
-              <label className="block text-sm">
-                <span className={dashboardLabelClass}>Ημέρες δοκιμής</span>
-                <FieldHint reason={fieldLocked(plan.id, "trialDays")} />
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold text-brand-navy">Marketing & εμφάνιση</h3>
+            <div
+              className={cn(
+                "grid gap-4",
+                planShowsTrialDays(plan.id) ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2",
+              )}
+            >
+              <FormField label="Κουμπί CTA" lockReason={fieldLocked(plan.id, "ctaLabel")}>
                 <input
-                  className={cn(dashboardFieldClass, lockedFieldClass(!canEdit("trialDays")))}
-                  type="number"
-                  min={1}
-                  value={trialDays}
-                  onChange={(e) => setTrialDays(e.target.value)}
-                  placeholder={FORM_PLACEHOLDERS.trialDays}
-                  disabled={!canEdit("trialDays")}
+                  className={formControlClass(!canEdit("ctaLabel"))}
+                  value={ctaLabel}
+                  onChange={(e) => setCtaLabel(e.target.value)}
+                  placeholder={FORM_PLACEHOLDERS.planCta}
+                  disabled={!canEdit("ctaLabel")}
                 />
-              </label>
-            ) : null}
-          </div>
-
-          <div className="flex flex-wrap gap-4 text-sm">
-            <label className={cn("inline-flex items-center gap-2", !canEdit("highlighted") && "opacity-50")}>
-              <input
-                type="checkbox"
-                checked={highlighted}
-                onChange={(e) => setHighlighted(e.target.checked)}
-                disabled={!canEdit("highlighted")}
-              />
-              <span>Επισημασμένο (Δημοφιλές)</span>
-            </label>
-            <label className={cn("inline-flex items-center gap-2", !canEdit("visibleOnPricing") && "opacity-50")}>
-              <input
-                type="checkbox"
-                checked={visibleOnPricing}
-                onChange={(e) => setVisibleOnPricing(e.target.checked)}
-                disabled={!canEdit("visibleOnPricing")}
-              />
-              <span>Εμφάνιση στη σελίδα τιμών</span>
-            </label>
-          </div>
+              </FormField>
+              <FormField label="Badge (π.χ. Δημοφιλές)" lockReason={fieldLocked(plan.id, "badge")}>
+                <input
+                  className={formControlClass(!canEdit("badge"))}
+                  value={badge}
+                  onChange={(e) => setBadge(e.target.value)}
+                  placeholder={FORM_PLACEHOLDERS.planBadge}
+                  disabled={!canEdit("badge")}
+                />
+              </FormField>
+              {planShowsTrialDays(plan.id) ? (
+                <FormField label="Ημέρες δοκιμής" lockReason={fieldLocked(plan.id, "trialDays")}>
+                  <input
+                    className={formControlClass(!canEdit("trialDays"))}
+                    type="number"
+                    min={1}
+                    value={trialDays}
+                    onChange={(e) => setTrialDays(e.target.value)}
+                    placeholder={FORM_PLACEHOLDERS.trialDays}
+                    disabled={!canEdit("trialDays")}
+                  />
+                </FormField>
+              ) : null}
+            </div>
+          </section>
 
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           {message ? <p className="text-sm text-green-700">{message}</p> : null}
 
-          <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
-            <button type="button" className={buttonClass("secondary")} onClick={onClose}>
-              Κλείσιμο
-            </button>
-            <button type="submit" className={buttonClass("primary")} disabled={saving}>
-              {saving ? "Αποθήκευση…" : "Αποθήκευση"}
-            </button>
+          <div className="flex flex-col gap-4 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+              <label className={cn("inline-flex items-center gap-2.5", !canEdit("highlighted") && "opacity-50")}>
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300"
+                  checked={highlighted}
+                  onChange={(e) => setHighlighted(e.target.checked)}
+                  disabled={!canEdit("highlighted")}
+                />
+                <span>Επισημασμένο (Δημοφιλές)</span>
+              </label>
+              <label className={cn("inline-flex items-center gap-2.5", !canEdit("visibleOnPricing") && "opacity-50")}>
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300"
+                  checked={visibleOnPricing}
+                  onChange={(e) => setVisibleOnPricing(e.target.checked)}
+                  disabled={!canEdit("visibleOnPricing")}
+                />
+                <span>Εμφάνιση στη σελίδα τιμών</span>
+              </label>
+            </div>
+            <div className="flex shrink-0 flex-wrap justify-end gap-2">
+              <button type="button" className={buttonClass("secondary")} onClick={onClose}>
+                Κλείσιμο
+              </button>
+              <button type="submit" className={buttonClass("primary")} disabled={saving}>
+                {saving ? "Αποθήκευση…" : "Αποθήκευση"}
+              </button>
+            </div>
           </div>
         </form>
       </Card>
@@ -529,7 +541,7 @@ export function SupervisorPlansClient() {
                     <td className="px-4 py-3 text-xs text-slate-600">
                       <p>{plan.maxVenues} κατ.</p>
                       <p>{formatLimit(plan.maxMenusPerVenue)} cat.</p>
-                      <p>{formatLimit(plan.maxItems)} πιάτα</p>
+                      <p>{formatLimit(plan.maxItems)} είδη</p>
                       <p>
                         Gemini:{" "}
                         {plan.maxGeminiTokensPerMonth === null
