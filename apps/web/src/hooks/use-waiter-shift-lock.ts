@@ -22,6 +22,7 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
 
   const onWakeLockReleased = useCallback(() => {
     wakeLockRef.current = null;
+    setLocked(false);
   }, []);
 
   const releaseWakeLock = useCallback(async () => {
@@ -79,11 +80,12 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
   }, [exitFullscreen, releaseWakeLock]);
 
   const enable = useCallback(async () => {
+    if (!wakeLockSupported) return;
     setBusy(true);
     try {
       unlockWaiterAudio();
       const gotWakeLock = await acquireWakeLock();
-      if (wakeLockSupported && !gotWakeLock) return;
+      if (!gotWakeLock) return;
       await enterFullscreen();
       setLocked(true);
     } finally {

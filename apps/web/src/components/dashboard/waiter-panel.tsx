@@ -115,6 +115,7 @@ export function WaiterPanel({
   const notificationSettingsRef = useRef(notificationSettings);
   const lastPassAlertIdRef = useRef<string | null>(null);
   const lastWaiterCallAlertIdRef = useRef<string | null>(null);
+  const alertedWaiterCallIdsRef = useRef<Set<string>>(new Set());
   zoneFilterIdRef.current = zoneFilterId;
   notificationSettingsRef.current = notificationSettings;
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -171,7 +172,8 @@ export function WaiterPanel({
       } | null;
 
       if (data?.type === "MENUOS_WAITER_CALL_ALERT") {
-        if (!data.callId || lastWaiterCallAlertIdRef.current === data.callId) return;
+        if (!data.callId || alertedWaiterCallIdsRef.current.has(data.callId)) return;
+        alertedWaiterCallIdsRef.current.add(data.callId);
         lastWaiterCallAlertIdRef.current = data.callId;
         alertNewWaiterCall();
         return;
@@ -339,6 +341,7 @@ export function WaiterPanel({
     passBaselineSetRef.current = false;
     lastPassAlertIdRef.current = null;
     lastWaiterCallAlertIdRef.current = null;
+    alertedWaiterCallIdsRef.current = new Set();
     autoZoneAppliedRef.current = false;
     zoneFilterUserPickedRef.current = false;
     setZoneFilterId("all");
@@ -348,10 +351,16 @@ export function WaiterPanel({
   useEffect(() => {
     if (!pendingBaselineSetRef.current || prevPendingRef.current === null) return;
     if (pendingCount > prevPendingRef.current && document.visibilityState === "visible") {
-      alertNewWaiterCall();
+      const freshPending = calls.filter(
+        (call) => call.status === "PENDING" && !alertedWaiterCallIdsRef.current.has(call.id),
+      );
+      if (freshPending.length > 0) {
+        for (const call of freshPending) alertedWaiterCallIdsRef.current.add(call.id);
+        alertNewWaiterCall();
+      }
     }
     prevPendingRef.current = pendingCount;
-  }, [pendingCount]);
+  }, [pendingCount, calls]);
 
   useEffect(() => {
     load();
