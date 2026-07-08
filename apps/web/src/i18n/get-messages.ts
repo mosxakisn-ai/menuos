@@ -1,3 +1,4 @@
+import { TRIAL_DAYS } from "@menuos/shared";
 import type { Locale } from "./types";
 import { MARKETING } from "@/content/marketing-el";
 import { MARKETING_EN } from "@/content/marketing-en";
@@ -16,11 +17,16 @@ const CATALOG: Record<Locale, MenuOsMessages> = {
   en: { marketing: MARKETING_EN, pages: PAGES_EN },
 };
 
-export async function getMessages(locale: Locale): Promise<MenuOsMessages> {
+/** Client-safe messages — no DB; used when switching language in the browser. */
+export function getStaticMessages(locale: Locale, trialDays = TRIAL_DAYS): MenuOsMessages {
   const base = CATALOG[locale] ?? CATALOG.el;
-  const trialDays = await getTrialDaysFromCatalog();
   return {
     marketing: applyTrialDayPlaceholdersDeep(base.marketing, trialDays, locale),
     pages: applyTrialDayPlaceholdersDeep(base.pages, trialDays, locale),
   };
+}
+
+export async function getMessages(locale: Locale): Promise<MenuOsMessages> {
+  const trialDays = await getTrialDaysFromCatalog().catch(() => TRIAL_DAYS);
+  return getStaticMessages(locale, trialDays);
 }

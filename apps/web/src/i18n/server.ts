@@ -4,7 +4,7 @@ import {
   isLocale,
   LOCALE_COOKIE,
   LOCALE_REQUEST_HEADER,
-  resolveLocale,
+  localeFromAcceptLanguage,
   type Locale,
 } from "./types";
 
@@ -14,5 +14,7 @@ export async function getServerLocale(): Promise<Locale> {
   if (fromHeader && isLocale(fromHeader)) return fromHeader;
 
   const cookie = (await cookies()).get(LOCALE_COOKIE)?.value;
-  return resolveLocale(cookie ?? DEFAULT_LOCALE);
+  if (cookie && isLocale(cookie)) return cookie;
+
+  return localeFromAcceptLanguage(headerStore.get("accept-language")) ?? DEFAULT_LOCALE;
 }
