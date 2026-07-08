@@ -505,12 +505,13 @@ export const DASHBOARD_EN = {
     shiftLock: {
       lockButton: "Keep screen on",
       unlockButton: "Unlock",
+      unlockButtonShort: "Off",
       promptTitle: "Shift mode",
       promptHint:
         "Tap to keep the screen and this panel active — sounds and calls work more reliably. Unlock when you are done.",
-      lockedTitle: "Panel active",
-      lockedHint: "The screen stays on — you remain here for calls and messages.",
-      fullscreenOn: "Full screen — swipe from the top to exit if needed.",
+      lockedTitle: "Screen on",
+      lockedHint: "Ready for calls.",
+      fullscreenOn: "Full screen",
       unsupported: "Open from a home-screen icon (not a plain browser tab) for best results.",
     },
     loadFailed: "Could not load calls. Refresh the page or open the link from the dashboard again.",

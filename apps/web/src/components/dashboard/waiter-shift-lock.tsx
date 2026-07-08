@@ -39,28 +39,37 @@ export function WaiterShiftLockControl({ compact = false }: { compact?: boolean 
   return (
     <div className={cn("space-y-2", compact ? "" : "rounded-2xl border border-slate-200 bg-white p-3 shadow-sm")}>
       {locked ? (
-        <div className="flex items-start gap-3 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
-            <Lock className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-emerald-950">{L.lockedTitle}</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-emerald-900/90">{L.lockedHint}</p>
-            {fullscreenActive ? (
-              <p className="mt-1 text-[11px] text-emerald-800/80">{L.fullscreenOn}</p>
-            ) : null}
-          </div>
+        <div
+          className={cn(
+            "flex items-center gap-2 border border-emerald-300 bg-emerald-50",
+            compact ? "rounded-lg px-2 py-1" : "rounded-xl px-3 py-2",
+          )}
+        >
+          <Lock className={cn("shrink-0 text-emerald-700", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
+          <p
+            className={cn(
+              "min-w-0 flex-1 font-semibold text-emerald-950",
+              compact ? "truncate text-xs" : "text-sm",
+            )}
+          >
+            {L.lockedTitle}
+          </p>
+          {!compact && fullscreenActive ? (
+            <p className="hidden text-[11px] text-emerald-800/80 sm:block">{L.fullscreenOn}</p>
+          ) : null}
           <button
             type="button"
             onClick={() => void toggle()}
             disabled={busy}
+            aria-label={L.unlockButton}
             className={cn(
               buttonClass("secondary", "sm"),
               "shrink-0 border-emerald-400 bg-white text-emerald-900 hover:bg-emerald-100",
+              compact && "h-7 px-2",
             )}
           >
-            <LockOpen className="mr-1.5 h-4 w-4" />
-            {L.unlockButton}
+            <LockOpen className={cn("shrink-0", compact ? "h-3 w-3" : "mr-1 h-4 w-4")} />
+            {compact ? L.unlockButtonShort : L.unlockButton}
           </button>
         </div>
       ) : (

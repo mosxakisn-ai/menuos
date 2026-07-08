@@ -516,12 +516,13 @@ export const DASHBOARD_EL = {
     shiftLock: {
       lockButton: "Κράτα ανοιχτή",
       unlockButton: "Ξεκλείδωμα",
+      unlockButtonShort: "Ξεκλ.",
       promptTitle: "Βάρδια με κινητό",
       promptHint:
         "Πάτα για να μείνει ανοιχτή η οθόνη και το panel — οι ήχοι και οι κλήσεις δουλεύουν πιο σίγουρα. Όταν τελειώσεις, ξεκλείδωσε.",
-      lockedTitle: "Panel ενεργό",
-      lockedHint: "Η οθόνη δεν σβήνει — μένεις εδώ για κλήσεις και μηνύματα.",
-      fullscreenOn: "Πλήρης οθόνη — σύρε από πάνω για να βγεις αν χρειαστεί.",
+      lockedTitle: "Οθόνη ενεργή",
+      lockedHint: "Έτοιμο για κλήσεις.",
+      fullscreenOn: "Πλήρης οθόνη",
       unsupported:
         "Άνοιξε το link από εικονίδιο στην αρχική (όχι απλό tab) για καλύτερη λειτουργία.",
     },
