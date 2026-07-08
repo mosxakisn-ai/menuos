@@ -169,7 +169,6 @@ export function WaiterPanel({
         zoneId?: string;
         callId?: string;
       } | null;
-      if (document.visibilityState !== "visible") return;
 
       if (data?.type === "MENUOS_WAITER_CALL_ALERT") {
         if (!data.callId || lastWaiterCallAlertIdRef.current === data.callId) return;

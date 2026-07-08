@@ -1,4 +1,4 @@
-// menuos-sw-v7
+// menuos-sw-v8
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
@@ -111,15 +111,33 @@ async function findWaiterClients() {
   });
 }
 
-async function isWaiterPanelVisible() {
-  const waiterClients = await findWaiterClients();
-  return waiterClients.some((client) => client.visibilityState === "visible");
+async function playBufferInSw(arrayBuffer) {
+  const AudioCtx = self.AudioContext || self.webkitAudioContext;
+  if (!AudioCtx) return false;
+  try {
+    const ctx = new AudioCtx();
+    if (ctx.state === "suspended") await ctx.resume();
+    const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+    await new Promise((resolve) => {
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.onended = () => {
+        void ctx.close().catch(() => undefined);
+        resolve();
+      };
+      source.start(0);
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-function playBeepInSw() {
+function playBeepWebAudio() {
   try {
     const AudioCtx = self.AudioContext || self.webkitAudioContext;
-    if (!AudioCtx) return Promise.resolve();
+    if (!AudioCtx) return Promise.resolve(false);
     const ctx = new AudioCtx();
     const run = () => {
       const playTone = (freq, start, duration) => {
@@ -138,17 +156,33 @@ function playBeepInSw() {
       return new Promise((resolve) => {
         self.setTimeout(() => {
           void ctx.close().catch(() => undefined);
-          resolve();
+          resolve(true);
         }, 450);
       });
     };
     if (ctx.state === "suspended") {
-      return ctx.resume().then(run).catch(() => undefined);
+      return ctx.resume().then(run).catch(() => false);
     }
     return run();
   } catch {
-    return Promise.resolve();
+    return Promise.resolve(false);
   }
+}
+
+async function playBeepWavFallback() {
+  try {
+    const res = await fetch("/api/waiter-beep", { credentials: "same-origin" });
+    if (!res.ok) return false;
+    return playBufferInSw(await res.arrayBuffer());
+  } catch {
+    return false;
+  }
+}
+
+async function playBeepInSw() {
+  const webAudioOk = await playBeepWebAudio();
+  if (webAudioOk) return;
+  await playBeepWavFallback();
 }
 
 async function playAnnouncementInSw(announcement) {
@@ -192,11 +226,13 @@ async function handleStaffPushAlert(data) {
   const kind = pushTagKind(data.tag);
   if (kind === "other") return;
 
-  const waiterVisible = await isWaiterPanelVisible();
   const waiterClients = await findWaiterClients();
+  const visibleWaiterClients = waiterClients.filter(
+    (client) => client.visibilityState === "visible",
+  );
 
-  if (waiterVisible && waiterClients.length > 0) {
-    for (const client of waiterClients) {
+  if (visibleWaiterClients.length > 0) {
+    for (const client of visibleWaiterClients) {
       if (kind === "pass") {
         client.postMessage({
           type: "MENUOS_PASS_ALERT",
