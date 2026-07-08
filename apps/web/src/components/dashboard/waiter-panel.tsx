@@ -112,7 +112,7 @@ export function WaiterPanel({
   const spotsRef = useRef<VenueSpot[]>([]);
   const opsConfigRef = useRef<ReturnType<typeof useVenueOperationsConfig>["config"]>(undefined);
   const notificationSettingsRef = useRef(notificationSettings);
-  const hasPushSubscriptionRef = useRef(false);
+  const lastPassAlertIdRef = useRef<string | null>(null);
   zoneFilterIdRef.current = zoneFilterId;
   notificationSettingsRef.current = notificationSettings;
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -129,23 +129,33 @@ export function WaiterPanel({
     };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function detectPush() {
-      try {
-        if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
-        const reg = await navigator.serviceWorker.getRegistration("/sw.js");
-        const sub = await reg?.pushManager.getSubscription();
-        if (!cancelled) hasPushSubscriptionRef.current = Boolean(sub);
-      } catch {
-        if (!cancelled) hasPushSubscriptionRef.current = false;
-      }
-    }
-    void detectPush();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  function triggerPassAlert(
+    pass: PassSignal,
+    announcementGroups: ReturnType<typeof groupVenueSpotsByZone>,
+  ) {
+    if (lastPassAlertIdRef.current === pass.id) return;
+    lastPassAlertIdRef.current = pass.id;
+    alertNewWaiterCall();
+    if (!notificationSettingsRef.current.voiceMessagesEnabled) return;
+    const passZoneId =
+      pass.zoneId?.trim() || zoneIdForWaiterLocationView(pass, announcementGroups);
+    speakPassMessage({
+      tableNumber: pass.tableNumber ?? undefined,
+      roomNumber: pass.roomNumber ?? undefined,
+      sunbedNumber: pass.sunbedNumber ?? undefined,
+      zoneGroups: announcementGroups,
+      activeZoneId: passZoneId,
+    });
+  }
+
+  function passAlertAllowedForZone(signalZoneId: string | null | undefined): boolean {
+    const alertZoneId =
+      assignedZoneIdRef.current ||
+      (zoneFilterIdRef.current !== "all" ? zoneFilterIdRef.current : null);
+    if (!alertZoneId) return true;
+    if (!signalZoneId?.trim()) return true;
+    return signalZoneId.trim() === alertZoneId;
+  }
 
   useEffect(() => {
     function onServiceWorkerMessage(event: MessageEvent) {
@@ -154,9 +164,14 @@ export function WaiterPanel({
         announcement?: string;
         voiceEnabled?: boolean;
         passId?: string;
+        zoneId?: string;
       } | null;
       if (data?.type !== "MENUOS_PASS_ALERT") return;
       if (document.visibilityState !== "visible") return;
+      if (!data.passId) return;
+      if (!passAlertAllowedForZone(data.zoneId)) return;
+      if (lastPassAlertIdRef.current === data.passId) return;
+      lastPassAlertIdRef.current = data.passId;
       alertNewWaiterCall();
       if (!data.voiceEnabled) return;
       const text = data.announcement?.trim();
@@ -197,7 +212,7 @@ export function WaiterPanel({
           const prev = prevById.get(call.id);
           return prev != null && prev.updatedAt !== call.updatedAt;
         });
-        if (orderUpdated) alertNewWaiterCall();
+        if (orderUpdated && document.visibilityState === "visible") alertNewWaiterCall();
       }
       prevCallsRef.current = newCalls;
       setCalls(newCalls);
@@ -230,14 +245,6 @@ export function WaiterPanel({
     }
 
     if (passRes.ok) {
-      try {
-        if ("serviceWorker" in navigator && "PushManager" in window) {
-          const reg = await navigator.serviceWorker.getRegistration("/sw.js");
-          hasPushSubscriptionRef.current = Boolean(await reg?.pushManager.getSubscription());
-        }
-      } catch {
-        /* ignore */
-      }
       const newSignals = (passData.signals ?? []) as PassSignal[];
       if (typeof passData.voiceMessagesEnabled === "boolean") {
         notificationSettingsRef.current = {
@@ -273,26 +280,12 @@ export function WaiterPanel({
           : freshPasses;
         const hasNewPass = alertablePasses.length > 0;
         if (hasNewPass && document.visibilityState === "visible") {
-          alertNewWaiterCall();
-          if (notificationSettingsRef.current.voiceMessagesEnabled) {
-            const latest = [...alertablePasses].sort((a, b) => {
-              const aTime = a.readyAt ? Date.parse(a.readyAt) : 0;
-              const bTime = b.readyAt ? Date.parse(b.readyAt) : 0;
-              return bTime - aTime;
-            })[0];
-            if (latest) {
-              const passZoneId =
-                latest.zoneId?.trim() ||
-                zoneIdForWaiterLocationView(latest, announcementGroups);
-              speakPassMessage({
-                tableNumber: latest.tableNumber ?? undefined,
-                roomNumber: latest.roomNumber ?? undefined,
-                sunbedNumber: latest.sunbedNumber ?? undefined,
-                zoneGroups: announcementGroups,
-                activeZoneId: passZoneId,
-              });
-            }
-          }
+          const latest = [...alertablePasses].sort((a, b) => {
+            const aTime = a.readyAt ? Date.parse(a.readyAt) : 0;
+            const bTime = b.readyAt ? Date.parse(b.readyAt) : 0;
+            return bTime - aTime;
+          })[0];
+          if (latest) triggerPassAlert(latest, announcementGroups);
         }
       }
       prevPassIdsRef.current = new Set(newSignals.map((signal) => signal.id));
@@ -334,6 +327,7 @@ export function WaiterPanel({
     prevPassIdsRef.current = new Set();
     pendingBaselineSetRef.current = false;
     passBaselineSetRef.current = false;
+    lastPassAlertIdRef.current = null;
     autoZoneAppliedRef.current = false;
     setZoneFilterId("all");
     setPendingByVenue({});
@@ -341,7 +335,7 @@ export function WaiterPanel({
 
   useEffect(() => {
     if (!pendingBaselineSetRef.current || prevPendingRef.current === null) return;
-    if (pendingCount > prevPendingRef.current) {
+    if (pendingCount > prevPendingRef.current && document.visibilityState === "visible") {
       alertNewWaiterCall();
     }
     prevPendingRef.current = pendingCount;

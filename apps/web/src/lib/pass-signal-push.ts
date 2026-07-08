@@ -64,6 +64,7 @@ async function notifyStaffPassSignal(
     tag: `pass-${signal.id}`,
     voiceEnabled,
     announcement: announcement?.trim() || undefined,
+    zoneId: activeZoneId ?? signal.zoneId ?? undefined,
     passId: signal.id,
   });
 

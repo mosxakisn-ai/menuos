@@ -1,3 +1,81 @@
+// menuos-sw-v5
+
+function resolveNotificationTarget(rawUrl) {
+  try {
+    const absolute = new URL(rawUrl || "/", self.location.origin);
+    return {
+      href: absolute.href,
+      path: `${absolute.pathname}${absolute.search}${absolute.hash}`,
+      origin: absolute.origin,
+    };
+  } catch {
+    return {
+      href: `${self.location.origin}/`,
+      path: "/",
+      origin: self.location.origin,
+    };
+  }
+}
+
+async function openNotificationTarget(rawUrl) {
+  const target = resolveNotificationTarget(rawUrl);
+  const clients = await self.clients.matchAll({
+    type: "window",
+    includeUncontrolled: true,
+  });
+
+  const sameOrigin = clients.filter((client) => {
+    try {
+      return new URL(client.url).origin === target.origin;
+    } catch {
+      return false;
+    }
+  });
+
+  for (const client of sameOrigin) {
+    if (client.url === target.href && "focus" in client) {
+      return client.focus();
+    }
+  }
+
+  const waiterClients = sameOrigin.filter((client) => {
+    try {
+      return isWaiterPanelPath(new URL(client.url).pathname);
+    } catch {
+      return false;
+    }
+  });
+
+  for (const client of waiterClients) {
+    if (!("navigate" in client)) continue;
+    try {
+      const opened = await client.navigate(target.href);
+      if (opened && "focus" in opened) return opened.focus();
+      if ("focus" in client) return client.focus();
+    } catch {
+      /* try next client */
+    }
+  }
+
+  for (const client of sameOrigin) {
+    if (!("navigate" in client)) continue;
+    try {
+      const opened = await client.navigate(target.href);
+      if (opened && "focus" in opened) return opened.focus();
+      if ("focus" in client) return client.focus();
+    } catch {
+      /* try openWindow */
+    }
+  }
+
+  if (!self.clients.openWindow) return undefined;
+
+  const opened = await self.clients.openWindow(target.path);
+  if (opened) return opened;
+
+  return self.clients.openWindow(target.href);
+}
+
 function isWaiterPanelPath(pathname) {
   return pathname.startsWith("/s/") || pathname.startsWith("/dashboard/waiter");
 }
@@ -84,14 +162,18 @@ async function playAnnouncementInSw(announcement) {
 }
 
 async function handlePassAlert(data) {
+  const tag = typeof data.tag === "string" ? data.tag : "";
+  if (!tag.startsWith("pass-")) return;
+
   const waiterVisible = await isWaiterPanelVisible();
   const waiterClients = await findWaiterClients();
 
-  if (waiterVisible) {
+  if (waiterVisible && waiterClients.length > 0) {
     for (const client of waiterClients) {
       client.postMessage({
         type: "MENUOS_PASS_ALERT",
         passId: data.passId,
+        zoneId: data.zoneId,
         announcement: data.announcement,
         voiceEnabled: Boolean(data.voiceEnabled),
       });
@@ -133,33 +215,14 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url ?? "/";
-  const targetOrigin = (() => {
-    try {
-      return new URL(url, self.location.origin).origin;
-    } catch {
-      return self.location.origin;
-    }
-  })();
-  event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      for (const client of clients) {
-        if ("focus" in client) {
-          try {
-            if (new URL(client.url).origin === targetOrigin) {
-              if ("navigate" in client) {
-                return client.navigate(url);
-              }
-              return client.focus();
-            }
-          } catch {
-            /* ignore malformed client URL */
-          }
-        }
-      }
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(url);
-      }
-    }),
-  );
+  const rawUrl = event.notification.data?.url ?? "/";
+  event.waitUntil(openNotificationTarget(rawUrl));
+});
+
+self.addEventListener("install", () => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
 });
