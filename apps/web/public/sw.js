@@ -1,19 +1,38 @@
-// menuos-sw-v5
-
+// menuos-sw-v6
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
+    const pathname = absolute.pathname;
+    const slugMatch = pathname.match(/^\/s\/([^/]+)/);
     return {
       href: absolute.href,
-      path: `${absolute.pathname}${absolute.search}${absolute.hash}`,
+      path: `${pathname}${absolute.search}${absolute.hash}`,
       origin: absolute.origin,
+      waiterSlug: slugMatch ? decodeURIComponent(slugMatch[1]) : null,
     };
   } catch {
     return {
       href: `${self.location.origin}/`,
       path: "/",
       origin: self.location.origin,
+      waiterSlug: null,
     };
+  }
+}
+
+function clientMatchesTarget(clientUrl, target) {
+  try {
+    const client = new URL(clientUrl);
+    if (client.origin !== target.origin) return false;
+    if (client.href === target.href) return true;
+    if (target.waiterSlug) {
+      const clientSlugMatch = client.pathname.match(/^\/s\/([^/]+)/);
+      const clientSlug = clientSlugMatch ? decodeURIComponent(clientSlugMatch[1]) : null;
+      if (clientSlug && clientSlug === target.waiterSlug) return true;
+    }
+    return client.pathname === new URL(target.href).pathname;
+  } catch {
+    return false;
   }
 }
 
@@ -24,21 +43,13 @@ async function openNotificationTarget(rawUrl) {
     includeUncontrolled: true,
   });
 
-  const sameOrigin = clients.filter((client) => {
-    try {
-      return new URL(client.url).origin === target.origin;
-    } catch {
-      return false;
-    }
-  });
-
-  for (const client of sameOrigin) {
-    if (client.url === target.href && "focus" in client) {
+  for (const client of clients) {
+    if (clientMatchesTarget(client.url, target) && "focus" in client) {
       return client.focus();
     }
   }
 
-  const waiterClients = sameOrigin.filter((client) => {
+  const waiterClients = clients.filter((client) => {
     try {
       return isWaiterPanelPath(new URL(client.url).pathname);
     } catch {
@@ -47,33 +58,40 @@ async function openNotificationTarget(rawUrl) {
   });
 
   for (const client of waiterClients) {
-    if (!("navigate" in client)) continue;
-    try {
-      const opened = await client.navigate(target.href);
-      if (opened && "focus" in opened) return opened.focus();
-      if ("focus" in client) return client.focus();
-    } catch {
-      /* try next client */
+    if ("navigate" in client) {
+      try {
+        const opened = await client.navigate(target.href);
+        if (opened && "focus" in opened) return opened.focus();
+      } catch {
+        /* try next */
+      }
     }
+    if ("focus" in client) return client.focus();
   }
 
-  for (const client of sameOrigin) {
-    if (!("navigate" in client)) continue;
+  for (const client of clients) {
     try {
-      const opened = await client.navigate(target.href);
-      if (opened && "focus" in opened) return opened.focus();
-      if ("focus" in client) return client.focus();
+      if (new URL(client.url).origin !== target.origin) continue;
+      if ("navigate" in client) {
+        try {
+          const opened = await client.navigate(target.href);
+          if (opened && "focus" in opened) return opened.focus();
+        } catch {
+          /* try openWindow */
+        }
+      }
     } catch {
-      /* try openWindow */
+      /* ignore */
     }
   }
 
   if (!self.clients.openWindow) return undefined;
 
-  const opened = await self.clients.openWindow(target.path);
+  let opened = await self.clients.openWindow(target.href);
   if (opened) return opened;
 
-  return self.clients.openWindow(target.href);
+  opened = await self.clients.openWindow(target.path);
+  return opened;
 }
 
 function isWaiterPanelPath(pathname) {
@@ -161,28 +179,42 @@ async function playAnnouncementInSw(announcement) {
   }
 }
 
-async function handlePassAlert(data) {
-  const tag = typeof data.tag === "string" ? data.tag : "";
-  if (!tag.startsWith("pass-")) return;
+function pushTagKind(tag) {
+  if (typeof tag !== "string") return "other";
+  if (tag.startsWith("pass-")) return "pass";
+  if (tag.startsWith("waiter-")) return "waiter";
+  return "other";
+}
+
+async function handleStaffPushAlert(data) {
+  const kind = pushTagKind(data.tag);
+  if (kind === "other") return;
 
   const waiterVisible = await isWaiterPanelVisible();
   const waiterClients = await findWaiterClients();
 
   if (waiterVisible && waiterClients.length > 0) {
     for (const client of waiterClients) {
-      client.postMessage({
-        type: "MENUOS_PASS_ALERT",
-        passId: data.passId,
-        zoneId: data.zoneId,
-        announcement: data.announcement,
-        voiceEnabled: Boolean(data.voiceEnabled),
-      });
+      if (kind === "pass") {
+        client.postMessage({
+          type: "MENUOS_PASS_ALERT",
+          passId: data.passId,
+          zoneId: data.zoneId,
+          announcement: data.announcement,
+          voiceEnabled: Boolean(data.voiceEnabled),
+        });
+      } else {
+        client.postMessage({
+          type: "MENUOS_WAITER_CALL_ALERT",
+          callId: data.callId,
+        });
+      }
     }
     return;
   }
 
   await playBeepInSw();
-  if (data.voiceEnabled && data.announcement) {
+  if (kind === "pass" && data.voiceEnabled && data.announcement) {
     await playAnnouncementInSw(data.announcement);
   }
 }
@@ -195,6 +227,8 @@ self.addEventListener("push", (event) => {
     /* ignore malformed payload */
   }
 
+  const openTarget = resolveNotificationTarget(data.url);
+
   event.waitUntil(
     Promise.all([
       self.registration.showNotification(data.title, {
@@ -206,16 +240,19 @@ self.addEventListener("push", (event) => {
         requireInteraction: true,
         renotify: true,
         silent: false,
-        data: { url: data.url },
+        data: {
+          url: data.url || openTarget.href,
+          path: openTarget.path,
+        },
       }),
-      handlePassAlert(data),
+      handleStaffPushAlert(data),
     ]),
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const rawUrl = event.notification.data?.url ?? "/";
+  const rawUrl = event.notification.data?.url ?? event.notification.data?.path ?? "/";
   event.waitUntil(openNotificationTarget(rawUrl));
 });
 

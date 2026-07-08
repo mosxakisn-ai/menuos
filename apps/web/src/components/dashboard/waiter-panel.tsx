@@ -114,6 +114,7 @@ export function WaiterPanel({
   const opsConfigRef = useRef<ReturnType<typeof useVenueOperationsConfig>["config"]>(undefined);
   const notificationSettingsRef = useRef(notificationSettings);
   const lastPassAlertIdRef = useRef<string | null>(null);
+  const lastWaiterCallAlertIdRef = useRef<string | null>(null);
   zoneFilterIdRef.current = zoneFilterId;
   notificationSettingsRef.current = notificationSettings;
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -166,9 +167,18 @@ export function WaiterPanel({
         voiceEnabled?: boolean;
         passId?: string;
         zoneId?: string;
+        callId?: string;
       } | null;
-      if (data?.type !== "MENUOS_PASS_ALERT") return;
       if (document.visibilityState !== "visible") return;
+
+      if (data?.type === "MENUOS_WAITER_CALL_ALERT") {
+        if (!data.callId || lastWaiterCallAlertIdRef.current === data.callId) return;
+        lastWaiterCallAlertIdRef.current = data.callId;
+        alertNewWaiterCall();
+        return;
+      }
+
+      if (data?.type !== "MENUOS_PASS_ALERT") return;
       if (!data.passId) return;
       if (!passAlertAllowedForZone(data.zoneId)) return;
       if (lastPassAlertIdRef.current === data.passId) return;
@@ -329,6 +339,7 @@ export function WaiterPanel({
     pendingBaselineSetRef.current = false;
     passBaselineSetRef.current = false;
     lastPassAlertIdRef.current = null;
+    lastWaiterCallAlertIdRef.current = null;
     autoZoneAppliedRef.current = false;
     zoneFilterUserPickedRef.current = false;
     setZoneFilterId("all");

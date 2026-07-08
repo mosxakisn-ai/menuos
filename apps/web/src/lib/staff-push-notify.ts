@@ -39,6 +39,7 @@ export async function notifyStaffWaiterCall(input: {
     body,
     url: buildStaffWaiterUrl(input.venue.slug, input.venue.staffToken),
     tag: `waiter-${input.call.id}`,
+    callId: input.call.id,
   });
 
   logWaiterCallPush({
