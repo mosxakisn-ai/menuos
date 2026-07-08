@@ -1,0 +1,78 @@
+---
+description: Live 360° staff alerts — ήχος, push, SW, iOS/Android, αρχεία, γιατί έτσι
+alwaysApply: true
+---
+
+# MenuOS — Staff alerts (τι κάνει τι & γιατί)
+
+## Τέταρτη επιφάνεια
+
+**Staff mobile** `/s/{venueSlug}?key={memberToken}` — session cookie μετά redirect. Όχι dashboard login. Pro + ενεργή συνδρομή.
+
+**Manager Οθόνες** `/dashboard/waiter` — ίδιο grid logic, org-wide sidebar badge.
+
+## Δύο ειδοποιήσεις
+
+| Τύπος | Πηγή | Tag push | Ήχος φωνής |
+|-------|------|----------|-------------|
+| Κλήση πελάτη | QR `WaiterCall` | `waiter-{callId}` | μόνο μπιπ |
+| Μήνυμα πάσου | KDS `PassSignal` | `pass-{id}` | μπιπ + TTS (αν `voiceMessagesEnabled`) |
+
+Polling **5s** όταν panel ανοιχτό. Push όταν κλειστό/κλειδωμένο (αν εγγεγραμμένο).
+
+## Ροή ήχου (γιατί δύο μονοπάτια)
+
+**Panel ορατό + focused:** `waiter-panel.tsx` → `alertNewWaiterCall()` (Web Audio μπιπ) → `speakPassMessage` / `speakGreekLine`.
+
+**Background / κλειδωμένο:** `public/sw.js` (v9+) → `showNotification` (OS ήχος + vibrate) + `playBeepInSw()` + `playAnnouncementInSw()` (server TTS).
+
+**Κρίσιμο:** SW στέλνει `postMessage` **μόνο** αν client `visibilityState === "visible"` **και** `focused === true`. Αλλιώς SW παίζει μόνο του — αλλιώς κλειδωμένο iPhone/Android: μπιπ στο page που δεν ακούγεται.
+
+## iOS vs Android
+
+| | Android Chrome PWA | iPhone |
+|--|-------------------|--------|
+| Push | Ναι (εγκατεστημένο) | **Μόνο Safari + Προσθήκη στην Αρχική** — όχι Chrome tab |
+| Φωνή panel | Web Speech API | **Server WAV** `/api/pass-announcement-audio` — Web Speech μπλοκάρεται async |
+| Unlock ήχου | Πρώτο tap panel | Ξεχωριστό prime audio + 480ms καθυστέρηση TTS μετά μπιπ |
+| Wake lock | Android OK | Safari standalone· όχι Chrome |
+
+Copy push banner: `iosBrowserUnsupported` στο `dashboard-el.ts`.
+
+## Dedup (γιατί)
+
+- `lastPassAlertIdRef` — push + polling ίδιο pass
+- `alertedWaiterCallIdsRef` — push + polling ίδια κλήση
+- `zoneFilterUserPickedRef` — auto-zone δεν ξαναγράφει χειροκίνητη επιλογή χώρου
+
+## Shift lock «Οθόνη ενεργή»
+
+`use-waiter-shift-lock.ts` + `waiter-shift-lock.tsx` compact στο `/s/…`.
+
+**Γιατί:** Wake Lock κρατά οθόνη — όχι OS app pin. Αν OS σβήσει wake lock → UI κλείνει. Lock μόνο αν `wakeLock.request` πιάσει.
+
+## Κλειδιά αρχείων
+
+| Αρχείο | Ρόλος |
+|--------|-------|
+| `apps/web/public/sw.js` | Push, notification, background beep/TTS |
+| `apps/web/src/components/dashboard/waiter-panel.tsx` | Polling, zones, alerts, SW messages |
+| `apps/web/src/lib/waiter-voice.ts` | TTS panel (iOS = WAV) |
+| `apps/web/src/lib/waiter-alert.ts` | Μπιπ + vibrate |
+| `apps/web/src/lib/waiter-device.ts` | `isIosDevice`, standalone PWA, in-app browser |
+| `apps/web/src/lib/staff-push-dispatch.ts` | Push targets ανά staff/zone, TTL 3600, urgency high |
+| `apps/web/src/lib/pass-signal-push.ts` | Pass push payload + announcement text |
+| `apps/web/public/waiter-beep.wav` | Static beep για notification sound + SW fallback |
+
+Μετά αλλαγή SW: **κλείσιμο + άνοιγμα app μία φορά** (νέο `menuos-sw-v*`).
+
+## Deploy
+
+Production: `188.34.195.62` `/opt/menuos` · `menuos.gr` · deploy μόνο με έγκριση χρήστη.
+
+## Pitfalls agents
+
+- Μην θεωρείς `visibilityState visible` = ακούγεται ήχος (lock screen)
+- Μην βασίζεσαι σε push στο iPhone Chrome
+- MIUI/Xiaomi μπορεί να σιγάζει background Web Audio — βασίσου σε notification sound
+- Sidebar badge ≠ τρέχον κατάστημα (org-wide)

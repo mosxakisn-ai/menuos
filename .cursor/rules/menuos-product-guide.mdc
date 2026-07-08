@@ -9,11 +9,14 @@ alwaysApply: true
 
 **Domain:** menuos.gr · **Demo:** `/m/demo-taverna?table=12`
 
-## Τρεις «κόσμοι»
+## Τρεις «κόσμοι» (+ staff)
 
 1. **Δημόσιο site** (menuos.gr) — marketing, εγγραφή, τιμές
 2. **Panel ιδιοκτήτη** (`/dashboard/*`) — διαχείριση
 3. **QR κατάλογος πελάτη** (`/m/{slug}`) — αυτό βλέπει ο επισκέπτης στο κινητό
+4. **Staff κινητό/tablet** (`/s/{slug}`, `/kds`, …) — χωρίς login dashboard, link + cookie
+
+**Alerts deep-dive (ήχος, push, iOS):** `.cursor/rules/menuos-staff-alerts.mdc` · `docs/LIVE360-OPERATIONS.md`
 
 ## Υπηρεσίες & δυνατότητες
 

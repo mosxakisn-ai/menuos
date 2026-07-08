@@ -135,6 +135,29 @@ Per spot: guest call state, pass message text, actions (Accept / Done, OK / Deli
 - **Pass signal created** → push to selected recipients (KDS popup) or all matching subs if no filter
 - Each push URL is **personalized** via `staffMemberAccessUrlFromScreens()` → waiter's `/s/…?key=…&zone=…`
 - Subscriptions tied to `staffMemberId` when staff enables notifications on their device
+- Web Push options: `TTL: 3600`, `urgency: high`
+
+---
+
+## Sound & voice (why two paths)
+
+| State | Beep | Voice (pass only) |
+|-------|------|-------------------|
+| Panel **focused + visible** | Page Web Audio (`waiter-alert.ts`) | Page: Android Web Speech · **iOS server WAV** (`/api/pass-announcement-audio`) |
+| **Background / locked** | SW `playBeepInSw()` + **notification OS sound** (`waiter-beep.wav`) | SW fetches same TTS API |
+
+Service worker (`apps/web/public/sw.js`, bump `menuos-sw-v*` on changes):
+
+- `postMessage` to page **only** if `focused && visibilityState === 'visible'`
+- Else SW handles beep/TTS — page audio fails on lock screen
+
+**iPhone:** Push + reliable alerts require **Safari → Add to Home Screen**. Chrome iOS tab = polling only when open, no push.
+
+**Android:** Installed PWA + push; disable battery optimization for Chrome if SW sleeps.
+
+**Org setting:** `notificationSettings.voiceMessagesEnabled` — toggles pass TTS, not guest-call beep alone.
+
+**Agent rule:** `.cursor/rules/menuos-staff-alerts.mdc`
 
 ---
 
@@ -147,6 +170,9 @@ Per spot: guest call state, pass message text, actions (Accept / Done, OK / Deli
 | Waiter with post id doesn't get push | Must use targeted notify list; `passSignalVisibleToStaffMember` must treat services post ids as waiters |
 | Zone card shows seats not messages | `activePending === 0` for that venue/zone — check venue selector |
 | «Σήμερα: N ειδοποιήσεις» on KDS | Venue-wide total today, **not per zone** — label clarifies «όλοι οι χώροι» |
+| Μπιπ αλλά όχι φωνή iPhone | Web Speech blocked — must use server WAV; user must tap once to unlock audio |
+| Ήχος σταματά κλειδωμένο κινητό | Panel was "visible" but not focused — SW must beep; check push + notification sound settings |
+| Chrome iPhone δεν push | Expected — Safari PWA only |
 
 ---
 
