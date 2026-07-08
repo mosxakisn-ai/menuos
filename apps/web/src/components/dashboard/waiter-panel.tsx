@@ -106,6 +106,7 @@ export function WaiterPanel({
   const pendingBaselineSetRef = useRef(false);
   const passBaselineSetRef = useRef(false);
   const autoZoneAppliedRef = useRef(false);
+  const zoneFilterUserPickedRef = useRef(false);
   const loadGenerationRef = useRef(0);
   const zoneFilterIdRef = useRef(zoneFilterId);
   const assignedZoneIdRef = useRef<string | null>(null);
@@ -329,6 +330,7 @@ export function WaiterPanel({
     passBaselineSetRef.current = false;
     lastPassAlertIdRef.current = null;
     autoZoneAppliedRef.current = false;
+    zoneFilterUserPickedRef.current = false;
     setZoneFilterId("all");
     setPendingByVenue({});
   }, [venueId]);
@@ -399,18 +401,7 @@ export function WaiterPanel({
     [zoneGroups],
   );
 
-  useEffect(() => {
-    if (!initialZoneId || zoneGroups.length === 0) return;
-    if (initialZoneId.trim() === "all") {
-      setZoneFilterId("all");
-      return;
-    }
-    if (zoneGroups.some((zone) => zone.id === initialZoneId)) {
-      setZoneFilterId(initialZoneId);
-    }
-  }, [initialZoneId, zoneGroups]);
-
-  /** Locked when staff has a zone or the share link/QR includes ?zone= (not manager panel). */
+  /** Locked when staff has a specific space (not «all») or share link includes ?zone=. */
   const assignedZoneId = useMemo(() => {
     const raw = initialZoneId?.trim();
     if (!raw || raw === "all") return null;
@@ -420,12 +411,10 @@ export function WaiterPanel({
   assignedZoneIdRef.current = assignedZoneId;
 
   useEffect(() => {
-    if (initialZoneId?.trim() === "all") {
-      setZoneFilterId("all");
-      return;
-    }
-    if (assignedZoneId) setZoneFilterId(assignedZoneId);
-  }, [assignedZoneId, initialZoneId]);
+    if (!assignedZoneId || zoneGroups.length === 0) return;
+    setZoneFilterId(assignedZoneId);
+    zoneFilterUserPickedRef.current = false;
+  }, [assignedZoneId, zoneGroups]);
 
   const assignedZoneLabel = useMemo(
     () => zoneGroups.find((zone) => zone.id === assignedZoneId)?.label ?? null,
@@ -519,7 +508,7 @@ export function WaiterPanel({
 
   useEffect(() => {
     if (staffKey || staffViaCookie) return;
-    if (autoZoneAppliedRef.current || assignedZoneId || !showZoneFilters) return;
+    if (zoneFilterUserPickedRef.current || autoZoneAppliedRef.current || assignedZoneId || !showZoneFilters) return;
     if (venueActiveTotal === 0) return;
 
     let bestZoneId = "all";
@@ -578,6 +567,7 @@ export function WaiterPanel({
         type="button"
         onClick={() => {
           unlockWaiterAudio();
+          zoneFilterUserPickedRef.current = true;
           setZoneFilterId(zoneId);
         }}
         className={cn(
