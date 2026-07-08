@@ -21,6 +21,7 @@ import { useVenueOperationsConfig } from "@/components/dashboard/venue-operation
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertNewWaiterCall } from "@/lib/waiter-alert";
+import { isIosDevice } from "@/lib/waiter-device";
 import { speakGreekLine, speakPassMessage, unlockWaiterAudio } from "@/lib/waiter-voice";
 import type { OrganizationNotificationSettings } from "@menuos/shared";
 import { DEFAULT_ORGANIZATION_NOTIFICATION_SETTINGS } from "@menuos/shared";
@@ -142,13 +143,19 @@ export function WaiterPanel({
     if (!notificationSettingsRef.current.voiceMessagesEnabled) return;
     const passZoneId =
       pass.zoneId?.trim() || zoneIdForWaiterLocationView(pass, announcementGroups);
-    speakPassMessage({
-      tableNumber: pass.tableNumber ?? undefined,
-      roomNumber: pass.roomNumber ?? undefined,
-      sunbedNumber: pass.sunbedNumber ?? undefined,
-      zoneGroups: announcementGroups,
-      activeZoneId: passZoneId,
-    });
+    const speak = () =>
+      speakPassMessage({
+        tableNumber: pass.tableNumber ?? undefined,
+        roomNumber: pass.roomNumber ?? undefined,
+        sunbedNumber: pass.sunbedNumber ?? undefined,
+        zoneGroups: announcementGroups,
+        activeZoneId: passZoneId,
+      });
+    if (isIosDevice()) {
+      window.setTimeout(speak, 480);
+      return;
+    }
+    speak();
   }
 
   function passAlertAllowedForZone(signalZoneId: string | null | undefined): boolean {

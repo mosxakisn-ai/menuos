@@ -1,6 +1,6 @@
 import { getWaiterAudioContext, unlockWaiterAudio } from "@/lib/waiter-voice";
 
-/** Short beep for new waiter calls (works while page is open). */
+export { isInAppBrowser, isIosDevice, isIosStandalonePwa } from "@/lib/waiter-device";
 export function playWaiterAlertSound() {
   if (typeof window === "undefined") return;
   try {
@@ -41,21 +41,4 @@ export function vibrateWaiterAlert() {
 export function alertNewWaiterCall() {
   playWaiterAlertSound();
   vibrateWaiterAlert();
-}
-
-export function isInAppBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent;
-  return /FBAN|FBAV|Instagram|Line\/|MicroMessenger|Messenger|WhatsApp|Twitter|LinkedInApp/i.test(ua);
-}
-
-export function isIosDevice(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /iPad|iPhone|iPod/.test(navigator.userAgent);
-}
-
-export function isIosStandalonePwa(): boolean {
-  if (typeof window === "undefined") return false;
-  const nav = window.navigator as Navigator & { standalone?: boolean };
-  return nav.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
 }

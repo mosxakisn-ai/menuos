@@ -3,11 +3,12 @@ import {
   type PassAnnouncementOptions,
   type PassAnnouncementLocation,
 } from "@menuos/shared";
-import { isIosDevice } from "@/lib/waiter-alert";
+import { isIosDevice } from "@/lib/waiter-device";
 
 let audioUnlocked = false;
 let sharedAudioCtx: AudioContext | null = null;
 let sharedSpeechAudio: HTMLAudioElement | null = null;
+let sharedPrimeAudio: HTMLAudioElement | null = null;
 let iosSpeechPrimed = false;
 let activeSpeechBlobUrl: string | null = null;
 
@@ -37,14 +38,23 @@ function revokeActiveSpeechBlobUrl(): void {
 
 function primeIosSpeechAudio(): void {
   if (!isIosDevice() || iosSpeechPrimed) return;
-  iosSpeechPrimed = true;
   try {
-    const audio = getSpeechAudioElement();
-    audio.src = "/waiter-beep.wav";
-    audio.volume = 0.01;
-    void audio.play().catch(() => undefined);
+    if (!sharedPrimeAudio) {
+      sharedPrimeAudio = new Audio();
+      sharedPrimeAudio.preload = "auto";
+    }
+    sharedPrimeAudio.src = "/waiter-beep.wav";
+    sharedPrimeAudio.volume = 0.01;
+    void sharedPrimeAudio
+      .play()
+      .then(() => {
+        iosSpeechPrimed = true;
+      })
+      .catch(() => {
+        iosSpeechPrimed = false;
+      });
   } catch {
-    /* ignore */
+    iosSpeechPrimed = false;
   }
 }
 
@@ -118,17 +128,16 @@ function startSpeech(synth: SpeechSynthesis, utterance: SpeechSynthesisUtterance
 
 async function speakGreekLineViaServerAudio(text: string): Promise<boolean> {
   try {
-    unlockWaiterAudio();
     const res = await fetch(
       `/api/pass-announcement-audio?text=${encodeURIComponent(text)}`,
       { credentials: "same-origin" },
     );
     if (!res.ok) return false;
     const blob = await res.blob();
-    revokeActiveSpeechBlobUrl();
-    activeSpeechBlobUrl = URL.createObjectURL(blob);
     const audio = getSpeechAudioElement();
     audio.pause();
+    revokeActiveSpeechBlobUrl();
+    activeSpeechBlobUrl = URL.createObjectURL(blob);
     audio.currentTime = 0;
     audio.volume = 1;
     audio.src = activeSpeechBlobUrl;
@@ -166,6 +175,7 @@ export function speakGreekLine(text: string): void {
   if (!trimmed) return;
 
   try {
+    unlockWaiterAudio();
     if (isIosDevice()) {
       void speakGreekLineViaServerAudio(trimmed).then((ok) => {
         if (!ok) speakGreekLineViaWebSpeech(trimmed);

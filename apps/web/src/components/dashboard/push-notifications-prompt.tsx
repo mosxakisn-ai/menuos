@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
-import { isInAppBrowser, isIosDevice, isIosStandalonePwa } from "@/lib/waiter-alert";
+import { isInAppBrowser, isIosDevice, isIosStandalonePwa } from "@/lib/waiter-device";
 import { cn } from "@/lib/utils";
 
 type PushState = "loading" | "unsupported" | "disabled" | "prompt" | "subscribed" | "denied" | "failed";
