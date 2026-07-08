@@ -64,11 +64,11 @@ export const MARKETING_EN = {
       eyebrow: "MenuOS Live · 360°",
       title: "Everything around one QR",
       subtitle:
-        "Live alerts for waiters, kitchen and bar — connected to the same QR menu. No guest app, no POS.",
+        "Kitchen sends a message — waiters hear a beep and voice with table number on their phone. No guest app.",
       tagline: "Scan. Browse. Order. 360°.",
       segments: [
         { label: "Guest", hint: "Scans & orders" },
-        { label: "Waiter", hint: "Push · table" },
+        { label: "Waiter", hint: "Beep + voice · table" },
         { label: "Kitchen", hint: "Dish ready" },
         { label: "Bar", hint: "Drink ready" },
       ],
@@ -115,7 +115,7 @@ export const MARKETING_EN = {
         {
           step: "4",
           title: "Connect your team",
-          text: "MenuOS Live · 360° — staff links, push with table number, no login.",
+          text: "MenuOS Live · 360° — staff links. Beep and voice with table number, no login.",
         },
       ],
     },
@@ -132,7 +132,7 @@ export const MARKETING_EN = {
         },
         {
           title: "MenuOS Live · 360°",
-          text: "Guest calls, ready dishes and push alerts for staff — all connected to one QR.",
+          text: "Kitchen sends a message — waiters hear a beep and voice with table number. Guest calls from the same QR.",
         },
         {
           title: "Management dashboard",
@@ -204,7 +204,7 @@ export const MARKETING_EN = {
         },
         {
           q: "What is MenuOS Live · 360°?",
-          a: "Live alerts for waiters, kitchen and bar — connected to your QR menu. Available on Pro.",
+          a: "The kitchen sends a message to the waiter's phone — beep and voice with table number. Guest calls from the QR. Available on Pro.",
         },
       ],
     },
@@ -217,11 +217,11 @@ export const MARKETING_EN = {
 
   footer: {
     about:
-      "Digital QR menus for hospitality. Live 360° with waiter and kitchen alerts on Pro — no app, no reprints.",
+      "Digital QR menus for hospitality. Live 360° with beep and voice on waiters' phones — on Pro, no app needed.",
     highlights: [
       {
         title: "Live 360° coordination",
-        text: "Calls, ready dishes and tables — all connected around one QR.",
+        text: "Calls, ready dishes and voice with table number — all around one QR.",
       },
       {
         title: "Multilingual QR menu",
@@ -291,9 +291,9 @@ export const MARKETING_EN = {
           "Every table or room gets its own QR. Guests scan and see the catalog on their phone right away.",
         proTitle: "With MenuOS Pro you get even more",
         proItems: [
-          "Upload your printed menu (even a photo or scan) — dishes and prices are recognized automatically, saving hours of typing.",
-          "Guests call the waiter from the QR; staff see exactly which table needs service.",
-          "Your team stays in sync in real time — service, kitchen and bar work more smoothly.",
+          "Upload your printed menu (even a photo or scan) — dishes and prices fill in almost on their own. You review before it goes live.",
+          "Guests call the waiter from the QR — you see right away which table needs service.",
+          "The kitchen sends a message and waiters hear it on their phone: beep and voice with table and area.",
         ],
         savingsTitle: "Lower costs. More flexibility.",
         savingsParagraphs: [
@@ -341,12 +341,13 @@ export const MARKETING_EN = {
       hero: "Start free for {trialDays}. Upgrade as you grow — no multi-year lock-in.",
       introParagraphs: [
         "MenuOS plans are simple and transparent: a free {trialDaysAdj} trial with no credit card, then Basic or Pro with monthly billing you can cancel anytime. No hidden fees, setup charges or annual lock-in — you only pay while you use the service.",
-        "Basic fits one venue: 5 catalogs (e.g. restaurant, bar, pool), unlimited items and a 4-language QR menu. Pro adds up to 3 venues, unlimited catalogs, Live 360° with call waiter, PDF import with Gemini AI and priority support. For chains with custom domain or white-label, contact us for Enterprise.",
+        "Basic fits one venue: 5 catalogs (e.g. restaurant, bar, pool), unlimited items and a 4-language QR menu. Pro adds up to 3 venues, unlimited catalogs, Live 360° (call waiter + voice for kitchen messages), PDF import and priority support. For chains with custom domain or white-label, contact us for Enterprise.",
       ],
       faq: [
         { q: "Need a credit card for the trial?", a: "No. The {trialDaysAdj} trial starts with email and OTP verification." },
         { q: "What happens after the trial?", a: "You get 7 extra grace days — your QR menu stays online. Then choose Basic or Pro." },
-        { q: "Is Live 360° included?", a: "Live 360° (call waiter, live panel, kitchen/bar screens) is on Pro — not on trial or Basic." },
+        { q: "Is Live 360° included?", a: "Live 360° (call waiter with beep, voice for kitchen messages, kitchen/bar screens) is on Pro — not on trial or Basic." },
+        { q: "Do waiters hear a voice on their phone?", a: "Yes, on Pro — when the kitchen sends a message (not on guest calls). Beep and voice with table and area. Turn on or off in settings." },
         { q: "Can I change plan later?", a: "Yes. Upgrade Basic or Pro from billing. Enterprise — contact us." },
         { q: "What's in Enterprise?", a: "Custom domain, white-label, multiple venues, priority support — quote per project." },
         { q: "Any commitment?", a: "No. Monthly subscription, cancel anytime." },

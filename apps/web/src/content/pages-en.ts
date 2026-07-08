@@ -37,8 +37,8 @@ export const PAGES_EN = {
       {
         title: "PDF menu import (Pro)",
         description:
-          "Already have a printed menu? Upload the PDF — categories, dishes and prices fill in almost on their own. Scans and tricky layouts use Gemini AI. You review everything before it goes live.",
-        bullets: ["Less typing", "OCR + Gemini AI for scans", "Review before publish"],
+          "Already have a printed menu? Upload the PDF — categories, dishes and prices fill in almost on their own. Works with scans too. You review everything before it goes live.",
+        bullets: ["Less typing", "Works with scans", "Review before publish"],
         href: "/pricing",
       },
       {
@@ -54,8 +54,8 @@ export const PAGES_EN = {
       {
         title: "MenuOS Live · 360°",
         description:
-          "Live alerts for waiters, kitchen and bar — connected to the same QR menu. No POS.",
-        bullets: ["Push to mobile", "Ready dish & drink", "Staff link, no login"],
+          "Kitchen or bar sends a message — waiters hear a beep and a voice on their phone with table and area. No app, no POS.",
+        bullets: ["Beep + voice on mobile", "Ready dish & drink", "Simple link — no login"],
       },
       {
         title: "Print-ready QR codes",
@@ -109,7 +109,7 @@ export const PAGES_EN = {
       },
       {
         title: "MenuOS Live · 360°",
-        body: "Send links to waiters and kitchen/bar screens. Push alerts with table number — no login.",
+        body: "Give staff a link. Guest call: beep. Message from kitchen or bar: beep and voice with table and area.",
         detail: "Guest calls, ready dishes: all connected around the same QR.",
       },
       {
@@ -147,7 +147,7 @@ export const PAGES_EN = {
       { q: "Can I change prices quickly?", a: "Yes. From the dashboard — changes appear instantly." },
       {
         q: "What is MenuOS Live · 360°?",
-        a: "Live alerts for waiters, kitchen and bar — connected to the same QR menu. No guest app.",
+        a: "The kitchen sends a message to the waiter's phone — beep and voice with table number. Guest calls from the QR. No app. On Pro plan.",
       },
     ],
     cta: {
@@ -216,6 +216,7 @@ export const PAGES_EN = {
         "Instant product and price updates",
         "Online management from desktop, tablet or phone",
         "Cloud service — no hardware or on-site setup",
+        "Live 360° — call waiter (beep) and voice for kitchen messages (Pro)",
         "Greek support before and after launch",
       ],
     },
@@ -304,7 +305,7 @@ export const PAGES_EN = {
         price: "€19.99",
         period: "/month",
         description: "For hotels and businesses with multiple areas.",
-        features: ["3 venues", "Unlimited menus", "Live 360°", "Call waiter", "Multiple languages", "PDF import · Gemini AI", "Priority support"],
+        features: ["3 venues", "Unlimited menus", "Live 360°", "Call waiter", "Voice on mobile", "Multiple languages", "PDF import", "Priority support"],
         cta: "Start Pro",
       },
     ],

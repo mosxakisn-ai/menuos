@@ -12,3 +12,9 @@ SET
   "maxItems" = NULL,
   "updatedAt" = CURRENT_TIMESTAMP
 WHERE "plan" = 'BASIC';
+
+UPDATE "PlanCatalog"
+SET
+  "features" = '["3 καταστήματα","Απεριόριστοι κατάλογοι","Live 360°","Κλήση σερβιτόρου","Φωνή στο κινητό","Πολλαπλές γλώσσες","Εισαγωγή PDF","Προτεραιότητα"]'::jsonb,
+  "updatedAt" = CURRENT_TIMESTAMP
+WHERE "plan" = 'PRO';

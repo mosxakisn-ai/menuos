@@ -136,7 +136,11 @@ export const SEO_PRICING_FAQ_EN = [
   },
   {
     q: "Is Live 360° included?",
-    a: "Live 360° (call waiter, live panel, kitchen/bar screens) is on Pro — not on trial or Basic.",
+    a: "Live 360° (call waiter with beep, voice for kitchen messages, kitchen/bar screens) is on Pro — not on trial or Basic.",
+  },
+  {
+    q: "Do waiters hear a voice on their phone?",
+    a: "Yes, on Pro — when the kitchen sends a message (not on guest calls). Beep and voice with table and area. Turn on or off in settings.",
   },
   {
     q: "Can I change plan later?",
