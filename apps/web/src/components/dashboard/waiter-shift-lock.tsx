@@ -18,7 +18,7 @@ export function WaiterShiftLockControl({ compact = false }: { compact?: boolean 
         onClick={() => void toggle()}
         disabled={busy}
         className={cn(
-          buttonClass({ variant: "outline", size: "sm" }),
+          buttonClass("secondary", "sm"),
           "w-full border-brand-blue/30 text-brand-navy",
         )}
       >
@@ -55,7 +55,7 @@ export function WaiterShiftLockControl({ compact = false }: { compact?: boolean 
             onClick={() => void toggle()}
             disabled={busy}
             className={cn(
-              buttonClass({ variant: "outline", size: "sm" }),
+              buttonClass("secondary", "sm"),
               "shrink-0 border-emerald-400 bg-white text-emerald-900 hover:bg-emerald-100",
             )}
           >
@@ -82,7 +82,7 @@ export function WaiterShiftLockControl({ compact = false }: { compact?: boolean 
             onClick={() => void toggle()}
             disabled={busy || !wakeLockSupported}
             className={cn(
-              buttonClass({ variant: "primary", size: "sm" }),
+              buttonClass("primary", "sm"),
               "w-full shrink-0 sm:w-auto",
             )}
           >
