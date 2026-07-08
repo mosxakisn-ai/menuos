@@ -115,7 +115,7 @@ export const MARKETING_EN = {
         {
           step: "4",
           title: "Connect your team",
-          text: "MenuOS Live · 360° — staff links. Beep and voice with table number, no login.",
+          text: "MenuOS Live · 360° — staff links. Guest call: beep. Kitchen message: beep and voice with table number.",
         },
       ],
     },
