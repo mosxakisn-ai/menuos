@@ -606,7 +606,7 @@ export const DASHBOARD_EL = {
     pageOpenHint:
       "Με ανοιχτή σελίδα βλέπεις κλήσεις live — χωρίς push.",
     compactInApp: "Άνοιξε σε Chrome/Safari — όχι από Messenger.",
-    compactPrompt: "Push για κλήσεις όταν κλείσει η σελίδα.",
+    compactPrompt: "Push για ήχο όταν η οθόνη είναι κλειστή ή κλειδωμένη.",
     compactSubscribed: "Push ενεργό",
     managerHint:
       "Λαμβάνεις push για κλήσεις και πάσο σε όλα τα καταστήματα της επιχείρησης σε αυτή τη συσκευή.",

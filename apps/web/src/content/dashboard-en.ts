@@ -593,7 +593,7 @@ export const DASHBOARD_EN = {
       "Android: Open in Chrome (not Messenger). Tap Enable and allow notifications when prompted.",
     pageOpenHint: "With the page open you see calls live — no push needed.",
     compactInApp: "Open in Chrome/Safari — not from Messenger.",
-    compactPrompt: "Push for calls when the page is closed.",
+    compactPrompt: "Push for sound when the screen is off or locked.",
     compactSubscribed: "Push on",
     managerHint:
       "You'll receive push for calls and pass from all venues in your organization on this device.",

@@ -1,4 +1,4 @@
-// menuos-sw-v8
+// menuos-sw-v9
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
@@ -111,6 +111,10 @@ async function findWaiterClients() {
   });
 }
 
+function isForegroundWaiterClient(client) {
+  return client.visibilityState === "visible" && client.focused === true;
+}
+
 async function playBufferInSw(arrayBuffer) {
   const AudioCtx = self.AudioContext || self.webkitAudioContext;
   if (!AudioCtx) return false;
@@ -140,6 +144,7 @@ function playBeepWebAudio() {
     if (!AudioCtx) return Promise.resolve(false);
     const ctx = new AudioCtx();
     const run = () => {
+      if (ctx.state === "suspended") return false;
       const playTone = (freq, start, duration) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -153,17 +158,25 @@ function playBeepWebAudio() {
       };
       playTone(880, ctx.currentTime, 0.12);
       playTone(988, ctx.currentTime + 0.18, 0.18);
-      return new Promise((resolve) => {
-        self.setTimeout(() => {
-          void ctx.close().catch(() => undefined);
-          resolve(true);
-        }, 450);
-      });
+      playTone(1175, ctx.currentTime + 0.42, 0.2);
+      return true;
     };
     if (ctx.state === "suspended") {
-      return ctx.resume().then(run).catch(() => false);
+      return ctx
+        .resume()
+        .then(() => run())
+        .catch(() => false)
+        .finally(() => {
+          self.setTimeout(() => {
+            void ctx.close().catch(() => undefined);
+          }, 700);
+        });
     }
-    return run();
+    const started = run();
+    self.setTimeout(() => {
+      void ctx.close().catch(() => undefined);
+    }, 700);
+    return Promise.resolve(started);
   } catch {
     return Promise.resolve(false);
   }
@@ -171,8 +184,12 @@ function playBeepWebAudio() {
 
 async function playBeepWavFallback() {
   try {
-    const res = await fetch("/api/waiter-beep", { credentials: "same-origin" });
-    if (!res.ok) return false;
+    const res = await fetch("/waiter-beep.wav", { credentials: "same-origin", cache: "force-cache" });
+    if (!res.ok) {
+      const apiRes = await fetch("/api/waiter-beep", { credentials: "same-origin" });
+      if (!apiRes.ok) return false;
+      return playBufferInSw(await apiRes.arrayBuffer());
+    }
     return playBufferInSw(await res.arrayBuffer());
   } catch {
     return false;
@@ -180,9 +197,8 @@ async function playBeepWavFallback() {
 }
 
 async function playBeepInSw() {
-  const webAudioOk = await playBeepWebAudio();
-  if (webAudioOk) return;
-  await playBeepWavFallback();
+  if (await playBeepWavFallback()) return;
+  await playBeepWebAudio();
 }
 
 async function playAnnouncementInSw(announcement) {
@@ -227,12 +243,10 @@ async function handleStaffPushAlert(data) {
   if (kind === "other") return;
 
   const waiterClients = await findWaiterClients();
-  const visibleWaiterClients = waiterClients.filter(
-    (client) => client.visibilityState === "visible",
-  );
+  const foregroundWaiterClients = waiterClients.filter(isForegroundWaiterClient);
 
-  if (visibleWaiterClients.length > 0) {
-    for (const client of visibleWaiterClients) {
+  if (foregroundWaiterClients.length > 0) {
+    for (const client of foregroundWaiterClients) {
       if (kind === "pass") {
         client.postMessage({
           type: "MENUOS_PASS_ALERT",
@@ -266,6 +280,7 @@ self.addEventListener("push", (event) => {
   }
 
   const openTarget = resolveNotificationTarget(data.url);
+  const alertSound = new URL("/waiter-beep.wav", self.location.origin).href;
 
   event.waitUntil(
     Promise.all([
@@ -274,10 +289,11 @@ self.addEventListener("push", (event) => {
         icon: "/icon",
         badge: "/icon",
         tag: data.tag ?? "menuos-waiter",
-        vibrate: [200, 100, 200, 100, 200],
+        vibrate: [400, 120, 400, 120, 400, 120, 400],
         requireInteraction: true,
         renotify: true,
         silent: false,
+        sound: alertSound,
         data: {
           url: data.url || openTarget.href,
           path: openTarget.path,

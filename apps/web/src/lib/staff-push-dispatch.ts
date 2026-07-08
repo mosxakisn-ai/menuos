@@ -154,6 +154,7 @@ export async function sendWebPushPayload(
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
           personalized,
+          { TTL: 3600, urgency: "high" },
         );
         base.sent += 1;
       } catch (err) {
