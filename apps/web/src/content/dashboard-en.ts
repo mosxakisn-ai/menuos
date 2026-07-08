@@ -502,6 +502,17 @@ export const DASHBOARD_EN = {
     pendingCount: (n: number) => `${n} pending`,
     activeCount: (n: number) => (n === 1 ? "1 active" : `${n} active`),
     refreshHint: "Refreshes every 5 sec.",
+    shiftLock: {
+      lockButton: "Keep screen on",
+      unlockButton: "Unlock",
+      promptTitle: "Shift mode",
+      promptHint:
+        "Tap to keep the screen and this panel active — sounds and calls work more reliably. Unlock when you are done.",
+      lockedTitle: "Panel active",
+      lockedHint: "The screen stays on — you remain here for calls and messages.",
+      fullscreenOn: "Full screen — swipe from the top to exit if needed.",
+      unsupported: "Open from a home-screen icon (not a plain browser tab) for best results.",
+    },
     loadFailed: "Could not load calls. Refresh the page or open the link from the dashboard again.",
     sessionExpired: "Session expired — open the waiter link from the dashboard again.",
     emptyTitle: "No active calls",

@@ -513,6 +513,18 @@ export const DASHBOARD_EL = {
     pendingCount: (n: number) => `${n} σε αναμονή`,
     activeCount: (n: number) => (n === 1 ? "1 ενεργό" : `${n} ενεργά`),
     refreshHint: "Ανανέωση κάθε 5 δευτ.",
+    shiftLock: {
+      lockButton: "Κράτα ανοιχτή",
+      unlockButton: "Ξεκλείδωμα",
+      promptTitle: "Βάρδια με κινητό",
+      promptHint:
+        "Πάτα για να μείνει ανοιχτή η οθόνη και το panel — οι ήχοι και οι κλήσεις δουλεύουν πιο σίγουρα. Όταν τελειώσεις, ξεκλείδωσε.",
+      lockedTitle: "Panel ενεργό",
+      lockedHint: "Η οθόνη δεν σβήνει — μένεις εδώ για κλήσεις και μηνύματα.",
+      fullscreenOn: "Πλήρης οθόνη — σύρε από πάνω για να βγεις αν χρειαστεί.",
+      unsupported:
+        "Άνοιξε το link από εικονίδιο στην αρχική (όχι απλό tab) για καλύτερη λειτουργία.",
+    },
     loadFailed: "Δεν φορτώθηκαν οι κλήσεις. Κάνε refresh ή άνοιξε ξανά το link από το dashboard.",
     sessionExpired: "Έληξε η σύνδεση — άνοιξε ξανά το link σερβιτόρου από το dashboard.",
     emptyTitle: "Καμία ενεργή κλήση",

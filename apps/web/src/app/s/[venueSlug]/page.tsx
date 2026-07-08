@@ -4,6 +4,7 @@ import { listVenuePosts } from "@menuos/shared";
 import { Logo } from "@/components/brand/logo";
 import { PushNotificationsPrompt } from "@/components/dashboard/push-notifications-prompt";
 import { StaffWaiterInvalidLink } from "@/components/dashboard/staff-waiter-invalid-link";
+import { WaiterShiftLockControl } from "@/components/dashboard/waiter-shift-lock";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { getOrganizationPlanContext, organizationCanUseLive360 } from "@/lib/billing";
 import { resolveStaffAuthByKey, resolveStaffAuthBySlug, type StaffMemberContext } from "@/lib/staff-auth";
@@ -119,6 +120,7 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
         </div>
       </header>
       <main className="mx-auto max-w-2xl space-y-2 px-3 py-3 sm:space-y-4 sm:px-4 sm:py-4">
+        <WaiterShiftLockControl compact />
         <PushNotificationsPrompt staffAuth={{ venueId: venue.id }} compact />
         <WaiterPanel
           venues={[{ id: venue.id, name: venue.name, slug: venue.slug }]}

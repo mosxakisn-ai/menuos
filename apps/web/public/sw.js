@@ -1,4 +1,4 @@
-// menuos-sw-v6
+// menuos-sw-v7
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
@@ -58,6 +58,9 @@ async function openNotificationTarget(rawUrl) {
   });
 
   for (const client of waiterClients) {
+    if (clientMatchesTarget(client.url, target) && "focus" in client) {
+      return client.focus();
+    }
     if ("navigate" in client) {
       try {
         const opened = await client.navigate(target.href);
@@ -66,7 +69,6 @@ async function openNotificationTarget(rawUrl) {
         /* try next */
       }
     }
-    if ("focus" in client) return client.focus();
   }
 
   for (const client of clients) {
