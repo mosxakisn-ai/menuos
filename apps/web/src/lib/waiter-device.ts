@@ -10,6 +10,11 @@ export function isIosDevice(): boolean {
 }
 
 export function isIosStandalonePwa(): boolean {
+  return isStandalonePwa();
+}
+
+/** Installed PWA (home screen icon) — iOS standalone or Android display-mode. */
+export function isStandalonePwa(): boolean {
   if (typeof window === "undefined") return false;
   const nav = window.navigator as Navigator & { standalone?: boolean };
   return nav.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
