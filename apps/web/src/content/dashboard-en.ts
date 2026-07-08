@@ -595,6 +595,8 @@ export const DASHBOARD_EN = {
     compactInApp: "Open in Chrome/Safari — not from Messenger.",
     compactPrompt: "Push for sound when the screen is off or locked.",
     compactSubscribed: "Push on",
+    iosBrowserUnsupported:
+      "iPhone: Open in Safari → Add to Home Screen. Push and voice work there. Chrome on iPhone does not support push.",
     managerHint:
       "You'll receive push for calls and pass from all venues in your organization on this device.",
   },

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
-import { isInAppBrowser, isIosDevice } from "@/lib/waiter-alert";
+import { isInAppBrowser, isIosDevice, isIosStandalonePwa } from "@/lib/waiter-alert";
 import { cn } from "@/lib/utils";
 
 type PushState = "loading" | "unsupported" | "disabled" | "prompt" | "subscribed" | "denied" | "failed";
@@ -198,9 +198,15 @@ export function PushNotificationsPrompt({
   }
 
   if (compact && (state === "unsupported" || state === "disabled")) {
+    const unsupportedText =
+      state === "disabled"
+        ? p.disabledServer
+        : isIosDevice() && !isIosStandalonePwa()
+          ? p.iosBrowserUnsupported
+          : p.unsupported;
     return (
       <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-snug text-slate-600">
-        {state === "unsupported" ? p.unsupported : p.disabledServer}
+        {unsupportedText}
       </p>
     );
   }

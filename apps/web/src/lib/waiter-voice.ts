@@ -3,9 +3,13 @@ import {
   type PassAnnouncementOptions,
   type PassAnnouncementLocation,
 } from "@menuos/shared";
+import { isIosDevice } from "@/lib/waiter-alert";
 
 let audioUnlocked = false;
 let sharedAudioCtx: AudioContext | null = null;
+let sharedSpeechAudio: HTMLAudioElement | null = null;
+let iosSpeechPrimed = false;
+let activeSpeechBlobUrl: string | null = null;
 
 export function getWaiterAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -17,13 +21,42 @@ export function getWaiterAudioContext(): AudioContext | null {
   return sharedAudioCtx;
 }
 
+function getSpeechAudioElement(): HTMLAudioElement {
+  if (!sharedSpeechAudio) {
+    sharedSpeechAudio = new Audio();
+    sharedSpeechAudio.preload = "auto";
+  }
+  return sharedSpeechAudio;
+}
+
+function revokeActiveSpeechBlobUrl(): void {
+  if (!activeSpeechBlobUrl) return;
+  URL.revokeObjectURL(activeSpeechBlobUrl);
+  activeSpeechBlobUrl = null;
+}
+
+function primeIosSpeechAudio(): void {
+  if (!isIosDevice() || iosSpeechPrimed) return;
+  iosSpeechPrimed = true;
+  try {
+    const audio = getSpeechAudioElement();
+    audio.src = "/waiter-beep.wav";
+    audio.volume = 0.01;
+    void audio.play().catch(() => undefined);
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Call once after user taps the waiter panel (unlocks iOS audio + speech). */
 export function unlockWaiterAudio(): void {
   if (typeof window === "undefined") return;
   try {
     const ctx = getWaiterAudioContext();
     if (ctx?.state === "suspended") void ctx.resume();
+    primeIosSpeechAudio();
     const synth = window.speechSynthesis;
+    if (!synth) return;
     synth.getVoices();
     if (!audioUnlocked) {
       const prime = new SpeechSynthesisUtterance("\u200b");
@@ -83,30 +116,63 @@ function startSpeech(synth: SpeechSynthesis, utterance: SpeechSynthesisUtterance
   }, 400);
 }
 
-/** Speak a short Greek line on the waiter phone (Web Speech API). */
+async function speakGreekLineViaServerAudio(text: string): Promise<boolean> {
+  try {
+    unlockWaiterAudio();
+    const res = await fetch(
+      `/api/pass-announcement-audio?text=${encodeURIComponent(text)}`,
+      { credentials: "same-origin" },
+    );
+    if (!res.ok) return false;
+    const blob = await res.blob();
+    revokeActiveSpeechBlobUrl();
+    activeSpeechBlobUrl = URL.createObjectURL(blob);
+    const audio = getSpeechAudioElement();
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = 1;
+    audio.src = activeSpeechBlobUrl;
+    await audio.play();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function speakGreekLineViaWebSpeech(text: string): void {
+  const synth = window.speechSynthesis;
+  if (!synth) return;
+  unlockWaiterAudio();
+  if (synth.speaking || synth.pending) synth.cancel();
+  const run = () => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "el-GR";
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    startSpeech(synth, utterance);
+  };
+  if (synth.speaking || synth.pending) {
+    window.setTimeout(run, 80);
+  } else {
+    run();
+  }
+}
+
+/** Speak a short Greek line on the waiter phone. */
 export function speakGreekLine(text: string): void {
   if (typeof window === "undefined") return;
   const trimmed = text.trim();
   if (!trimmed) return;
 
   try {
-    const synth = window.speechSynthesis;
-    if (!synth) return;
-    unlockWaiterAudio();
-    if (synth.speaking || synth.pending) synth.cancel();
-    const run = () => {
-      const utterance = new SpeechSynthesisUtterance(trimmed);
-      utterance.lang = "el-GR";
-      utterance.rate = 0.95;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-      startSpeech(synth, utterance);
-    };
-    if (synth.speaking || synth.pending) {
-      window.setTimeout(run, 80);
-    } else {
-      run();
+    if (isIosDevice()) {
+      void speakGreekLineViaServerAudio(trimmed).then((ok) => {
+        if (!ok) speakGreekLineViaWebSpeech(trimmed);
+      });
+      return;
     }
+    speakGreekLineViaWebSpeech(trimmed);
   } catch {
     /* autoplay / unsupported browser */
   }

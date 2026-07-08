@@ -608,6 +608,8 @@ export const DASHBOARD_EL = {
     compactInApp: "Άνοιξε σε Chrome/Safari — όχι από Messenger.",
     compactPrompt: "Push για ήχο όταν η οθόνη είναι κλειστή ή κλειδωμένη.",
     compactSubscribed: "Push ενεργό",
+    iosBrowserUnsupported:
+      "iPhone: Άνοιξε σε Safari → Προσθήκη στην Αρχική. Εκεί δουλεύουν push και φωνή. Το Chrome στο iPhone δεν υποστηρίζει push.",
     managerHint:
       "Λαμβάνεις push για κλήσεις και πάσο σε όλα τα καταστήματα της επιχείρησης σε αυτή τη συσκευή.",
   },
