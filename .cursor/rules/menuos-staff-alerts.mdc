@@ -15,8 +15,8 @@ alwaysApply: true
 
 | Τύπος | Πηγή | Tag push | Ήχος φωνής |
 |-------|------|----------|-------------|
-| Κλήση πελάτη | QR `WaiterCall` | `waiter-{callId}` | μόνο μπιπ |
-| Μήνυμα πάσου | KDS `PassSignal` | `pass-{id}` | μπιπ + TTS (αν `voiceMessagesEnabled`) |
+| Κλήση πελάτη | QR `WaiterCall` | `waiter-{callId}` | διπλό χαμηλό μπιπ |
+| Μήνυμα πάσου | KDS `PassSignal` | `pass-{id}` | τριπλό ανερχόμενο μπιπ + TTS (αν `voiceMessagesEnabled`) |
 
 Polling **5s** όταν panel ανοιχτό. Push όταν κλειστό/κλειδωμένο (αν εγγεγραμμένο).
 
@@ -62,7 +62,8 @@ Copy push banner: `iosBrowserUnsupported` στο `dashboard-el.ts`.
 | `apps/web/src/lib/waiter-device.ts` | `isIosDevice`, standalone PWA, in-app browser |
 | `apps/web/src/lib/staff-push-dispatch.ts` | Push targets ανά staff/zone, TTL 3600, urgency high |
 | `apps/web/src/lib/pass-signal-push.ts` | Pass push payload + announcement text |
-| `apps/web/public/waiter-beep.wav` | Static beep για notification sound + SW fallback |
+| `apps/web/public/waiter-beep.wav` | Pass beep WAV (static fallback) |
+| `apps/web/src/lib/waiter-beep-audio.ts` | Pass/guest tone synthesis |
 
 Μετά αλλαγή SW: **κλείσιμο + άνοιγμα app μία φορά** (νέο `menuos-sw-v*`).
 

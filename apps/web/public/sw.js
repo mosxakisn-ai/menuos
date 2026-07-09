@@ -1,4 +1,4 @@
-// menuos-sw-v10
+// menuos-sw-v11
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
@@ -138,67 +138,80 @@ async function playBufferInSw(arrayBuffer) {
   }
 }
 
-function playBeepWebAudio() {
+const PASS_BEEP_TONES = [
+  { freq: 880, startMs: 0, durationMs: 140, gain: 0.42 },
+  { freq: 1100, startMs: 180, durationMs: 140, gain: 0.45 },
+  { freq: 1320, startMs: 360, durationMs: 160, gain: 0.48 },
+];
+
+const GUEST_BEEP_TONES = [
+  { freq: 660, startMs: 0, durationMs: 150, gain: 0.4 },
+  { freq: 880, startMs: 220, durationMs: 180, gain: 0.42 },
+];
+
+function playBeepWebAudio(kind) {
+  const tones = kind === "pass" ? PASS_BEEP_TONES : GUEST_BEEP_TONES;
   try {
     const AudioCtx = self.AudioContext || self.webkitAudioContext;
     if (!AudioCtx) return Promise.resolve(false);
     const ctx = new AudioCtx();
     const run = () => {
       if (ctx.state === "suspended") return false;
-      const playTone = (freq, start, duration) => {
+      const base = ctx.currentTime;
+      for (const tone of tones) {
+        const start = base + tone.startMs / 1000;
+        const duration = tone.durationMs / 1000;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.value = freq;
-        gain.gain.value = 0.14;
+        osc.type = "triangle";
+        osc.frequency.value = tone.freq;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(tone.gain, start + 0.01);
+        gain.gain.setValueAtTime(tone.gain, start + duration - 0.02);
+        gain.gain.linearRampToValueAtTime(0, start + duration);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(start);
-        osc.stop(start + duration);
-      };
-      playTone(880, ctx.currentTime, 0.12);
-      playTone(988, ctx.currentTime + 0.18, 0.18);
-      playTone(1175, ctx.currentTime + 0.42, 0.2);
+        osc.stop(start + duration + 0.01);
+      }
       return true;
+    };
+    const closeLater = () => {
+      self.setTimeout(() => {
+        void ctx.close().catch(() => undefined);
+      }, 900);
     };
     if (ctx.state === "suspended") {
       return ctx
         .resume()
         .then(() => run())
         .catch(() => false)
-        .finally(() => {
-          self.setTimeout(() => {
-            void ctx.close().catch(() => undefined);
-          }, 700);
-        });
+        .finally(closeLater);
     }
     const started = run();
-    self.setTimeout(() => {
-      void ctx.close().catch(() => undefined);
-    }, 700);
+    closeLater();
     return Promise.resolve(started);
   } catch {
     return Promise.resolve(false);
   }
 }
 
-async function playBeepWavFallback() {
+async function playBeepWavFallback(kind) {
   try {
-    const res = await fetch("/waiter-beep.wav", { credentials: "same-origin", cache: "force-cache" });
-    if (!res.ok) {
-      const apiRes = await fetch("/api/waiter-beep", { credentials: "same-origin" });
-      if (!apiRes.ok) return false;
-      return playBufferInSw(await apiRes.arrayBuffer());
-    }
-    return playBufferInSw(await res.arrayBuffer());
+    const apiRes = await fetch(`/api/waiter-beep?kind=${kind}`, {
+      credentials: "same-origin",
+      cache: "force-cache",
+    });
+    if (!apiRes.ok) return false;
+    return playBufferInSw(await apiRes.arrayBuffer());
   } catch {
     return false;
   }
 }
 
-async function playBeepInSw() {
-  if (await playBeepWavFallback()) return;
-  await playBeepWebAudio();
+async function playBeepInSw(kind) {
+  if (await playBeepWavFallback(kind)) return;
+  await playBeepWebAudio(kind);
 }
 
 async function playAnnouncementInSw(announcement) {
@@ -265,7 +278,7 @@ async function handleStaffPushAlert(data) {
     return;
   }
 
-  await playBeepInSw();
+  await playBeepInSw(kind === "pass" ? "pass" : "guest");
   if (kind === "pass" && data.voiceEnabled && data.announcement) {
     await playAnnouncementInSw(data.announcement);
   }
@@ -280,7 +293,9 @@ self.addEventListener("push", (event) => {
   }
 
   const openTarget = resolveNotificationTarget(data.url);
-  const alertSound = new URL("/waiter-beep.wav", self.location.origin).href;
+  const pushKind = pushTagKind(data.tag);
+  const beepKind = pushKind === "pass" ? "pass" : "guest";
+  const alertSound = new URL(`/api/waiter-beep?kind=${beepKind}`, self.location.origin).href;
 
   event.waitUntil(
     Promise.all([

@@ -18,7 +18,7 @@ import {
 import { buttonClass } from "@/components/ui/button";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { useWaiterShiftLock } from "@/hooks/use-waiter-shift-lock";
-import { playWaiterAlertSound } from "@/lib/waiter-alert";
+import { playPassAlertSound } from "@/lib/waiter-alert";
 import {
   readStaffSetupVerified,
   writeStaffSetupVerified,
@@ -173,7 +173,7 @@ export function StaffWaiterSetupBar({
     setTesting(true);
     try {
       unlockWaiterAudio();
-      playWaiterAlertSound();
+      playPassAlertSound();
       if (voiceEnabled) {
         speakPassMessage({ tableNumber: "12" });
       }

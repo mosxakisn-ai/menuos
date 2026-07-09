@@ -20,7 +20,7 @@ import { WaiterTableGrid } from "@/components/dashboard/waiter-table-grid";
 import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
 import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
-import { alertNewWaiterCall } from "@/lib/waiter-alert";
+import { alertGuestCall, alertPassSignal } from "@/lib/waiter-alert";
 import { isIosDevice } from "@/lib/waiter-device";
 import { speakGreekLine, speakPassMessage, unlockWaiterAudio } from "@/lib/waiter-voice";
 import type { OrganizationNotificationSettings } from "@menuos/shared";
@@ -139,7 +139,7 @@ export function WaiterPanel({
   ) {
     if (lastPassAlertIdRef.current === pass.id) return;
     lastPassAlertIdRef.current = pass.id;
-    alertNewWaiterCall();
+    alertPassSignal();
     if (!notificationSettingsRef.current.voiceMessagesEnabled) return;
     const passZoneId =
       pass.zoneId?.trim() || zoneIdForWaiterLocationView(pass, announcementGroups);
@@ -182,7 +182,7 @@ export function WaiterPanel({
         if (!data.callId || alertedWaiterCallIdsRef.current.has(data.callId)) return;
         alertedWaiterCallIdsRef.current.add(data.callId);
         lastWaiterCallAlertIdRef.current = data.callId;
-        alertNewWaiterCall();
+        alertGuestCall();
         return;
       }
 
@@ -191,7 +191,7 @@ export function WaiterPanel({
       if (!passAlertAllowedForZone(data.zoneId)) return;
       if (lastPassAlertIdRef.current === data.passId) return;
       lastPassAlertIdRef.current = data.passId;
-      alertNewWaiterCall();
+      alertPassSignal();
       if (!data.voiceEnabled) return;
       const text = data.announcement?.trim();
       if (!text || !notificationSettingsRef.current.voiceMessagesEnabled) return;
@@ -231,7 +231,7 @@ export function WaiterPanel({
           const prev = prevById.get(call.id);
           return prev != null && prev.updatedAt !== call.updatedAt;
         });
-        if (orderUpdated && document.visibilityState === "visible") alertNewWaiterCall();
+        if (orderUpdated && document.visibilityState === "visible") alertGuestCall();
       }
       prevCallsRef.current = newCalls;
       setCalls(newCalls);
@@ -363,7 +363,7 @@ export function WaiterPanel({
       );
       if (freshPending.length > 0) {
         for (const call of freshPending) alertedWaiterCallIdsRef.current.add(call.id);
-        alertNewWaiterCall();
+        alertGuestCall();
       }
     }
     prevPendingRef.current = pendingCount;

@@ -43,7 +43,7 @@ function primeIosSpeechAudio(): void {
       sharedPrimeAudio = new Audio();
       sharedPrimeAudio.preload = "auto";
     }
-    sharedPrimeAudio.src = "/waiter-beep.wav";
+    sharedPrimeAudio.src = "/api/waiter-beep?kind=pass";
     sharedPrimeAudio.volume = 0.01;
     void sharedPrimeAudio
       .play()

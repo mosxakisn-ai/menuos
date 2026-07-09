@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { fallbackAnnouncementWav } from "@/lib/pass-announcement-audio";
+import { parseWaiterBeepKind, synthesizeWaiterBeepWav } from "@/lib/waiter-beep-audio";
 
-/** Short two-tone alert WAV for service worker background beep fallback. */
-export async function GET() {
-  const wav = fallbackAnnouncementWav();
+/** Alert WAV for push notification sound + service worker background beep. */
+export async function GET(request: Request) {
+  const kind = parseWaiterBeepKind(new URL(request.url).searchParams.get("kind"));
+  const wav = synthesizeWaiterBeepWav(kind);
+
   return new NextResponse(new Uint8Array(wav), {
     status: 200,
     headers: {
