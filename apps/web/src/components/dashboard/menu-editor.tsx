@@ -23,6 +23,7 @@ import { ProFeatureLink } from "@/components/dashboard/pro-feature-link";
 import { PlanLimitHint } from "@/components/dashboard/plan-limit-hint";
 import { usePlanLimits } from "@/components/dashboard/plan-limits-provider";
 import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
+import { MenuItemTagRow } from "@/components/menu/menu-item-tags";
 import { ItemLabelBadge } from "@/components/menu/menu-item-card";
 import { DashboardScrollRow } from "@/components/dashboard/dashboard-ui";
 import { dashboardIconButtonClass } from "@/components/dashboard/dashboard-action-button";
@@ -1049,6 +1050,15 @@ export function MenuEditor({
                                   <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
                                     {tGrField(item, "description")}
                                   </p>
+                                ) : null}
+                                {!isEditing ? (
+                                  <MenuItemTagRow
+                                    dietaryTags={parseDietaryTags(item.dietaryTags)}
+                                    allergenCodes={parseAllergenCodes(item.allergenCodes)}
+                                    lang="GR"
+                                    maxAllergens={2}
+                                    className="mt-1.5"
+                                  />
                                 ) : null}
                               </>
                             )}

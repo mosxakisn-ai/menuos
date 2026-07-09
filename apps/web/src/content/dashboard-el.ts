@@ -916,13 +916,15 @@ export const DASHBOARD_EL = {
           urlPlaceholder: "https://g.page/r/... ή link από Google Maps",
           urlHint:
             "Από Google Business → Κριτικές → «Λήψη περισσότερων κριτικών» → αντιγραφή link.",
+          urlRequiredHint: "Χωρίς link η κάρτα δεν εμφανίζεται στο QR menu.",
           ratingLabel: "Βαθμολογία (προαιρετικό)",
           ratingPlaceholder: "π.χ. 4.8",
           ratingHint: "Όπως φαίνεται στο Google — για την κάρτα στο menu.",
           countLabel: "Αριθμός κριτικών (προαιρετικό)",
           countPlaceholder: "π.χ. 312",
           countHint: "Προαιρετικό — εμφανίζεται κάτω από τον τίτλο.",
-          clearedHint: "Άδεια πεδία = δεν εμφανίζονται στο QR menu.",
+          optionalFieldsHint:
+            "Βαθμολογία και αριθμός κριτικών είναι προαιρετικά — αν μείνουν κενά, δεν φαίνονται στη κάρτα.",
           save: "Αποθήκευση",
           saving: "Αποθήκευση…",
         },

@@ -902,13 +902,15 @@ export const DASHBOARD_EN = {
           urlPlaceholder: "https://g.page/r/... or link from Google Maps",
           urlHint:
             "From Google Business → Reviews → “Get more reviews” → copy the link.",
+          urlRequiredHint: "Without a link, the card will not appear on the QR menu.",
           ratingLabel: "Rating (optional)",
           ratingPlaceholder: "e.g. 4.8",
           ratingHint: "As shown on Google — for the menu card badge.",
           countLabel: "Review count (optional)",
           countPlaceholder: "e.g. 312",
           countHint: "Optional — shown below the title on the card.",
-          clearedHint: "Leave empty to hide on the QR menu.",
+          optionalFieldsHint:
+            "Rating and review count are optional — leave empty to hide them on the card.",
           save: "Save",
           saving: "Saving…",
         },

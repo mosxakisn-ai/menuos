@@ -135,6 +135,7 @@ export function SettingsGoogleReviewPanel({ venues }: { venues: VenueWithGoogle[
             autoComplete="off"
           />
           <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">{G.urlHint}</p>
+          <p className="mt-1 text-[11px] font-medium text-slate-600">{G.urlRequiredHint}</p>
         </label>
 
         <label className="block">
@@ -165,7 +166,7 @@ export function SettingsGoogleReviewPanel({ venues }: { venues: VenueWithGoogle[
           <p className="mt-1 text-[11px] text-slate-500">{G.countHint}</p>
         </label>
 
-        <p className="sm:col-span-2 text-[11px] text-slate-400">{G.clearedHint}</p>
+        <p className="sm:col-span-2 text-[11px] text-slate-400">{G.optionalFieldsHint}</p>
 
         <div className="sm:col-span-2">
           <button type="submit" disabled={saving} className={buttonClass("primary", "md")}>
