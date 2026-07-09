@@ -1,8 +1,8 @@
 "use client";
 
 import {
+  ITEM_LABEL_ICON_COLORS,
   ITEM_LABEL_ICONS,
-  ITEM_LABEL_STYLES,
   isItemLabel,
   itemLabelText,
   parseAllergenCodes,
@@ -40,23 +40,28 @@ const ITEM_LABEL_ICON_MAP: Record<ItemLabel, LucideIcon> = {
 export function ItemLabelBadge({
   label,
   lang,
+  variant = "inline",
   className,
 }: {
   label: ItemLabel;
   lang: QrMenuLanguage;
+  /** overlay = on food photo (stronger shadow). inline = list/dashboard. */
+  variant?: "inline" | "overlay";
   className?: string;
 }) {
   const Icon = ITEM_LABEL_ICON_MAP[label];
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-        ITEM_LABEL_STYLES[label],
+        "inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-800",
+        variant === "overlay"
+          ? "border border-white/90 bg-white/95 px-2.5 py-1 shadow-md backdrop-blur-[2px]"
+          : "border border-slate-200 bg-white shadow-sm",
         className,
       )}
     >
-      <Icon className="h-3 w-3 shrink-0" aria-hidden />
-      {itemLabelText(label, lang)}
+      <Icon className={cn("h-3 w-3 shrink-0", ITEM_LABEL_ICON_COLORS[label])} aria-hidden />
+      <span className="truncate">{itemLabelText(label, lang)}</span>
     </span>
   );
 }
@@ -241,7 +246,7 @@ export function MenuItemCard({
         />
         {badge ? (
           <div className="absolute left-2 top-2">
-            <ItemLabelBadge label={badge} lang={lang} />
+            <ItemLabelBadge label={badge} lang={lang} variant="overlay" />
           </div>
         ) : null}
       </div>

@@ -3,7 +3,7 @@
 import { ExternalLink, FileUp, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseAllergenCodes, parseDietaryTags, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
+import { ITEM_LABEL_OPTIONS, isItemLabel, newItemExtraId, parseAllergenCodes, parseDietaryTags, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
 import { LoadingSkeleton, LoadingState } from "@/components/ui/loading-state";
 import { panelPhotoDisplayUrl } from "@/lib/photo-display-url";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -23,6 +23,7 @@ import { ProFeatureLink } from "@/components/dashboard/pro-feature-link";
 import { PlanLimitHint } from "@/components/dashboard/plan-limit-hint";
 import { usePlanLimits } from "@/components/dashboard/plan-limits-provider";
 import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
+import { ItemLabelBadge } from "@/components/menu/menu-item-card";
 import { DashboardScrollRow } from "@/components/dashboard/dashboard-ui";
 import { dashboardIconButtonClass } from "@/components/dashboard/dashboard-action-button";
 import { buttonClass } from "@/components/ui/button";
@@ -1002,11 +1003,11 @@ export function MenuEditor({
                                     {tName(item.translations)}
                                   </p>
                                   {isItemLabel(item.label) ? (
-                                    <span
-                                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${ITEM_LABEL_STYLES[item.label]}`}
-                                    >
-                                      {ITEM_LABEL_OPTIONS.find((o) => o.value === item.label)?.dashboardGr}
-                                    </span>
+                                    <ItemLabelBadge
+                                      label={item.label}
+                                      lang="GR"
+                                      className="shrink-0"
+                                    />
                                   ) : null}
                                   {!ro ? (
                                     <button

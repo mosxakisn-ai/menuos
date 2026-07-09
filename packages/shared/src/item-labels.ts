@@ -31,14 +31,24 @@ export const ITEM_LABEL_ICONS: Record<ItemLabel, string> = {
   RECOMMENDED: "ThumbsUp",
 };
 
-/** Tailwind classes for badge pill on menu cards. */
+/** Icon accent on white badge pills — readable on photos and dashboard. */
+export const ITEM_LABEL_ICON_COLORS: Record<ItemLabel, string> = {
+  OFFER: "text-amber-600",
+  BEST: "text-brand-blue",
+  NEW: "text-emerald-600",
+  CHEF: "text-violet-600",
+  SEASONAL: "text-orange-600",
+  RECOMMENDED: "text-cyan-700",
+};
+
+/** @deprecated Use ItemLabelBadge component styles instead. */
 export const ITEM_LABEL_STYLES: Record<ItemLabel, string> = {
-  OFFER: "bg-amber-500 text-white shadow-sm",
-  BEST: "bg-brand-blue text-white shadow-sm",
-  NEW: "bg-emerald-500 text-white shadow-sm",
-  CHEF: "bg-violet-600 text-white shadow-sm",
-  SEASONAL: "bg-orange-500 text-white shadow-sm",
-  RECOMMENDED: "bg-cyan-600 text-white shadow-sm",
+  OFFER: "bg-white text-slate-800 border border-slate-200 shadow-sm",
+  BEST: "bg-white text-slate-800 border border-slate-200 shadow-sm",
+  NEW: "bg-white text-slate-800 border border-slate-200 shadow-sm",
+  CHEF: "bg-white text-slate-800 border border-slate-200 shadow-sm",
+  SEASONAL: "bg-white text-slate-800 border border-slate-200 shadow-sm",
+  RECOMMENDED: "bg-white text-slate-800 border border-slate-200 shadow-sm",
 };
 
 export function itemLabelText(label: ItemLabel, lang: QrMenuLanguage): string {
