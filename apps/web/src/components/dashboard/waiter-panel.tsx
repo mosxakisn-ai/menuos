@@ -274,6 +274,7 @@ export function WaiterPanel({
         };
       }
       const hadPassBaseline = passBaselineSetRef.current;
+      let passesToMarkSeen: PassSignal[] = [];
       if (hadPassBaseline) {
         const freshPasses = newSignals.filter(
           (signal) => !prevPassIdsRef.current.has(signal.id) && isMonitorPendingPass(signal),
@@ -300,6 +301,7 @@ export function WaiterPanel({
               return signalZone === alertZoneId;
             })
           : freshPasses;
+        passesToMarkSeen = alertablePasses;
         const hasNewPass = alertablePasses.length > 0;
         if (hasNewPass && document.visibilityState === "visible") {
           const latest = [...alertablePasses].sort((a, b) => {
@@ -321,7 +323,7 @@ export function WaiterPanel({
         document.visibilityState === "visible"
       ) {
         const credsForSeen = staffViaCookie ? "include" : "same-origin";
-        for (const signal of newSignals) {
+        for (const signal of passesToMarkSeen) {
           if (signal.status !== "READY" || signal.firstSeenAt || seenAckSentRef.current.has(signal.id)) {
             continue;
           }

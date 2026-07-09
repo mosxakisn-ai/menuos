@@ -54,35 +54,44 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
   const [wakeLockSupported, setWakeLockSupported] = useState(false);
   const [fullscreenActive, setFullscreenActive] = useState(false);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
-
-  const onWakeLockReleased = useCallback(() => {
-    wakeLockRef.current = null;
-    setLocked(false);
-  }, []);
+  const userWantsLockRef = useRef(false);
 
   const releaseWakeLock = useCallback(async () => {
     try {
-      wakeLockRef.current?.removeEventListener("release", onWakeLockReleased);
-      await wakeLockRef.current?.release();
+      const current = wakeLockRef.current;
+      if (current) {
+        current.onrelease = null;
+        await current.release();
+      }
     } catch {
       /* ignore */
     }
     wakeLockRef.current = null;
-  }, [onWakeLockReleased]);
+  }, []);
 
   const acquireWakeLock = useCallback(async (): Promise<boolean> => {
-    if (!wakeLockSupported) return false;
+    if (!wakeLockSupported || !userWantsLockRef.current) return false;
     await releaseWakeLock();
     try {
       const lock = await navigator.wakeLock.request("screen");
       wakeLockRef.current = lock;
-      lock.addEventListener("release", onWakeLockReleased);
+      lock.onrelease = () => {
+        wakeLockRef.current = null;
+        if (!userWantsLockRef.current) {
+          unlockPortraitOrientation();
+          setLocked(false);
+          return;
+        }
+        if (document.visibilityState === "visible") {
+          void acquireWakeLock();
+        }
+      };
       return true;
     } catch {
       wakeLockRef.current = null;
       return false;
     }
-  }, [onWakeLockReleased, releaseWakeLock, wakeLockSupported]);
+  }, [releaseWakeLock, wakeLockSupported]);
 
   const exitFullscreen = useCallback(async () => {
     if (!document.fullscreenElement) return;
@@ -103,9 +112,21 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
     }
   }, []);
 
+  const restoreShiftLock = useCallback(async () => {
+    if (!userWantsLockRef.current) return;
+    const gotWakeLock = await acquireWakeLock();
+    if (!gotWakeLock) return;
+    if (!document.fullscreenElement) {
+      await enterFullscreen();
+    }
+    await lockPortraitOrientation();
+    setLocked(true);
+  }, [acquireWakeLock, enterFullscreen]);
+
   const disable = useCallback(async () => {
     setBusy(true);
     try {
+      userWantsLockRef.current = false;
       await releaseWakeLock();
       await exitFullscreen();
       unlockPortraitOrientation();
@@ -119,9 +140,13 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
     if (!wakeLockSupported) return;
     setBusy(true);
     try {
+      userWantsLockRef.current = true;
       unlockWaiterAudio();
       const gotWakeLock = await acquireWakeLock();
-      if (!gotWakeLock) return;
+      if (!gotWakeLock) {
+        userWantsLockRef.current = false;
+        return;
+      }
       await enterFullscreen();
       await lockPortraitOrientation();
       setLocked(true);
@@ -142,31 +167,29 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
   useEffect(() => {
     function onFullscreenChange() {
       setFullscreenActive(Boolean(document.fullscreenElement));
-      if (!document.fullscreenElement && locked) {
-        void acquireWakeLock();
+      if (userWantsLockRef.current && document.visibilityState === "visible") {
+        void restoreShiftLock();
       }
     }
     document.addEventListener("fullscreenchange", onFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
-  }, [acquireWakeLock, locked]);
+  }, [restoreShiftLock]);
 
   useEffect(() => {
-    if (!locked) return;
-
     function onVisibilityChange() {
-      if (document.visibilityState === "visible") {
-        void acquireWakeLock();
-        void lockPortraitOrientation();
+      if (document.visibilityState === "visible" && userWantsLockRef.current) {
+        void restoreShiftLock();
         unlockWaiterAudio();
       }
     }
 
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [acquireWakeLock, locked]);
+  }, [restoreShiftLock]);
 
   useEffect(() => {
     return () => {
+      userWantsLockRef.current = false;
       void releaseWakeLock();
       unlockPortraitOrientation();
     };

@@ -26,6 +26,16 @@ function pushStatsFromResult(result: PushDispatchResult) {
   };
 }
 
+/** Count repush only when push was actually attempted to at least one device. */
+function repushCountsAsAttempt(result: PushDispatchResult): boolean {
+  if (result.skippedReason === "push_disabled") return false;
+  if (result.sent > 0) return true;
+  if (result.skippedReason === "no_subscriptions" || result.skippedReason === "no_targets") {
+    return false;
+  }
+  return result.targetCount > 0;
+}
+
 export async function persistPassSignalPushStats(
   signalId: string,
   result: PushDispatchResult,
@@ -163,6 +173,8 @@ export async function repushPassSignal(
     console.error("[menuos] pass-signal repush dispatch failed", signal.id, err);
     return;
   }
+
+  if (!repushCountsAsAttempt(result)) return;
 
   const claimed = await prisma.passSignal.updateMany({
     where: {
