@@ -134,6 +134,7 @@ export const QR_MENU_UI = {
     footerHome: "Αρχή menu",
     googleReviews: "Κριτικές Google",
     googleReviewsCta: "Πάτα για να αφήσεις κριτική",
+    googleReviewCount: (n: number) => (n === 1 ? "1 κριτική" : `${n.toLocaleString("el-GR")} κριτικές`),
   },
   EN: {
     table: (n: string) => `Table ${n}`,
@@ -200,6 +201,7 @@ export const QR_MENU_UI = {
     footerHome: "Menu home",
     googleReviews: "Google Reviews",
     googleReviewsCta: "Tap to leave a review",
+    googleReviewCount: (n: number) => (n === 1 ? "1 review" : `${n.toLocaleString("en")} reviews`),
   },
   DE: {
     table: (n: string) => `Tisch ${n}`,
@@ -266,6 +268,7 @@ export const QR_MENU_UI = {
     footerHome: "Speisekarten-Start",
     googleReviews: "Google Bewertungen",
     googleReviewsCta: "Tippen für eine Bewertung",
+    googleReviewCount: (n: number) => (n === 1 ? "1 Bewertung" : `${n.toLocaleString("de-DE")} Bewertungen`),
   },
   FR: {
     table: (n: string) => `Table ${n}`,
@@ -332,6 +335,7 @@ export const QR_MENU_UI = {
     footerHome: "Accueil menu",
     googleReviews: "Avis Google",
     googleReviewsCta: "Appuyez pour laisser un avis",
+    googleReviewCount: (n: number) => (n === 1 ? "1 avis" : `${n.toLocaleString("fr-FR")} avis`),
   },
 } as const;
 

@@ -27,6 +27,8 @@ export default async function SettingsPage() {
       primaryColor: true,
       secondaryColor: true,
       googleReviewUrl: true,
+      googleReviewRating: true,
+      googleReviewCount: true,
       ...(canManage
         ? {
             staffToken: true,

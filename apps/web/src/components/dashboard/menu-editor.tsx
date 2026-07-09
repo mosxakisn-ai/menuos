@@ -139,6 +139,12 @@ function parseMenuPrice(raw: string): number {
   return parseFloat(raw.trim().replace(",", "."));
 }
 
+function menuPricesEqual(a: number, snapshot: string | undefined): boolean {
+  if (!snapshot) return false;
+  const b = parseMenuPrice(snapshot);
+  return Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) < 0.001;
+}
+
 export function MenuEditor({
   venues,
   initialVenueId,
@@ -475,7 +481,7 @@ export function MenuEditor({
     const patchBody: Record<string, unknown> = {};
     const trimmedName = editNameGr.trim();
     if (trimmedName !== snapshot?.nameGr) patchBody.nameGr = trimmedName;
-    if (price.toString() !== snapshot?.price) patchBody.price = price;
+    if (!menuPricesEqual(price, snapshot?.price)) patchBody.price = price;
     if ((editPhotoUrl.trim() || "") !== (snapshot?.photoUrl ?? "")) {
       patchBody.photoUrl = editPhotoUrl.trim() || "";
     }

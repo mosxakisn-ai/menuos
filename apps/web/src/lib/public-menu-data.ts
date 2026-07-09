@@ -66,6 +66,8 @@ export async function buildPublicVenuePayload(venue: LoadedVenue) {
     description: venue.description,
     cuisineType: venue.cuisineType,
     googleReviewUrl: venue.googleReviewUrl,
+    googleReviewRating: venue.googleReviewRating,
+    googleReviewCount: venue.googleReviewCount,
     menus: enrichedMenus.map((menu) => ({
       id: menu.id,
       name: menu.name,

@@ -273,6 +273,12 @@ export const venueUpdateSchema = z.object({
     },
     z.union([z.string().url().max(2048), z.literal("")]).optional(),
   ),
+  googleReviewRating: z
+    .union([z.number().min(1).max(5), z.literal(null)])
+    .optional(),
+  googleReviewCount: z
+    .union([z.number().int().min(0).max(9_999_999), z.literal(null)])
+    .optional(),
 });
 
 export const waiterCallUpdateSchema = z.object({

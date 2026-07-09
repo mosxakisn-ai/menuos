@@ -227,6 +227,8 @@ model Venue {
   primaryColor      String   @default("#2563EB")
   secondaryColor    String   @default("#06B6D4")
   googleReviewUrl   String?
+  googleReviewRating Decimal? @db.Decimal(2, 1)
+  googleReviewCount  Int?
   createdAt         DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

@@ -84,6 +84,8 @@ type Venue = {
   description?: string | null;
   cuisineType?: CuisineType | null;
   googleReviewUrl?: string | null;
+  googleReviewRating?: { toString(): string } | number | null;
+  googleReviewCount?: number | null;
   menus: Menu[];
 };
 
@@ -984,13 +986,18 @@ export function PublicMenuView({
             </section>
           ))
         )}
-      </main>
 
-      {!isEmbedded && venue.googleReviewUrl ? (
-        <section className={cn(shell, "px-4 pb-2 pt-4")}>
-          <GoogleReviewCard url={venue.googleReviewUrl} lang={lang} />
-        </section>
-      ) : null}
+        {venue.googleReviewUrl ? (
+          <section className="scroll-mt-24 pt-2" aria-label={ui.googleReviews}>
+            <GoogleReviewCard
+              url={venue.googleReviewUrl}
+              lang={lang}
+              rating={venue.googleReviewRating}
+              reviewCount={venue.googleReviewCount}
+            />
+          </section>
+        ) : null}
+      </main>
 
       {!isEmbedded ? (
       <footer
@@ -1272,7 +1279,7 @@ export function PublicMenuView({
                       />
                       {isItemLabel(selectedItem.label) ? (
                         <div className="absolute left-3 top-3">
-                          <ItemLabelBadge label={selectedItem.label} lang={lang} />
+                          <ItemLabelBadge label={selectedItem.label} lang={lang} variant="overlay" />
                         </div>
                       ) : null}
                     </div>
@@ -1281,7 +1288,7 @@ export function PublicMenuView({
                       <MenuItemPhotoPlaceholder size="lg" />
                       {isItemLabel(selectedItem.label) ? (
                         <div className="absolute left-3 top-3">
-                          <ItemLabelBadge label={selectedItem.label} lang={lang} />
+                          <ItemLabelBadge label={selectedItem.label} lang={lang} variant="overlay" />
                         </div>
                       ) : null}
                     </div>

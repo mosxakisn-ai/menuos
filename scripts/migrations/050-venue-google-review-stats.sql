@@ -1,0 +1,2 @@
+ALTER TABLE "Venue" ADD COLUMN IF NOT EXISTS "googleReviewRating" DECIMAL(2,1);
+ALTER TABLE "Venue" ADD COLUMN IF NOT EXISTS "googleReviewCount" INTEGER;

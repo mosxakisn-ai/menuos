@@ -911,12 +911,18 @@ export const DASHBOARD_EL = {
         googleReview: {
           title: "Κριτικές Google",
           description:
-            "Βάλε το link του Google Business Profile σου. Θα εμφανίζεται στο QR menu ώστε οι πελάτες να σου αφήσουν κριτική.",
+            "Βάλε το link του Google Business Profile σου. Θα εμφανίζεται στο τέλος του QR menu ώστε οι πελάτες να σου αφήσουν κριτική.",
           urlLabel: "Link Google (κριτικές)",
           urlPlaceholder: "https://g.page/r/... ή link από Google Maps",
           urlHint:
             "Από Google Business → Κριτικές → «Λήψη περισσότερων κριτικών» → αντιγραφή link.",
-          clearedHint: "Άδειο πεδίο = δεν εμφανίζεται στο QR menu.",
+          ratingLabel: "Βαθμολογία (προαιρετικό)",
+          ratingPlaceholder: "π.χ. 4.8",
+          ratingHint: "Όπως φαίνεται στο Google — για την κάρτα στο menu.",
+          countLabel: "Αριθμός κριτικών (προαιρετικό)",
+          countPlaceholder: "π.χ. 312",
+          countHint: "Προαιρετικό — εμφανίζεται κάτω από τον τίτλο.",
+          clearedHint: "Άδεια πεδία = δεν εμφανίζονται στο QR menu.",
           save: "Αποθήκευση",
           saving: "Αποθήκευση…",
         },

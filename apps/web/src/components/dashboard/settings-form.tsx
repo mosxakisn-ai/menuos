@@ -33,6 +33,8 @@ export type SettingsVenue = {
   primaryColor: string;
   secondaryColor: string;
   googleReviewUrl?: string | null;
+  googleReviewRating?: { toString(): string } | number | null;
+  googleReviewCount?: number | null;
 };
 
 function ColorField({
