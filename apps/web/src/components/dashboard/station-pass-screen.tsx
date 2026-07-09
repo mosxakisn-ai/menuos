@@ -905,7 +905,7 @@ function WaitingSignalsStrip({
 }: {
   signals: ActiveSignal[];
   zoneGroups: ReturnType<typeof groupVenueSpotsByZone>;
-  activeZoneId: string | null | undefined;
+  activeZoneId: string | null;
   activeZone: ReturnType<typeof groupVenueSpotsByZone>[number] | undefined;
   table: ScreenSpot | null;
   cancellingId: string | null;
