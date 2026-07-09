@@ -304,6 +304,13 @@ describe("staffPostPickerLabel", () => {
     ];
     expect(staffPostPickerLabel("k2", "GR", multi)).toBe("Grill");
   });
+
+  it("distinguishes waiter all from pass-all in picker", () => {
+    expect(staffPostPickerLabel("all", "GR", posts)).toBe("Όλα (σερβιτόρος)");
+    expect(staffPostPickerLabel("pass-all", "GR", posts)).toBe("Όλα πόστα πάσου");
+    expect(staffPostPickerLabel("all", "EN", posts)).toBe("All (waiter)");
+    expect(staffPostPickerLabel("pass-all", "EN", posts)).toBe("All pass posts");
+  });
 });
 
 describe("staffJobRole", () => {
