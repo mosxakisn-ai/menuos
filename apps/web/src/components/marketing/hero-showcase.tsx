@@ -136,15 +136,13 @@ export function HeroShowcase() {
 
               <div className="relative isolate aspect-[9/19.5] overflow-hidden rounded-[2.2rem] bg-white">
                 <PhoneStatusBar />
-                <div className="absolute inset-x-0 bottom-3 top-10 overflow-hidden bg-white">
+                <div className="absolute inset-x-0 bottom-3 top-10 overflow-hidden overscroll-contain bg-white [touch-action:pan-y]">
                   {demoIframeSrc ? (
                     <iframe
                       src={demoIframeSrc}
                       title={`${hs.venueName} — ${hs.venueSubtitle}`}
-                      className="pointer-events-none block h-full w-full max-w-full touch-none border-0 bg-white"
+                      className="block h-full w-full max-w-full touch-pan-y border-0 bg-white"
                       loading="eager"
-                      tabIndex={-1}
-                      aria-hidden
                       referrerPolicy="strict-origin-when-cross-origin"
                     />
                   ) : (
