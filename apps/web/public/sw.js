@@ -1,4 +1,4 @@
-// menuos-sw-v9
+// menuos-sw-v10
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
@@ -111,8 +111,8 @@ async function findWaiterClients() {
   });
 }
 
-function isForegroundWaiterClient(client) {
-  return client.visibilityState === "visible" && client.focused === true;
+function isVisibleWaiterClient(client) {
+  return client.visibilityState === "visible";
 }
 
 async function playBufferInSw(arrayBuffer) {
@@ -243,10 +243,10 @@ async function handleStaffPushAlert(data) {
   if (kind === "other") return;
 
   const waiterClients = await findWaiterClients();
-  const foregroundWaiterClients = waiterClients.filter(isForegroundWaiterClient);
+  const visibleWaiterClients = waiterClients.filter(isVisibleWaiterClient);
 
-  if (foregroundWaiterClients.length > 0) {
-    for (const client of foregroundWaiterClients) {
+  if (visibleWaiterClients.length > 0) {
+    for (const client of visibleWaiterClients) {
       if (kind === "pass") {
         client.postMessage({
           type: "MENUOS_PASS_ALERT",
