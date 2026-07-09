@@ -1,4 +1,4 @@
-// menuos-sw-v11
+// menuos-sw-v12
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
@@ -251,9 +251,10 @@ function pushTagKind(tag) {
   return "other";
 }
 
+/** @returns {"panel"|"sw"|"none"} who plays alert audio */
 async function handleStaffPushAlert(data) {
   const kind = pushTagKind(data.tag);
-  if (kind === "other") return;
+  if (kind === "other") return "none";
 
   const waiterClients = await findWaiterClients();
   const visibleWaiterClients = waiterClients.filter(isVisibleWaiterClient);
@@ -275,13 +276,14 @@ async function handleStaffPushAlert(data) {
         });
       }
     }
-    return;
+    return "panel";
   }
 
   await playBeepInSw(kind === "pass" ? "pass" : "guest");
   if (kind === "pass" && data.voiceEnabled && data.announcement) {
     await playAnnouncementInSw(data.announcement);
   }
+  return "sw";
 }
 
 self.addEventListener("push", (event) => {
@@ -294,12 +296,12 @@ self.addEventListener("push", (event) => {
 
   const openTarget = resolveNotificationTarget(data.url);
   const pushKind = pushTagKind(data.tag);
-  const beepKind = pushKind === "pass" ? "pass" : "guest";
-  const alertSound = new URL(`/api/waiter-beep?kind=${beepKind}`, self.location.origin).href;
+  const staffPush = pushKind === "pass" || pushKind === "waiter";
 
   event.waitUntil(
-    Promise.all([
-      self.registration.showNotification(data.title, {
+    (async () => {
+      await handleStaffPushAlert(data);
+      await self.registration.showNotification(data.title, {
         body: data.body,
         icon: "/icon",
         badge: "/icon",
@@ -307,15 +309,13 @@ self.addEventListener("push", (event) => {
         vibrate: [400, 120, 400, 120, 400, 120, 400],
         requireInteraction: true,
         renotify: true,
-        silent: false,
-        sound: alertSound,
+        silent: staffPush,
         data: {
           url: data.url || openTarget.href,
           path: openTarget.path,
         },
-      }),
-      handleStaffPushAlert(data),
-    ]),
+      });
+    })(),
   );
 });
 
