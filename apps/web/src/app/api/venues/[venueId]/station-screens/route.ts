@@ -10,7 +10,15 @@ import {
   zodFirstErrorMessage,
 } from "@menuos/shared";
 import { requireLive360Plan } from "@/lib/api-auth";
-import { countStationScreens, isStationScreenLabelTaken, legacyVenueScreenToken, listStationScreens, nextStationScreenSortOrder, syncLegacyVenueToken } from "@/lib/station-screens";
+import {
+  countStationScreens,
+  isStationScreenLabelTaken,
+  legacyVenueScreenToken,
+  listPassStationScreens,
+  listStationScreens,
+  nextStationScreenSortOrder,
+  syncLegacyVenueToken,
+} from "@/lib/station-screens";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 type Params = { params: Promise<{ venueId: string }> };
@@ -26,9 +34,14 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   const stationRaw = new URL(request.url).searchParams.get("station");
+  if (!stationRaw) {
+    const screens = await listPassStationScreens(venueId);
+    return NextResponse.json({ screens });
+  }
+
   const stationParsed = passStationInputSchema.safeParse(stationRaw);
   if (!stationParsed.success) {
-    return NextResponse.json({ error: "Μη έγκυρο τμήμα." }, { status: 400 });
+    return NextResponse.json({ error: "Μη έγκυρο πόστο." }, { status: 400 });
   }
 
   const screens = await listStationScreens(venueId, stationParsed.data);

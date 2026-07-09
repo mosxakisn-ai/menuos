@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Sparkles, Wifi } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { demoMenuUrl } from "@menuos/shared";
 import { DemoTavernaLogo } from "@/components/marketing/demo-taverna-logo";
 import { HeroQrCode } from "@/components/marketing/hero-qr-code";
@@ -59,7 +59,6 @@ export function HeroShowcase() {
   const [scanning, setScanning] = useState(true);
   const [qrOrigin, setQrOrigin] = useState(APP_URL);
   const [demoIframeSrc, setDemoIframeSrc] = useState<string | null>(null);
-  const demoIframeHostRef = useRef<HTMLDivElement>(null);
 
   const demoMenuIframePath = useMemo(
     () => demoMenuUrl({ table: "12", siteLocale: locale, embed: true }),
@@ -67,35 +66,7 @@ export function HeroShowcase() {
   );
 
   useEffect(() => {
-    const host = demoIframeHostRef.current;
-    if (!host) return;
-
-    const loadIframe = () => setDemoIframeSrc(demoMenuIframePath);
-
-    const scheduleLoad = () => {
-      if (typeof requestIdleCallback !== "undefined") {
-        requestIdleCallback(loadIframe, { timeout: 2500 });
-      } else {
-        window.setTimeout(loadIframe, 600);
-      }
-    };
-
-    if (typeof IntersectionObserver === "undefined") {
-      scheduleLoad();
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          scheduleLoad();
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "120px" },
-    );
-    observer.observe(host);
-    return () => observer.disconnect();
+    setDemoIframeSrc(demoMenuIframePath);
   }, [demoMenuIframePath]);
 
   useEffect(() => {
@@ -165,16 +136,15 @@ export function HeroShowcase() {
 
               <div className="relative isolate aspect-[9/19.5] overflow-hidden rounded-[2.2rem] bg-white">
                 <PhoneStatusBar />
-                <div
-                  ref={demoIframeHostRef}
-                  className="absolute inset-x-0 bottom-3 top-10 overflow-hidden bg-white"
-                >
+                <div className="absolute inset-x-0 bottom-3 top-10 overflow-hidden bg-white">
                   {demoIframeSrc ? (
                     <iframe
                       src={demoIframeSrc}
                       title={`${hs.venueName} — ${hs.venueSubtitle}`}
-                      className="block h-full w-full max-w-full touch-pan-y border-0 bg-white"
-                      loading="lazy"
+                      className="pointer-events-none block h-full w-full max-w-full touch-none border-0 bg-white"
+                      loading="eager"
+                      tabIndex={-1}
+                      aria-hidden
                       referrerPolicy="strict-origin-when-cross-origin"
                     />
                   ) : (

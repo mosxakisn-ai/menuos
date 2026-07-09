@@ -66,7 +66,28 @@ export async function GET(request: Request) {
 
   const stationScreenId = searchParams.get("stationScreenId")?.trim();
   if (stationScreenId) {
-    where.stationScreenId = stationScreenId;
+    const screen = await prisma.venueStationScreen.findFirst({
+      where: { id: stationScreenId, venueId },
+      select: { id: true, station: true },
+    });
+    if (!screen) {
+      return NextResponse.json({
+        signals: [],
+        days,
+        limit,
+        ...(dateParam ? { date: dateParam } : {}),
+      });
+    }
+    const primary = await prisma.venueStationScreen.findFirst({
+      where: { venueId, station: screen.station },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: { id: true },
+    });
+    if (primary?.id === screen.id) {
+      where.OR = [{ stationScreenId: screen.id }, { stationScreenId: null, station: screen.station }];
+    } else {
+      where.stationScreenId = screen.id;
+    }
   }
 
   const staffMemberId = searchParams.get("staffMemberId")?.trim();

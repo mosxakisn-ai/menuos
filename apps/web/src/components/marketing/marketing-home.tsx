@@ -72,13 +72,9 @@ function useIsDesktop() {
 function MobileDeferredHeroShowcase() {
   const [ready, setReady] = useState(false);
 
+  // Mount after hydration — avoid requestIdleCallback on iOS Safari (often delayed 2s+).
   useEffect(() => {
-    const run = () => setReady(true);
-    if (typeof requestIdleCallback !== "undefined") {
-      requestIdleCallback(run, { timeout: 2500 });
-    } else {
-      window.setTimeout(run, 800);
-    }
+    setReady(true);
   }, []);
 
   if (!ready) {
@@ -103,16 +99,16 @@ export function MarketingHome() {
   return (
     <>
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden bg-hero-gradient pb-16 pt-12 sm:pb-24 sm:pt-16">
+      <section className="relative overflow-hidden [overflow-anchor:none] bg-hero-gradient pb-16 pt-12 sm:pb-24 sm:pt-16">
         {/* Background orbs — fixed offsets (not %) so hero min-height changes do not move them */}
         <div className="pointer-events-none absolute -left-32 top-0 h-[28rem] w-[28rem] rounded-full bg-brand-blue/10 blur-3xl" />
         <div className="pointer-events-none absolute -right-24 top-40 h-80 w-80 rounded-full bg-brand-cyan/10 blur-3xl lg:top-48" />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(15,23,42,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_70%_at_50%_0%,#000_50%,transparent_100%)]" />
 
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="grid items-center gap-12 lg:grid-cols-[1fr_1.05fr] lg:gap-10 xl:gap-16">
+          <div className="grid min-w-0 items-center gap-12 lg:grid-cols-[1fr_1.05fr] lg:gap-10 xl:gap-16">
             {/* Copy */}
-            <div className="text-center lg:text-left">
+            <div className="order-1 min-w-0 text-center lg:text-left">
               <div className="animate-fade-up flex justify-center lg:justify-start">
                 <ValuePill>
                   <Sparkles className="mr-1.5 inline h-3.5 w-3.5" aria-hidden />
@@ -125,11 +121,11 @@ export function MarketingHome() {
                 <span className="mt-1 block text-gradient-brand">{h.hero.titleAccent}</span>
               </h1>
 
-              <p className="animate-fade-up-delay mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-600 opacity-0 lg:mx-0 sm:text-xl">
+              <p className="animate-fade-up-delay mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-600 lg:mx-0 sm:text-xl">
                 {h.hero.subtitle}
               </p>
 
-              <div className="animate-fade-up-delay mt-8 flex flex-wrap items-center justify-center gap-2 opacity-0 lg:justify-start">
+              <div className="animate-fade-up-delay mt-8 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
                 {h.hero.trust.map((t) => (
                   <span
                     key={t}
@@ -141,7 +137,7 @@ export function MarketingHome() {
                 ))}
               </div>
 
-              <div className="animate-fade-up-delay-2 mt-10 flex flex-col items-center justify-center gap-4 opacity-0 sm:flex-row lg:justify-start">
+              <div className="animate-fade-up-delay-2 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
                 <Link href="/register" className={`${buttonClass("primary", "lg")} shadow-glow`}>
                   {h.hero.ctaTrial}
                 </Link>
@@ -155,7 +151,7 @@ export function MarketingHome() {
 
               <Link
                 href="/pos-leitourgei"
-                className="animate-fade-up-delay-2 mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-blue opacity-0 hover:underline sm:hidden"
+                className="animate-fade-up-delay-2 mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-blue hover:underline sm:hidden"
               >
                 {pages.common.howItWorksLink}
                 <ArrowDown className="h-4 w-4" />
@@ -163,7 +159,7 @@ export function MarketingHome() {
             </div>
 
             {/* Visual — deferred on mobile so hero copy stays the LCP element */}
-            <div className="lg:justify-self-end">
+            <div className="order-2 min-w-0 [overflow-anchor:none] lg:justify-self-end">
               <HeroShowcaseSlot />
             </div>
           </div>

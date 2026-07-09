@@ -133,4 +133,13 @@
       transform: none !important;
     }
   }
+
+  /* iOS Safari can leave opacity-0 stuck when CSS animations do not start. */
+  @supports (-webkit-touch-callout: none) {
+    .animate-fade-up,
+    .animate-fade-up-delay,
+    .animate-fade-up-delay-2 {
+      animation-fill-mode: both;
+    }
+  }
 }

@@ -5,6 +5,7 @@ import {
   DEFAULT_STATION_SCREEN_LABELS_EL,
   isVenuePassPostStation,
   PASS_STATION_INPUTS,
+  passStationDbToInput,
   passStationInputToDb,
   spotPrefixForVenuePost,
   staffAssignableVenuePosts,
@@ -47,6 +48,32 @@ export async function listStationScreens(
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     select: { id: true, label: true, screenToken: true, sortOrder: true, spotPrefix: true },
   });
+}
+
+/** Kitchen & bar pass tablets — matches Πόστα tab (not legacy cold/dessert). */
+export async function listPassStationScreens(
+  venueId: string,
+): Promise<(StationScreenRow & { station: PassStationInput })[]> {
+  const rows = await prisma.venueStationScreen.findMany({
+    where: { venueId, station: { in: ["KITCHEN", "BAR"] } },
+    orderBy: [{ station: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+    select: {
+      id: true,
+      label: true,
+      screenToken: true,
+      sortOrder: true,
+      spotPrefix: true,
+      station: true,
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    label: row.label,
+    screenToken: row.screenToken,
+    sortOrder: row.sortOrder,
+    spotPrefix: row.spotPrefix,
+    station: passStationDbToInput(row.station),
+  }));
 }
 
 export async function resolveStationScreenByToken(

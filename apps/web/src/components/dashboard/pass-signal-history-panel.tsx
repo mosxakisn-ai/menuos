@@ -6,7 +6,6 @@ import {
   formatVenueSpotLabelForLang,
   formatWaiterCallLocationForLang,
   passStationDbToInput,
-  type PassStationInput,
   type VenueSpotType,
 } from "@menuos/shared";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
@@ -16,6 +15,7 @@ import { athensPeriodStartYmd, athensTodayYmd } from "@/lib/athens-day";
 type HistorySignal = {
   id: string;
   station: string;
+  stationScreenId?: string | null;
   stationScreenLabel?: string | null;
   tableNumber: string | null;
   roomNumber: string | null;
@@ -28,8 +28,28 @@ type HistorySignal = {
 
 type VenueSpot = { id: string; type: VenueSpotType; label: string };
 type StaffMember = { id: string; name: string };
+type PassStationScreen = { id: string; label: string; station?: string };
 
-const STATION_FILTERS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
+function formatHistoryPostLabel(
+  signal: HistorySignal,
+  passStationLabels: Record<string, string>,
+  stationScreens: PassStationScreen[],
+): string {
+  const custom = signal.stationScreenLabel?.trim();
+  if (custom) return custom;
+
+  const screenId = signal.stationScreenId?.trim();
+  if (screenId) {
+    const byId = stationScreens.find((screen) => screen.id === screenId);
+    if (byId) return byId.label;
+  }
+
+  const stationKey = passStationDbToInput(signal.station);
+  const forStation = stationScreens.filter((screen) => screen.station === stationKey);
+  if (forStation.length === 1) return forStation[0]!.label;
+
+  return passStationLabels[stationKey] ?? signal.station;
+}
 
 function formatDurationMs(ms: number): string {
   if (!Number.isFinite(ms) || ms < 0) return "—";
@@ -48,13 +68,14 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
   const [signals, setSignals] = useState<HistorySignal[]>([]);
   const [spots, setSpots] = useState<VenueSpot[]>([]);
+  const [stationScreens, setStationScreens] = useState<PassStationScreen[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [days, setDays] = useState(7);
   const [day, setDay] = useState("");
   const [spotId, setSpotId] = useState("");
-  const [station, setStation] = useState("");
+  const [stationScreenId, setStationScreenId] = useState("");
   const [staffMemberId, setStaffMemberId] = useState("");
   const loadGenerationRef = useRef(0);
 
@@ -66,7 +87,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     if (!venues.some((v) => v.id === venueId)) {
       setVenueId(venues[0]!.id);
       setSpotId("");
-      setStation("");
+      setStationScreenId("");
       setStaffMemberId("");
     }
   }, [venues, venueId]);
@@ -75,33 +96,50 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     loadGenerationRef.current += 1;
     setSignals([]);
     setSpots([]);
+    setStationScreens([]);
     setStaffMembers([]);
     setLoadError(false);
     setDay("");
+    setSpotId("");
+    setStationScreenId("");
+    setStaffMemberId("");
   }, [venueId]);
 
   useEffect(() => {
     if (!venueId) {
       setSpots([]);
+      setStationScreens([]);
       setStaffMembers([]);
       return;
     }
     let cancelled = false;
     void (async () => {
-      const [spotsRes, staffRes] = await Promise.all([
+      const [spotsRes, screensRes, staffRes] = await Promise.all([
         fetch(`/api/venues/${venueId}/spots`),
+        fetch(`/api/venues/${venueId}/station-screens`),
         fetch(`/api/venues/${venueId}/staff-members`),
       ]);
       if (cancelled) return;
       const spotsData = spotsRes.ok ? ((await spotsRes.json()) as { spots?: VenueSpot[] }) : {};
+      const screensData = screensRes.ok
+        ? ((await screensRes.json()) as { screens?: PassStationScreen[] })
+        : {};
       const staffData = staffRes.ok ? ((await staffRes.json()) as { members?: StaffMember[] }) : {};
       setSpots(spotsData.spots ?? []);
+      setStationScreens(screensData.screens ?? []);
       setStaffMembers(staffData.members ?? []);
     })();
     return () => {
       cancelled = true;
     };
   }, [venueId]);
+
+  useEffect(() => {
+    if (!stationScreenId) return;
+    if (!stationScreens.some((screen) => screen.id === stationScreenId)) {
+      setStationScreenId("");
+    }
+  }, [stationScreenId, stationScreens]);
 
   const load = useCallback(async () => {
     if (!venueId) {
@@ -115,7 +153,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     try {
       const params = new URLSearchParams({ venueId, days: String(days) });
       if (spotId) params.set("spotId", spotId);
-      if (station) params.set("station", station);
+      if (stationScreenId) params.set("stationScreenId", stationScreenId);
       if (staffMemberId) params.set("staffMemberId", staffMemberId);
       if (day) params.set("date", day);
       const res = await fetch(`/api/pass-signals/history?${params}`);
@@ -134,7 +172,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     } finally {
       if (generation === loadGenerationRef.current) setLoading(false);
     }
-  }, [venueId, days, day, spotId, station, staffMemberId]);
+  }, [venueId, days, day, spotId, stationScreenId, staffMemberId]);
 
   useEffect(() => {
     void load();
@@ -154,16 +192,16 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
 
   return (
     <div className={dashboardCardClass}>
-      <div className="mt-4 flex flex-wrap items-end gap-4">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {venues.length > 1 ? (
-          <label className="block min-w-[180px]">
+          <label className="block min-w-0">
             <span className={dashboardLabelClass}>{d.venue}</span>
             <select
               value={venueId}
               onChange={(e) => {
                 setVenueId(e.target.value);
                 setSpotId("");
-                setStation("");
+                setStationScreenId("");
                 setStaffMemberId("");
               }}
               className={dashboardFieldClass}
@@ -176,7 +214,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
             </select>
           </label>
         ) : null}
-        <label className="block min-w-[140px]">
+        <label className="block min-w-0">
           <span className={dashboardLabelClass}>{H.daysLabel}</span>
           <select
             value={days}
@@ -191,7 +229,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
             <option value={90}>{H.days90}</option>
           </select>
         </label>
-        <label className="block min-w-[160px]">
+        <label className="block min-w-0 sm:col-span-2 lg:col-span-1">
           <span className={dashboardLabelClass}>{H.filterDay}</span>
           <div className="flex items-center gap-2">
             <input
@@ -214,7 +252,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
           </div>
           <p className="mt-1 text-[10px] leading-snug text-slate-500">{H.filterDayHint}</p>
         </label>
-        <label className="block min-w-[160px]">
+        <label className="block min-w-0">
           <span className={dashboardLabelClass}>{H.filterSpot}</span>
           <select
             value={spotId}
@@ -229,22 +267,22 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
             ))}
           </select>
         </label>
-        <label className="block min-w-[140px]">
-          <span className={dashboardLabelClass}>{H.filterStation}</span>
+        <label className="block min-w-0">
+          <span className={dashboardLabelClass}>{H.filterPost}</span>
           <select
-            value={station}
-            onChange={(e) => setStation(e.target.value)}
+            value={stationScreenId}
+            onChange={(e) => setStationScreenId(e.target.value)}
             className={dashboardFieldClass}
           >
             <option value="">{H.filterAll}</option>
-            {STATION_FILTERS.map((key) => (
-              <option key={key} value={key}>
-                {W.passStation[key]}
+            {stationScreens.map((screen) => (
+              <option key={screen.id} value={screen.id}>
+                {screen.label}
               </option>
             ))}
           </select>
         </label>
-        <label className="block min-w-[160px]">
+        <label className="block min-w-0">
           <span className={dashboardLabelClass}>{H.filterStaff}</span>
           <select
             value={staffMemberId}
@@ -269,25 +307,20 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
         <p className="mt-6 text-sm text-slate-500">{H.empty}</p>
       ) : (
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[720px] table-fixed text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-slate-500">
-                <th className="pb-3 pr-4 font-medium">{H.colSpot}</th>
-                <th className="pb-3 pr-4 font-medium">{H.colStation}</th>
-                <th className="pb-3 pr-4 font-medium">{H.colMessage}</th>
-                <th className="pb-3 pr-4 font-medium">{H.colStaff}</th>
-                <th className="pb-3 pr-4 font-medium">{H.colReady}</th>
-                <th className="pb-3 font-medium">{H.colDuration}</th>
+              <tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="w-[14%] pb-3 pr-3">{H.colSpot}</th>
+                <th className="w-[16%] pb-3 pr-3">{H.colPost}</th>
+                <th className="w-[26%] pb-3 pr-3">{H.colMessage}</th>
+                <th className="w-[14%] pb-3 pr-3">{H.colStaff}</th>
+                <th className="w-[20%] pb-3 pr-3">{H.colReady}</th>
+                <th className="w-[10%] pb-3 text-right">{H.colDuration}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {signals.map((signal) => {
-                const stationKey = passStationDbToInput(signal.station);
-                const baseStationLabel =
-                  W.passStation[stationKey as keyof typeof W.passStation] ?? signal.station;
-                const stationLabel = signal.stationScreenLabel?.trim()
-                  ? `${baseStationLabel} (${signal.stationScreenLabel.trim()})`
-                  : baseStationLabel;
+                const postLabel = formatHistoryPostLabel(signal, W.passStation, stationScreens);
                 const readyAt = new Date(signal.readyAt);
                 const deliveredAt = signal.deliveredAt ? new Date(signal.deliveredAt) : null;
                 const duration =
@@ -296,22 +329,22 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
                     : "—";
 
                 return (
-                  <tr key={signal.id}>
-                    <td className="py-3 pr-4 font-medium text-brand-navy">
+                  <tr key={signal.id} className="align-top">
+                    <td className="py-3 pr-3 font-medium text-brand-navy">
                       {formatWaiterCallLocationForLang(signal, lang)}
                     </td>
-                    <td className="py-3 pr-4 text-slate-700">{stationLabel}</td>
-                    <td className="py-3 pr-4 text-slate-600">{signal.message?.trim() || "—"}</td>
-                    <td className="py-3 pr-4 text-slate-600">
+                    <td className="py-3 pr-3 text-slate-700">{postLabel}</td>
+                    <td className="py-3 pr-3 text-slate-600">{signal.message?.trim() || "—"}</td>
+                    <td className="py-3 pr-3 text-slate-600">
                       {signal.deliveredByStaffMemberName?.trim() || "—"}
                     </td>
-                    <td className="py-3 pr-4 text-slate-600">
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                    <td className="py-3 pr-3 text-slate-600">
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                        <Clock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                         {readyAt.toLocaleString(locale)}
                       </span>
                     </td>
-                    <td className="py-3 text-slate-700">{duration}</td>
+                    <td className="py-3 text-right tabular-nums text-slate-700">{duration}</td>
                   </tr>
                 );
               })}
