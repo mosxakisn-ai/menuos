@@ -1,4 +1,4 @@
-// menuos-sw-v15
+// menuos-sw-v16
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
@@ -279,13 +279,12 @@ async function handleStaffPushAlert(data) {
 
   const waiterClients = await findWaiterClients();
   const visibleWaiterClients = waiterClients.filter(isVisibleWaiterClient);
-  const focusedWaiterClients = visibleWaiterClients.filter((client) => client.focused);
 
   for (const client of visibleWaiterClients) {
     postStaffAlertToClient(client, kind, data);
   }
 
-  if (focusedWaiterClients.length > 0) {
+  if (visibleWaiterClients.length > 0) {
     return { source: "panel", swBeepPlayed: false };
   }
 

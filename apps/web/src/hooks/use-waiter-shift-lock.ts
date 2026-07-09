@@ -59,6 +59,7 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
   const userWantsLockRef = useRef(false);
   const restoreInFlightRef = useRef(false);
   const lastRestoreAtRef = useRef(0);
+  const restoreShiftLockRef = useRef<() => Promise<void>>(async () => undefined);
 
   const releaseWakeLock = useCallback(async () => {
     try {
@@ -87,7 +88,7 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
           return;
         }
         if (document.visibilityState === "visible") {
-          void acquireWakeLock();
+          void restoreShiftLockRef.current();
         }
       };
       return true;
@@ -140,6 +141,7 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
       restoreInFlightRef.current = false;
     }
   }, [acquireWakeLock, enterFullscreen]);
+  restoreShiftLockRef.current = restoreShiftLock;
 
   const disable = useCallback(async () => {
     setBusy(true);
