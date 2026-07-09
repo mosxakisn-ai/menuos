@@ -58,3 +58,17 @@ export function pushTagKind(tag: string | null | undefined): "pass" | "waiter" |
   if (tag.startsWith("waiter-")) return "waiter";
   return "other";
 }
+
+export type StaffPushAudioSource = "panel" | "sw" | "none";
+
+/** When to mute OS notification sound for staff pushes (panel/SW plays custom beep). */
+export function staffPushNotificationSilent(input: {
+  staffPush: boolean;
+  audioSource: StaffPushAudioSource;
+  swBeepPlayed: boolean;
+}): boolean {
+  if (!input.staffPush) return false;
+  if (input.audioSource === "panel") return true;
+  if (input.audioSource === "sw") return input.swBeepPlayed;
+  return false;
+}

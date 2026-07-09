@@ -4,6 +4,7 @@ import {
   isWaiterPanelPathname,
   pushTagKind,
   resolveNotificationOpenTarget,
+  staffPushNotificationSilent,
 } from "./staff-notification-open";
 
 const ORIGIN = "https://menuos.gr";
@@ -60,5 +61,47 @@ describe("isWaiterPanelPathname", () => {
     expect(isWaiterPanelPathname("/s/demo-taverna")).toBe(true);
     expect(isWaiterPanelPathname("/dashboard/waiter")).toBe(true);
     expect(isWaiterPanelPathname("/")).toBe(false);
+  });
+});
+
+describe("staffPushNotificationSilent", () => {
+  it("keeps OS sound for non-staff pushes", () => {
+    expect(
+      staffPushNotificationSilent({
+        staffPush: false,
+        audioSource: "sw",
+        swBeepPlayed: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("mutes OS sound when visible panel handles audio", () => {
+    expect(
+      staffPushNotificationSilent({
+        staffPush: true,
+        audioSource: "panel",
+        swBeepPlayed: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("falls back to OS sound when SW beep fails in background", () => {
+    expect(
+      staffPushNotificationSilent({
+        staffPush: true,
+        audioSource: "sw",
+        swBeepPlayed: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("mutes OS sound when SW beep succeeds", () => {
+    expect(
+      staffPushNotificationSilent({
+        staffPush: true,
+        audioSource: "sw",
+        swBeepPlayed: true,
+      }),
+    ).toBe(true);
   });
 });

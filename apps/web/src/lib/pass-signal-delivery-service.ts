@@ -160,6 +160,20 @@ export async function repushPassSignal(
     now.getTime() - PASS_SIGNAL_REPUSH_COOLDOWN_SECONDS * 1000,
   );
 
+  const existing = await prisma.passSignal.findFirst({
+    where: {
+      id: signal.id,
+      status: "READY",
+      firstSeenAt: null,
+      repushCount: expectedRepush,
+      OR: [{ lastRepushAt: null }, { lastRepushAt: { lt: cooldownCutoff } }],
+    },
+    select: { lastRepushAt: true },
+  });
+  if (!existing) return;
+
+  const previousLastRepushAt = existing.lastRepushAt;
+
   const claimed = await prisma.passSignal.updateMany({
     where: {
       id: signal.id,
@@ -172,15 +186,26 @@ export async function repushPassSignal(
   });
   if (claimed.count === 0) return;
 
+  const revertLastRepushAt = async () => {
+    await prisma.passSignal.update({
+      where: { id: signal.id },
+      data: { lastRepushAt: previousLastRepushAt },
+    });
+  };
+
   let result: PushDispatchResult;
   try {
     result = await dispatchPassSignalPush(venue, signal);
   } catch (err) {
     console.error("[menuos] pass-signal repush dispatch failed", signal.id, err);
+    await revertLastRepushAt();
     return;
   }
 
-  if (!repushCountsAsAttempt(result)) return;
+  if (!repushCountsAsAttempt(result)) {
+    await revertLastRepushAt();
+    return;
+  }
 
   const incremented = await prisma.passSignal.updateMany({
     where: {
@@ -193,7 +218,10 @@ export async function repushPassSignal(
       repushCount: { increment: 1 },
     },
   });
-  if (incremented.count === 0) return;
+  if (incremented.count === 0) {
+    await revertLastRepushAt();
+    return;
+  }
 
   await persistPassSignalPushStats(signal.id, result, { preserveOnFailedRepush: true });
 }
@@ -208,9 +236,18 @@ export async function maybeRepushStalePassSignals(venueId: string, now = new Dat
       venueId,
       status: "READY",
       firstSeenAt: null,
-      readyAt: { lt: staleCutoff },
       repushCount: { lt: PASS_SIGNAL_MAX_REPUSH },
-      OR: [{ lastRepushAt: null }, { lastRepushAt: { lt: cooldownCutoff } }],
+      AND: [
+        {
+          OR: [
+            { lastRepushAt: null, readyAt: { lt: staleCutoff } },
+            { lastRepushAt: { lt: staleCutoff } },
+          ],
+        },
+        {
+          OR: [{ lastRepushAt: null }, { lastRepushAt: { lt: cooldownCutoff } }],
+        },
+      ],
     },
     orderBy: { readyAt: "asc" },
     take: 6,

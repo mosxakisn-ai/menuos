@@ -1,4 +1,4 @@
-// menuos-sw-v12
+// menuos-sw-v14
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
@@ -210,8 +210,8 @@ async function playBeepWavFallback(kind) {
 }
 
 async function playBeepInSw(kind) {
-  if (await playBeepWavFallback(kind)) return;
-  await playBeepWebAudio(kind);
+  if (await playBeepWavFallback(kind)) return true;
+  return playBeepWebAudio(kind);
 }
 
 async function playAnnouncementInSw(announcement) {
@@ -251,39 +251,51 @@ function pushTagKind(tag) {
   return "other";
 }
 
-/** @returns {"panel"|"sw"|"none"} who plays alert audio */
+function postStaffAlertToClient(client, kind, data) {
+  if (kind === "pass") {
+    client.postMessage({
+      type: "MENUOS_PASS_ALERT",
+      passId: data.passId,
+      zoneId: data.zoneId,
+      announcement: data.announcement,
+      voiceEnabled: Boolean(data.voiceEnabled),
+    });
+    return;
+  }
+  client.postMessage({
+    type: "MENUOS_WAITER_CALL_ALERT",
+    callId: data.callId,
+  });
+}
+
+/** @returns {{ source: "panel"|"sw"|"none", swBeepPlayed: boolean }} */
 async function handleStaffPushAlert(data) {
   const kind = pushTagKind(data.tag);
-  if (kind === "other") return "none";
+  if (kind === "other") return { source: "none", swBeepPlayed: false };
 
   const waiterClients = await findWaiterClients();
   const visibleWaiterClients = waiterClients.filter(isVisibleWaiterClient);
 
-  if (visibleWaiterClients.length > 0) {
-    for (const client of visibleWaiterClients) {
-      if (kind === "pass") {
-        client.postMessage({
-          type: "MENUOS_PASS_ALERT",
-          passId: data.passId,
-          zoneId: data.zoneId,
-          announcement: data.announcement,
-          voiceEnabled: Boolean(data.voiceEnabled),
-        });
-      } else {
-        client.postMessage({
-          type: "MENUOS_WAITER_CALL_ALERT",
-          callId: data.callId,
-        });
-      }
-    }
-    return "panel";
+  for (const client of visibleWaiterClients) {
+    postStaffAlertToClient(client, kind, data);
   }
 
-  await playBeepInSw(kind === "pass" ? "pass" : "guest");
+  if (visibleWaiterClients.length > 0) {
+    return { source: "panel", swBeepPlayed: false };
+  }
+
+  const beepPlayed = await playBeepInSw(kind === "pass" ? "pass" : "guest");
   if (kind === "pass" && data.voiceEnabled && data.announcement) {
     await playAnnouncementInSw(data.announcement);
   }
-  return "sw";
+  return { source: "sw", swBeepPlayed: beepPlayed };
+}
+
+function staffPushNotificationSilent(staffPush, audioSource, swBeepPlayed) {
+  if (!staffPush) return false;
+  if (audioSource === "panel") return true;
+  if (audioSource === "sw") return swBeepPlayed;
+  return false;
 }
 
 self.addEventListener("push", (event) => {
@@ -300,7 +312,12 @@ self.addEventListener("push", (event) => {
 
   event.waitUntil(
     (async () => {
-      await handleStaffPushAlert(data);
+      const audio = await handleStaffPushAlert(data);
+      const notificationSilent = staffPushNotificationSilent(
+        staffPush,
+        audio.source,
+        audio.swBeepPlayed,
+      );
       await self.registration.showNotification(data.title, {
         body: data.body,
         icon: "/icon",
@@ -309,7 +326,7 @@ self.addEventListener("push", (event) => {
         vibrate: [400, 120, 400, 120, 400, 120, 400],
         requireInteraction: true,
         renotify: true,
-        silent: staffPush,
+        silent: notificationSilent,
         data: {
           url: data.url || openTarget.href,
           path: openTarget.path,
