@@ -17,8 +17,10 @@ import {
   sanitizeStaffMessageScope,
   staffAssignmentLinkKind,
   defaultStaffAssignmentForJobRole,
+  defaultStaffPostAssignment,
   staffJobRoleForAssignment,
   staffPostOptionsForJobRole,
+  staffPostPickerOptions,
   staffPostPickerLabel,
   staffPrimaryAssignment,
   staffScreenDeviceForAssignment,
@@ -328,6 +330,30 @@ describe("staffJobRole", () => {
       "kitchen",
       "bar",
     ]);
+  });
+
+  it("lists all assignable posts in one picker", () => {
+    expect(staffPostPickerOptions(posts).map((row) => row.id)).toEqual([
+      "all",
+      "svc-sala",
+      "pass-all",
+      "kitchen",
+      "bar",
+    ]);
+    expect(defaultStaffPostAssignment(posts)).toBe("all");
+  });
+
+  it("defaults to first tablet post when venue has no waiter posts", () => {
+    const kdsOnly = [
+      { id: "kitchen", label: "Κουζίνα", enabled: true, station: "kitchen" as const },
+      { id: "bar", label: "Bar", enabled: true, station: "bar" as const },
+    ];
+    expect(staffPostPickerOptions(kdsOnly).map((row) => row.id)).toEqual([
+      "pass-all",
+      "kitchen",
+      "bar",
+    ]);
+    expect(defaultStaffPostAssignment(kdsOnly)).toBe("pass-all");
   });
 
   it("maps role to screen device", () => {

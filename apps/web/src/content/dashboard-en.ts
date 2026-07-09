@@ -995,14 +995,14 @@ export const DASHBOARD_EN = {
       personnel: {
         title: "Staff",
         description:
-          "Add an employee: name, role, space and post. Pick role first — then the right posts appear.",
+          "Add an employee: name, post and space. Pick a post — mobile or tablet is set automatically.",
         addTitle: "New employee",
         addStaff: "Add",
         listTitle: "Staff members",
         editTitle: "Edit",
         cancelEdit: "Cancel",
         formHint:
-          "Waiter = phone (calls, pass). Kitchen/Bar = tablet (quick messages, pass). Post must match Settings → Messages.",
+          "Pick a post by name — mobile for waiter, tablet for kitchen/bar. Post must match Settings → Messages.",
         messagesScopeWaiter:
           "Floor waiter — calls & pass alerts on phone (does not send quick messages)",
         messagesScopeAll:
@@ -1026,6 +1026,7 @@ export const DASHBOARD_EN = {
         colScreen: "Screen",
         colSpaceRequired: "Space *",
         colPostRequired: "Post *",
+        colDevice: "Device",
         colScreenRequired: "Screen *",
         jobRoleWaiter: "Waiter",
         jobRolePass: "Kitchen / Bar",
@@ -1047,7 +1048,7 @@ export const DASHBOARD_EN = {
         selectSpacePlaceholder: "Choose space",
         selectPostPlaceholder: "Choose post",
         fieldsRequiredHint:
-          "Name, role, space (waiter) and post are required. Posts are filtered by role.",
+          "Name, post and space (waiter) are required. All posts appear by name.",
         colLink: "Link & QR",
         colLinkHint:
           "Waiter: phone link or QR. Kitchen/Bar: tablet link or QR — opens without login.",

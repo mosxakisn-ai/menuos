@@ -3,6 +3,7 @@ import { prisma } from "@menuos/db";
 import {
   formatWaiterCallLocation,
   passSignalBulkDismissSchema,
+  passSignalsEligibleForManualClear,
   passStationDbToInput,
   stationDisplayLabel,
 } from "@menuos/shared";
@@ -81,6 +82,18 @@ export async function POST(request: Request) {
 
   if (allowedIds.length === 0) {
     return NextResponse.json({ error: "Μη εξουσιοδοτημένο." }, { status: 403 });
+  }
+
+  const allowedSignals = signals.filter((row) => allowedIds.includes(row.id));
+  if (!passSignalsEligibleForManualClear(allowedSignals)) {
+    return NextResponse.json(
+      {
+        error:
+          "Δεν γίνεται καθάρισμα πριν περάσουν 24 ώρες. Οι ειδοποιήσεις κλείνουν αυτόματα μετά από 24 ώρες.",
+        code: "clear_too_soon",
+      },
+      { status: 400 },
+    );
   }
 
   await prisma.passSignal.deleteMany({ where: { id: { in: allowedIds } } });

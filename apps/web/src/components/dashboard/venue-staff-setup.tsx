@@ -21,7 +21,7 @@ import {
   getPostMessageColor,
   groupVenueSpotsByZone,
   listVenuePosts,
-  defaultStaffAssignmentForJobRole,
+  defaultStaffPostAssignment,
   pickStationScreenForStaffAssignment,
   resolveStaffAssignmentToPassInput,
   staffAssignmentLinkKind,
@@ -30,8 +30,7 @@ import {
   staffAssignableVenuePosts,
   staffJobRoleForAssignment,
   staffJobRoleLabel,
-  staffPostOptionsForJobRole,
-  staffPostPickerLabel,
+  staffPostPickerOptions,
   staffPostRequiresZoneAssignment,
   staffPostStationSubtitle,
   staffPrimaryAssignment,
@@ -659,12 +658,10 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   const [name, setName] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [postAssignment, setPostAssignment] = useState("all");
-  const [jobRole, setJobRole] = useState<StaffJobRole>("waiter");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editZoneId, setEditZoneId] = useState("");
   const [editPostAssignment, setEditPostAssignment] = useState("all");
-  const [editJobRole, setEditJobRole] = useState<StaffJobRole>("waiter");
   const [busy, setBusy] = useState<string | null>(null);
   const [screensByStation, setScreensByStation] = useState<StaffScreensByStation>({});
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -711,33 +708,17 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     return null;
   }
 
-  const postOptionsForRole = useCallback(
-    (role: StaffJobRole) => staffPostOptionsForJobRole(role, assignablePosts, langCode),
+  const allPostOptions = useMemo(
+    () => staffPostPickerOptions(assignablePosts, langCode),
     [assignablePosts, langCode],
   );
 
-  const waiterPostOptions = useMemo(
-    () => postOptionsForRole("waiter").filter((row) => row.id !== "all"),
-    [postOptionsForRole],
-  );
-
-  const kdsPostOptions = useMemo(() => postOptionsForRole("pass"), [postOptionsForRole]);
-
-  function applyJobRoleChange(
-    role: StaffJobRole,
-    setPost: (post: string) => void,
-    setZone: (zone: string) => void,
-    currentZone: string,
-  ) {
-    const options = staffPostOptionsForJobRole(role, assignablePosts, langCode);
-    const nextPost = defaultStaffAssignmentForJobRole(role, assignablePosts) || options[0]?.id || "";
-    setPost(nextPost);
-    if (role === "waiter") {
-      if (!currentZone) setZone("all");
-    } else {
-      setZone("");
+  useEffect(() => {
+    if (allPostOptions.length === 0) return;
+    if (!allPostOptions.some((option) => option.id === postAssignment)) {
+      setPostAssignment(defaultStaffPostAssignment(assignablePosts));
     }
-  }
+  }, [allPostOptions, assignablePosts, postAssignment]);
 
   function roleLabelFromPost(assignment: string): string {
     return staffAssignmentLabelForLang(assignment, langCode, venuePosts);
@@ -842,8 +823,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setName("");
-        setPostAssignment(defaultStaffAssignmentForJobRole("waiter", assignablePosts) || "all");
-        setJobRole("waiter");
+        setPostAssignment(defaultStaffPostAssignment(assignablePosts) || "all");
         setZoneId("");
         await reload();
         notifyLive360Updated();
@@ -853,17 +833,12 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     }
   }
 
-  function assignmentForRole(role: StaffJobRole, assignment: string): string {
-    const options = staffPostOptionsForJobRole(role, assignablePosts, langCode);
-    if (options.some((option) => option.id === assignment)) return assignment;
-    return defaultStaffAssignmentForJobRole(role, assignablePosts) || options[0]?.id || "";
-  }
-
   function startEdit(member: StaffMember) {
     const assignment = staffPrimaryAssignment(member.stations);
-    const role = staffJobRoleForAssignment(assignment, venuePosts);
-    const resolvedRole: StaffJobRole = role === "invalid" ? "waiter" : role;
-    const resolvedAssignment = assignmentForRole(resolvedRole, assignment);
+    const options = staffPostPickerOptions(assignablePosts, langCode);
+    const resolvedAssignment = options.some((option) => option.id === assignment)
+      ? assignment
+      : defaultStaffPostAssignment(assignablePosts) || options[0]?.id || "";
     setEditingId(member.id);
     setEditName(member.name);
     setEditZoneId(
@@ -872,7 +847,6 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
         : "",
     );
     setEditPostAssignment(resolvedAssignment);
-    setEditJobRole(resolvedRole);
   }
 
   async function saveEdit(memberId: string) {
@@ -955,64 +929,131 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
   function renderAssignmentFields(
     values: {
       name: string;
-      role: StaffJobRole;
       zone: string;
       post: string;
     },
     onChange: {
       setName: (v: string) => void;
-      setRole: (v: StaffJobRole) => void;
       setZone: (v: string) => void;
       setPost: (v: string) => void;
     },
+    options: {
+      layout?: "create" | "list";
+      postOptions?: Array<{ id: string; label: string }>;
+    } = {},
   ) {
+    const layout = options.layout ?? "create";
+    const cellPad = layout === "list" ? "px-4 py-3" : "px-3 py-2";
+    const postOptions = options.postOptions ?? allPostOptions;
     const chipsScope = messageScopeForPost(values.post);
-    const postOptions = staffPostOptionsForJobRole(values.role, assignablePosts, langCode);
-    const kdsUnavailable = values.role === "pass" && postOptions.length === 0;
-    const waiterPostsMissing = values.role === "waiter" && waiterPostOptions.length === 0;
-    const deviceLabel = staffDeviceLabelForContext(
-      values.post,
-      venuePosts,
-      screenCopy,
-      values.role,
+    const derivedRole = staffJobRoleForAssignment(values.post, venuePosts);
+    const noPosts = postOptions.length === 0;
+    const deviceLabel = staffDeviceLabelForContext(values.post, venuePosts, screenCopy);
+    const postHint = noPosts
+      ? "no-posts"
+      : chipsScope
+        ? "tablet-scope"
+        : values.post === "all"
+          ? "all-scope"
+          : derivedRole === "waiter"
+            ? "waiter-scope"
+            : "empty";
+
+    const nameCell = (
+      <td key="name" className={`${cellPad} align-top`}>
+        <input
+          value={values.name}
+          onChange={(e) => onChange.setName(e.target.value)}
+          maxLength={60}
+          placeholder={S.namePlaceholder}
+          className={`${dashboardFieldClass} w-full text-sm`}
+        />
+      </td>
     );
-    const postHint = kdsUnavailable
-      ? "kds-unavailable"
-      : waiterPostsMissing && values.post !== "all"
-        ? "waiter-missing"
-        : chipsScope
-          ? "tablet-scope"
-          : values.post === "all"
-            ? "all-scope"
-            : values.role === "waiter"
-              ? "waiter-scope"
-              : "empty";
-    return (
-      <>
-        <td className="px-3 py-2 align-top">
-          <input
-            value={values.name}
-            onChange={(e) => onChange.setName(e.target.value)}
-            maxLength={60}
-            placeholder={S.namePlaceholder}
-            className={`${dashboardFieldClass} w-full text-sm`}
-          />
-        </td>
-        <td className="px-3 py-2 align-top">
-          <select
-            value={values.role}
-            required
-            onChange={(e) => {
-              const next = e.target.value as StaffJobRole;
-              onChange.setRole(next);
-              applyJobRoleChange(next, onChange.setPost, onChange.setZone, values.zone);
-            }}
-            className={`${dashboardFieldClass} w-full text-sm`}
-          >
-            <option value="waiter">{S.jobRoleWaiter}</option>
-            <option value="pass">{S.jobRolePass}</option>
-          </select>
-          <div className="mt-1.5 flex min-h-[2.5rem] flex-col gap-1">
+
+    const postCell = (
+      <td key="post" className={`${cellPad} align-top`}>
+        <select
+          value={postOptions.some((option) => option.id === values.post) ? values.post : ""}
+          required
+          disabled={noPosts}
+          onChange={(e) => {
+            const next = e.target.value;
+            onChange.setPost(next);
+            if (staffPostRequiresZoneAssignment(next, venuePosts)) {
+              if (!values.zone) onChange.setZone("all");
+            } else {
+              onChange.setZone("");
+            }
+          }}
+          className={`${dashboardFieldClass} w-full text-sm disabled:opacity-60`}
+        >
+          {postOptions.length === 0 ? (
+            <option value="">{S.noPosts}</option>
+          ) : (
+            postOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))
+          )}
+        </select>
+        <div className="mt-1 min-h-[2.5rem] text-[10px] leading-snug">
+          {postHint === "no-posts" ? (
+            <p className="text-amber-700">
+              {S.noPosts}{" "}
+              <Link href="/dashboard/settings?tab=posts" className="font-semibold underline">
+                →
+              </Link>
+            </p>
+          ) : postHint === "tablet-scope" ? (
+            <p className="font-medium text-slate-500">{S.messagesScopeTablet}</p>
+          ) : postHint === "all-scope" ? (
+            <p className="text-slate-400">{S.messagesScopeAll}</p>
+          ) : postHint === "waiter-scope" ? (
+            <p className="text-slate-400">{S.messagesScopeWaiter}</p>
+          ) : (
+            <span className="invisible select-none" aria-hidden>
+              —
+            </span>
+          )}
+        </div>
+      </td>
+    );
+
+    const spaceCell = (
+      <td key="space" className={`${cellPad} align-top`}>
+        <select
+          value={values.zone}
+          onChange={(e) => onChange.setZone(e.target.value)}
+          required={staffPostRequiresZoneAssignment(values.post, venuePosts)}
+          disabled={!staffPostRequiresZoneAssignment(values.post, venuePosts)}
+          className={`${dashboardFieldClass} w-full text-sm disabled:opacity-60`}
+        >
+          {staffPostRequiresZoneAssignment(values.post, venuePosts) ? (
+            <>
+              <option value="" disabled>
+                {S.selectSpacePlaceholder}
+              </option>
+              <option value="all">{S.colSpaceAll}</option>
+            </>
+          ) : (
+            <option value="">{S.colSpaceAll}</option>
+          )}
+          {zoneGroups.map((zone) => (
+            <option key={zone.id} value={zone.id}>
+              {zone.label}
+            </option>
+          ))}
+        </select>
+        <div className="mt-1 min-h-[2.5rem]" aria-hidden />
+      </td>
+    );
+
+    const deviceCell = (
+      <td key="device" className={`${cellPad} align-top`}>
+        <div className="flex min-h-[2.25rem] items-center">
+          {values.post ? (
             <ScreenDeviceLabel
               device={deviceLabel.device}
               labelMobile={deviceLabel.labelMobile}
@@ -1020,93 +1061,50 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
               hintMobile={deviceLabel.hintMobile}
               hintTablet={deviceLabel.hintTablet}
             />
-            <p className="text-[10px] leading-snug text-slate-400">
-              {deviceLabel.device === "mobile"
-                ? deviceLabel.hintMobile
-                : deviceLabel.hintTablet}
-            </p>
-          </div>
-        </td>
-        <td className="px-3 py-2 align-top">
-          <select
-            value={values.zone}
-            onChange={(e) => onChange.setZone(e.target.value)}
-            required={staffPostRequiresZoneAssignment(values.post, venuePosts)}
-            disabled={values.role === "pass"}
-            className={`${dashboardFieldClass} w-full text-sm disabled:opacity-60`}
-          >
-            {staffPostRequiresZoneAssignment(values.post, venuePosts) ? (
-              <>
-                <option value="" disabled>
-                  {S.selectSpacePlaceholder}
-                </option>
-                <option value="all">{S.colSpaceAll}</option>
-              </>
-            ) : (
-              <option value="">{S.colSpaceAll}</option>
-            )}
-            {zoneGroups.map((zone) => (
-              <option key={zone.id} value={zone.id}>
-                {zone.label}
-              </option>
-            ))}
-          </select>
-          <div className="mt-1 min-h-[2.5rem]" aria-hidden />
-        </td>
-        <td className="px-3 py-2 align-top">
-          <select
-            value={postOptions.some((option) => option.id === values.post) ? values.post : ""}
-            required
-            disabled={kdsUnavailable}
-            onChange={(e) => {
-              const next = e.target.value;
-              onChange.setPost(next);
-              if (staffPostRequiresZoneAssignment(next, venuePosts)) {
-                if (!values.zone) onChange.setZone("all");
-              } else {
-                onChange.setZone("");
-              }
-            }}
-            className={`${dashboardFieldClass} w-full text-sm disabled:opacity-60`}
-          >
-            {postOptions.length === 0 ? (
-              <option value="">{S.noKdsPosts}</option>
-            ) : (
-              postOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))
-            )}
-          </select>
-          <div className="mt-1 min-h-[2.5rem] text-[10px] leading-snug">
-            {postHint === "kds-unavailable" ? (
-              <p className="text-amber-700">
-                {S.noKdsPosts}{" "}
-                <Link href="/dashboard/settings?tab=posts" className="font-semibold underline">
-                  →
-                </Link>
+          ) : (
+            <span className="text-xs text-slate-400">—</span>
+          )}
+        </div>
+        <div className="mt-1 min-h-[2.5rem] flex flex-col gap-1">
+          {values.post ? (
+            <>
+              <p className="text-[11px] font-medium text-brand-navy">
+                {derivedRole === "invalid"
+                  ? "—"
+                  : staffJobRoleLabel(derivedRole, langCode)}
               </p>
-            ) : postHint === "waiter-missing" ? (
-              <p className="text-amber-700">
-                {S.noWaiterPosts}{" "}
-                <Link href="/dashboard/settings?tab=posts" className="font-semibold underline">
-                  →
-                </Link>
+              <p className="text-[10px] leading-snug text-slate-400">
+                {deviceLabel.device === "mobile"
+                  ? deviceLabel.hintMobile
+                  : deviceLabel.hintTablet}
               </p>
-            ) : postHint === "tablet-scope" ? (
-              <p className="font-medium text-slate-500">{S.messagesScopeTablet}</p>
-            ) : postHint === "all-scope" ? (
-              <p className="text-slate-400">{S.messagesScopeAll}</p>
-            ) : postHint === "waiter-scope" ? (
-              <p className="text-slate-400">{S.messagesScopeWaiter}</p>
-            ) : (
-              <span className="invisible select-none" aria-hidden>
-                —
-              </span>
-            )}
-          </div>
-        </td>
+            </>
+          ) : (
+            <span className="invisible select-none text-[10px]" aria-hidden>
+              —
+            </span>
+          )}
+        </div>
+      </td>
+    );
+
+    if (layout === "list") {
+      return (
+        <>
+          {nameCell}
+          {deviceCell}
+          {spaceCell}
+          {postCell}
+        </>
+      );
+    }
+
+    return (
+      <>
+        {nameCell}
+        {postCell}
+        {spaceCell}
+        {deviceCell}
       </>
     );
   }
@@ -1150,15 +1148,16 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           <p className="text-sm font-semibold text-brand-navy">{S.addTitle}</p>
           {!postsReady ? (
             <p className="text-sm text-slate-600">{S.loading}</p>
-          ) : staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zonesReady ? (
-            <p className="text-sm text-slate-600">
-              {S.noSpaces}{" "}
-              <Link href="/dashboard/settings?tab=spaces" className="font-medium text-brand-blue hover:underline">
-                {S.manageSpacesLink}
-              </Link>
-            </p>
           ) : (
             <>
+              {staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zonesReady ? (
+                <p className="mb-3 text-sm text-amber-800">
+                  {S.noSpaces}{" "}
+                  <Link href="/dashboard/settings?tab=spaces" className="font-medium text-brand-blue hover:underline">
+                    {S.manageSpacesLink}
+                  </Link>
+                </p>
+              ) : null}
               <div className="overflow-x-auto rounded-xl border border-slate-200">
                 <table className="w-full min-w-[42rem] table-fixed text-sm">
                   <colgroup>
@@ -1170,9 +1169,9 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                       <th className="px-3 py-2.5">{S.colName}</th>
-                      <th className="px-3 py-2.5">{S.colRoleRequired}</th>
-                      <th className="px-3 py-2.5">{S.colSpaceRequired}</th>
                       <th className="px-3 py-2.5">{S.colPostRequired}</th>
+                      <th className="px-3 py-2.5">{S.colSpaceRequired}</th>
+                      <th className="px-3 py-2.5">{S.colDevice}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1180,13 +1179,11 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                       {renderAssignmentFields(
                         {
                           name,
-                          role: jobRole,
                           zone: zoneId,
                           post: postAssignment,
                         },
                         {
                           setName,
-                          setRole: setJobRole,
                           setZone: setZoneId,
                           setPost: setPostAssignment,
                         },
@@ -1203,8 +1200,9 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                   disabled={
                     busy !== null ||
                     !name.trim() ||
-                    (staffPostRequiresZoneAssignment(postAssignment, venuePosts) && !zoneId) ||
-                    (jobRole === "pass" && kdsPostOptions.length === 0) ||
+                    (staffPostRequiresZoneAssignment(postAssignment, venuePosts) &&
+                      (!zoneId || !zonesReady)) ||
+                    allPostOptions.length === 0 ||
                     !postAssignment
                   }
                   className={`inline-flex items-center gap-1.5 ${buttonClass("primary", "md")}`}
@@ -1279,16 +1277,15 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                           {renderAssignmentFields(
                             {
                               name: editName,
-                              role: editJobRole,
                               zone: editZoneId,
                               post: editPostAssignment,
                             },
                             {
                               setName: setEditName,
-                              setRole: setEditJobRole,
                               setZone: setEditZoneId,
                               setPost: setEditPostAssignment,
                             },
+                            { layout: "list" },
                           )}
                           <td className="px-4 py-3 align-top text-right" colSpan={2}>
                             <div className="flex flex-wrap justify-end gap-2">
@@ -1307,7 +1304,7 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
                                   !editName.trim() ||
                                   (staffPostRequiresZoneAssignment(editPostAssignment, venuePosts) &&
                                     !editZoneId) ||
-                                  (editJobRole === "pass" && kdsPostOptions.length === 0) ||
+                                  allPostOptions.length === 0 ||
                                   !editPostAssignment
                                 }
                                 onClick={() => void saveEdit(member.id)}

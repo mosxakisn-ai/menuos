@@ -21,6 +21,7 @@ import {
   zoneIdForWaiterLocationView,
   venuePostMatchesZone,
   kdsPassDeliveryStatus,
+  passSignalsEligibleForManualClear,
   type PassStationInput,
   type VenuePostStationInput,
   type VenueSpotType,
@@ -31,6 +32,7 @@ import {
   type KdsPassRecipient,
 } from "@/components/dashboard/kds-send-recipients-dialog";
 import { buttonClass } from "@/components/ui/button";
+import { ConfirmDialogHost } from "@/components/ui/confirm-dialog";
 import { confirmDestructive } from "@/lib/confirm-action";
 import { cn } from "@/lib/utils";
 
@@ -115,6 +117,8 @@ const COPY = {
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     clearWaiting: "Καθάρισμα",
     clearWaitingConfirm: "Να αφαιρεθούν όλες οι ειδοποιήσεις αυτής της ζώνης από την οθόνη;",
+    clearWaitingTooSoon:
+      "Δεν γίνεται καθάρισμα πριν περάσουν 24 ώρες. Οι ειδοποιήσεις κλείνουν αυτόματα μετά από 24 ώρες.",
     quickComments: ["Ξέχασες τον πάγο", "Ξέχασες το ψωμί", "2 πιάτα μαζί", "Επείγον"],
   },
   bar: {
@@ -144,6 +148,8 @@ const COPY = {
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     clearWaiting: "Καθάρισμα",
     clearWaitingConfirm: "Να αφαιρεθούν όλες οι ειδοποιήσεις αυτής της ζώνης από την οθόνη;",
+    clearWaitingTooSoon:
+      "Δεν γίνεται καθάρισμα πριν περάσουν 24 ώρες. Οι ειδοποιήσεις κλείνουν αυτόματα μετά από 24 ώρες.",
     quickComments: ["Χωρίς πάγο", "Με πάγο", "Ξέχασες καλαμάκι", "Επείγον"],
   },
   cold: {
@@ -173,6 +179,8 @@ const COPY = {
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     clearWaiting: "Καθάρισμα",
     clearWaitingConfirm: "Να αφαιρεθούν όλες οι ειδοποιήσεις αυτής της ζώνης από την οθόνη;",
+    clearWaitingTooSoon:
+      "Δεν γίνεται καθάρισμα πριν περάσουν 24 ώρες. Οι ειδοποιήσεις κλείνουν αυτόματα μετά από 24 ώρες.",
     quickComments: ["Με σως χωριστά", "Χωρίς κρεμμύδι", "Ξέχασες πίτα", "Επείγον"],
   },
   dessert: {
@@ -202,6 +210,8 @@ const COPY = {
     cancelConfirm: "Ακύρωση αυτής της ειδοποίησης;",
     clearWaiting: "Καθάρισμα",
     clearWaitingConfirm: "Να αφαιρεθούν όλες οι ειδοποιήσεις αυτής της ζώνης από την οθόνη;",
+    clearWaitingTooSoon:
+      "Δεν γίνεται καθάρισμα πριν περάσουν 24 ώρες. Οι ειδοποιήσεις κλείνουν αυτόματα μετά από 24 ώρες.",
     quickComments: ["Με παγωτό", "Χωρίς ζάχαρη", "Ξέχασες κουταλάκι", "Επείγον"],
   },
 };
@@ -1096,6 +1106,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [clearingWaiting, setClearingWaiting] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
+  const [headerFlash, setHeaderFlash] = useState<string | null>(null);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [sendDialogLoading, setSendDialogLoading] = useState(false);
   const [sendRecipients, setSendRecipients] = useState<KdsPassRecipient[]>([]);
@@ -1304,6 +1315,11 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
 
   async function clearWaitingSignals() {
     if (!ctx || zoneFilteredSignals.length === 0) return;
+    if (!passSignalsEligibleForManualClear(zoneFilteredSignals)) {
+      setHeaderFlash(C.clearWaitingTooSoon);
+      setTimeout(() => setHeaderFlash(null), 5000);
+      return;
+    }
     if (!(await confirmDestructive(C.clearWaitingConfirm))) return;
     setClearingWaiting(true);
     try {
@@ -1441,7 +1457,9 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
         : C.waitingTitle;
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-slate-900 text-white">
+    <>
+      <ConfirmDialogHost />
+      <div className="flex h-[100dvh] flex-col overflow-hidden bg-slate-900 text-white">
       <header className="flex shrink-0 items-stretch gap-2 border-b border-white/10 bg-slate-950/80 sm:gap-3">
         <div className="flex w-[38%] max-w-[12.5rem] shrink-0 flex-col justify-center border-r border-white/10 px-3 py-2 sm:max-w-[13.5rem] sm:px-3.5 sm:py-2.5">
           <div aria-label="MenuOS">
@@ -1475,6 +1493,11 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               </button>
             ) : null}
           </div>
+          {headerFlash ? (
+            <p className="mt-1.5 rounded-md border border-amber-400/30 bg-amber-950/50 px-2 py-1.5 text-[10px] leading-snug text-amber-100 sm:text-xs">
+              {headerFlash}
+            </p>
+          ) : null}
           {zoneFilteredSignals.length > 0 ? (
             <WaitingSignalsStrip
               signals={zoneFilteredSignals}
@@ -1728,5 +1751,6 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
         onConfirm={(selectedIds) => void confirmSend(selectedIds)}
       />
     </div>
+    </>
   );
 }

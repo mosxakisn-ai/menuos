@@ -60,3 +60,23 @@ export function passStationDbToInput(station: string): PassStationInput {
 }
 
 export const PASS_SIGNAL_ACTIVE_STATUSES = ["READY", "PICKED_UP"] as const;
+
+/** READY / PICKED_UP signals auto-close after this many hours; manual KDS clear uses the same window. */
+export const PASS_SIGNAL_ACTIVE_MAX_HOURS = 24;
+
+export function passSignalManualClearCutoff(
+  now = Date.now(),
+  maxHours = PASS_SIGNAL_ACTIVE_MAX_HOURS,
+): number {
+  return now - maxHours * 60 * 60 * 1000;
+}
+
+export function passSignalsEligibleForManualClear(
+  signals: ReadonlyArray<{ readyAt: Date | string }>,
+  now = Date.now(),
+  maxHours = PASS_SIGNAL_ACTIVE_MAX_HOURS,
+): boolean {
+  if (signals.length === 0) return false;
+  const cutoff = passSignalManualClearCutoff(now, maxHours);
+  return signals.every((signal) => new Date(signal.readyAt).getTime() <= cutoff);
+}
