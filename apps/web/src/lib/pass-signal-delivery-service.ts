@@ -91,9 +91,11 @@ type PassSignalPushRow = Pick<
   | "sunbedNumber"
   | "zoneId"
   | "message"
-  | "repushCount"
-  | "lastRepushAt"
-> & { notifyStaffMemberIds?: string[] };
+> & {
+  repushCount?: number;
+  lastRepushAt?: PassSignal["lastRepushAt"];
+  notifyStaffMemberIds?: string[];
+};
 
 function resolveNotifyTargets(
   notifyStaffMemberIds: string[] | null | undefined,
