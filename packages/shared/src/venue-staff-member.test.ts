@@ -21,6 +21,7 @@ import {
   staffJobRoleForAssignment,
   staffPostOptionsForJobRole,
   staffPostPickerOptions,
+  staffPostPickerOptionGroups,
   staffPostPickerLabel,
   staffPrimaryAssignment,
   staffScreenDeviceForAssignment,
@@ -348,6 +349,22 @@ describe("staffJobRole", () => {
       "bar",
     ]);
     expect(defaultStaffPostAssignment(posts)).toBe("all");
+  });
+
+  it("groups picker options with bold title rows for all choices", () => {
+    const groups = staffPostPickerOptionGroups(posts);
+    expect(groups.map((g) => g.id)).toEqual(["waiter", "pass"]);
+    expect(groups[0]?.options[0]).toEqual({
+      id: "all",
+      label: "Όλα (σερβιτόρος)",
+      emphasis: "title",
+    });
+    expect(groups[1]?.options[0]).toEqual({
+      id: "pass-all",
+      label: "Όλα πόστα πάσου",
+      emphasis: "title",
+    });
+    expect(groups[0]?.options[1]?.emphasis).toBeUndefined();
   });
 
   it("defaults to first tablet post when venue has no waiter posts", () => {

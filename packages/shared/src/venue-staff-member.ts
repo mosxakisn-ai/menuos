@@ -481,47 +481,89 @@ export function staffScreenDeviceForJobRole(role: StaffJobRole): StaffScreenDevi
   return role === "waiter" ? "mobile" : "kds";
 }
 
+export type StaffPostPickerOption = {
+  id: string;
+  label: string;
+  emphasis?: "title";
+};
+
+export type StaffPostPickerOptionGroup = {
+  id: "waiter" | "pass" | "support";
+  label: string;
+  options: StaffPostPickerOption[];
+};
+
+export function isStaffPostPickerTitleOption(id: string): boolean {
+  return id === "all" || id === "pass-all";
+}
+
+/** Grouped post picker — title options (Όλα…) are marked for bold UI. */
+export function staffPostPickerOptionGroups(
+  posts: VenuePost[],
+  lang: "GR" | "EN" = "GR",
+): StaffPostPickerOptionGroup[] {
+  const enabled = posts.filter((post) => post.enabled);
+  const passPosts = enabled.filter((post) => isVenuePassPostStation(post.station));
+  const supportPosts = enabled.filter((post) => isVenueSupportPostStation(post.station));
+  const groups: StaffPostPickerOptionGroup[] = [];
+
+  const waiterPosts = enabled.filter((post) => post.station === "services");
+  if (waiterPosts.length > 0) {
+    groups.push({
+      id: "waiter",
+      label: lang === "EN" ? "Waiter" : "Σερβιτόρος",
+      options: [
+        {
+          id: "all",
+          label: staffPostPickerLabel("all", lang, posts),
+          emphasis: "title",
+        },
+        ...waiterPosts.map((post) => ({
+          id: post.id,
+          label: post.label.trim(),
+        })),
+      ],
+    });
+  }
+
+  if (passPosts.length > 0) {
+    groups.push({
+      id: "pass",
+      label: lang === "EN" ? "Pass — kitchen & bar" : "Πάσος — κουζίνα & μπαρ",
+      options: [
+        {
+          id: "pass-all",
+          label: staffPostPickerLabel("pass-all", lang, posts),
+          emphasis: "title",
+        },
+        ...passPosts.map((post) => ({
+          id: post.id,
+          label: staffPostPickerLabel(post.id, lang, posts),
+        })),
+      ],
+    });
+  }
+
+  if (supportPosts.length > 0) {
+    groups.push({
+      id: "support",
+      label: lang === "EN" ? "Other tablets" : "Άλλα tablet",
+      options: supportPosts.map((post) => ({
+        id: post.id,
+        label: staffPostPickerLabel(post.id, lang, posts),
+      })),
+    });
+  }
+
+  return groups;
+}
+
 /** All assignable posts in one picker — device/role derived from the selected post. */
 export function staffPostPickerOptions(
   posts: VenuePost[],
   lang: "GR" | "EN" = "GR",
 ): Array<{ id: string; label: string }> {
-  const enabled = posts.filter((post) => post.enabled);
-  const passPosts = enabled.filter((post) => isVenuePassPostStation(post.station));
-  const options: Array<{ id: string; label: string }> = [];
-
-  if (enabled.some((post) => post.station === "services")) {
-    options.push({ id: "all", label: staffPostPickerLabel("all", lang, posts) });
-  }
-
-  for (const post of enabled) {
-    if (post.station === "services") {
-      options.push({ id: post.id, label: post.label.trim() });
-    }
-  }
-
-  if (passPosts.length > 0) {
-    options.push({ id: "pass-all", label: staffPostPickerLabel("pass-all", lang, posts) });
-    for (const post of enabled) {
-      if (isVenuePassPostStation(post.station)) {
-        options.push({
-          id: post.id,
-          label: staffPostPickerLabel(post.id, lang, posts),
-        });
-      }
-    }
-  }
-
-  for (const post of enabled) {
-    if (isVenueSupportPostStation(post.station)) {
-      options.push({
-        id: post.id,
-        label: staffPostPickerLabel(post.id, lang, posts),
-      });
-    }
-  }
-
-  return options;
+  return staffPostPickerOptionGroups(posts, lang).flatMap((group) => group.options);
 }
 
 export function defaultStaffPostAssignment(posts: VenuePost[]): string {

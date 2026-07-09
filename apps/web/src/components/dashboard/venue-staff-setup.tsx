@@ -31,6 +31,7 @@ import {
   staffJobRoleForAssignment,
   staffJobRoleLabel,
   staffPostPickerOptions,
+  staffPostPickerOptionGroups,
   staffPostRequiresZoneAssignment,
   staffPostStationSubtitle,
   staffPrimaryAssignment,
@@ -712,6 +713,10 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     () => staffPostPickerOptions(assignablePosts, langCode),
     [assignablePosts, langCode],
   );
+  const allPostOptionGroups = useMemo(
+    () => staffPostPickerOptionGroups(assignablePosts, langCode),
+    [assignablePosts, langCode],
+  );
 
   useEffect(() => {
     if (allPostOptions.length === 0) return;
@@ -940,11 +945,13 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
     options: {
       layout?: "create" | "list";
       postOptions?: Array<{ id: string; label: string }>;
+      postOptionGroups?: ReturnType<typeof staffPostPickerOptionGroups>;
     } = {},
   ) {
     const layout = options.layout ?? "create";
     const cellPad = layout === "list" ? "px-4 py-3" : "px-3 py-2";
     const postOptions = options.postOptions ?? allPostOptions;
+    const postOptionGroups = options.postOptionGroups ?? allPostOptionGroups;
     const chipsScope = messageScopeForPost(values.post);
     const derivedRole = staffJobRoleForAssignment(values.post, venuePosts);
     const noPosts = postOptions.length === 0;
@@ -991,10 +998,23 @@ export function VenueStaffSetup({ venues }: { venues: Venue[] }) {
           {postOptions.length === 0 ? (
             <option value="">{S.noPosts}</option>
           ) : (
-            postOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
+            postOptionGroups.map((group) => (
+              <optgroup key={group.id} label={group.label}>
+                {group.options.map((option) => (
+                  <option
+                    key={option.id}
+                    value={option.id}
+                    className={
+                      option.emphasis === "title"
+                        ? "font-bold text-brand-navy"
+                        : "font-normal"
+                    }
+                    style={option.emphasis === "title" ? { fontWeight: 700 } : undefined}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </optgroup>
             ))
           )}
         </select>

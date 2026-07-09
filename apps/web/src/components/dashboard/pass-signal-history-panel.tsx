@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Clock } from "lucide-react";
 import {
   formatVenueSpotLabelForLang,
@@ -11,6 +11,7 @@ import {
 } from "@menuos/shared";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { athensPeriodStartYmd, athensTodayYmd } from "@/lib/athens-day";
 
 type HistorySignal = {
   id: string;
@@ -51,6 +52,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [days, setDays] = useState(7);
+  const [day, setDay] = useState("");
   const [spotId, setSpotId] = useState("");
   const [station, setStation] = useState("");
   const [staffMemberId, setStaffMemberId] = useState("");
@@ -75,6 +77,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     setSpots([]);
     setStaffMembers([]);
     setLoadError(false);
+    setDay("");
   }, [venueId]);
 
   useEffect(() => {
@@ -114,6 +117,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
       if (spotId) params.set("spotId", spotId);
       if (station) params.set("station", station);
       if (staffMemberId) params.set("staffMemberId", staffMemberId);
+      if (day) params.set("date", day);
       const res = await fetch(`/api/pass-signals/history?${params}`);
       const data = await res.json();
       if (generation !== loadGenerationRef.current) return;
@@ -130,11 +134,19 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     } finally {
       if (generation === loadGenerationRef.current) setLoading(false);
     }
-  }, [venueId, days, spotId, station, staffMemberId]);
+  }, [venueId, days, day, spotId, station, staffMemberId]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const todayYmd = useMemo(() => athensTodayYmd(), []);
+  const minDayYmd = useMemo(() => athensPeriodStartYmd(days), [days]);
+
+  useEffect(() => {
+    if (!day) return;
+    if (day > todayYmd || day < minDayYmd) setDay("");
+  }, [day, days, todayYmd, minDayYmd]);
 
   if (venues.length === 0) return null;
 
@@ -168,13 +180,39 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
           <span className={dashboardLabelClass}>{H.daysLabel}</span>
           <select
             value={days}
-            onChange={(e) => setDays(Number(e.target.value))}
+            onChange={(e) => {
+              setDays(Number(e.target.value));
+              setDay("");
+            }}
             className={dashboardFieldClass}
           >
             <option value={7}>{H.days7}</option>
             <option value={30}>{H.days30}</option>
             <option value={90}>{H.days90}</option>
           </select>
+        </label>
+        <label className="block min-w-[160px]">
+          <span className={dashboardLabelClass}>{H.filterDay}</span>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={day}
+              min={minDayYmd}
+              max={todayYmd}
+              onChange={(e) => setDay(e.target.value)}
+              className={dashboardFieldClass}
+            />
+            {day ? (
+              <button
+                type="button"
+                onClick={() => setDay("")}
+                className="shrink-0 text-xs font-medium text-brand-blue hover:underline"
+              >
+                {H.filterDayClear}
+              </button>
+            ) : null}
+          </div>
+          <p className="mt-1 text-[10px] leading-snug text-slate-500">{H.filterDayHint}</p>
         </label>
         <label className="block min-w-[160px]">
           <span className={dashboardLabelClass}>{H.filterSpot}</span>

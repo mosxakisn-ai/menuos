@@ -3,6 +3,7 @@ import { prisma } from "@menuos/db";
 import type { Prisma } from "@menuos/db";
 import { passStationInputToDb, spotToQueryParams, type PassStationInput } from "@menuos/shared";
 import { requireLive360Plan } from "@/lib/api-auth";
+import { athensDayBounds, isAthensDateInPeriod } from "@/lib/athens-day";
 import { getVenueForOrganization } from "@/lib/venue-access";
 
 const MAX_DAYS = 90;
@@ -38,10 +39,24 @@ export async function GET(request: Request) {
 
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
+  const dateParam = searchParams.get("date")?.trim();
+  let deliveredAtFilter: Prisma.DateTimeFilter = { gte: since };
+  if (dateParam) {
+    try {
+      if (!isAthensDateInPeriod(dateParam, days)) {
+        return NextResponse.json({ signals: [], days, limit, date: dateParam });
+      }
+      const bounds = athensDayBounds(dateParam);
+      deliveredAtFilter = { gte: bounds.gte, lt: bounds.lt };
+    } catch {
+      return NextResponse.json({ error: "Μη έγκυρη ημερομηνία." }, { status: 400 });
+    }
+  }
+
   const where: Prisma.PassSignalWhereInput = {
     venueId,
     status: "DELIVERED",
-    deliveredAt: { gte: since },
+    deliveredAt: deliveredAtFilter,
   };
 
   const stationParam = searchParams.get("station")?.trim();
@@ -100,6 +115,7 @@ export async function GET(request: Request) {
       })),
       days,
       limit,
+      ...(dateParam ? { date: dateParam } : {}),
     });
   } catch (err) {
     console.error("[menuos] pass-signals history GET failed", err);
