@@ -1,4 +1,4 @@
-// menuos-sw-v14
+// menuos-sw-v15
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
@@ -211,7 +211,8 @@ async function playBeepWavFallback(kind) {
 
 async function playBeepInSw(kind) {
   if (await playBeepWavFallback(kind)) return true;
-  return playBeepWebAudio(kind);
+  await playBeepWebAudio(kind);
+  return false;
 }
 
 async function playAnnouncementInSw(announcement) {
@@ -257,6 +258,9 @@ function postStaffAlertToClient(client, kind, data) {
       type: "MENUOS_PASS_ALERT",
       passId: data.passId,
       zoneId: data.zoneId,
+      tableNumber: data.tableNumber,
+      roomNumber: data.roomNumber,
+      sunbedNumber: data.sunbedNumber,
       announcement: data.announcement,
       voiceEnabled: Boolean(data.voiceEnabled),
     });
@@ -275,12 +279,13 @@ async function handleStaffPushAlert(data) {
 
   const waiterClients = await findWaiterClients();
   const visibleWaiterClients = waiterClients.filter(isVisibleWaiterClient);
+  const focusedWaiterClients = visibleWaiterClients.filter((client) => client.focused);
 
   for (const client of visibleWaiterClients) {
     postStaffAlertToClient(client, kind, data);
   }
 
-  if (visibleWaiterClients.length > 0) {
+  if (focusedWaiterClients.length > 0) {
     return { source: "panel", swBeepPlayed: false };
   }
 

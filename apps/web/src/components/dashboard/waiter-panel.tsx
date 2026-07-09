@@ -170,6 +170,20 @@ export function WaiterPanel({
     return signalZoneId.trim() === alertZoneId;
   }
 
+  function resolvePassSignalZone(
+    signal: Pick<PassSignal, "zoneId" | "tableNumber" | "roomNumber" | "sunbedNumber">,
+  ): string | null | undefined {
+    const spotInputs = spotsRef.current.map((spot) => ({
+      type: spot.type,
+      label: spot.label,
+    }));
+    const announcementGroups = applyZoneLabelOverrides(
+      groupVenueSpotsByZone(spotInputs),
+      opsConfigRef.current?.zoneLabels,
+    );
+    return signal.zoneId?.trim() || zoneIdForWaiterLocationView(signal, announcementGroups);
+  }
+
   const passesEligibleForSeenAck = useCallback((signals: PassSignal[]): PassSignal[] => {
     if (!passBaselineSetRef.current) return [];
     const spotInputs = spotsRef.current.map((spot) => ({
@@ -212,6 +226,8 @@ export function WaiterPanel({
     },
     [staffKey, staffViaCookie, staffMember],
   );
+  const sendPassSeenAcksRef = useRef(sendPassSeenAcks);
+  sendPassSeenAcksRef.current = sendPassSeenAcks;
 
   useEffect(() => {
     function onServiceWorkerMessage(event: MessageEvent) {
@@ -221,6 +237,9 @@ export function WaiterPanel({
         voiceEnabled?: boolean;
         passId?: string;
         zoneId?: string;
+        tableNumber?: string;
+        roomNumber?: string;
+        sunbedNumber?: string;
         callId?: string;
       } | null;
 
@@ -234,10 +253,20 @@ export function WaiterPanel({
 
       if (data?.type !== "MENUOS_PASS_ALERT") return;
       if (!data.passId) return;
-      if (!passAlertAllowedForZone(data.zoneId)) return;
+      const pushPass: PassSignal = {
+        id: data.passId,
+        station: "",
+        status: "READY",
+        zoneId: data.zoneId ?? null,
+        tableNumber: data.tableNumber ?? null,
+        roomNumber: data.roomNumber ?? null,
+        sunbedNumber: data.sunbedNumber ?? null,
+      };
+      if (!passAlertAllowedForZone(resolvePassSignalZone(pushPass))) return;
       if (lastPassAlertIdRef.current === data.passId) return;
       lastPassAlertIdRef.current = data.passId;
       alertPassSignal();
+      sendPassSeenAcksRef.current([pushPass]);
       if (!data.voiceEnabled) return;
       const text = data.announcement?.trim();
       if (!text || !notificationSettingsRef.current.voiceMessagesEnabled) return;
@@ -354,7 +383,7 @@ export function WaiterPanel({
               return signalZone === alertZoneId;
             })
           : freshPasses;
-        passesToMarkSeen = alertablePasses;
+        passesToMarkSeen = passesEligibleForSeenAck(newSignals);
         const hasNewPass = alertablePasses.length > 0;
         if (hasNewPass && document.visibilityState === "visible") {
           const latest = [...alertablePasses].sort((a, b) => {

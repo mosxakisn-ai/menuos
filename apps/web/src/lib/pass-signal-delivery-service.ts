@@ -128,6 +128,9 @@ async function dispatchPassSignalPush(
     announcement: announcement?.trim() || undefined,
     zoneId: activeZoneId ?? undefined,
     passId: signal.id,
+    tableNumber: signal.tableNumber ?? undefined,
+    roomNumber: signal.roomNumber ?? undefined,
+    sunbedNumber: signal.sunbedNumber ?? undefined,
   });
 
   const notifyStaffMemberIds =

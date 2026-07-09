@@ -890,6 +890,149 @@ function deliveryBorderClass(tone: ReturnType<typeof kdsPassDeliveryStatus>["ton
   }
 }
 
+const WAITING_SIGNAL_SCROLL_PX = 180;
+
+function WaitingSignalsStrip({
+  signals,
+  zoneGroups,
+  activeZoneId,
+  activeZone,
+  table,
+  cancellingId,
+  cancelLabel,
+  onSelectSignal,
+  onCancelSignal,
+}: {
+  signals: ActiveSignal[];
+  zoneGroups: ReturnType<typeof groupVenueSpotsByZone>;
+  activeZoneId: string | null | undefined;
+  activeZone: ReturnType<typeof groupVenueSpotsByZone>[number] | undefined;
+  table: ScreenSpot | null;
+  cancellingId: string | null;
+  cancelLabel: string;
+  onSelectSignal: (signal: ActiveSignal) => void;
+  onCancelSignal: (signalId: string) => void;
+}) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [canScrollBack, setCanScrollBack] = useState(false);
+  const [canScrollForward, setCanScrollForward] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = listRef.current;
+    if (!el) {
+      setCanScrollBack(false);
+      setCanScrollForward(false);
+      setHasOverflow(false);
+      return;
+    }
+    const overflow = el.scrollWidth > el.clientWidth + 4;
+    setHasOverflow(overflow);
+    setCanScrollBack(el.scrollLeft > 4);
+    setCanScrollForward(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    const el = listRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => updateScrollState());
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [signals, updateScrollState]);
+
+  function scrollStrip(direction: "back" | "forward") {
+    const el = listRef.current;
+    if (!el) return;
+    const delta = direction === "back" ? -WAITING_SIGNAL_SCROLL_PX : WAITING_SIGNAL_SCROLL_PX;
+    el.scrollBy({ left: delta, behavior: "smooth" });
+    window.setTimeout(updateScrollState, 320);
+  }
+
+  const showArrows = hasOverflow || signals.length > 5;
+
+  return (
+    <div className="mt-1 flex min-w-0 items-stretch gap-1">
+      {showArrows ? (
+        <button
+          type="button"
+          aria-label="Προηγούμενες ειδοποιήσεις"
+          disabled={!canScrollBack}
+          onClick={() => scrollStrip("back")}
+          className={cn(KDS_SCROLL_ARROW_BUTTON_CLASS, "h-8 w-7 shrink-0 self-center")}
+        >
+          <ChevronUp className="h-4 w-4 -rotate-90" />
+        </button>
+      ) : null}
+      <div
+        ref={listRef}
+        onScroll={updateScrollState}
+        className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {signals.map((signal) => {
+          const spot = signalToSpot(signal);
+          const location = signalLocationLabel(signal, zoneGroups, activeZoneId, activeZone);
+          const delivery = kdsPassDeliveryStatus(signal);
+          const canCancel = signal.status === "READY" || signal.status === "PICKED_UP";
+          return (
+            <div
+              key={signal.id}
+              className={cn(
+                "relative shrink-0 rounded-lg border",
+                spot && table && spotSelected(table, spot)
+                  ? "border-cyan-400 bg-cyan-500/15"
+                  : deliveryBorderClass(delivery.tone),
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => onSelectSignal(signal)}
+                className="rounded-lg px-2.5 py-1.5 pr-7 text-left transition active:scale-[0.98]"
+              >
+                <p className="text-xs font-bold text-white">{location}</p>
+                {signal.message ? (
+                  <p className="mt-0.5 max-w-[8rem] truncate text-[10px] text-slate-300">{signal.message}</p>
+                ) : null}
+                <p
+                  className={cn(
+                    "mt-0.5 flex items-center gap-1 text-[9px] font-medium",
+                    deliveryToneClass(delivery.tone),
+                  )}
+                >
+                  <Clock className="h-2.5 w-2.5" />
+                  {delivery.label} · {minutesAgo(signal.readyAt)}
+                </p>
+              </button>
+              {canCancel ? (
+                <button
+                  type="button"
+                  title={cancelLabel}
+                  disabled={cancellingId === signal.id}
+                  onClick={() => onCancelSignal(signal.id)}
+                  className="absolute right-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-md bg-red-500/20 text-red-200 hover:bg-red-500/35 disabled:opacity-50"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+      {showArrows ? (
+        <button
+          type="button"
+          aria-label="Επόμενες ειδοποιήσεις"
+          disabled={!canScrollForward}
+          onClick={() => scrollStrip("forward")}
+          className={cn(KDS_SCROLL_ARROW_BUTTON_CLASS, "h-8 w-7 shrink-0 self-center")}
+        >
+          <ChevronDown className="h-4 w-4 -rotate-90" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function playSendChime() {
   try {
     const ctx = new AudioContext();
@@ -1330,56 +1473,17 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
             ) : null}
           </div>
           {zoneFilteredSignals.length > 0 ? (
-            <div className="mt-1 flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {zoneFilteredSignals.map((signal) => {
-                const spot = signalToSpot(signal);
-                const location = signalLocationLabel(signal, zoneGroups, activeZoneId, activeZone);
-                const delivery = kdsPassDeliveryStatus(signal);
-                const canCancel = signal.status === "READY" || signal.status === "PICKED_UP";
-                return (
-                  <div
-                    key={signal.id}
-                    className={cn(
-                      "relative shrink-0 rounded-lg border",
-                      spot && table && spotSelected(table, spot)
-                        ? "border-cyan-400 bg-cyan-500/15"
-                        : deliveryBorderClass(delivery.tone),
-                    )}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => selectFromSignal(signal)}
-                      className="rounded-lg px-2.5 py-1.5 pr-7 text-left transition active:scale-[0.98]"
-                    >
-                      <p className="text-xs font-bold text-white">{location}</p>
-                      {signal.message ? (
-                        <p className="mt-0.5 max-w-[8rem] truncate text-[10px] text-slate-300">{signal.message}</p>
-                      ) : null}
-                      <p
-                        className={cn(
-                          "mt-0.5 flex items-center gap-1 text-[9px] font-medium",
-                          deliveryToneClass(delivery.tone),
-                        )}
-                      >
-                        <Clock className="h-2.5 w-2.5" />
-                        {delivery.label} · {minutesAgo(signal.readyAt)}
-                      </p>
-                    </button>
-                    {canCancel ? (
-                      <button
-                        type="button"
-                        title={C.cancelSignal}
-                        disabled={cancellingId === signal.id}
-                        onClick={() => void cancelSignal(signal.id)}
-                        className="absolute right-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-md bg-red-500/20 text-red-200 hover:bg-red-500/35 disabled:opacity-50"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
+            <WaitingSignalsStrip
+              signals={zoneFilteredSignals}
+              zoneGroups={zoneGroups}
+              activeZoneId={activeZoneId}
+              activeZone={activeZone}
+              table={table}
+              cancellingId={cancellingId}
+              cancelLabel={C.cancelSignal}
+              onSelectSignal={selectFromSignal}
+              onCancelSignal={(signalId) => void cancelSignal(signalId)}
+            />
           ) : ctx ? (
             <p className="mt-0.5 text-[10px] text-slate-600">Καμία ενεργή ειδοποίηση σε αυτόν τον χώρο.</p>
           ) : null}

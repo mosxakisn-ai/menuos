@@ -127,6 +127,7 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
     try {
       const gotWakeLock = await acquireWakeLock();
       if (!gotWakeLock) {
+        userWantsLockRef.current = false;
         setLocked(false);
         return;
       }
