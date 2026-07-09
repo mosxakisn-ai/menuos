@@ -1,5 +1,5 @@
 import type { VenueSpotLang, VenueSpotType } from "./venue-spots";
-import { formatWaiterCallLocationForLang, normalizeWaiterCallLocation } from "./venue-spots";
+import { formatWaiterCallLocationForLang, normalizeWaiterCallLocation, spotToQueryParams } from "./venue-spots";
 
 export type ZoneSpotInput = { type: VenueSpotType; label: string };
 
@@ -359,4 +359,40 @@ export function filterWaiterLocationsForZoneView<T extends WaiterLocationLike & 
 ): T[] {
   if (zoneId === "all") return items;
   return filterWaiterLocationsByZone(items, zoneId, groups);
+}
+
+export type PassSignalLocationMatch = {
+  tableNumber: string | null;
+  roomNumber: string | null;
+  sunbedNumber: string | null;
+};
+
+/** Location variants stored on PassSignal for spots in one zone (history SQL filter). */
+export function passSignalLocationMatchesForZone(group: SpotZoneGroup): PassSignalLocationMatch[] {
+  const matches: PassSignalLocationMatch[] = [];
+  const seen = new Set<string>();
+
+  const add = (table: string | null, room: string | null, sunbed: string | null) => {
+    const key = `${table ?? ""}|${room ?? ""}|${sunbed ?? ""}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    matches.push({ tableNumber: table, roomNumber: room, sunbedNumber: sunbed });
+  };
+
+  for (const entry of group.spots) {
+    const loc = spotToQueryParams(entry.spot.type, entry.spot.label);
+    add(loc.table ?? null, loc.room ?? null, loc.sunbed ?? null);
+
+    if (
+      entry.spot.type === "TABLE" &&
+      group.id !== MAIN_ZONE_ID &&
+      !parseTableSpotLabel(entry.spot.label) &&
+      /^[0-9]+$/.test(entry.displayLabel)
+    ) {
+      const zoneLabel = group.label.trim();
+      if (zoneLabel) add(`${zoneLabel}-${entry.displayLabel}`, null, null);
+    }
+  }
+
+  return matches;
 }

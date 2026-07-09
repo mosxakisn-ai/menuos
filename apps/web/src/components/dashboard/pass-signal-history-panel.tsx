@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Clock } from "lucide-react";
 import {
-  formatVenueSpotLabelForLang,
-  formatWaiterCallLocationForLang,
+  applyZoneLabelOverrides,
+  formatWaiterCallLocationWithZone,
+  groupVenueSpotsByZone,
   passStationDbToInput,
-  type VenueSpotType,
 } from "@menuos/shared";
 import { dashboardCardClass, dashboardFieldClass, dashboardLabelClass } from "@/components/dashboard/dashboard-page";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { useVenueOperationsConfig } from "@/components/dashboard/venue-operations-config-panel";
+import { useVenueSpots } from "@/components/dashboard/use-venue-spots";
 import { athensPeriodStartYmd, athensTodayYmd } from "@/lib/athens-day";
 
 type HistorySignal = {
@@ -20,15 +22,17 @@ type HistorySignal = {
   tableNumber: string | null;
   roomNumber: string | null;
   sunbedNumber: string | null;
+  zoneId?: string | null;
   message: string | null;
   readyAt: string;
   deliveredAt: string | null;
   deliveredByStaffMemberName?: string | null;
 };
 
-type VenueSpot = { id: string; type: VenueSpotType; label: string };
 type StaffMember = { id: string; name: string };
 type PassStationScreen = { id: string; label: string; station?: string };
+
+type HistoryLimit = 50 | 100 | "all";
 
 function formatHistoryPostLabel(
   signal: HistorySignal,
@@ -67,17 +71,31 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
   const W = d.waiter;
   const [venueId, setVenueId] = useState(venues[0]?.id ?? "");
   const [signals, setSignals] = useState<HistorySignal[]>([]);
-  const [spots, setSpots] = useState<VenueSpot[]>([]);
   const [stationScreens, setStationScreens] = useState<PassStationScreen[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [days, setDays] = useState(7);
   const [day, setDay] = useState("");
-  const [spotId, setSpotId] = useState("");
+  const [zoneId, setZoneId] = useState("");
   const [stationScreenId, setStationScreenId] = useState("");
   const [staffMemberId, setStaffMemberId] = useState("");
+  const [recordLimit, setRecordLimit] = useState<HistoryLimit>(50);
+  const [truncated, setTruncated] = useState(false);
   const loadGenerationRef = useRef(0);
+
+  const { spots } = useVenueSpots(venueId);
+  const { config: opsConfig } = useVenueOperationsConfig(venueId);
+
+  const zoneGroups = useMemo(() => {
+    const groups = groupVenueSpotsByZone(spots);
+    return applyZoneLabelOverrides(groups, opsConfig?.zoneLabels);
+  }, [spots, opsConfig?.zoneLabels]);
+
+  const activeZoneGroups = useMemo(
+    () => zoneGroups.filter((zone) => zone.spots.length > 0),
+    [zoneGroups],
+  );
 
   useEffect(() => {
     if (venues.length === 0) {
@@ -86,7 +104,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     }
     if (!venues.some((v) => v.id === venueId)) {
       setVenueId(venues[0]!.id);
-      setSpotId("");
+      setZoneId("");
       setStationScreenId("");
       setStaffMemberId("");
     }
@@ -95,37 +113,32 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
   useEffect(() => {
     loadGenerationRef.current += 1;
     setSignals([]);
-    setSpots([]);
     setStationScreens([]);
     setStaffMembers([]);
     setLoadError(false);
     setDay("");
-    setSpotId("");
+    setZoneId("");
     setStationScreenId("");
     setStaffMemberId("");
   }, [venueId]);
 
   useEffect(() => {
     if (!venueId) {
-      setSpots([]);
       setStationScreens([]);
       setStaffMembers([]);
       return;
     }
     let cancelled = false;
     void (async () => {
-      const [spotsRes, screensRes, staffRes] = await Promise.all([
-        fetch(`/api/venues/${venueId}/spots`),
+      const [screensRes, staffRes] = await Promise.all([
         fetch(`/api/venues/${venueId}/station-screens`),
         fetch(`/api/venues/${venueId}/staff-members`),
       ]);
       if (cancelled) return;
-      const spotsData = spotsRes.ok ? ((await spotsRes.json()) as { spots?: VenueSpot[] }) : {};
       const screensData = screensRes.ok
         ? ((await screensRes.json()) as { screens?: PassStationScreen[] })
         : {};
       const staffData = staffRes.ok ? ((await staffRes.json()) as { members?: StaffMember[] }) : {};
-      setSpots(spotsData.spots ?? []);
       setStationScreens(screensData.screens ?? []);
       setStaffMembers(staffData.members ?? []);
     })();
@@ -141,6 +154,20 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     }
   }, [stationScreenId, stationScreens]);
 
+  useEffect(() => {
+    if (!zoneId) return;
+    if (!activeZoneGroups.some((zone) => zone.id === zoneId)) {
+      setZoneId("");
+    }
+  }, [zoneId, activeZoneGroups]);
+
+  useEffect(() => {
+    if (!staffMemberId) return;
+    if (!staffMembers.some((member) => member.id === staffMemberId)) {
+      setStaffMemberId("");
+    }
+  }, [staffMemberId, staffMembers]);
+
   const load = useCallback(async () => {
     if (!venueId) {
       setSignals([]);
@@ -151,8 +178,12 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
     setLoading(true);
     setLoadError(false);
     try {
-      const params = new URLSearchParams({ venueId, days: String(days) });
-      if (spotId) params.set("spotId", spotId);
+      const params = new URLSearchParams({
+        venueId,
+        days: String(days),
+        limit: recordLimit === "all" ? "all" : String(recordLimit),
+      });
+      if (zoneId) params.set("zoneId", zoneId);
       if (stationScreenId) params.set("stationScreenId", stationScreenId);
       if (staffMemberId) params.set("staffMemberId", staffMemberId);
       if (day) params.set("date", day);
@@ -161,18 +192,21 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
       if (generation !== loadGenerationRef.current) return;
       if (!res.ok) {
         setSignals([]);
+        setTruncated(false);
         setLoadError(true);
         return;
       }
       setSignals(data.signals ?? []);
+      setTruncated(Boolean(data.truncated));
     } catch {
       if (generation !== loadGenerationRef.current) return;
       setSignals([]);
+      setTruncated(false);
       setLoadError(true);
     } finally {
       if (generation === loadGenerationRef.current) setLoading(false);
     }
-  }, [venueId, days, day, spotId, stationScreenId, staffMemberId]);
+  }, [venueId, days, day, zoneId, stationScreenId, staffMemberId, recordLimit]);
 
   useEffect(() => {
     void load();
@@ -200,7 +234,7 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
               value={venueId}
               onChange={(e) => {
                 setVenueId(e.target.value);
-                setSpotId("");
+                setZoneId("");
                 setStationScreenId("");
                 setStaffMemberId("");
               }}
@@ -255,14 +289,15 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
         <label className="block min-w-0">
           <span className={dashboardLabelClass}>{H.filterSpot}</span>
           <select
-            value={spotId}
-            onChange={(e) => setSpotId(e.target.value)}
+            value={zoneId}
+            onChange={(e) => setZoneId(e.target.value)}
             className={dashboardFieldClass}
+            disabled={activeZoneGroups.length === 0}
           >
             <option value="">{H.filterAll}</option>
-            {spots.map((spot) => (
-              <option key={spot.id} value={spot.id}>
-                {formatVenueSpotLabelForLang(spot.type, spot.label, lang)}
+            {activeZoneGroups.map((zone) => (
+              <option key={zone.id} value={zone.id}>
+                {zone.label}
               </option>
             ))}
           </select>
@@ -299,6 +334,30 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
         </label>
       </div>
 
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <label className="flex items-center gap-2 text-sm text-slate-600">
+          <span className={dashboardLabelClass}>{H.limitLabel}</span>
+          <select
+            value={recordLimit}
+            onChange={(e) => {
+              const value = e.target.value;
+              setRecordLimit(value === "all" ? "all" : (Number(value) as 50 | 100));
+            }}
+            className={`${dashboardFieldClass} w-auto min-w-[9rem]`}
+          >
+            <option value={50}>{H.limit50}</option>
+            <option value={100}>{H.limit100}</option>
+            <option value="all">{H.limitAll}</option>
+          </select>
+        </label>
+        {!loading && !loadError && signals.length > 0 ? (
+          <p className="text-xs text-slate-500">
+            {H.showingCount(signals.length, recordLimit)}
+            {truncated ? ` · ${H.truncatedHint}` : ""}
+          </p>
+        ) : null}
+      </div>
+
       {loading ? (
         <p className="mt-6 text-sm text-slate-500">{H.loading}</p>
       ) : loadError ? (
@@ -327,12 +386,11 @@ export function PassSignalHistoryPanel({ venues }: { venues: { id: string; name:
                   deliveredAt != null
                     ? formatDurationMs(deliveredAt.getTime() - readyAt.getTime())
                     : "—";
+                const locationLabel = formatWaiterCallLocationWithZone(signal, zoneGroups, { lang });
 
                 return (
                   <tr key={signal.id} className="align-top">
-                    <td className="py-3 pr-3 font-medium text-brand-navy">
-                      {formatWaiterCallLocationForLang(signal, lang)}
-                    </td>
+                    <td className="py-3 pr-3 font-medium text-brand-navy">{locationLabel}</td>
                     <td className="py-3 pr-3 text-slate-700">{postLabel}</td>
                     <td className="py-3 pr-3 text-slate-600">{signal.message?.trim() || "—"}</td>
                     <td className="py-3 pr-3 text-slate-600">

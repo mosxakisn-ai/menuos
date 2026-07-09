@@ -1,15 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
 import type { Prisma } from "@menuos/db";
-import { passStationInputToDb, spotToQueryParams, type PassStationInput } from "@menuos/shared";
+import {
+  applyZoneLabelOverrides,
+  groupVenueSpotsByZone,
+  passSignalLocationMatchesForZone,
+  passStationInputToDb,
+  type PassStationInput,
+} from "@menuos/shared";
 import { requireLive360Plan } from "@/lib/api-auth";
 import { athensDayBounds, isAthensDateInPeriod } from "@/lib/athens-day";
 import { getVenueForOrganization } from "@/lib/venue-access";
+import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 
 const MAX_DAYS = 90;
 const DEFAULT_DAYS = 7;
-const MAX_LIMIT = 200;
-const DEFAULT_LIMIT = 100;
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 50;
+const ALL_LIMIT = 5000;
 
 const STATION_INPUTS: PassStationInput[] = ["kitchen", "bar", "cold", "dessert"];
 
@@ -32,10 +40,15 @@ export async function GET(request: Request) {
   const days = Number.isFinite(daysRaw)
     ? Math.min(MAX_DAYS, Math.max(1, Math.floor(daysRaw)))
     : DEFAULT_DAYS;
-  const limitRaw = Number(searchParams.get("limit") ?? DEFAULT_LIMIT);
-  const limit = Number.isFinite(limitRaw)
-    ? Math.min(MAX_LIMIT, Math.max(1, Math.floor(limitRaw)))
-    : DEFAULT_LIMIT;
+  const limitParam = searchParams.get("limit")?.trim();
+  const limitAll = limitParam === "all";
+  const limitRaw = limitAll ? ALL_LIMIT : Number(limitParam ?? DEFAULT_LIMIT);
+  const limit = limitAll
+    ? ALL_LIMIT
+    : Number.isFinite(limitRaw)
+      ? Math.min(MAX_LIMIT, Math.max(1, Math.floor(limitRaw)))
+      : DEFAULT_LIMIT;
+  const limitResponse = limitAll ? ("all" as const) : limit;
 
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
@@ -44,7 +57,7 @@ export async function GET(request: Request) {
   if (dateParam) {
     try {
       if (!isAthensDateInPeriod(dateParam, days)) {
-        return NextResponse.json({ signals: [], days, limit, date: dateParam });
+        return NextResponse.json({ signals: [], days, limit: limitResponse, date: dateParam });
       }
       const bounds = athensDayBounds(dateParam);
       deliveredAtFilter = { gte: bounds.gte, lt: bounds.lt };
@@ -74,7 +87,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         signals: [],
         days,
-        limit,
+        limit: limitResponse,
         ...(dateParam ? { date: dateParam } : {}),
       });
     }
@@ -97,24 +110,40 @@ export async function GET(request: Request) {
       select: { id: true },
     });
     if (!member) {
-      return NextResponse.json({ signals: [], days, limit });
+      return NextResponse.json({ signals: [], days, limit: limitResponse });
     }
     where.deliveredByStaffMemberId = staffMemberId;
   }
 
-  const spotId = searchParams.get("spotId")?.trim();
-  if (spotId) {
-    const spot = await prisma.venueSpot.findFirst({
-      where: { id: spotId, venueId },
+  const zoneId = searchParams.get("zoneId")?.trim();
+  if (zoneId) {
+    const spots = await prisma.venueSpot.findMany({
+      where: { venueId },
       select: { type: true, label: true },
     });
-    if (!spot) {
-      return NextResponse.json({ signals: [], days, limit });
+    const opsConfig = await getVenueOperationsConfig(venueId);
+    const groups = applyZoneLabelOverrides(groupVenueSpotsByZone(spots), opsConfig.zoneLabels);
+    const group = groups.find((row) => row.id === zoneId);
+    if (!group) {
+      return NextResponse.json({
+        signals: [],
+        days,
+        limit: limitResponse,
+        ...(dateParam ? { date: dateParam } : {}),
+      });
     }
-    const loc = spotToQueryParams(spot.type, spot.label);
-    where.tableNumber = loc.table ?? null;
-    where.roomNumber = loc.room ?? null;
-    where.sunbedNumber = loc.sunbed ?? null;
+    const legacyOr: Prisma.PassSignalWhereInput[] = passSignalLocationMatchesForZone(group).map(
+      (loc) => ({
+        zoneId: null,
+        tableNumber: loc.tableNumber,
+        roomNumber: loc.roomNumber,
+        sunbedNumber: loc.sunbedNumber,
+      }),
+    );
+    const zoneFilter: Prisma.PassSignalWhereInput = {
+      OR: [{ zoneId }, ...legacyOr],
+    };
+    where.AND = [...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []), zoneFilter];
   }
 
   try {
@@ -135,7 +164,8 @@ export async function GET(request: Request) {
         deliveredByStaffMemberName: deliveredByStaffMember?.name ?? null,
       })),
       days,
-      limit,
+      limit: limitResponse,
+      truncated: signals.length >= limit,
       ...(dateParam ? { date: dateParam } : {}),
     });
   } catch (err) {

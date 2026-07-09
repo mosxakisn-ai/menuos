@@ -9,6 +9,7 @@ import {
   groupVenueSpotsByZone,
   pickDefaultZoneId,
   passSendTableNumber,
+  passSignalLocationMatchesForZone,
   resolveWaiterLocationInZones,
   zoneIdForWaiterLocation,
 } from "./station-spot-zones";
@@ -162,5 +163,36 @@ describe("zone filters for waiter", () => {
       passSendTableNumber({ type: "TABLE", label: "1" }, "", "prefix:αυλή", groups),
     ).toBe("Αυλή-1");
     expect(zoneIdForWaiterLocation({ tableNumber: "1" }, groups)).toBeNull();
+  });
+
+  it("passSignalLocationMatchesForZone covers stored spot labels and KDS prefixed sends", () => {
+    const groups = groupVenueSpotsByZone([
+      { type: "TABLE", label: "Σαλα-1" },
+      { type: "TABLE", label: "Αυλή-2" },
+    ]);
+    const avli = groups.find((group) => group.id === "prefix:αυλή")!;
+    const matches = passSignalLocationMatchesForZone(avli);
+    expect(matches).toContainEqual({
+      tableNumber: "Αυλή-2",
+      roomNumber: null,
+      sunbedNumber: null,
+    });
+
+    const patioGroup = {
+      id: "prefix:αυλή",
+      label: "Αυλή",
+      spots: [{ spot: { type: "TABLE" as const, label: "5" }, displayLabel: "5" }],
+    };
+    const patioMatches = passSignalLocationMatchesForZone(patioGroup);
+    expect(patioMatches).toContainEqual({
+      tableNumber: "5",
+      roomNumber: null,
+      sunbedNumber: null,
+    });
+    expect(patioMatches).toContainEqual({
+      tableNumber: "Αυλή-5",
+      roomNumber: null,
+      sunbedNumber: null,
+    });
   });
 });
