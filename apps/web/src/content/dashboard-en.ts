@@ -534,6 +534,9 @@ export const DASHBOARD_EN = {
       pushUnsupported:
         "This browser does not support notifications. Use Chrome (Android) or Safari (iPhone).",
       allReady: "All set — you will hear kitchen pass alerts.",
+      compactReadyLabel: "Ready",
+      doneButton: "Done — start",
+      testAriaLabel: "Test sound",
     },
     loadFailed: "Could not load calls. Refresh the page or open the link from the dashboard again.",
     sessionExpired: "Session expired — open the waiter link from the dashboard again.",

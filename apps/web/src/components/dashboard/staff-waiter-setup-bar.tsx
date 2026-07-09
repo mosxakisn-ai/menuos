@@ -4,6 +4,8 @@ import {
   Check,
   Home,
   Loader2,
+  Lock,
+  LockOpen,
   Share,
   Smartphone,
   Volume2,
@@ -11,9 +13,15 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
+import { WaiterShiftLockControl } from "@/components/dashboard/waiter-shift-lock";
 import { buttonClass } from "@/components/ui/button";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { useWaiterShiftLock } from "@/hooks/use-waiter-shift-lock";
 import { playWaiterAlertSound } from "@/lib/waiter-alert";
+import {
+  readStaffSetupVerified,
+  writeStaffSetupVerified,
+} from "@/lib/staff-setup-storage";
 import {
   isIosDevice,
   isStandalonePwa,
@@ -26,23 +34,41 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
+function resolvePushBlockedMessage(
+  pushState: string,
+  ios: boolean,
+  installed: boolean,
+  s: { pushDenied: string; pushUnsupported: string },
+  d: { push: { iosBrowserUnsupported: string } },
+): string | null {
+  if (pushState === "denied") return s.pushDenied;
+  if (pushState === "unsupported" && ios && !installed) return d.push.iosBrowserUnsupported;
+  if (pushState === "unsupported") return s.pushUnsupported;
+  return null;
+}
+
 function ReadinessChip({
   label,
   ok,
   muted,
+  dense = false,
 }: {
   label: string;
   ok: boolean;
   muted?: boolean;
+  dense?: boolean;
 }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex items-center gap-0.5 font-medium",
+        dense
+          ? "rounded px-1 py-0 text-[10px]"
+          : "rounded-full px-2 py-0.5 text-[11px]",
         muted
           ? "bg-slate-100 text-slate-500"
           : ok
-            ? "bg-emerald-50 text-emerald-800"
+            ? "bg-emerald-100/80 text-emerald-800"
             : "bg-amber-50 text-amber-900",
       )}
     >
@@ -51,12 +77,37 @@ function ReadinessChip({
           —
         </span>
       ) : ok ? (
-        <Check className="h-3 w-3" aria-hidden />
+        <Check className={dense ? "h-2.5 w-2.5" : "h-3 w-3"} aria-hidden />
       ) : (
-        <X className="h-3 w-3" aria-hidden />
+        <X className={dense ? "h-2.5 w-2.5" : "h-3 w-3"} aria-hidden />
       )}
       {label}
     </span>
+  );
+}
+
+function CompactShiftLockButton() {
+  const { d } = useDashboardCopy();
+  const L = d.waiter.shiftLock;
+  const { locked, wakeLockSupported, busy, toggle } = useWaiterShiftLock();
+
+  if (!wakeLockSupported) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => void toggle()}
+      disabled={busy}
+      aria-label={locked ? L.unlockButton : L.lockButton}
+      className={cn(
+        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border",
+        locked
+          ? "border-emerald-400 bg-emerald-50 text-emerald-800"
+          : "border-slate-200 bg-white text-brand-navy",
+      )}
+    >
+      {locked ? <LockOpen className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+    </button>
   );
 }
 
@@ -76,6 +127,7 @@ export function StaffWaiterSetupBar({
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installBusy, setInstallBusy] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [setupVerified, setSetupVerified] = useState(false);
 
   const refreshInstalled = useCallback(() => {
     setInstalled(isStandalonePwa());
@@ -83,10 +135,14 @@ export function StaffWaiterSetupBar({
 
   useEffect(() => {
     refreshInstalled();
-    const onVisible = () => refreshInstalled();
+    setSetupVerified(readStaffSetupVerified(staffAuth.venueId));
+    const onVisible = () => {
+      refreshInstalled();
+      void push.checkState();
+    };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [refreshInstalled]);
+  }, [refreshInstalled, staffAuth.venueId, push.checkState]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -103,16 +159,15 @@ export function StaffWaiterSetupBar({
   const pushNeeded = push.canEnable && (!ios || installed);
   const showActionRow = installNeeded || pushNeeded;
   const allReady = pushReady && (!ios || installed);
+  const blockedMessage = resolvePushBlockedMessage(push.state, ios, installed, s, d);
+  const compactMode = allReady && setupVerified && !showActionRow && !blockedMessage;
   const iosNeedsInstallFirst =
     ios && !installed && (push.state === "unsupported" || push.state === "prompt");
-  const pushBlockedMessage =
-    push.state === "denied"
-      ? s.pushDenied
-      : push.state === "unsupported" && ios && !installed
-        ? d.push.iosBrowserUnsupported
-        : push.state === "unsupported"
-          ? s.pushUnsupported
-          : null;
+
+  function markSetupVerified() {
+    writeStaffSetupVerified(staffAuth.venueId);
+    setSetupVerified(true);
+  }
 
   async function handleAndroidInstall() {
     if (!deferredPrompt) return;
@@ -145,6 +200,7 @@ export function StaffWaiterSetupBar({
       if (voiceEnabled) {
         speakPassMessage({ tableNumber: "12" });
       }
+      markSetupVerified();
     } finally {
       window.setTimeout(() => setTesting(false), 2500);
     }
@@ -175,6 +231,43 @@ export function StaffWaiterSetupBar({
       <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-snug text-slate-600">
         {ios && !installed ? d.push.iosBrowserUnsupported : s.pushUnsupported}
       </p>
+    );
+  }
+
+  if (compactMode) {
+    return (
+      <div className="flex items-center gap-1.5 rounded-lg border border-emerald-200/80 bg-emerald-50/50 px-2 py-1.5">
+        <span className="shrink-0 text-[10px] font-semibold text-emerald-800">{s.compactReadyLabel}</span>
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+          <ReadinessChip
+            label={s.installedLabel}
+            ok={installed}
+            muted={!ios && !installed}
+            dense
+          />
+          <ReadinessChip label={s.pushLabel} ok={pushReady} dense />
+          <ReadinessChip
+            label={voiceEnabled ? s.voiceLabel : s.voiceOff}
+            ok={voiceEnabled}
+            muted={!voiceEnabled}
+            dense
+          />
+        </div>
+        <button
+          type="button"
+          disabled={testing}
+          onClick={() => void handleTestSound()}
+          aria-label={s.testAriaLabel}
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-brand-navy"
+        >
+          {testing ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Volume2 className="h-3.5 w-3.5" />
+          )}
+        </button>
+        <CompactShiftLockButton />
+      </div>
     );
   }
 
@@ -249,25 +342,36 @@ export function StaffWaiterSetupBar({
         </div>
       ) : null}
 
-      {pushBlockedMessage ? (
-        <p className="text-xs leading-snug text-amber-900">{pushBlockedMessage}</p>
+      {blockedMessage ? (
+        <p className="text-xs leading-snug text-amber-900">{blockedMessage}</p>
       ) : null}
 
-      {allReady ? (
-        <button
-          type="button"
-          disabled={testing}
-          onClick={() => void handleTestSound()}
-          className={cn(buttonClass("secondary", "sm"), "w-full text-xs")}
-        >
-          {testing ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Volume2 className="h-3.5 w-3.5" />
-          )}
-          {testing ? s.testPlaying : s.testButton}
-        </button>
+      {allReady && !setupVerified ? (
+        <div className="grid grid-cols-[1fr_auto] gap-2">
+          <button
+            type="button"
+            disabled={testing}
+            onClick={() => void handleTestSound()}
+            className={cn(buttonClass("secondary", "sm"), "w-full text-xs")}
+          >
+            {testing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Volume2 className="h-3.5 w-3.5" />
+            )}
+            {testing ? s.testPlaying : s.testButton}
+          </button>
+          <button
+            type="button"
+            onClick={markSetupVerified}
+            className={cn(buttonClass("primary", "sm"), "shrink-0 text-xs whitespace-nowrap")}
+          >
+            {s.doneButton}
+          </button>
+        </div>
       ) : null}
+
+      {!compactMode ? <WaiterShiftLockControl compact /> : null}
 
       {iosSheetOpen ? (
         <div

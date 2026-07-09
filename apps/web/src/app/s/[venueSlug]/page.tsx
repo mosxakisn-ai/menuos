@@ -4,7 +4,6 @@ import { listVenuePosts } from "@menuos/shared";
 import { Logo } from "@/components/brand/logo";
 import { StaffWaiterInvalidLink } from "@/components/dashboard/staff-waiter-invalid-link";
 import { StaffWaiterSetupBar } from "@/components/dashboard/staff-waiter-setup-bar";
-import { WaiterShiftLockControl } from "@/components/dashboard/waiter-shift-lock";
 import { WaiterPanel } from "@/components/dashboard/waiter-panel";
 import { getOrganizationPlanContext, organizationCanUseLive360 } from "@/lib/billing";
 import { resolveStaffAuthByKey, resolveStaffAuthBySlug, type StaffMemberContext } from "@/lib/staff-auth";
@@ -124,7 +123,6 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
           staffAuth={{ venueId: venue.id }}
           voiceEnabled={notificationSettings.voiceMessagesEnabled}
         />
-        <WaiterShiftLockControl compact />
         <WaiterPanel
           venues={[{ id: venue.id, name: venue.name, slug: venue.slug }]}
           initialVenueId={venue.id}
