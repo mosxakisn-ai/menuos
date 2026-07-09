@@ -25,6 +25,7 @@ import {
 } from "@menuos/shared";
 import { authorizePassSignalCreate } from "@/lib/pass-signal-auth";
 import { expireStaleActivePassSignals } from "@/lib/pass-signal-cleanup";
+import { maybeRepushStalePassSignals } from "@/lib/pass-signal-delivery-service";
 import { resolvePrimaryStationScreen } from "@/lib/station-screens";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
 import { startOfTodayAthens } from "@/lib/athens-day";
@@ -54,6 +55,9 @@ export async function GET(request: Request) {
   if (auth.response) return auth.response;
 
   await expireStaleActivePassSignals({ venueId: auth.venue.id });
+  void maybeRepushStalePassSignals(auth.venue.id).catch((err) =>
+    console.error("[menuos] pass-signal repush sweep failed", err),
+  );
 
   const opsConfig = await getVenueOperationsConfig(auth.venue.id);
   if (!isPassScreenStationEnabled(opsConfig, station)) {
@@ -112,6 +116,14 @@ export async function GET(request: Request) {
       message: true,
       status: true,
       readyAt: true,
+      firstSeenAt: true,
+      pickedUpAt: true,
+      pushTargetCount: true,
+      pushSentCount: true,
+      pushFailedCount: true,
+      repushCount: true,
+      seenByStaffMember: { select: { name: true } },
+      pickedUpByStaffMember: { select: { name: true } },
     },
   });
 
@@ -128,9 +140,11 @@ export async function GET(request: Request) {
         spotPrefixForSignals,
       ),
     )
-    .map(({ station: signalStation, ...signal }) => ({
+    .map(({ station: signalStation, seenByStaffMember, pickedUpByStaffMember, ...signal }) => ({
       ...signal,
       station: passStationDbToInput(signalStation),
+      seenByStaffMemberName: seenByStaffMember?.name ?? null,
+      pickedUpByStaffMemberName: pickedUpByStaffMember?.name ?? null,
     }));
   const todayStart = startOfTodayAthens();
   const todaySignalsRaw = await prisma.passSignal.findMany({

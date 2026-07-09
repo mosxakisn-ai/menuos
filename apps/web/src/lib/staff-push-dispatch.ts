@@ -235,7 +235,7 @@ export async function pushPassSignalToStaff(input: {
   signalId: string;
   location?: string;
   notifyStaffMemberIds?: string[];
-}): Promise<void> {
+}): Promise<PushDispatchResult> {
   const subscriptions = await prisma.pushSubscription.findMany({
     where: {
       organizationId: input.organizationId,
@@ -252,7 +252,7 @@ export async function pushPassSignalToStaff(input: {
   const posts = listVenuePosts(opsConfig);
   const screensByStation = await loadStaffScreensByStation(input.venueId);
 
-  await dispatchPushWithDiagnostics(
+  return dispatchPushWithDiagnostics(
     {
       organizationId: input.organizationId,
       venueId: input.venueId,

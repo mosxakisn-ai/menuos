@@ -14,6 +14,7 @@ export function buildStaffPwaManifest(venueSlug: string): MetadataRoute.Manifest
     start_url: startUrl,
     scope: "/s/",
     display: "standalone",
+    orientation: "portrait",
     background_color: "#ffffff",
     theme_color: "#2563EB",
     lang: "el",

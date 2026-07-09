@@ -87,7 +87,12 @@ export async function PATCH(request: Request, { params }: Props) {
     where: { id: signalId, status: existing.status },
     data: {
       status: next,
-      ...(next === "PICKED_UP" ? { pickedUpAt: now } : {}),
+      ...(next === "PICKED_UP"
+        ? {
+            pickedUpAt: now,
+            ...(member ? { pickedUpByStaffMemberId: member.id } : {}),
+          }
+        : {}),
       ...(next === "DELIVERED"
         ? {
             deliveredAt: now,

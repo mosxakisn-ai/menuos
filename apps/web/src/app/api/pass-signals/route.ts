@@ -191,6 +191,7 @@ export async function POST(request: Request) {
         sunbedNumber: location.sunbedNumber,
         zoneId: parsed.data.zoneId?.trim() || null,
         message,
+        notifyStaffMemberIds: notifyIds && notifyIds.length > 0 ? notifyIds : [],
       },
       include: {
         stationScreen: { select: { label: true } },

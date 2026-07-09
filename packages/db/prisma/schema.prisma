@@ -283,6 +283,8 @@ model VenueStaffMember {
   venue             Venue              @relation(fields: [venueId], references: [id], onDelete: Cascade)
   pushSubscriptions PushSubscription[]
   deliveredPassSignals PassSignal[]
+  seenPassSignals      PassSignal[] @relation("PassSignalSeenBy")
+  pickedUpPassSignals  PassSignal[] @relation("PassSignalPickedUpBy")
 
   @@index([venueId, sortOrder])
 }
@@ -405,12 +407,24 @@ model PassSignal {
   pickedUpAt       DateTime?
   deliveredAt      DateTime?
   deliveredByStaffMemberId String?
+  firstSeenAt              DateTime?
+  seenByStaffMemberId      String?
+  pickedUpByStaffMemberId  String?
+  pushSentAt               DateTime?
+  pushTargetCount          Int?
+  pushSentCount            Int?
+  pushFailedCount          Int?
+  repushCount              Int              @default(0)
+  lastRepushAt             DateTime?
+  notifyStaffMemberIds     String[]         @default([])
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
   venue                   Venue               @relation(fields: [venueId], references: [id], onDelete: Cascade)
   stationScreen           VenueStationScreen? @relation(fields: [stationScreenId], references: [id], onDelete: SetNull)
   deliveredByStaffMember  VenueStaffMember?   @relation(fields: [deliveredByStaffMemberId], references: [id], onDelete: SetNull)
+  seenByStaffMember       VenueStaffMember?   @relation("PassSignalSeenBy", fields: [seenByStaffMemberId], references: [id], onDelete: SetNull)
+  pickedUpByStaffMember   VenueStaffMember?   @relation("PassSignalPickedUpBy", fields: [pickedUpByStaffMemberId], references: [id], onDelete: SetNull)
 
   @@index([venueId, status])
   @@index([deliveredByStaffMemberId])

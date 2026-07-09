@@ -20,6 +20,7 @@ import {
   resolveWaiterLocationInZone,
   zoneIdForWaiterLocationView,
   venuePostMatchesZone,
+  kdsPassDeliveryStatus,
   type PassStationInput,
   type VenuePostStationInput,
   type VenueSpotType,
@@ -44,6 +45,14 @@ type ActiveSignal = {
   message: string | null;
   status: "READY" | "PICKED_UP";
   readyAt: string;
+  firstSeenAt?: string | null;
+  pickedUpAt?: string | null;
+  pushTargetCount?: number | null;
+  pushSentCount?: number | null;
+  pushFailedCount?: number | null;
+  repushCount?: number | null;
+  seenByStaffMemberName?: string | null;
+  pickedUpByStaffMemberName?: string | null;
 };
 
 type StationPostOption = {
@@ -850,6 +859,36 @@ function minutesAgo(iso: string): string {
   return `πριν ${mins} λεπ.`;
 }
 
+function deliveryToneClass(tone: ReturnType<typeof kdsPassDeliveryStatus>["tone"]): string {
+  switch (tone) {
+    case "danger":
+      return "text-red-300";
+    case "warn":
+      return "text-amber-300";
+    case "seen":
+      return "text-cyan-300";
+    case "picked":
+      return "text-amber-300";
+    default:
+      return "text-emerald-300";
+  }
+}
+
+function deliveryBorderClass(tone: ReturnType<typeof kdsPassDeliveryStatus>["tone"]): string {
+  switch (tone) {
+    case "danger":
+      return "border-red-400/60 bg-red-500/10";
+    case "warn":
+      return "border-amber-400/60 bg-amber-500/10";
+    case "seen":
+      return "border-cyan-400/60 bg-cyan-500/10";
+    case "picked":
+      return "border-amber-400/70 bg-amber-500/10";
+    default:
+      return "border-emerald-400/70 bg-emerald-500/10";
+  }
+}
+
 function playSendChime() {
   try {
     const ctx = new AudioContext();
@@ -1294,7 +1333,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
               {zoneFilteredSignals.map((signal) => {
                 const spot = signalToSpot(signal);
                 const location = signalLocationLabel(signal, zoneGroups, activeZoneId, activeZone);
-                const picked = signal.status === "PICKED_UP";
+                const delivery = kdsPassDeliveryStatus(signal);
                 const canCancel = signal.status === "READY" || signal.status === "PICKED_UP";
                 return (
                   <div
@@ -1303,7 +1342,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                       "relative shrink-0 rounded-lg border",
                       spot && table && spotSelected(table, spot)
                         ? "border-cyan-400 bg-cyan-500/15"
-                        : "border-white/15 bg-white/5",
+                        : deliveryBorderClass(delivery.tone),
                     )}
                   >
                     <button
@@ -1318,11 +1357,11 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
                       <p
                         className={cn(
                           "mt-0.5 flex items-center gap-1 text-[9px] font-medium",
-                          picked ? "text-amber-300" : "text-emerald-300",
+                          deliveryToneClass(delivery.tone),
                         )}
                       >
                         <Clock className="h-2.5 w-2.5" />
-                        {picked ? C.waitingPicked : C.waitingReady} · {minutesAgo(signal.readyAt)}
+                        {delivery.label} · {minutesAgo(signal.readyAt)}
                       </p>
                     </button>
                     {canCancel ? (

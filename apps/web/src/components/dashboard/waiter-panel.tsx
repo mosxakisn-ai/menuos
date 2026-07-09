@@ -51,6 +51,7 @@ type PassSignal = {
   zoneId?: string | null;
   message?: string | null;
   readyAt?: string;
+  firstSeenAt?: string | null;
 };
 
 function isMonitorPendingCall(call: WaiterCall): boolean {
@@ -117,6 +118,7 @@ export function WaiterPanel({
   const lastPassAlertIdRef = useRef<string | null>(null);
   const lastWaiterCallAlertIdRef = useRef<string | null>(null);
   const alertedWaiterCallIdsRef = useRef<Set<string>>(new Set());
+  const seenAckSentRef = useRef<Set<string>>(new Set());
   zoneFilterIdRef.current = zoneFilterId;
   notificationSettingsRef.current = notificationSettings;
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -271,7 +273,8 @@ export function WaiterPanel({
           voiceMessagesEnabled: passData.voiceMessagesEnabled,
         };
       }
-      if (passBaselineSetRef.current) {
+      const hadPassBaseline = passBaselineSetRef.current;
+      if (hadPassBaseline) {
         const freshPasses = newSignals.filter(
           (signal) => !prevPassIdsRef.current.has(signal.id) && isMonitorPendingPass(signal),
         );
@@ -310,6 +313,31 @@ export function WaiterPanel({
       prevPassIdsRef.current = new Set(newSignals.map((signal) => signal.id));
       passBaselineSetRef.current = true;
       setPassSignals(newSignals);
+
+      const isStaffDevice = Boolean(staffKey || staffViaCookie || staffMember);
+      if (
+        hadPassBaseline &&
+        isStaffDevice &&
+        document.visibilityState === "visible"
+      ) {
+        const credsForSeen = staffViaCookie ? "include" : "same-origin";
+        for (const signal of newSignals) {
+          if (signal.status !== "READY" || signal.firstSeenAt || seenAckSentRef.current.has(signal.id)) {
+            continue;
+          }
+          seenAckSentRef.current.add(signal.id);
+          void fetch(`/api/pass-signals/${signal.id}/seen`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: credsForSeen,
+            body: JSON.stringify({
+              ...(staffKey && !staffViaCookie ? { staffKey } : {}),
+            }),
+          }).then((res) => {
+            if (!res.ok) seenAckSentRef.current.delete(signal.id);
+          });
+        }
+      }
     } else {
       if (passRes.status === 401) {
         setPassSignals([]);
@@ -332,7 +360,7 @@ export function WaiterPanel({
     } else if (managerView && generation === loadGenerationRef.current) {
       setPendingByVenue({});
     }
-  }, [staffKey, staffViaCookie, venueId, W.sessionExpired, W.loadFailed, setFlash]);
+  }, [staffKey, staffViaCookie, staffMember, venueId, W.sessionExpired, W.loadFailed, setFlash]);
 
   useEffect(() => {
     loadGenerationRef.current += 1;
@@ -349,6 +377,7 @@ export function WaiterPanel({
     lastPassAlertIdRef.current = null;
     lastWaiterCallAlertIdRef.current = null;
     alertedWaiterCallIdsRef.current = new Set();
+    seenAckSentRef.current = new Set();
     autoZoneAppliedRef.current = false;
     zoneFilterUserPickedRef.current = false;
     setZoneFilterId("all");

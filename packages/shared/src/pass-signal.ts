@@ -36,6 +36,10 @@ export const passSignalStatusUpdateSchema = z.object({
   staffKey: z.string().min(1).max(80).optional(),
 });
 
+export const passSignalSeenSchema = z.object({
+  staffKey: z.string().min(1).max(80).optional(),
+});
+
 export const passSignalStationCancelSchema = z.object({
   venueSlug: z.string().min(1).max(60),
   station: passStationInputSchema,

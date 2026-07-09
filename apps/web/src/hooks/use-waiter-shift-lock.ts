@@ -3,6 +3,41 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { unlockWaiterAudio } from "@/lib/waiter-voice";
 
+type OrientableScreenOrientation = ScreenOrientation & {
+  lock?: (orientation: string) => Promise<void>;
+  unlock?: () => void;
+};
+
+function getOrientableScreen(): OrientableScreenOrientation | null {
+  if (typeof screen === "undefined" || !("orientation" in screen)) return null;
+  const orientation = screen.orientation as OrientableScreenOrientation;
+  return typeof orientation.lock === "function" ? orientation : null;
+}
+
+async function lockPortraitOrientation(): Promise<boolean> {
+  const orientation = getOrientableScreen();
+  if (!orientation?.lock) return false;
+  try {
+    await orientation.lock("portrait-primary");
+    return true;
+  } catch {
+    try {
+      await orientation.lock("portrait");
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+function unlockPortraitOrientation(): void {
+  try {
+    getOrientableScreen()?.unlock?.();
+  } catch {
+    /* ignore */
+  }
+}
+
 export type WaiterShiftLockState = {
   locked: boolean;
   wakeLockSupported: boolean;
@@ -73,6 +108,7 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
     try {
       await releaseWakeLock();
       await exitFullscreen();
+      unlockPortraitOrientation();
       setLocked(false);
     } finally {
       setBusy(false);
@@ -87,6 +123,7 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
       const gotWakeLock = await acquireWakeLock();
       if (!gotWakeLock) return;
       await enterFullscreen();
+      await lockPortraitOrientation();
       setLocked(true);
     } finally {
       setBusy(false);
@@ -119,6 +156,7 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
     function onVisibilityChange() {
       if (document.visibilityState === "visible") {
         void acquireWakeLock();
+        void lockPortraitOrientation();
         unlockWaiterAudio();
       }
     }
@@ -130,6 +168,7 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
   useEffect(() => {
     return () => {
       void releaseWakeLock();
+      unlockPortraitOrientation();
     };
   }, [releaseWakeLock]);
 

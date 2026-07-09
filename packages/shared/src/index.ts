@@ -48,3 +48,4 @@ export * from "./kds-station-screen";
 export * from "./cuisine-type";
 export * from "./organization-notifications";
 export * from "./pass-signal-announcement";
+export * from "./pass-signal-delivery";

@@ -1,19 +1,11 @@
 import type { PassSignal, PassStation } from "@menuos/db";
-import {
-  buildPassSignalAnnouncement,
-  buildPassSignalPushCopy,
-  applyZoneLabelOverrides,
-  groupVenueSpotsByZone,
-  passStationDbToInput,
-  stationDisplayLabel,
-} from "@menuos/shared";
+import { passStationDbToInput, stationDisplayLabel } from "@menuos/shared";
 import { fireStaffPushNotify } from "@/lib/staff-push-notify";
-import { pushPassSignalToStaff } from "@/lib/staff-push-dispatch";
-import { buildStaffWaiterUrl } from "@/lib/staff-auth";
 import { getVenueOperationsConfig } from "@/lib/venue-operations-config-service";
-import { getOrganizationNotificationSettings } from "@/lib/organization-notification-settings";
-import { prisma } from "@menuos/db";
-
+import {
+  dispatchPassSignalPush,
+  persistPassSignalPushStats,
+} from "@/lib/pass-signal-delivery-service";
 export function pushStaffPassSignal(
   venue: { id: string; name: string; slug: string; staffToken: string; organizationId: string },
   signal: Pick<
@@ -37,47 +29,10 @@ async function notifyStaffPassSignal(
   },
   opts?: { notifyStaffMemberIds?: string[]; zoneId?: string | null },
 ) {
-  const opsConfig = await getVenueOperationsConfig(venue.id);
-  const spots = await prisma.venueSpot.findMany({
-    where: { venueId: venue.id },
-    select: { type: true, label: true },
-    orderBy: { sortOrder: "asc" },
-  });
-  const zoneGroups = applyZoneLabelOverrides(
-    groupVenueSpotsByZone(spots),
-    opsConfig.zoneLabels,
-  );
-  const activeZoneId = opts?.zoneId ?? signal.zoneId ?? null;
-  const { title, body } = buildPassSignalPushCopy(signal, {
-    zoneGroups,
-    activeZoneId,
-  });
-  const orgNotifications = await getOrganizationNotificationSettings(venue.organizationId);
-  const voiceEnabled = orgNotifications.voiceMessagesEnabled;
-  const announcement = voiceEnabled
-    ? buildPassSignalAnnouncement(signal, { zoneGroups, activeZoneId })
-    : undefined;
-  const payload = JSON.stringify({
-    title,
-    body,
-    url: buildStaffWaiterUrl(venue.slug, venue.staffToken),
-    tag: `pass-${signal.id}`,
-    voiceEnabled,
-    announcement: announcement?.trim() || undefined,
-    zoneId: activeZoneId ?? signal.zoneId ?? undefined,
-    passId: signal.id,
-  });
-
-  await pushPassSignalToStaff({
-    organizationId: venue.organizationId,
-    venueId: venue.id,
-    venue: { slug: venue.slug, staffToken: venue.staffToken, name: venue.name },
-    station: signal.station,
-    payload,
-    signalId: signal.id,
-    location: body,
+  const result = await dispatchPassSignalPush(venue, signal, {
     notifyStaffMemberIds: opts?.notifyStaffMemberIds,
   });
+  await persistPassSignalPushStats(signal.id, result);
 }
 
 export async function passStationLabel(
