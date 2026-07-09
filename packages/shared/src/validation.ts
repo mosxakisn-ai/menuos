@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CUISINE_TYPES } from "./cuisine-type";
+import { DIETARY_TAGS } from "./item-dietary-tags";
 import { itemExtrasSchema } from "./item-extras";
 import { SUPPORTED_LANGUAGES } from "./menu-languages";
 
@@ -232,7 +233,7 @@ export const allergenCodeSchema = z.enum([
   "MOLLUSCS",
 ]);
 
-export const dietaryTagsSchema = z.array(dietaryTagSchema).max(6);
+export const dietaryTagsSchema = z.array(dietaryTagSchema).max(DIETARY_TAGS.length);
 export const allergenCodesSchema = z.array(allergenCodeSchema).max(14);
 
 export const itemCreateSchema = z.object({

@@ -22,6 +22,7 @@ import {
   parseOrderPayload,
   parseItemExtras,
   pickItemExtraLabel,
+  pickQrMenuItemTranslation,
   pickQrMenuTranslation,
   resolveExtraLabels,
   computeItemUnitPrice,
@@ -509,7 +510,7 @@ export function PublicMenuView({
 
   function addToCart() {
     if (!selectedItem || !orderActionsEnabled) return;
-    const tr = pickQrMenuTranslation(selectedItem.translations, lang);
+    const tr = pickQrMenuItemTranslation(selectedItem.translations, lang);
     const itemExtras = parseItemExtras(selectedItem.extras);
     const extraIds = selectedExtraIds.filter((id) => itemExtras.some((e) => e.id === id));
     const extras = resolveExtraLabels(itemExtras, extraIds, lang);
@@ -932,7 +933,7 @@ export function PublicMenuView({
                     {withoutPhoto.length > 0 ? (
                       <div className="overflow-hidden rounded-card border border-slate-100 bg-white shadow-soft divide-y divide-slate-100">
                         {withoutPhoto.map((item) => {
-                          const tr = pickQrMenuTranslation(item.translations, lang);
+                          const tr = pickQrMenuItemTranslation(item.translations, lang);
                           return (
                             <MenuItemRow
                               key={item.id}
@@ -952,7 +953,7 @@ export function PublicMenuView({
                     {withPhoto.length > 0 ? (
                       <div className={cn("grid gap-3", withPhoto.length > 1 ? "sm:grid-cols-2" : "")}>
                         {withPhoto.map((item) => {
-                          const tr = pickQrMenuTranslation(item.translations, lang);
+                          const tr = pickQrMenuItemTranslation(item.translations, lang);
                           return (
                             <MenuItemCard
                               key={item.id}
@@ -1248,7 +1249,7 @@ export function PublicMenuView({
             </div>
             <div className="p-6 pt-4">
             {(() => {
-              const tr = pickQrMenuTranslation(selectedItem.translations, lang);
+              const tr = pickQrMenuItemTranslation(selectedItem.translations, lang);
               return (
                 <>
                   {selectedItem.photoUrl ? (

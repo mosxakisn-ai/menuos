@@ -67,6 +67,47 @@ const EMPTY_ITEM_DETAIL: MenuItemDetailFormValue = {
   dietaryTags: [],
   allergenCodes: [],
 };
+
+type ItemEditSnapshot = {
+  nameGr: string;
+  price: string;
+  photoUrl: string;
+  extrasJson: string;
+  detail: MenuItemDetailFormValue;
+};
+
+function cloneItemDetail(detail: MenuItemDetailFormValue): MenuItemDetailFormValue {
+  return {
+    descriptionGr: detail.descriptionGr,
+    ingredientsGr: detail.ingredientsGr,
+    dietaryTags: [...detail.dietaryTags],
+    allergenCodes: [...detail.allergenCodes],
+  };
+}
+
+function itemDetailEqual(a: MenuItemDetailFormValue, b: MenuItemDetailFormValue): boolean {
+  return (
+    a.descriptionGr.trim() === b.descriptionGr.trim() &&
+    a.ingredientsGr.trim() === b.ingredientsGr.trim() &&
+    JSON.stringify([...a.dietaryTags].sort()) === JSON.stringify([...b.dietaryTags].sort()) &&
+    JSON.stringify([...a.allergenCodes].sort()) === JSON.stringify([...b.allergenCodes].sort())
+  );
+}
+
+function normalizeExtrasForCompare(extras: ItemExtra[]): string {
+  return JSON.stringify(
+    extras
+      .map((e) => ({ ...e, labels: { ...e.labels, GR: e.labels.GR.trim() } }))
+      .filter((e) => e.labels.GR)
+      .map((e) => {
+        const out: ItemExtra = { id: e.id, labels: e.labels };
+        if (e.price != null && Number.isFinite(e.price) && e.price > 0) {
+          out.price = Math.round(e.price * 100) / 100;
+        }
+        return out;
+      }),
+  );
+}
 type Category = {
   id: string;
   translations: Translation[];
@@ -162,6 +203,7 @@ export function MenuEditor({
   const [deletingAllMenus, setDeletingAllMenus] = useState(false);
   const scrollRestoreRef = useRef<number | null>(null);
   const refreshSeqRef = useRef(0);
+  const editSnapshotRef = useRef<ItemEditSnapshot | null>(null);
 
   const restoreScrollAfterRefresh = useCallback(() => {
     const y = scrollRestoreRef.current;
@@ -428,26 +470,40 @@ export function MenuEditor({
         }
         return out;
       });
+    const snapshot = editSnapshotRef.current;
+    const patchBody: Record<string, unknown> = {};
+    const trimmedName = editNameGr.trim();
+    if (trimmedName !== snapshot?.nameGr) patchBody.nameGr = trimmedName;
+    if (price.toString() !== snapshot?.price) patchBody.price = price;
+    if ((editPhotoUrl.trim() || "") !== (snapshot?.photoUrl ?? "")) {
+      patchBody.photoUrl = editPhotoUrl.trim() || "";
+    }
+    if (normalizeExtrasForCompare(extras) !== (snapshot?.extrasJson ?? "")) {
+      patchBody.extras = extras;
+    }
+    if (!itemDetailEqual(editDetail, snapshot?.detail ?? EMPTY_ITEM_DETAIL)) {
+      patchBody.descriptionGr = editDetail.descriptionGr;
+      patchBody.ingredientsGr = editDetail.ingredientsGr;
+      patchBody.dietaryTags = editDetail.dietaryTags;
+      patchBody.allergenCodes = editDetail.allergenCodes;
+    }
+    if (Object.keys(patchBody).length === 0) {
+      setEditingItemId(null);
+      editSnapshotRef.current = null;
+      return;
+    }
     setSavingName(true);
     try {
       const res = await fetch(`/api/items/${itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nameGr: editNameGr.trim(),
-          price,
-          photoUrl: editPhotoUrl.trim() || "",
-          extras,
-          descriptionGr: editDetail.descriptionGr,
-          ingredientsGr: editDetail.ingredientsGr,
-          dietaryTags: editDetail.dietaryTags,
-          allergenCodes: editDetail.allergenCodes,
-        }),
+        body: JSON.stringify(patchBody),
       });
       const data = await res.json();
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
         setEditingItemId(null);
+        editSnapshotRef.current = null;
         await refreshMenus();
       }
     } finally {
@@ -537,12 +593,20 @@ export function MenuEditor({
     setEditPrice(item.price.toString());
     setEditPhotoUrl(item.photoUrl ?? "");
     setEditExtras(parseItemExtras(item.extras));
-    setEditDetail({
+    const detail = {
       descriptionGr: tGrField(item, "description"),
       ingredientsGr: tGrField(item, "ingredients"),
       dietaryTags: parseDietaryTags(item.dietaryTags),
       allergenCodes: parseAllergenCodes(item.allergenCodes),
-    });
+    };
+    setEditDetail(detail);
+    editSnapshotRef.current = {
+      nameGr: tName(item.translations),
+      price: item.price.toString(),
+      photoUrl: item.photoUrl ?? "",
+      extrasJson: normalizeExtrasForCompare(parseItemExtras(item.extras)),
+      detail: cloneItemDetail(detail),
+    };
   }
 
   const activeMenu = menus.find((m) => m.id === activeMenuId) ?? menus[0];

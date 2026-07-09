@@ -10,11 +10,11 @@ export async function upsertItemTranslationTextFields(
     allergensGr?: string;
   },
 ): Promise<void> {
-  const grExists = await prisma.itemTranslation.findUnique({
+  const grRow = await prisma.itemTranslation.findUnique({
     where: { itemId_language: { itemId, language: "GR" } },
-    select: { id: true },
+    select: { id: true, description: true, ingredients: true, allergens: true },
   });
-  if (!grExists) return;
+  if (!grRow) return;
 
   const description =
     fields.descriptionGr !== undefined ? fields.descriptionGr.trim() || null : undefined;
@@ -23,21 +23,28 @@ export async function upsertItemTranslationTextFields(
   const allergens =
     fields.allergensGr !== undefined ? fields.allergensGr.trim() || null : undefined;
 
-  if (description !== undefined || ingredients !== undefined || allergens !== undefined) {
+  const descriptionChanged =
+    description !== undefined && description !== (grRow.description?.trim() || null);
+  const ingredientsChanged =
+    ingredients !== undefined && ingredients !== (grRow.ingredients?.trim() || null);
+  const allergensChanged =
+    allergens !== undefined && allergens !== (grRow.allergens?.trim() || null);
+
+  if (descriptionChanged || ingredientsChanged || allergensChanged) {
     await prisma.itemTranslation.update({
       where: { itemId_language: { itemId, language: "GR" } },
       data: {
-        ...(description !== undefined ? { description } : {}),
-        ...(ingredients !== undefined ? { ingredients } : {}),
-        ...(allergens !== undefined ? { allergens } : {}),
+        ...(descriptionChanged ? { description } : {}),
+        ...(ingredientsChanged ? { ingredients } : {}),
+        ...(allergensChanged ? { allergens } : {}),
       },
     });
   }
 
-  if (fields.descriptionGr === undefined) return;
+  if (!descriptionChanged) return;
 
   let descriptionEn: string | null = null;
-  const trimmed = fields.descriptionGr.trim();
+  const trimmed = fields.descriptionGr?.trim() ?? "";
   if (trimmed) {
     const translated = await translateMenuTextFromGreek(trimmed, ["EN"], 1000);
     descriptionEn = translated.EN ?? null;

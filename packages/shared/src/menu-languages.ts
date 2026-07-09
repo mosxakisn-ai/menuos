@@ -360,6 +360,56 @@ export function pickQrMenuTranslation<T extends { language: string; name?: strin
   return translations.find((t) => t.name?.trim()) ?? translations[0];
 }
 
+export type QrMenuItemTranslationRow = {
+  language: string;
+  name?: string | null;
+  description?: string | null;
+  ingredients?: string | null;
+  allergens?: string | null;
+};
+
+function translationTextField(
+  translations: QrMenuItemTranslationRow[],
+  code: QrMenuLanguage,
+  field: "description" | "ingredients" | "allergens",
+): string | undefined {
+  const hit = translations.find((t) => t.language === code);
+  const val = hit?.[field]?.trim();
+  return val || undefined;
+}
+
+/** Like pickQrMenuTranslation but fills description/ingredients/allergens from EN→GR fallback. */
+export function pickQrMenuItemTranslation(
+  translations: QrMenuItemTranslationRow[],
+  lang: QrMenuLanguage,
+): QrMenuItemTranslationRow | undefined {
+  const base = pickQrMenuTranslation(translations, lang);
+  if (!base) return undefined;
+
+  const picked = base;
+  const fallbackOrder = [
+    lang,
+    ...qrMenuTranslationFallbackOrder(lang).filter((code) => code !== lang),
+  ];
+
+  function fillField(field: "description" | "ingredients" | "allergens"): string | null {
+    const direct = picked[field]?.trim();
+    if (direct) return direct;
+    for (const code of fallbackOrder) {
+      const val = translationTextField(translations, code, field);
+      if (val) return val;
+    }
+    return null;
+  }
+
+  return {
+    ...picked,
+    description: fillField("description"),
+    ingredients: fillField("ingredients"),
+    allergens: fillField("allergens"),
+  };
+}
+
 /** Δημιουργία μεταφράσεων κατηγορίας/πιάτου από φόρμα dashboard. */
 export function buildMenuNameTranslations(
   input: import("./menu-translation-langs").MenuNameFields,
