@@ -38,6 +38,7 @@ import {
 } from "@menuos/shared";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { cn } from "@/lib/utils";
+import { GoogleReviewCard } from "@/components/menu/google-review-card";
 import { ItemLabelBadge, MenuItemCard, MenuItemRow } from "@/components/menu/menu-item-card";
 import { MenuItemTagRow } from "@/components/menu/menu-item-tags";
 import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
@@ -82,6 +83,7 @@ type Venue = {
   primaryColor: string;
   description?: string | null;
   cuisineType?: CuisineType | null;
+  googleReviewUrl?: string | null;
   menus: Menu[];
 };
 
@@ -983,6 +985,12 @@ export function PublicMenuView({
           ))
         )}
       </main>
+
+      {!isEmbedded && venue.googleReviewUrl ? (
+        <section className={cn(shell, "px-4 pb-2 pt-4")}>
+          <GoogleReviewCard url={venue.googleReviewUrl} lang={lang} />
+        </section>
+      ) : null}
 
       {!isEmbedded ? (
       <footer

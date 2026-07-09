@@ -893,6 +893,20 @@ export const DASHBOARD_EN = {
         title: "Venue",
         description: "Name, colours and logo — what guests see on the QR menu.",
       },
+      generalTab: {
+        googleReview: {
+          title: "Google Reviews",
+          description:
+            "Paste your Google Business Profile review link. It appears on the QR menu so guests can leave a review.",
+          urlLabel: "Google review link",
+          urlPlaceholder: "https://g.page/r/... or link from Google Maps",
+          urlHint:
+            "From Google Business → Reviews → “Get more reviews” → copy the link.",
+          clearedHint: "Leave empty to hide it on the QR menu.",
+          save: "Save",
+          saving: "Saving…",
+        },
+      },
       tablesTab: {
         title: "Tables",
         description:

@@ -65,6 +65,7 @@ export async function buildPublicVenuePayload(venue: LoadedVenue) {
     primaryColor: venue.primaryColor,
     description: venue.description,
     cuisineType: venue.cuisineType,
+    googleReviewUrl: venue.googleReviewUrl,
     menus: enrichedMenus.map((menu) => ({
       id: menu.id,
       name: menu.name,

@@ -32,6 +32,7 @@ export type SettingsVenue = {
   logoUrl: string | null;
   primaryColor: string;
   secondaryColor: string;
+  googleReviewUrl?: string | null;
 };
 
 function ColorField({

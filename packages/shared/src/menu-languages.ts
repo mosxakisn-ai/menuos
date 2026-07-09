@@ -132,6 +132,8 @@ export const QR_MENU_UI = {
     removeFromCart: "Αφαίρεση",
     footerDigitalMenu: "Ψηφιακό menu",
     footerHome: "Αρχή menu",
+    googleReviews: "Κριτικές Google",
+    googleReviewsCta: "Πάτα για να αφήσεις κριτική",
   },
   EN: {
     table: (n: string) => `Table ${n}`,
@@ -196,6 +198,8 @@ export const QR_MENU_UI = {
     removeFromCart: "Remove",
     footerDigitalMenu: "Digital menu",
     footerHome: "Menu home",
+    googleReviews: "Google Reviews",
+    googleReviewsCta: "Tap to leave a review",
   },
   DE: {
     table: (n: string) => `Tisch ${n}`,
@@ -260,6 +264,8 @@ export const QR_MENU_UI = {
     removeFromCart: "Entfernen",
     footerDigitalMenu: "Digitale Speisekarte",
     footerHome: "Speisekarten-Start",
+    googleReviews: "Google Bewertungen",
+    googleReviewsCta: "Tippen für eine Bewertung",
   },
   FR: {
     table: (n: string) => `Table ${n}`,
@@ -324,6 +330,8 @@ export const QR_MENU_UI = {
     removeFromCart: "Retirer",
     footerDigitalMenu: "Menu numérique",
     footerHome: "Accueil menu",
+    googleReviews: "Avis Google",
+    googleReviewsCta: "Appuyez pour laisser un avis",
   },
 } as const;
 

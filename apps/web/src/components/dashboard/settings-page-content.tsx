@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { DashboardPage, DashboardPageHeader, dashboardCardClass } from "@/components/dashboard/dashboard-page";
 import { ChangePasswordForm } from "@/components/dashboard/change-password-form";
+import { SettingsGoogleReviewPanel } from "@/components/dashboard/settings-google-review-panel";
 import { type SettingsVenue } from "@/components/dashboard/settings-form";
 import {
   SettingsGeneralExtrasPanel,
@@ -35,6 +36,7 @@ function SettingsGeneralTab({
   showManagerExtras,
   live360Enabled,
   notificationSettings,
+  venues,
 }: {
   email: string;
   name: string;
@@ -42,6 +44,7 @@ function SettingsGeneralTab({
   showManagerExtras: boolean;
   live360Enabled: boolean;
   notificationSettings: OrganizationNotificationSettings;
+  venues: SettingsVenueFull[];
 }) {
   const { d, roleLabel } = useDashboardCopy();
 
@@ -71,6 +74,10 @@ function SettingsGeneralTab({
           </div>
         </div>
       </div>
+
+      {showManagerExtras && venues.length > 0 ? (
+        <SettingsGoogleReviewPanel venues={venues} />
+      ) : null}
 
       {showManagerExtras && live360Enabled ? (
         <SettingsGeneralExtrasPanel initialNotifications={notificationSettings} />
@@ -112,6 +119,7 @@ function SettingsPageBody({
             showManagerExtras={canManageVenue}
             live360Enabled={live360Enabled}
             notificationSettings={notificationSettings}
+            venues={venues}
           />
         );
         break;

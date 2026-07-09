@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeGoogleReviewUrlInput } from "./google-review-url";
 import { CUISINE_TYPES } from "./cuisine-type";
 import { DIETARY_TAGS } from "./item-dietary-tags";
 import { itemExtrasSchema } from "./item-extras";
@@ -264,6 +265,14 @@ export const venueUpdateSchema = z.object({
     .optional(),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  googleReviewUrl: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null) return val;
+      if (typeof val !== "string") return val;
+      return normalizeGoogleReviewUrlInput(val);
+    },
+    z.union([z.string().url().max(2048), z.literal("")]).optional(),
+  ),
 });
 
 export const waiterCallUpdateSchema = z.object({

@@ -907,6 +907,20 @@ export const DASHBOARD_EL = {
         title: "Κατάστημα",
         description: "Όνομα, χρώματα και logo — αυτό βλέπει ο πελάτης στο QR menu.",
       },
+      generalTab: {
+        googleReview: {
+          title: "Κριτικές Google",
+          description:
+            "Βάλε το link του Google Business Profile σου. Θα εμφανίζεται στο QR menu ώστε οι πελάτες να σου αφήσουν κριτική.",
+          urlLabel: "Link Google (κριτικές)",
+          urlPlaceholder: "https://g.page/r/... ή link από Google Maps",
+          urlHint:
+            "Από Google Business → Κριτικές → «Λήψη περισσότερων κριτικών» → αντιγραφή link.",
+          clearedHint: "Άδειο πεδίο = δεν εμφανίζεται στο QR menu.",
+          save: "Αποθήκευση",
+          saving: "Αποθήκευση…",
+        },
+      },
       tablesTab: {
         title: "Τραπέζια",
         description:

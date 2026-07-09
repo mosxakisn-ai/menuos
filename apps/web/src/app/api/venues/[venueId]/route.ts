@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@menuos/db";
-import { venueUpdateSchema } from "@menuos/shared";
+import { venueUpdateSchema, isLikelyGoogleReviewUrl } from "@menuos/shared";
 import { requireActiveSubscription } from "@/lib/api-auth";
 import { canManageVenueSecrets } from "@/lib/dashboard-roles";
 import { getVenueForOrganization } from "@/lib/venue-access";
@@ -49,19 +49,33 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: A.invalidData }, { status: 400 });
   }
 
-  const { logoUrl, ...rest } = parsed.data;
+  const { logoUrl, googleReviewUrl, ...rest } = parsed.data;
+  if (
+    googleReviewUrl &&
+    googleReviewUrl !== "" &&
+    !isLikelyGoogleReviewUrl(googleReviewUrl)
+  ) {
+    return NextResponse.json({ error: A.invalidData }, { status: 400 });
+  }
   const normalizedLogo =
     logoUrl === undefined
       ? undefined
       : logoUrl === "" || logoUrl === null
         ? null
         : normalizeStoredPhotoUrl(logoUrl);
+  const normalizedGoogleReviewUrl =
+    googleReviewUrl === undefined
+      ? undefined
+      : googleReviewUrl === "" || googleReviewUrl === null
+        ? null
+        : googleReviewUrl.trim();
 
   const venue = await prisma.venue.update({
     where: { id: venueId },
     data: {
       ...rest,
       ...(normalizedLogo !== undefined ? { logoUrl: normalizedLogo } : {}),
+      ...(normalizedGoogleReviewUrl !== undefined ? { googleReviewUrl: normalizedGoogleReviewUrl } : {}),
     },
   });
 

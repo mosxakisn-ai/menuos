@@ -26,6 +26,7 @@ export default async function SettingsPage() {
       logoUrl: true,
       primaryColor: true,
       secondaryColor: true,
+      googleReviewUrl: true,
       ...(canManage
         ? {
             staffToken: true,

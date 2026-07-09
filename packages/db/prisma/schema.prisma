@@ -224,9 +224,10 @@ model Venue {
   description    String?
   cuisineType    CuisineType?
   logoUrl        String?
-  primaryColor   String   @default("#2563EB")
-  secondaryColor String   @default("#06B6D4")
-  createdAt      DateTime @default(now())
+  primaryColor      String   @default("#2563EB")
+  secondaryColor    String   @default("#06B6D4")
+  googleReviewUrl   String?
+  createdAt         DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)

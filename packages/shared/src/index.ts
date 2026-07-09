@@ -18,6 +18,7 @@ export const BRAND = {
   warning: "#F39C12",
 } as const;
 
+export * from "./google-review-url";
 export * from "./validation";
 export * from "./plans";
 export * from "./trial";
