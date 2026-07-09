@@ -17,6 +17,7 @@ export type PassSignalDeliveryView = {
   readyAt: string;
   firstSeenAt?: string | null;
   pickedUpAt?: string | null;
+  lastRepushAt?: string | null;
   seenByStaffMemberName?: string | null;
   pickedUpByStaffMemberName?: string | null;
   pushTargetCount?: number | null;
@@ -34,6 +35,15 @@ function ageSeconds(iso: string, nowMs = Date.now()): number {
   const t = Date.parse(iso);
   if (!Number.isFinite(t)) return 0;
   return Math.max(0, Math.round((nowMs - t) / 1000));
+}
+
+/** Stale timer resets after an automatic re-push. */
+function waitingSinceMs(signal: PassSignalDeliveryView): number {
+  const readyMs = Date.parse(signal.readyAt);
+  const repushMs = signal.lastRepushAt ? Date.parse(signal.lastRepushAt) : 0;
+  const base = Number.isFinite(readyMs) ? readyMs : 0;
+  const extra = Number.isFinite(repushMs) ? repushMs : 0;
+  return Math.max(base, extra);
 }
 
 function pushDeliveryLabel(
@@ -76,13 +86,14 @@ export function kdsPassDeliveryStatus(
     signal.pushTargetCount,
     signal.pushFailedCount,
   );
-  const age = ageSeconds(signal.readyAt, nowMs);
+  const age = Math.round((nowMs - waitingSinceMs(signal)) / 1000);
+  const ageClamped = Math.max(0, age);
 
   if (pushLabel === "Δεν παραδόθηκε" || pushLabel === "Χωρίς push") {
     return { label: pushLabel + repushSuffix, tone: "danger" };
   }
 
-  if (age >= PASS_SIGNAL_STALE_WARNING_SECONDS) {
+  if (ageClamped >= PASS_SIGNAL_STALE_WARNING_SECONDS) {
     const base = pushLabel ? `${pushLabel} · δεν απαντήθηκε` : "Δεν απαντήθηκε";
     return { label: base + repushSuffix, tone: "danger" };
   }

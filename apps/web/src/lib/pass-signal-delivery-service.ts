@@ -147,6 +147,7 @@ async function dispatchPassSignalPush(
 
 export async function repushPassSignal(
   signal: PassSignalPushRow & { venueId: string },
+  now = new Date(),
 ): Promise<void> {
   const venue = await prisma.venue.findUnique({
     where: { id: signal.venueId },
@@ -155,16 +156,21 @@ export async function repushPassSignal(
   if (!venue) return;
 
   const expectedRepush = signal.repushCount ?? 0;
-  const stillEligible = await prisma.passSignal.findFirst({
+  const cooldownCutoff = new Date(
+    now.getTime() - PASS_SIGNAL_REPUSH_COOLDOWN_SECONDS * 1000,
+  );
+
+  const claimed = await prisma.passSignal.updateMany({
     where: {
       id: signal.id,
       status: "READY",
       firstSeenAt: null,
       repushCount: expectedRepush,
+      OR: [{ lastRepushAt: null }, { lastRepushAt: { lt: cooldownCutoff } }],
     },
-    select: { id: true },
+    data: { lastRepushAt: now },
   });
-  if (!stillEligible) return;
+  if (claimed.count === 0) return;
 
   let result: PushDispatchResult;
   try {
@@ -176,7 +182,7 @@ export async function repushPassSignal(
 
   if (!repushCountsAsAttempt(result)) return;
 
-  const claimed = await prisma.passSignal.updateMany({
+  const incremented = await prisma.passSignal.updateMany({
     where: {
       id: signal.id,
       status: "READY",
@@ -185,10 +191,9 @@ export async function repushPassSignal(
     },
     data: {
       repushCount: { increment: 1 },
-      lastRepushAt: new Date(),
     },
   });
-  if (claimed.count === 0) return;
+  if (incremented.count === 0) return;
 
   await persistPassSignalPushStats(signal.id, result, { preserveOnFailedRepush: true });
 }

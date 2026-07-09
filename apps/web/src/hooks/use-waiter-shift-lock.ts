@@ -8,6 +8,8 @@ type OrientableScreenOrientation = ScreenOrientation & {
   unlock?: () => void;
 };
 
+const RESTORE_DEBOUNCE_MS = 500;
+
 function getOrientableScreen(): OrientableScreenOrientation | null {
   if (typeof screen === "undefined" || !("orientation" in screen)) return null;
   const orientation = screen.orientation as OrientableScreenOrientation;
@@ -55,6 +57,8 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
   const [fullscreenActive, setFullscreenActive] = useState(false);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const userWantsLockRef = useRef(false);
+  const restoreInFlightRef = useRef(false);
+  const lastRestoreAtRef = useRef(0);
 
   const releaseWakeLock = useCallback(async () => {
     try {
@@ -114,13 +118,26 @@ export function useWaiterShiftLock(): WaiterShiftLockState {
 
   const restoreShiftLock = useCallback(async () => {
     if (!userWantsLockRef.current) return;
-    const gotWakeLock = await acquireWakeLock();
-    if (!gotWakeLock) return;
-    if (!document.fullscreenElement) {
-      await enterFullscreen();
+    const now = Date.now();
+    if (restoreInFlightRef.current || now - lastRestoreAtRef.current < RESTORE_DEBOUNCE_MS) {
+      return;
     }
-    await lockPortraitOrientation();
-    setLocked(true);
+    restoreInFlightRef.current = true;
+    lastRestoreAtRef.current = now;
+    try {
+      const gotWakeLock = await acquireWakeLock();
+      if (!gotWakeLock) {
+        setLocked(false);
+        return;
+      }
+      if (!document.fullscreenElement) {
+        await enterFullscreen();
+      }
+      await lockPortraitOrientation();
+      setLocked(true);
+    } finally {
+      restoreInFlightRef.current = false;
+    }
   }, [acquireWakeLock, enterFullscreen]);
 
   const disable = useCallback(async () => {

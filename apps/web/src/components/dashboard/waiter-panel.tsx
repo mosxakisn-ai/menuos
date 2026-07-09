@@ -119,6 +119,7 @@ export function WaiterPanel({
   const lastWaiterCallAlertIdRef = useRef<string | null>(null);
   const alertedWaiterCallIdsRef = useRef<Set<string>>(new Set());
   const seenAckSentRef = useRef<Set<string>>(new Set());
+  const passSignalsRef = useRef<PassSignal[]>([]);
   zoneFilterIdRef.current = zoneFilterId;
   notificationSettingsRef.current = notificationSettings;
   const { flash, setFlash, showFromResponse } = useFlashMessage();
@@ -169,6 +170,49 @@ export function WaiterPanel({
     return signalZoneId.trim() === alertZoneId;
   }
 
+  const passesEligibleForSeenAck = useCallback((signals: PassSignal[]): PassSignal[] => {
+    if (!passBaselineSetRef.current) return [];
+    const spotInputs = spotsRef.current.map((spot) => ({
+      type: spot.type,
+      label: spot.label,
+    }));
+    const announcementGroups = applyZoneLabelOverrides(
+      groupVenueSpotsByZone(spotInputs),
+      opsConfigRef.current?.zoneLabels,
+    );
+    return signals.filter((signal) => {
+      if (signal.status !== "READY" || signal.firstSeenAt) return false;
+      const signalZone =
+        signal.zoneId?.trim() || zoneIdForWaiterLocationView(signal, announcementGroups);
+      return passAlertAllowedForZone(signalZone);
+    });
+  }, []);
+
+  const sendPassSeenAcks = useCallback(
+    (signals: PassSignal[]) => {
+      const isStaffDevice = Boolean(staffKey || staffViaCookie || staffMember);
+      if (!isStaffDevice || document.visibilityState !== "visible" || signals.length === 0) {
+        return;
+      }
+      const credsForSeen = staffViaCookie ? "include" : "same-origin";
+      for (const signal of signals) {
+        if (seenAckSentRef.current.has(signal.id)) continue;
+        seenAckSentRef.current.add(signal.id);
+        void fetch(`/api/pass-signals/${signal.id}/seen`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: credsForSeen,
+          body: JSON.stringify({
+            ...(staffKey && !staffViaCookie ? { staffKey } : {}),
+          }),
+        }).then((res) => {
+          if (!res.ok) seenAckSentRef.current.delete(signal.id);
+        });
+      }
+    },
+    [staffKey, staffViaCookie, staffMember],
+  );
+
   useEffect(() => {
     function onServiceWorkerMessage(event: MessageEvent) {
       const data = event.data as {
@@ -204,6 +248,15 @@ export function WaiterPanel({
       navigator.serviceWorker?.removeEventListener("message", onServiceWorkerMessage);
     };
   }, []);
+
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (document.visibilityState !== "visible") return;
+      sendPassSeenAcks(passesEligibleForSeenAck(passSignalsRef.current));
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [passesEligibleForSeenAck, sendPassSeenAcks]);
 
   const load = useCallback(async () => {
     if (!venueId) return;
@@ -315,36 +368,17 @@ export function WaiterPanel({
       prevPassIdsRef.current = new Set(newSignals.map((signal) => signal.id));
       passBaselineSetRef.current = true;
       setPassSignals(newSignals);
+      passSignalsRef.current = newSignals;
 
-      const isStaffDevice = Boolean(staffKey || staffViaCookie || staffMember);
-      if (
-        hadPassBaseline &&
-        isStaffDevice &&
-        document.visibilityState === "visible"
-      ) {
-        const credsForSeen = staffViaCookie ? "include" : "same-origin";
-        for (const signal of passesToMarkSeen) {
-          if (signal.status !== "READY" || signal.firstSeenAt || seenAckSentRef.current.has(signal.id)) {
-            continue;
-          }
-          seenAckSentRef.current.add(signal.id);
-          void fetch(`/api/pass-signals/${signal.id}/seen`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: credsForSeen,
-            body: JSON.stringify({
-              ...(staffKey && !staffViaCookie ? { staffKey } : {}),
-            }),
-          }).then((res) => {
-            if (!res.ok) seenAckSentRef.current.delete(signal.id);
-          });
-        }
+      if (hadPassBaseline && document.visibilityState === "visible") {
+        sendPassSeenAcks(passesToMarkSeen);
       }
     } else {
       if (passRes.status === 401) {
         setPassSignals([]);
         prevPassIdsRef.current = new Set();
         passBaselineSetRef.current = false;
+        passSignalsRef.current = [];
       }
       if (callsRes.ok && passRes.status >= 400) {
         const passError = typeof passData.error === "string" ? passData.error : null;
@@ -362,7 +396,7 @@ export function WaiterPanel({
     } else if (managerView && generation === loadGenerationRef.current) {
       setPendingByVenue({});
     }
-  }, [staffKey, staffViaCookie, staffMember, venueId, W.sessionExpired, W.loadFailed, setFlash]);
+  }, [staffKey, staffViaCookie, staffMember, venueId, W.sessionExpired, W.loadFailed, setFlash, sendPassSeenAcks]);
 
   useEffect(() => {
     loadGenerationRef.current += 1;
@@ -380,6 +414,7 @@ export function WaiterPanel({
     lastWaiterCallAlertIdRef.current = null;
     alertedWaiterCallIdsRef.current = new Set();
     seenAckSentRef.current = new Set();
+    passSignalsRef.current = [];
     autoZoneAppliedRef.current = false;
     zoneFilterUserPickedRef.current = false;
     setZoneFilterId("all");

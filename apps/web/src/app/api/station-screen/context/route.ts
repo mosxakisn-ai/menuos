@@ -122,6 +122,7 @@ export async function GET(request: Request) {
       pushSentCount: true,
       pushFailedCount: true,
       repushCount: true,
+      lastRepushAt: true,
       seenByStaffMember: { select: { name: true } },
       pickedUpByStaffMember: { select: { name: true } },
     },

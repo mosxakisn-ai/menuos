@@ -66,4 +66,20 @@ describe("kdsPassDeliveryStatus", () => {
     expect(result.label).toBe("Δεν παραδόθηκε");
     expect(result.tone).toBe("danger");
   });
+
+  it("resets stale timer after repush", () => {
+    const result = kdsPassDeliveryStatus(
+      base({
+        readyAt: new Date(now - (PASS_SIGNAL_STALE_WARNING_SECONDS + 30) * 1000).toISOString(),
+        lastRepushAt: new Date(now - 15_000).toISOString(),
+        pushTargetCount: 2,
+        pushSentCount: 2,
+        pushFailedCount: 0,
+        repushCount: 1,
+      }),
+      now,
+    );
+    expect(result.label).not.toContain("δεν απαντήθηκε");
+    expect(result.tone).toBe("warn");
+  });
 });

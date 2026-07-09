@@ -214,7 +214,7 @@ export async function POST(request: Request) {
         stationScreenLabel: signal.stationScreen?.label ?? null,
         stationDisplayName: stationDisplayLabel(opsConfig, parsed.data.station),
       });
-      pushStaffPassSignal(venueFull, signal, {
+      await pushStaffPassSignal(venueFull, signal, {
         notifyStaffMemberIds: notifyIds && notifyIds.length > 0 ? notifyIds : undefined,
         zoneId: parsed.data.zoneId ?? null,
       });

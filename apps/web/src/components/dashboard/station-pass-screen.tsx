@@ -51,6 +51,7 @@ type ActiveSignal = {
   pushSentCount?: number | null;
   pushFailedCount?: number | null;
   repushCount?: number | null;
+  lastRepushAt?: string | null;
   seenByStaffMemberName?: string | null;
   pickedUpByStaffMemberName?: string | null;
 };
