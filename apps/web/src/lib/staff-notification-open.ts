@@ -72,3 +72,40 @@ export function staffPushNotificationSilent(input: {
   if (input.audioSource === "sw") return input.swBeepPlayed;
   return false;
 }
+
+export type PassAlertDedupInput = {
+  id: string;
+  repushCount?: number | null;
+  lastRepushAt?: string | Date | null;
+};
+
+/** Unique key per pass alert — initial push and each repush get distinct keys. */
+export function passAlertDedupKey(input: PassAlertDedupInput): string {
+  const lastRepush =
+    input.lastRepushAt instanceof Date
+      ? input.lastRepushAt.toISOString()
+      : (input.lastRepushAt ?? "");
+  return `${input.id}:${input.repushCount ?? 0}:${lastRepush}`;
+}
+
+export function passAlertStateSnapshot(input: PassAlertDedupInput): {
+  repushCount: number;
+  lastRepushAt: string;
+} {
+  const lastRepush =
+    input.lastRepushAt instanceof Date
+      ? input.lastRepushAt.toISOString()
+      : (input.lastRepushAt ?? "");
+  return { repushCount: input.repushCount ?? 0, lastRepushAt: lastRepush };
+}
+
+export function isRepushedPassAlert(
+  signal: PassAlertDedupInput,
+  prev: { repushCount: number; lastRepushAt: string } | undefined,
+): boolean {
+  if (!prev) return false;
+  const next = passAlertStateSnapshot(signal);
+  return (
+    next.repushCount > prev.repushCount || next.lastRepushAt !== prev.lastRepushAt
+  );
+}

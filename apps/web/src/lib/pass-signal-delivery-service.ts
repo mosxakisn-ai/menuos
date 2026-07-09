@@ -91,7 +91,9 @@ type PassSignalPushRow = Pick<
   | "sunbedNumber"
   | "zoneId"
   | "message"
-> & { repushCount?: number; notifyStaffMemberIds?: string[] };
+  | "repushCount"
+  | "lastRepushAt"
+> & { notifyStaffMemberIds?: string[] };
 
 function resolveNotifyTargets(
   notifyStaffMemberIds: string[] | null | undefined,
@@ -119,6 +121,12 @@ async function dispatchPassSignalPush(
   const announcement = voiceEnabled
     ? buildPassSignalAnnouncement(signal, { zoneGroups, activeZoneId })
     : undefined;
+  const lastRepushAt =
+    signal.lastRepushAt instanceof Date
+      ? signal.lastRepushAt.toISOString()
+      : signal.lastRepushAt
+        ? String(signal.lastRepushAt)
+        : undefined;
   const payload = JSON.stringify({
     title,
     body,
@@ -128,6 +136,8 @@ async function dispatchPassSignalPush(
     announcement: announcement?.trim() || undefined,
     zoneId: activeZoneId ?? undefined,
     passId: signal.id,
+    repushCount: signal.repushCount ?? 0,
+    lastRepushAt,
     tableNumber: signal.tableNumber ?? undefined,
     roomNumber: signal.roomNumber ?? undefined,
     sunbedNumber: signal.sunbedNumber ?? undefined,
@@ -198,7 +208,7 @@ export async function repushPassSignal(
 
   let result: PushDispatchResult;
   try {
-    result = await dispatchPassSignalPush(venue, signal);
+    result = await dispatchPassSignalPush(venue, { ...signal, lastRepushAt: now });
   } catch (err) {
     console.error("[menuos] pass-signal repush dispatch failed", signal.id, err);
     await revertLastRepushAt();

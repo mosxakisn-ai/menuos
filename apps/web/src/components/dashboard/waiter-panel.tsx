@@ -22,6 +22,11 @@ import { Card } from "@/components/ui/card";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { alertGuestCall, alertPassSignal } from "@/lib/waiter-alert";
 import { isIosDevice } from "@/lib/waiter-device";
+import {
+  isRepushedPassAlert,
+  passAlertDedupKey,
+  passAlertStateSnapshot,
+} from "@/lib/staff-notification-open";
 import { speakGreekLine, speakPassMessage, unlockWaiterAudio } from "@/lib/waiter-voice";
 import type { OrganizationNotificationSettings } from "@menuos/shared";
 import { DEFAULT_ORGANIZATION_NOTIFICATION_SETTINGS } from "@menuos/shared";
@@ -52,6 +57,8 @@ type PassSignal = {
   message?: string | null;
   readyAt?: string;
   firstSeenAt?: string | null;
+  repushCount?: number | null;
+  lastRepushAt?: string | null;
 };
 
 function isMonitorPendingCall(call: WaiterCall): boolean {
@@ -115,7 +122,10 @@ export function WaiterPanel({
   const spotsRef = useRef<VenueSpot[]>([]);
   const opsConfigRef = useRef<ReturnType<typeof useVenueOperationsConfig>["config"]>(undefined);
   const notificationSettingsRef = useRef(notificationSettings);
-  const lastPassAlertIdRef = useRef<string | null>(null);
+  const lastPassAlertKeyRef = useRef<string | null>(null);
+  const prevPassAlertStateRef = useRef(
+    new Map<string, { repushCount: number; lastRepushAt: string }>(),
+  );
   const lastWaiterCallAlertIdRef = useRef<string | null>(null);
   const alertedWaiterCallIdsRef = useRef<Set<string>>(new Set());
   const seenAckSentRef = useRef<Set<string>>(new Set());
@@ -140,8 +150,9 @@ export function WaiterPanel({
     pass: PassSignal,
     announcementGroups: ReturnType<typeof groupVenueSpotsByZone>,
   ) {
-    if (lastPassAlertIdRef.current === pass.id) return;
-    lastPassAlertIdRef.current = pass.id;
+    const alertKey = passAlertDedupKey(pass);
+    if (lastPassAlertKeyRef.current === alertKey) return;
+    lastPassAlertKeyRef.current = alertKey;
     alertPassSignal();
     if (!notificationSettingsRef.current.voiceMessagesEnabled) return;
     const passZoneId =
@@ -237,6 +248,8 @@ export function WaiterPanel({
         announcement?: string;
         voiceEnabled?: boolean;
         passId?: string;
+        repushCount?: number;
+        lastRepushAt?: string;
         zoneId?: string;
         tableNumber?: string;
         roomNumber?: string;
@@ -259,13 +272,16 @@ export function WaiterPanel({
         station: "",
         status: "READY",
         zoneId: data.zoneId ?? null,
+        repushCount: data.repushCount ?? 0,
+        lastRepushAt: data.lastRepushAt ?? null,
         tableNumber: data.tableNumber ?? null,
         roomNumber: data.roomNumber ?? null,
         sunbedNumber: data.sunbedNumber ?? null,
       };
       if (!passAlertAllowedForZone(resolvePassSignalZone(pushPass))) return;
-      if (lastPassAlertIdRef.current === data.passId) return;
-      lastPassAlertIdRef.current = data.passId;
+      const alertKey = passAlertDedupKey(pushPass);
+      if (lastPassAlertKeyRef.current === alertKey) return;
+      lastPassAlertKeyRef.current = alertKey;
       alertPassSignal();
       if (document.visibilityState === "visible") {
         sendPassSeenAcksRef.current([pushPass]);
@@ -364,6 +380,17 @@ export function WaiterPanel({
         const freshPasses = newSignals.filter(
           (signal) => !prevPassIdsRef.current.has(signal.id) && isMonitorPendingPass(signal),
         );
+        const repushedPasses = newSignals.filter(
+          (signal) =>
+            prevPassIdsRef.current.has(signal.id) &&
+            isMonitorPendingPass(signal) &&
+            isRepushedPassAlert(signal, prevPassAlertStateRef.current.get(signal.id)),
+        );
+        const passAlertCandidates = [
+          ...new Map(
+            [...freshPasses, ...repushedPasses].map((signal) => [signal.id, signal]),
+          ).values(),
+        ];
         const loadedSpots = callsRes.ok
           ? ((data.spots ?? []) as VenueSpot[])
           : spotsRef.current;
@@ -379,13 +406,13 @@ export function WaiterPanel({
           assignedZoneIdRef.current ||
           (zoneFilterIdRef.current !== "all" ? zoneFilterIdRef.current : null);
         const alertablePasses = alertZoneId
-          ? freshPasses.filter((signal) => {
+          ? passAlertCandidates.filter((signal) => {
               const signalZone =
                 signal.zoneId?.trim() ||
                 zoneIdForWaiterLocationView(signal, announcementGroups);
               return signalZone === alertZoneId;
             })
-          : freshPasses;
+          : passAlertCandidates;
         passesToMarkSeen = [
           ...new Map(
             [
@@ -407,6 +434,9 @@ export function WaiterPanel({
         }
       }
       prevPassIdsRef.current = new Set(newSignals.map((signal) => signal.id));
+      prevPassAlertStateRef.current = new Map(
+        newSignals.map((signal) => [signal.id, passAlertStateSnapshot(signal)]),
+      );
       passBaselineSetRef.current = true;
       setPassSignals(newSignals);
       passSignalsRef.current = newSignals;
@@ -418,6 +448,7 @@ export function WaiterPanel({
       if (passRes.status === 401) {
         setPassSignals([]);
         prevPassIdsRef.current = new Set();
+        prevPassAlertStateRef.current = new Map();
         passBaselineSetRef.current = false;
         passSignalsRef.current = [];
       }
@@ -449,9 +480,10 @@ export function WaiterPanel({
     prevPendingRef.current = null;
     prevCallsRef.current = [];
     prevPassIdsRef.current = new Set();
+    prevPassAlertStateRef.current = new Map();
     pendingBaselineSetRef.current = false;
     passBaselineSetRef.current = false;
-    lastPassAlertIdRef.current = null;
+    lastPassAlertKeyRef.current = null;
     lastWaiterCallAlertIdRef.current = null;
     alertedWaiterCallIdsRef.current = new Set();
     seenAckSentRef.current = new Set();

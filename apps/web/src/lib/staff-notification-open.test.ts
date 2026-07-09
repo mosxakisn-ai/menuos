@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   clientMatchesNotificationTarget,
+  isRepushedPassAlert,
   isWaiterPanelPathname,
+  passAlertDedupKey,
+  passAlertStateSnapshot,
   pushTagKind,
   resolveNotificationOpenTarget,
   staffPushNotificationSilent,
@@ -103,5 +106,52 @@ describe("staffPushNotificationSilent", () => {
         swBeepPlayed: true,
       }),
     ).toBe(true);
+  });
+});
+
+describe("passAlertDedupKey", () => {
+  it("differs for repush with new lastRepushAt", () => {
+    const initial = passAlertDedupKey({ id: "p1", repushCount: 0, lastRepushAt: null });
+    const repush = passAlertDedupKey({
+      id: "p1",
+      repushCount: 0,
+      lastRepushAt: "2026-07-09T04:00:00.000Z",
+    });
+    expect(initial).not.toBe(repush);
+  });
+
+  it("differs when repushCount increments", () => {
+    const first = passAlertDedupKey({ id: "p1", repushCount: 0, lastRepushAt: null });
+    const second = passAlertDedupKey({
+      id: "p1",
+      repushCount: 1,
+      lastRepushAt: "2026-07-09T04:00:00.000Z",
+    });
+    expect(first).not.toBe(second);
+  });
+});
+
+describe("isRepushedPassAlert", () => {
+  it("detects lastRepushAt change", () => {
+    expect(
+      isRepushedPassAlert(
+        { id: "p1", repushCount: 0, lastRepushAt: "2026-07-09T04:00:00.000Z" },
+        passAlertStateSnapshot({ id: "p1", repushCount: 0, lastRepushAt: null }),
+      ),
+    ).toBe(true);
+  });
+
+  it("ignores unchanged state", () => {
+    const prev = passAlertStateSnapshot({
+      id: "p1",
+      repushCount: 1,
+      lastRepushAt: "2026-07-09T04:00:00.000Z",
+    });
+    expect(
+      isRepushedPassAlert(
+        { id: "p1", repushCount: 1, lastRepushAt: "2026-07-09T04:00:00.000Z" },
+        prev,
+      ),
+    ).toBe(false);
   });
 });

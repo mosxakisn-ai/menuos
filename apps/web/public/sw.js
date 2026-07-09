@@ -1,4 +1,4 @@
-// menuos-sw-v16
+// menuos-sw-v17
 function resolveNotificationTarget(rawUrl) {
   try {
     const absolute = new URL(rawUrl || "/", self.location.origin);
@@ -211,8 +211,7 @@ async function playBeepWavFallback(kind) {
 
 async function playBeepInSw(kind) {
   if (await playBeepWavFallback(kind)) return true;
-  await playBeepWebAudio(kind);
-  return false;
+  return playBeepWebAudio(kind);
 }
 
 async function playAnnouncementInSw(announcement) {
@@ -257,6 +256,8 @@ function postStaffAlertToClient(client, kind, data) {
     client.postMessage({
       type: "MENUOS_PASS_ALERT",
       passId: data.passId,
+      repushCount: data.repushCount ?? 0,
+      lastRepushAt: data.lastRepushAt,
       zoneId: data.zoneId,
       tableNumber: data.tableNumber,
       roomNumber: data.roomNumber,
