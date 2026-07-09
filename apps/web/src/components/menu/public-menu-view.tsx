@@ -989,12 +989,7 @@ export function PublicMenuView({
 
         {venue.googleReviewUrl ? (
           <section className="scroll-mt-24 pt-2" aria-label={ui.googleReviews}>
-            <GoogleReviewCard
-              url={venue.googleReviewUrl}
-              lang={lang}
-              rating={venue.googleReviewRating}
-              reviewCount={venue.googleReviewCount}
-            />
+            <GoogleReviewCard url={venue.googleReviewUrl} lang={lang} />
           </section>
         ) : null}
       </main>

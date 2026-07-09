@@ -897,20 +897,11 @@ export const DASHBOARD_EN = {
         googleReview: {
           title: "Google Reviews",
           description:
-            "Paste your Google Business Profile review link. It appears at the end of the QR menu so guests can leave a review.",
+            "Paste your Google Business review link — it appears at the end of the QR menu.",
           urlLabel: "Google review link",
           urlPlaceholder: "https://g.page/r/... or link from Google Maps",
           urlHint:
-            "From Google Business → Reviews → “Get more reviews” → copy the link.",
-          urlRequiredHint: "Without a link, the card will not appear on the QR menu.",
-          ratingLabel: "Rating (optional)",
-          ratingPlaceholder: "e.g. 4.8",
-          ratingHint: "As shown on Google — for the menu card badge.",
-          countLabel: "Review count (optional)",
-          countPlaceholder: "e.g. 312",
-          countHint: "Optional — shown below the title on the card.",
-          optionalFieldsHint:
-            "Rating and review count are optional — leave empty to hide them on the card.",
+            "Google Business → Reviews → “Get more reviews” → copy the link.",
           save: "Save",
           saving: "Saving…",
         },

@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { DashboardPage, DashboardPageHeader, dashboardCardClass } from "@/components/dashboard/dashboard-page";
 import { ChangePasswordForm } from "@/components/dashboard/change-password-form";
-import { SettingsGoogleReviewPanel } from "@/components/dashboard/settings-google-review-panel";
+import { SettingsGoogleReviewLink } from "@/components/dashboard/settings-google-review-link";
 import { type SettingsVenue } from "@/components/dashboard/settings-form";
 import {
   SettingsGeneralExtrasPanel,
@@ -68,16 +68,22 @@ function SettingsGeneralTab({
         </dl>
 
         <div className="mt-6 border-t border-slate-100 pt-6">
-          <h2 className="text-sm font-semibold text-primary">{d.changePassword.title}</h2>
-          <div className="mt-4 max-w-md">
-            <ChangePasswordForm compact />
+          <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+            <div className="min-w-0 max-w-md">
+              <h2 className="text-sm font-semibold text-primary">{d.changePassword.title}</h2>
+              <div className="mt-4">
+                <ChangePasswordForm compact />
+              </div>
+            </div>
+
+            {showManagerExtras && venues.length > 0 ? (
+              <div className="min-w-0 lg:border-l lg:border-slate-100 lg:pl-8">
+                <SettingsGoogleReviewLink venues={venues} />
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
-
-      {showManagerExtras && venues.length > 0 ? (
-        <SettingsGoogleReviewPanel venues={venues} />
-      ) : null}
 
       {showManagerExtras && live360Enabled ? (
         <SettingsGeneralExtrasPanel initialNotifications={notificationSettings} />
