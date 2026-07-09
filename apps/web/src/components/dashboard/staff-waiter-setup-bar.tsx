@@ -4,8 +4,6 @@ import {
   Check,
   Home,
   Loader2,
-  Lock,
-  LockOpen,
   Share,
   Smartphone,
   Volume2,
@@ -13,7 +11,10 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
-import { WaiterShiftLockControl } from "@/components/dashboard/waiter-shift-lock";
+import {
+  CompactShiftLockButton,
+  WaiterShiftLockControl,
+} from "@/components/dashboard/waiter-shift-lock";
 import { buttonClass } from "@/components/ui/button";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { useWaiterShiftLock } from "@/hooks/use-waiter-shift-lock";
@@ -86,31 +87,6 @@ function ReadinessChip({
   );
 }
 
-function CompactShiftLockButton() {
-  const { d } = useDashboardCopy();
-  const L = d.waiter.shiftLock;
-  const { locked, wakeLockSupported, busy, toggle } = useWaiterShiftLock();
-
-  if (!wakeLockSupported) return null;
-
-  return (
-    <button
-      type="button"
-      onClick={() => void toggle()}
-      disabled={busy}
-      aria-label={locked ? L.unlockButton : L.lockButton}
-      className={cn(
-        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border",
-        locked
-          ? "border-emerald-400 bg-emerald-50 text-emerald-800"
-          : "border-slate-200 bg-white text-brand-navy",
-      )}
-    >
-      {locked ? <LockOpen className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
-    </button>
-  );
-}
-
 export function StaffWaiterSetupBar({
   staffAuth,
   voiceEnabled,
@@ -121,13 +97,14 @@ export function StaffWaiterSetupBar({
   const { d } = useDashboardCopy();
   const s = d.waiter.staffSetup;
   const push = usePushNotifications(staffAuth);
+  const shiftLock = useWaiterShiftLock();
 
   const [installed, setInstalled] = useState(false);
   const [iosSheetOpen, setIosSheetOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installBusy, setInstallBusy] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [setupVerified, setSetupVerified] = useState(false);
+  const [setupVerified, setSetupVerified] = useState(() => readStaffSetupVerified(staffAuth.venueId));
 
   const refreshInstalled = useCallback(() => {
     setInstalled(isStandalonePwa());
@@ -234,6 +211,10 @@ export function StaffWaiterSetupBar({
     );
   }
 
+  if (compactMode && shiftLock.locked) {
+    return <WaiterShiftLockControl compact shiftLock={shiftLock} />;
+  }
+
   if (compactMode) {
     return (
       <div className="flex items-center gap-1.5 rounded-lg border border-emerald-200/80 bg-emerald-50/50 px-2 py-1.5">
@@ -266,7 +247,7 @@ export function StaffWaiterSetupBar({
             <Volume2 className="h-3.5 w-3.5" />
           )}
         </button>
-        <CompactShiftLockButton />
+        <CompactShiftLockButton shiftLock={shiftLock} />
       </div>
     );
   }
@@ -371,7 +352,7 @@ export function StaffWaiterSetupBar({
         </div>
       ) : null}
 
-      {!compactMode ? <WaiterShiftLockControl compact /> : null}
+      {!compactMode ? <WaiterShiftLockControl compact shiftLock={shiftLock} /> : null}
 
       {iosSheetOpen ? (
         <div

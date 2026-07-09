@@ -3,13 +3,19 @@
 import { Lock, LockOpen, Smartphone } from "lucide-react";
 import { useDashboardCopy } from "@/components/dashboard/dashboard-locale-provider";
 import { buttonClass } from "@/components/ui/button";
-import { useWaiterShiftLock } from "@/hooks/use-waiter-shift-lock";
+import type { WaiterShiftLockState } from "@/hooks/use-waiter-shift-lock";
 import { cn } from "@/lib/utils";
 
-export function WaiterShiftLockControl({ compact = false }: { compact?: boolean }) {
+export function WaiterShiftLockControl({
+  compact = false,
+  shiftLock,
+}: {
+  compact?: boolean;
+  shiftLock: WaiterShiftLockState;
+}) {
   const { d } = useDashboardCopy();
   const L = d.waiter.shiftLock;
-  const { locked, wakeLockSupported, fullscreenActive, busy, toggle } = useWaiterShiftLock();
+  const { locked, wakeLockSupported, fullscreenActive, busy, toggle } = shiftLock;
 
   if (compact && !locked && wakeLockSupported) {
     return (
@@ -101,5 +107,30 @@ export function WaiterShiftLockControl({ compact = false }: { compact?: boolean 
         </div>
       )}
     </div>
+  );
+}
+
+export function CompactShiftLockButton({ shiftLock }: { shiftLock: WaiterShiftLockState }) {
+  const { d } = useDashboardCopy();
+  const L = d.waiter.shiftLock;
+  const { locked, wakeLockSupported, busy, toggle } = shiftLock;
+
+  if (!wakeLockSupported) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => void toggle()}
+      disabled={busy}
+      aria-label={locked ? L.unlockButton : L.lockButton}
+      className={cn(
+        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border",
+        locked
+          ? "border-emerald-400 bg-emerald-50 text-emerald-800"
+          : "border-slate-200 bg-white text-brand-navy",
+      )}
+    >
+      {locked ? <LockOpen className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+    </button>
   );
 }
