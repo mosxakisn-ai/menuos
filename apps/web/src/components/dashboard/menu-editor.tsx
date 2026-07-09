@@ -3,7 +3,7 @@
 import { ExternalLink, FileUp, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
+import { ITEM_LABEL_OPTIONS, ITEM_LABEL_STYLES, isItemLabel, newItemExtraId, parseAllergenCodes, parseDietaryTags, parseItemExtras, type ItemExtra, type ItemLabel } from "@menuos/shared";
 import { LoadingSkeleton, LoadingState } from "@/components/ui/loading-state";
 import { panelPhotoDisplayUrl } from "@/lib/photo-display-url";
 import { FlashMessages, useFlashMessage } from "@/components/dashboard/flash-message";
@@ -15,6 +15,10 @@ import {
   dashboardLabelClass,
 } from "@/components/dashboard/dashboard-page";
 import { PhotoUploadField } from "@/components/dashboard/photo-upload-field";
+import {
+  MenuItemDetailFields,
+  type MenuItemDetailFormValue,
+} from "@/components/dashboard/menu-item-detail-fields";
 import { ProFeatureLink } from "@/components/dashboard/pro-feature-link";
 import { PlanLimitHint } from "@/components/dashboard/plan-limit-hint";
 import { usePlanLimits } from "@/components/dashboard/plan-limits-provider";
@@ -38,15 +42,30 @@ import {
 } from "@/lib/dashboard-plan-limits";
 import { cn } from "@/lib/utils";
 
-type Translation = { language: string; name: string; description?: string | null };
+type Translation = {
+  language: string;
+  name: string;
+  description?: string | null;
+  ingredients?: string | null;
+  allergens?: string | null;
+};
 type Item = {
   id: string;
   price: { toString(): string };
   available: boolean;
   label: string | null;
   photoUrl: string | null;
+  dietaryTags?: unknown;
+  allergenCodes?: unknown;
   extras?: unknown;
   translations: Translation[];
+};
+
+const EMPTY_ITEM_DETAIL: MenuItemDetailFormValue = {
+  descriptionGr: "",
+  ingredientsGr: "",
+  dietaryTags: [],
+  allergenCodes: [],
 };
 type Category = {
   id: string;
@@ -121,9 +140,9 @@ export function MenuEditor({
   const [itemForm, setItemForm] = useState({
     nameGr: "",
     price: "",
-    descriptionGr: "",
     label: "" as "" | ItemLabel,
     photoUrl: "",
+    ...EMPTY_ITEM_DETAIL,
   });
   const [addingItem, setAddingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -133,6 +152,7 @@ export function MenuEditor({
   const [editPrice, setEditPrice] = useState("");
   const [editPhotoUrl, setEditPhotoUrl] = useState("");
   const [editExtras, setEditExtras] = useState<ItemExtra[]>([]);
+  const [editDetail, setEditDetail] = useState<MenuItemDetailFormValue>(EMPTY_ITEM_DETAIL);
   const [savingName, setSavingName] = useState(false);
   const [savingCategory, setSavingCategory] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string>("");
@@ -270,6 +290,9 @@ export function MenuEditor({
           nameGr: itemForm.nameGr.trim(),
           price,
           descriptionGr: itemForm.descriptionGr.trim() || undefined,
+          ingredientsGr: itemForm.ingredientsGr.trim() || undefined,
+          dietaryTags: itemForm.dietaryTags.length ? itemForm.dietaryTags : undefined,
+          allergenCodes: itemForm.allergenCodes.length ? itemForm.allergenCodes : undefined,
           label: itemForm.label || undefined,
           photoUrl: itemForm.photoUrl.trim() || undefined,
         }),
@@ -277,7 +300,7 @@ export function MenuEditor({
       const data = await res.json();
       showFromResponse(data, res.ok, res.status);
       if (res.ok) {
-        setItemForm({ nameGr: "", price: "", descriptionGr: "", label: "", photoUrl: "" });
+        setItemForm({ nameGr: "", price: "", label: "", photoUrl: "", ...EMPTY_ITEM_DETAIL });
         setItemCategoryId(null);
         setItemCountLive((n) => (n ?? planLimitsBase?.itemCount ?? 0) + 1);
         await refreshMenus();
@@ -415,6 +438,10 @@ export function MenuEditor({
           price,
           photoUrl: editPhotoUrl.trim() || "",
           extras,
+          descriptionGr: editDetail.descriptionGr,
+          ingredientsGr: editDetail.ingredientsGr,
+          dietaryTags: editDetail.dietaryTags,
+          allergenCodes: editDetail.allergenCodes,
         }),
       });
       const data = await res.json();
@@ -468,6 +495,10 @@ export function MenuEditor({
     return translations.find((t) => t.language === "GR")?.name ?? translations[0]?.name ?? "—";
   }
 
+  function tGrField(item: Item, field: "description" | "ingredients") {
+    return item.translations.find((t) => t.language === "GR")?.[field]?.trim() ?? "";
+  }
+
   function startEditingCategory(cat: Category) {
     setEditingItemId(null);
     setItemCategoryId(null);
@@ -506,6 +537,12 @@ export function MenuEditor({
     setEditPrice(item.price.toString());
     setEditPhotoUrl(item.photoUrl ?? "");
     setEditExtras(parseItemExtras(item.extras));
+    setEditDetail({
+      descriptionGr: tGrField(item, "description"),
+      ingredientsGr: tGrField(item, "ingredients"),
+      dietaryTags: parseDietaryTags(item.dietaryTags),
+      allergenCodes: parseAllergenCodes(item.allergenCodes),
+    });
   }
 
   const activeMenu = menus.find((m) => m.id === activeMenuId) ?? menus[0];
@@ -937,6 +974,11 @@ export function MenuEditor({
                                     <span className="text-xs text-slate-500">{d.menuEditor.qrExtrasCount(extrasCount)}</span>
                                   ) : null}
                                 </div>
+                                {tGrField(item, "description") ? (
+                                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
+                                    {tGrField(item, "description")}
+                                  </p>
+                                ) : null}
                               </>
                             )}
                           </div>
@@ -986,6 +1028,7 @@ export function MenuEditor({
 
                         {isEditing ? (
                           <div className="space-y-3 border-t border-slate-100 bg-slate-50/40 px-3 py-4 sm:px-4">
+                            <MenuItemDetailFields value={editDetail} onChange={setEditDetail} />
                             <PhotoUploadField value={editPhotoUrl} onChange={setEditPhotoUrl} />
                             <div className="space-y-2 rounded-lg border border-slate-200/80 bg-white p-3">
                               <p className="text-xs font-semibold text-brand-navy">{d.menuEditor.qrExtrasTitle}</p>
@@ -1085,12 +1128,12 @@ export function MenuEditor({
                         onChange={(e) => setItemForm((f) => ({ ...f, price: e.target.value }))}
                         className={dashboardInputClass}
                       />
-                      <input
-                        placeholder={FORM_PLACEHOLDERS.itemDescription}
-                        value={itemForm.descriptionGr}
-                        onChange={(e) => setItemForm((f) => ({ ...f, descriptionGr: e.target.value }))}
-                        className={`${dashboardInputClass} sm:col-span-2`}
-                      />
+                      <div className="sm:col-span-2">
+                        <MenuItemDetailFields
+                          value={itemForm}
+                          onChange={(next) => setItemForm((f) => ({ ...f, ...next }))}
+                        />
+                      </div>
                       <PhotoUploadField
                         value={itemForm.photoUrl}
                         onChange={(url) => setItemForm((f) => ({ ...f, photoUrl: url }))}

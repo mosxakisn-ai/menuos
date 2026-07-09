@@ -201,7 +201,39 @@ export const categoryPatchSchema = z
   })
   .refine((d) => Object.values(d).some((v) => v !== undefined), { message: "Nothing to update" });
 
-export const itemLabelSchema = z.enum(["OFFER", "BEST", "NEW"]).nullable();
+export const itemLabelSchema = z
+  .enum(["OFFER", "BEST", "NEW", "CHEF", "SEASONAL", "RECOMMENDED"])
+  .nullable();
+
+export const dietaryTagSchema = z.enum([
+  "VEGETARIAN",
+  "VEGAN",
+  "GLUTEN_FREE",
+  "DAIRY_FREE",
+  "SPICY",
+  "HALAL",
+  "KIDS",
+]);
+
+export const allergenCodeSchema = z.enum([
+  "GLUTEN",
+  "MILK",
+  "EGGS",
+  "FISH",
+  "CRUSTACEANS",
+  "PEANUTS",
+  "SOY",
+  "NUTS",
+  "CELERY",
+  "MUSTARD",
+  "SESAME",
+  "SULPHITES",
+  "LUPIN",
+  "MOLLUSCS",
+]);
+
+export const dietaryTagsSchema = z.array(dietaryTagSchema).max(6);
+export const allergenCodesSchema = z.array(allergenCodeSchema).max(14);
 
 export const itemCreateSchema = z.object({
   categoryId: z.string().min(1),
@@ -216,6 +248,8 @@ export const itemCreateSchema = z.object({
   descriptionEn: z.string().max(1000).optional(),
   ingredientsGr: z.string().max(500).optional(),
   allergensGr: z.string().max(500).optional(),
+  dietaryTags: dietaryTagsSchema.optional(),
+  allergenCodes: allergenCodesSchema.optional(),
   available: z.boolean().optional(),
   extras: itemExtrasSchema.optional(),
 });
@@ -295,6 +329,11 @@ export const itemPatchSchema = z
     nameGr: z.string().min(1).max(120).optional(),
     ...optionalTranslatedMenuNameFields,
     extras: itemExtrasSchema.optional(),
+    descriptionGr: z.string().max(1000).optional(),
+    ingredientsGr: z.string().max(500).optional(),
+    allergensGr: z.string().max(500).optional(),
+    dietaryTags: dietaryTagsSchema.optional(),
+    allergenCodes: allergenCodesSchema.optional(),
   })
   .refine((d) => Object.values(d).some((v) => v !== undefined), { message: "Nothing to update" });
 

@@ -68,6 +68,9 @@ enum ItemLabel {
   OFFER
   BEST
   NEW
+  CHEF
+  SEASONAL
+  RECOMMENDED
 }
 
 enum VenueSpotType {
@@ -335,8 +338,10 @@ model Item {
   categoryId String
   price      Decimal    @db.Decimal(10, 2)
   photoUrl   String?
-  label      ItemLabel?
-  available  Boolean    @default(true)
+  label         ItemLabel?
+  dietaryTags   Json?
+  allergenCodes Json?
+  available     Boolean    @default(true)
   extras     Json?
   sortOrder  Int        @default(0)
   createdAt  DateTime   @default(now())

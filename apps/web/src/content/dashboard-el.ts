@@ -1471,6 +1471,15 @@ export const DASHBOARD_EL = {
     extraChargePlaceholder: "Extra χρέωση (προαιρετικό)",
     addExtraOption: "Προσθήκη επιλογής",
     cancel: "Ακύρωση",
+    itemDescription: "Περιγραφή πιάτου",
+    itemDescriptionHint:
+      "Εμφανίζεται στην κάρτα QR (1–2 γραμμές). Αν μείνει κενό, η κάρτα δείχνει μόνο όνομα και τιμή — δεν χαλάει η διάταξη.",
+    itemIngredients: "Συστατικά (προαιρετικό)",
+    itemIngredientsPlaceholder: "π.χ. ντομάτα, αγγούρι, ελαιόλαδο, φέτα",
+    dietaryTagsTitle: "Διατροφικές ετικέτες",
+    dietaryTagsHint: "Εμφανίζονται ως μικρές ετικέτες κάτω από την περιγραφή στο QR menu.",
+    allergenCodesTitle: "Αλλεργιογόνα",
+    allergenCodesHint: "Επίλεξε όσα περιέχει το πιάτο — εμφανίζονται στο QR menu.",
   },
   flash: {
     close: "Κλείσιμο",

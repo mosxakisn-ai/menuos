@@ -79,6 +79,8 @@ export async function buildPublicVenuePayload(venue: LoadedVenue) {
             price: item.price,
             photoUrl: appendPhotoSignature(item.photoUrl as string | null),
             label: item.label as string | null,
+            dietaryTags: item.dietaryTags,
+            allergenCodes: item.allergenCodes,
             extras: item.extras,
             translations: mapItemTranslations(item.translations),
           })),

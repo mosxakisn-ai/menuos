@@ -60,6 +60,8 @@ export async function POST(request: Request) {
           price: parsed.data.price,
           label: parsed.data.label ?? null,
           photoUrl: normalizeStoredPhotoUrl(parsed.data.photoUrl),
+          dietaryTags: parsed.data.dietaryTags?.length ? parsed.data.dietaryTags : [],
+          allergenCodes: parsed.data.allergenCodes?.length ? parsed.data.allergenCodes : [],
           available: parsed.data.available ?? true,
           sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
           extras: parsed.data.extras?.length ? parsed.data.extras : undefined,

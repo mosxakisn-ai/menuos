@@ -22,6 +22,8 @@ export * from "./validation";
 export * from "./plans";
 export * from "./trial";
 export * from "./item-labels";
+export * from "./item-dietary-tags";
+export * from "./item-allergen-codes";
 export * from "./menu-languages";
 export * from "./menu-auto-translate";
 export * from "./menu-translation-langs";

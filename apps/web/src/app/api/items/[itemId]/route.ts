@@ -11,6 +11,7 @@ import {
   patchProvidedAnyTranslatedName,
   upsertEntityNameTranslation,
 } from "@/lib/menu-name-upsert";
+import { upsertItemTranslationTextFields } from "@/lib/upsert-item-translation-fields";
 
 type Params = { params: Promise<{ itemId: string }> };
 
@@ -53,7 +54,20 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: catalogEntry.invalidData }, { status: 400 });
   }
 
-  const { available, price, label, photoUrl, extras, nameGr, ...namePatch } = parsed.data;
+  const {
+    available,
+    price,
+    label,
+    photoUrl,
+    extras,
+    nameGr,
+    descriptionGr,
+    ingredientsGr,
+    allergensGr,
+    dietaryTags,
+    allergenCodes,
+    ...namePatch
+  } = parsed.data;
 
   if (nameGr !== undefined) {
     const filled = await autoFillMenuNames({ nameGr, ...namePatch });
@@ -66,6 +80,18 @@ export async function PATCH(request: Request, { params }: Params) {
       (language, name) => upsertItemName(itemId, language, name),
       { nameGr: "", ...namePatch },
     );
+  }
+
+  if (
+    descriptionGr !== undefined ||
+    ingredientsGr !== undefined ||
+    allergensGr !== undefined
+  ) {
+    await upsertItemTranslationTextFields(itemId, {
+      descriptionGr,
+      ingredientsGr,
+      allergensGr,
+    });
   }
 
   const normalizedPhoto =
@@ -86,6 +112,8 @@ export async function PATCH(request: Request, { params }: Params) {
       ...(label !== undefined ? { label } : {}),
       ...(normalizedPhoto !== undefined ? { photoUrl: normalizedPhoto } : {}),
       ...(normalizedExtras !== undefined ? { extras: normalizedExtras } : {}),
+      ...(dietaryTags !== undefined ? { dietaryTags } : {}),
+      ...(allergenCodes !== undefined ? { allergenCodes } : {}),
     },
   });
 

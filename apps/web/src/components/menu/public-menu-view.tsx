@@ -28,6 +28,8 @@ import {
   formatExtraPriceSuffix,
   updateCartLineQty,
   isItemLabel,
+  parseAllergenCodes,
+  parseDietaryTags,
   type OrderLine,
   type OrderPayload,
   type QrMenuLanguage,
@@ -36,6 +38,7 @@ import {
 import { LogoMark } from "@/components/brand/logo-mark";
 import { cn } from "@/lib/utils";
 import { ItemLabelBadge, MenuItemCard, MenuItemRow } from "@/components/menu/menu-item-card";
+import { MenuItemTagRow } from "@/components/menu/menu-item-tags";
 import { MenuItemPhotoPlaceholder } from "@/components/menu/menu-item-photo-placeholder";
 import { optimizeMenuCardPhotoUrl, optimizeMenuLogoUrl } from "@/lib/menu-photo-url";
 
@@ -52,6 +55,8 @@ type Item = {
   price: { toString(): string };
   photoUrl: string | null;
   label: string | null;
+  dietaryTags?: unknown;
+  allergenCodes?: unknown;
   extras?: unknown;
   translations: Translation[];
 };
@@ -935,6 +940,8 @@ export function PublicMenuView({
                               description={tr?.description}
                               price={item.price.toString()}
                               label={item.label}
+                              dietaryTags={item.dietaryTags}
+                              allergenCodes={item.allergenCodes}
                               lang={lang}
                               onClick={() => setSelectedItem(item)}
                             />
@@ -959,6 +966,8 @@ export function PublicMenuView({
                                   : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 240px"
                               }
                               label={item.label}
+                              dietaryTags={item.dietaryTags}
+                              allergenCodes={item.allergenCodes}
                               lang={lang}
                               onClick={() => setSelectedItem(item)}
                             />
@@ -1284,6 +1293,13 @@ export function PublicMenuView({
                   {tr?.description ? (
                     <p className="mt-4 text-sm leading-relaxed text-slate-600">{tr.description}</p>
                   ) : null}
+                  <MenuItemTagRow
+                    dietaryTags={parseDietaryTags(selectedItem.dietaryTags)}
+                    allergenCodes={parseAllergenCodes(selectedItem.allergenCodes)}
+                    lang={lang}
+                    maxAllergens={14}
+                    className="mt-3"
+                  />
                   {tr?.ingredients ? (
                     <p className="mt-3 text-xs text-slate-500">
                       <span className="font-semibold">{ui.ingredients}:</span> {tr.ingredients}

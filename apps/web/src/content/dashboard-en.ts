@@ -1454,6 +1454,15 @@ export const DASHBOARD_EN = {
     extraChargePlaceholder: "Extra charge (optional)",
     addExtraOption: "Add option",
     cancel: "Cancel",
+    itemDescription: "Dish description",
+    itemDescriptionHint:
+      "Shown on the QR card (1–2 lines). Leave empty to show name and price only — the layout stays clean.",
+    itemIngredients: "Ingredients (optional)",
+    itemIngredientsPlaceholder: "e.g. tomato, cucumber, olive oil, feta",
+    dietaryTagsTitle: "Dietary labels",
+    dietaryTagsHint: "Shown as small tags below the description on the QR menu.",
+    allergenCodesTitle: "Allergens",
+    allergenCodesHint: "Select all that apply — shown on the QR menu.",
   },
   flash: {
     close: "Close",
