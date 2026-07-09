@@ -539,7 +539,7 @@ export const DASHBOARD_EL = {
       iosInstallTitle: "Προσθήκη στην Αρχική",
       iosStep1: "Πάτα το κουμπί Κοινοποίηση (κάτω στη μέση).",
       iosStep2: "Διάλεξε «Προσθήκη στην Αρχική οθόνη».",
-      iosStep3: "Άνοιξε το MenuOS από το εικονίδιο — όχι από tab Safari.",
+      iosStep3: "Άνοιξε από το εικονίδιο — θα ανοίξει αυτή η σελίδα σερβιτόρου, όχι η αρχική του site.",
       iosClose: "Κατάλαβα",
       inAppWarning: "Άνοιξε σε Chrome ή Safari — όχι από Messenger ή Instagram.",
       pushDenied: "Οι ειδοποιήσεις αποκλείστηκαν — άλλαξέ το από τις ρυθμίσεις του κινητού.",

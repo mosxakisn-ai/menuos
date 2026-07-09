@@ -527,7 +527,7 @@ export const DASHBOARD_EN = {
       iosInstallTitle: "Add to Home Screen",
       iosStep1: "Tap the Share button (bottom centre).",
       iosStep2: "Choose “Add to Home Screen”.",
-      iosStep3: "Open MenuOS from the icon — not from a Safari tab.",
+      iosStep3: "Open from the icon — it opens this waiter page, not the marketing homepage.",
       iosClose: "Got it",
       inAppWarning: "Open in Chrome or Safari — not from Messenger or Instagram.",
       pushDenied: "Notifications were blocked — change it in your phone settings.",
