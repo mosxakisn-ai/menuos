@@ -41,14 +41,22 @@ function persistLang(lang: DashboardLang) {
 
 export function DashboardLocaleProvider({
   initialLang,
+  fixedLang,
   children,
 }: {
   initialLang: DashboardLang;
+  /** Staff screens: always GR — ignore phone browser/localStorage EN defaults. */
+  fixedLang?: DashboardLang;
   children: ReactNode;
 }) {
-  const [lang, setLangState] = useState<DashboardLang>(initialLang);
+  const resolvedInitial = fixedLang ?? initialLang;
+  const [lang, setLangState] = useState<DashboardLang>(resolvedInitial);
 
   useEffect(() => {
+    if (fixedLang) {
+      setLangState(fixedLang);
+      return;
+    }
     try {
       const cookieMatch = document.cookie.match(
         new RegExp(`${DASHBOARD_LANG_COOKIE}=([^;]+)`),
@@ -61,7 +69,7 @@ export function DashboardLocaleProvider({
     } catch {
       /* ignore */
     }
-  }, [initialLang]);
+  }, [initialLang, fixedLang]);
 
   const setLang = useCallback((next: DashboardLang) => {
     setLangState(next);

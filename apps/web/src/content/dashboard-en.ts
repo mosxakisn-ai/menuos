@@ -580,7 +580,7 @@ export const DASHBOARD_EN = {
     passEmpty: "No active pass notifications.",
     passCount: (n: number) => `${n} pass`,
     passNewMessage: "New message",
-    passPickedUp: "OK",
+    passPickedUp: "I saw it",
     passDelivered: "Done",
     passStatus: {
       READY: "Ready",
