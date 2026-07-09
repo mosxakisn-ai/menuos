@@ -106,6 +106,24 @@ function pickPrimaryOrgUser<T extends { role: string; createdAt: Date }>(users: 
   );
 }
 
+function isStripePaidSubscription(sub: {
+  plan: string;
+  status: string;
+  trialEndsAt: Date | null;
+  stripeSubId: string | null;
+}): boolean {
+  return (
+    Boolean(sub.stripeSubId) &&
+    sub.status === "ACTIVE" &&
+    sub.plan !== "TRIAL" &&
+    organizationHasPaidPlan({
+      plan: sub.plan,
+      status: sub.status,
+      trialEndsAt: sub.trialEndsAt,
+    })
+  );
+}
+
 function addCalendarMonths(from: Date, months: number): Date {
   const result = new Date(from);
   const day = result.getDate();
@@ -216,7 +234,13 @@ export async function getSupervisorOverview(): Promise<SupervisorOverview> {
       select: { id: true, createdAt: true },
     }),
     prisma.subscription.findMany({
-      select: { organizationId: true, plan: true, status: true, trialEndsAt: true },
+      select: {
+        organizationId: true,
+        plan: true,
+        status: true,
+        trialEndsAt: true,
+        stripeSubId: true,
+      },
     }),
     prisma.venue.count({ where: excludeDemo }),
     prisma.item.count({
@@ -247,11 +271,12 @@ export async function getSupervisorOverview(): Promise<SupervisorOverview> {
       status: sub.status,
       trialEndsAt: sub.trialEndsAt,
     });
+    const stripePaid = isStripePaidSubscription(sub);
 
     if (sub.status === "CANCELED") canceled += 1;
     else if (sub.status === "PAST_DUE") pastDue += 1;
     else if (sub.plan === "TRIAL" && active) trialActive += 1;
-    else if (active && sub.plan !== "TRIAL") {
+    else if (stripePaid) {
       paidActive += 1;
       const price = planPrices[sub.plan] ?? 0;
       estimatedMrr += price;

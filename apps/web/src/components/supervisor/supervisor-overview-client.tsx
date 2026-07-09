@@ -199,17 +199,11 @@ export function SupervisorOverviewClient() {
             <p className="mt-2 font-serif text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">
               {loading ? "…" : `€${(data?.estimatedMrr ?? 0).toFixed(2)}`}
             </p>
-            <p className="mt-2 text-sm text-slate-300">MRR από ενεργές πληρωμένες συνδρομές</p>
+            <p className="mt-2 text-sm text-slate-300">MRR από ενεργές συνδρομές μέσω Stripe</p>
           </div>
-          <div className="flex gap-6 sm:text-right">
-            <div>
-              <p className="text-2xl font-bold tabular-nums">{loading ? "…" : data?.paidActive ?? 0}</p>
-              <p className="text-xs text-slate-400">Πληρωμένες</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold tabular-nums">{loading ? "…" : data?.organizationsReal ?? 0}</p>
-              <p className="text-xs text-slate-400">Πελάτες</p>
-            </div>
+          <div className="sm:text-right">
+            <p className="text-2xl font-bold tabular-nums">{loading ? "…" : data?.paidActive ?? 0}</p>
+            <p className="text-xs text-slate-400">Πληρωμένες (Stripe)</p>
           </div>
         </div>
       </Card>
@@ -272,7 +266,7 @@ export function SupervisorOverviewClient() {
               tone="border-amber-100 bg-amber-50/80"
             />
             <StatusPill
-              label="Πληρωμένες"
+              label="Πληρωμένες (Stripe)"
               value={data?.paidActive ?? 0}
               tone="border-emerald-100 bg-emerald-50/80"
             />
