@@ -1476,7 +1476,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
             <WaitingSignalsStrip
               signals={zoneFilteredSignals}
               zoneGroups={zoneGroups}
-              activeZoneId={activeZoneId}
+              activeZoneId={activeZoneId ?? null}
               activeZone={activeZone}
               table={table}
               cancellingId={cancellingId}

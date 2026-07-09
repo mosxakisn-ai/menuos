@@ -575,8 +575,8 @@ export const DASHBOARD_EL = {
     passEmpty: "Καμία ενεργή ειδοποίηση πάσου.",
     passCount: (n: number) => `${n} πάσο`,
     passNewMessage: "Νέο μήνυμα",
-    passPickedUp: "OK",
-    passDelivered: "Έτοιμο",
+    passPickedUp: "Το είδα",
+    passDelivered: "Έγινε",
     passStatus: {
       READY: "Έτοιμο",
       PICKED_UP: "Σε εξέλιξη",
