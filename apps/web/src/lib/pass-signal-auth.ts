@@ -141,12 +141,14 @@ export function buildStationScreenUrl(
   path: "/kds" | "/bds" | "/cold" | "/dessert",
   slug: string,
   screenToken: string,
-  opts?: { allPosts?: boolean },
+  opts?: { allPosts?: boolean; staffKey?: string },
 ): string {
   const base = process.env.APP_URL?.replace(/\/$/, "") ?? "https://menuos.gr";
   const url = new URL(path, base);
   url.searchParams.set("venueSlug", slug);
   url.searchParams.set("key", screenToken);
   if (opts?.allPosts) url.searchParams.set("allPosts", "1");
+  const staffKey = opts?.staffKey?.trim();
+  if (staffKey) url.searchParams.set("staffKey", staffKey);
   return url.toString();
 }

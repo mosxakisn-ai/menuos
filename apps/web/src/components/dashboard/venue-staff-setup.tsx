@@ -166,6 +166,7 @@ function memberAccessLink(
         kind: "pass",
         url: buildStationScreenShareUrl(picked.station, venueSlug, picked.screenToken, {
           allPosts: assignment === "pass-all",
+          staffKey: member.memberToken,
         }),
         station: picked.station,
       };

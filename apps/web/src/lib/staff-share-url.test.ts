@@ -33,4 +33,12 @@ describe("buildStationScreenShareUrl", () => {
       "https://menuos.gr/kds?venueSlug=hellas-taverna&key=screen-token-1",
     );
   });
+
+  it("builds kitchen tablet URL with staff key", () => {
+    expect(
+      buildStationScreenShareUrl("kitchen", "hellas-taverna", "screen-token-1", {
+        staffKey: "member-abc",
+      }),
+    ).toBe("https://menuos.gr/kds?venueSlug=hellas-taverna&key=screen-token-1&staffKey=member-abc");
+  });
 });

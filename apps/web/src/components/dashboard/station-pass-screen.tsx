@@ -84,6 +84,7 @@ type ScreenContext = {
   zoneLabels?: Record<string, string>;
   activeSignals?: ActiveSignal[];
   todayCount?: number;
+  staffMemberName?: string | null;
 };
 
 const COPY = {
@@ -1080,6 +1081,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
   const searchParams = useSearchParams();
   const venueSlug = searchParams.get("venueSlug")?.trim() ?? "";
   const stationKey = searchParams.get("key")?.trim() ?? "";
+  const staffKey = searchParams.get("staffKey")?.trim() ?? "";
   const allPostsMode = searchParams.get("allPosts") === "1";
   const C = COPY[station];
 
@@ -1147,6 +1149,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     const generation = ++loadGenerationRef.current;
     const params = new URLSearchParams({ venueSlug, key: stationKey, station });
     if (allPostsMode) params.set("allPosts", "1");
+    if (staffKey) params.set("staffKey", staffKey);
     const res = await fetch(`/api/station-screen/context?${params}`);
     const data = await res.json();
     if (generation !== loadGenerationRef.current) return;
@@ -1157,7 +1160,7 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
     }
     setError(null);
     setCtx(data as ScreenContext);
-  }, [venueSlug, stationKey, station, allPostsMode, C.invalid]);
+  }, [venueSlug, stationKey, staffKey, station, allPostsMode, C.invalid]);
 
   useEffect(() => {
     void load();
@@ -1645,6 +1648,11 @@ export function StationPassScreen({ station }: { station: StationScreenKind }) {
       {ctx ? (
         <footer className="flex shrink-0 border-t border-white/10 bg-slate-950/95 backdrop-blur-sm">
           <div className="flex w-[38%] max-w-[12.5rem] shrink-0 flex-col justify-end self-stretch border-r border-white/10 px-3.5 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:max-w-[13.5rem] sm:py-3 sm:pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {ctx.staffMemberName ? (
+              <p className="mb-1 truncate text-xs font-semibold text-slate-200 sm:text-sm">
+                {ctx.staffMemberName}
+              </p>
+            ) : null}
             <p className="text-[10px] leading-relaxed text-slate-500">
               {hasSelection ? C.messagesTapHint : C.messagesNeedTable}
             </p>

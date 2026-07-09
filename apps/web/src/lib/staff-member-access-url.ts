@@ -36,6 +36,7 @@ export function staffMemberTabletUrlFromScreens(
   assignment: string,
   posts: VenuePost[],
   screensByStation: StaffScreensByStation,
+  staffKey?: string,
 ): string | null {
   const station = resolveStaffAssignmentToPassInput(assignment, posts);
   if (!station) return null;
@@ -44,6 +45,7 @@ export function staffMemberTabletUrlFromScreens(
   if (!picked) return null;
   return buildStationScreenUrl(stationScreenPath(picked.station), venueSlug, picked.screenToken, {
     allPosts: assignment === "pass-all",
+    staffKey,
   });
 }
 
@@ -70,6 +72,7 @@ export function resolveStaffMemberAccessLink(input: {
       device: "tablet",
       url: buildStationScreenUrl(stationScreenPath(picked.station), input.venueSlug, picked.screenToken, {
         allPosts: assignment === "pass-all",
+        staffKey: input.memberToken,
       }),
     };
   }
@@ -115,6 +118,7 @@ export async function resolvePassStaffAccessResult(input: {
   venueSlug: string;
   stations: string[];
   posts: VenuePost[];
+  memberToken?: string | null;
 }): Promise<StaffPassStaffAccessResult> {
   const assignment = staffPrimaryAssignment(input.stations);
   const linkKind = staffAssignmentLinkKind(assignment, input.posts);
@@ -129,6 +133,7 @@ export async function resolvePassStaffAccessResult(input: {
     kind: "tablet",
     url: buildStationScreenUrl(stationScreenPath(picked.station), input.venueSlug, picked.screenToken, {
       allPosts: assignment === "pass-all",
+      staffKey: input.memberToken ?? undefined,
     }),
   };
 }

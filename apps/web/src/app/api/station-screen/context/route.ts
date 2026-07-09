@@ -43,6 +43,7 @@ export async function GET(request: Request) {
 
   const station = stationParsed.data as PassStationInput;
   const allPosts = url.searchParams.get("allPosts") === "1";
+  const staffKey = url.searchParams.get("staffKey")?.trim() || null;
   if (!["kitchen", "bar", "cold", "dessert"].includes(station)) {
     return NextResponse.json({ error: "Μη έγκυρο τμήμα." }, { status: 400 });
   }
@@ -212,6 +213,15 @@ export async function GET(request: Request) {
     ),
   );
 
+  let staffMemberName: string | null = null;
+  if (staffKey) {
+    const member = await prisma.venueStaffMember.findFirst({
+      where: { venueId: auth.venue.id, memberToken: staffKey },
+      select: { name: true },
+    });
+    staffMemberName = member?.name?.trim() || null;
+  }
+
   return NextResponse.json({
     venueId: auth.venue.id,
     venueName: auth.venue.name,
@@ -231,5 +241,6 @@ export async function GET(request: Request) {
     zoneLabels: opsConfig.zoneLabels ?? undefined,
     activeSignals,
     todayCount,
+    staffMemberName,
   });
 }

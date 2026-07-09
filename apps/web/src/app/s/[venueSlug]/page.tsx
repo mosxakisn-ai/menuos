@@ -29,6 +29,7 @@ async function resolvePassStaffAccess(
   venueId: string,
   venueSlug: string,
   staffMember: StaffMemberContext | null,
+  memberToken?: string | null,
 ): Promise<StaffPassStaffAccessResult> {
   if (!staffMember) return { kind: "waiter" };
   const opsConfig = await getVenueOperationsConfig(venueId);
@@ -38,6 +39,7 @@ async function resolvePassStaffAccess(
     venueSlug,
     stations: staffMember.stations,
     posts,
+    memberToken,
   });
 }
 
@@ -60,7 +62,12 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   if (incomingKey) {
     const auth = await resolveStaffAuthBySlug(venueSlug, incomingKey);
     if (!auth) return <StaffWaiterInvalidLink venueSlug={venueSlug} invalidKey />;
-    const passAccess = await resolvePassStaffAccess(auth.venue.id, venueSlug, auth.staffMember);
+    const passAccess = await resolvePassStaffAccess(
+      auth.venue.id,
+      venueSlug,
+      auth.staffMember,
+      incomingKey,
+    );
     if (passAccess.kind === "tablet") redirect(passAccess.url);
     const invalid = passStaffInvalidLink(venueSlug, passAccess);
     if (invalid) return invalid;
@@ -92,7 +99,12 @@ export default async function StaffWaiterPage({ params, searchParams }: Props) {
   const { venue, staffMember } = auth;
   const staffZoneLock = staffMember?.zoneId?.trim() || initialZoneId?.trim();
 
-  const passAccess = await resolvePassStaffAccess(venue.id, venue.slug, staffMember);
+  const passAccess = await resolvePassStaffAccess(
+    venue.id,
+    venue.slug,
+    staffMember,
+    session.staffToken,
+  );
   if (passAccess.kind === "tablet") redirect(passAccess.url);
   const invalid = passStaffInvalidLink(venue.slug, passAccess);
   if (invalid) return invalid;

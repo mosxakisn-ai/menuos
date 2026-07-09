@@ -7,12 +7,14 @@ export function buildStationScreenShareUrl(
   station: PassStationInput,
   venueSlug: string,
   screenToken: string,
-  opts?: { allPosts?: boolean },
+  opts?: { allPosts?: boolean; staffKey?: string },
 ): string {
   const u = new URL(stationScreenPath(station), clientShareOrigin());
   u.searchParams.set("venueSlug", venueSlug);
   u.searchParams.set("key", screenToken);
   if (opts?.allPosts) u.searchParams.set("allPosts", "1");
+  const staffKey = opts?.staffKey?.trim();
+  if (staffKey) u.searchParams.set("staffKey", staffKey);
   return u.toString();
 }
 
