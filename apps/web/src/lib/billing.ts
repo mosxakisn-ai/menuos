@@ -2,6 +2,7 @@ import { prisma, type SubscriptionPlan, type SubscriptionStatus } from "@menuos/
 import {
   isPaidPlan,
   organizationHasPaidPlan,
+  isActivePaidStatus,
   PAID_SUBSCRIPTION_PLANS,
   type PaidSubscriptionPlanId,
   type PlanDefinition,
@@ -115,6 +116,7 @@ export async function activateSubscriptionFromCheckout(input: {
       stripeSubId: input.stripeSubId ?? null,
       trialEndsAt: null,
       currentPeriodEnd: periodEnd,
+      cancelAtPeriodEnd: false,
     },
     update: {
       plan: input.planId as SubscriptionPlan,
@@ -123,6 +125,7 @@ export async function activateSubscriptionFromCheckout(input: {
       stripeSubId: input.stripeSubId ?? undefined,
       trialEndsAt: null,
       currentPeriodEnd: periodEnd,
+      cancelAtPeriodEnd: false,
     },
   });
 
@@ -159,6 +162,7 @@ export async function syncSubscriptionFromStripe(input: {
   status: SubscriptionStatus;
   currentPeriodEnd?: Date | null;
   planId?: PaidSubscriptionPlanId;
+  cancelAtPeriodEnd?: boolean;
 }) {
   let organizationId: string | null = null;
 
@@ -192,6 +196,7 @@ export async function syncSubscriptionFromStripe(input: {
     ...(input.stripeCustomerId ? { stripeCustomerId: input.stripeCustomerId } : {}),
     ...(input.currentPeriodEnd ? { currentPeriodEnd: input.currentPeriodEnd } : {}),
     ...(input.planId ? { plan: input.planId as SubscriptionPlan } : {}),
+    ...(input.cancelAtPeriodEnd !== undefined ? { cancelAtPeriodEnd: input.cancelAtPeriodEnd } : {}),
   };
 
   const existing = await prisma.subscription.findUnique({ where: { organizationId } });
@@ -223,6 +228,76 @@ export async function syncSubscriptionFromStripe(input: {
   });
 
   return organizationId;
+}
+
+export async function setOrganizationSubscriptionRenewal(input: {
+  organizationId: string;
+  cancelAtPeriodEnd: boolean;
+}): Promise<
+  | { ok: true; cancelAtPeriodEnd: boolean; currentPeriodEnd: Date | null }
+  | { ok: false; error: string; code: string }
+> {
+  const sub = await prisma.subscription.findUnique({
+    where: { organizationId: input.organizationId },
+  });
+  if (!sub) {
+    return { ok: false, error: "Η συνδρομή δεν βρέθηκε.", code: "not_found" };
+  }
+  if (!isPaidPlan(sub.plan)) {
+    return {
+      ok: false,
+      error: "Η ρύθμιση αφορά μόνο πληρωμένα πλάνα Basic ή Pro.",
+      code: "not_paid_plan",
+    };
+  }
+  if (!isActivePaidStatus(sub.status)) {
+    return {
+      ok: false,
+      error: "Η συνδρομή δεν είναι ενεργή.",
+      code: "subscription_inactive",
+    };
+  }
+  if (!sub.stripeSubId) {
+    return {
+      ok: false,
+      error: "Δεν υπάρχει συνδεδεμένη κάρτα για αυτόν τον λογαριασμό.",
+      code: "no_stripe_subscription",
+    };
+  }
+
+  const { isStripeEnabled, setStripeSubscriptionCancelAtPeriodEnd } = await import(
+    "@/lib/stripe-client"
+  );
+  if (!isStripeEnabled()) {
+    return {
+      ok: false,
+      error: "Το σύστημα πληρωμών δεν είναι ρυθμισμένο.",
+      code: "stripe_not_configured",
+    };
+  }
+
+  try {
+    await setStripeSubscriptionCancelAtPeriodEnd(sub.stripeSubId, input.cancelAtPeriodEnd);
+  } catch (err) {
+    console.error("[menuos-billing] set cancel_at_period_end failed", err);
+    return {
+      ok: false,
+      error: "Δεν ενημερώθηκε η ρύθμιση ανανέωσης. Δοκίμασε ξανά.",
+      code: "stripe_update_failed",
+    };
+  }
+
+  const updated = await prisma.subscription.update({
+    where: { organizationId: input.organizationId },
+    data: { cancelAtPeriodEnd: input.cancelAtPeriodEnd },
+    select: { cancelAtPeriodEnd: true, currentPeriodEnd: true },
+  });
+
+  return {
+    ok: true,
+    cancelAtPeriodEnd: updated.cancelAtPeriodEnd,
+    currentPeriodEnd: updated.currentPeriodEnd,
+  };
 }
 
 export async function canOrganizationAddVenue(organizationId: string): Promise<

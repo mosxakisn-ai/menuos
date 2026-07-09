@@ -352,6 +352,22 @@ export const DASHBOARD_EN = {
     selectPlan: (name: string) => `Choose ${name}`,
     upgradeTo: (name: string) => `Upgrade to ${name}`,
     downgradeTo: (name: string) => `Downgrade to ${name}`,
+    renewal: {
+      title: "Automatic renewal",
+      autoOn:
+        "Your subscription renews automatically each month on the card you provided. Prefer to pay manually? You can turn this off — your current period stays active.",
+      autoOff: (date: string) =>
+        `Automatic renewal is off. Your current period ends ${date} — you will not be charged again unless you choose to pay.`,
+      manualRenewHint:
+        "After it ends you can pay again from this page. Your catalog stays saved.",
+      stopButton: "Turn off automatic renewal",
+      resumeButton: "Turn automatic renewal back on",
+      stopConfirm:
+        "Your subscription stays active until the end of the current period. After that there will be no automatic charge — you can pay again yourself from here.",
+      saved: "Setting updated.",
+      loading: "Saving…",
+      networkError: "Network error",
+    },
   },
   trial: {
     expired:
@@ -1590,6 +1606,7 @@ export const DASHBOARD_EN = {
     expiresOn: (date: string) => `Expires ${date}`,
     graceUntil: (date: string) => `Extension until ${date}`,
     renewsOn: (date: string) => `Renews ${date}`,
+    endsOnNoRenewal: (date: string) => `Ends ${date} — no auto-renewal`,
     expiredOn: (date: string) => `Expired ${date}`,
   },
 } as const;

@@ -93,6 +93,19 @@ export async function cancelStripeSubscription(stripeSubId: string): Promise<voi
   }
 }
 
+export async function setStripeSubscriptionCancelAtPeriodEnd(
+  stripeSubId: string,
+  cancelAtPeriodEnd: boolean,
+): Promise<void> {
+  const params = new URLSearchParams();
+  params.set("cancel_at_period_end", cancelAtPeriodEnd ? "true" : "false");
+  await stripePost(`/subscriptions/${stripeSubId}`, params);
+}
+
+export function stripeCancelAtPeriodEnd(obj: Record<string, unknown>): boolean {
+  return obj.cancel_at_period_end === true;
+}
+
 function buildCheckoutSessionParams(input: {
   organizationId: string;
   planId: PaidSubscriptionPlanId;
@@ -248,6 +261,7 @@ export async function stripeGetSubscription(subscriptionId: string) {
   const subscription = (await res.json()) as {
     status?: string;
     current_period_end?: number;
+    cancel_at_period_end?: boolean;
     error?: { message?: string };
   };
   if (!res.ok) {

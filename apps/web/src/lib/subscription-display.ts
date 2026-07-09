@@ -15,6 +15,7 @@ export type SubscriptionDisplayInput = {
   status: string;
   trialEndsAt: Date | null;
   currentPeriodEnd: Date | null;
+  cancelAtPeriodEnd?: boolean;
 };
 
 export type SubscriptionDisplaySummary = {
@@ -37,6 +38,7 @@ export function formatSubscriptionSummary(
   const status = sub?.status ?? "TRIALING";
   const trialEndsAt = sub?.trialEndsAt ?? null;
   const currentPeriodEnd = sub?.currentPeriodEnd ?? null;
+  const cancelAtPeriodEnd = sub?.cancelAtPeriodEnd ?? false;
 
   const active = organizationHasPaidPlan({
     plan,
@@ -78,7 +80,9 @@ export function formatSubscriptionSummary(
     statusLine: `${planLabelForLang(lang, plan)} · ${statusLabel}`,
     expiryLine: currentPeriodEnd
       ? active
-        ? statusCopy.renewsOn(formatDate(currentPeriodEnd, lang))
+        ? cancelAtPeriodEnd
+          ? statusCopy.endsOnNoRenewal(formatDate(currentPeriodEnd, lang))
+          : statusCopy.renewsOn(formatDate(currentPeriodEnd, lang))
         : statusCopy.expiredOn(formatDate(currentPeriodEnd, lang))
       : null,
   };

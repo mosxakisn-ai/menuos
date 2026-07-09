@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@menuos/db";
 import { BillingConfirmHandler } from "@/components/dashboard/billing-confirm-handler";
 import { BillingPlans } from "@/components/dashboard/billing-plans";
+import { BillingRenewalControl } from "@/components/dashboard/billing-renewal-control";
 import { BillingVisitorIntentLabel } from "@/components/dashboard/billing-visitor-intent";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
 import { LocalizedDashboardPageHeader } from "@/components/dashboard/localized-dashboard-page-header";
@@ -45,6 +46,7 @@ export default async function BillingPage({ searchParams: _searchParams }: Props
           status: subscription.status,
           trialEndsAt: subscription.trialEndsAt,
           currentPeriodEnd: subscription.currentPeriodEnd,
+          cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
         }
       : null,
     lang,
@@ -69,6 +71,24 @@ export default async function BillingPage({ searchParams: _searchParams }: Props
         <UpgradeReasonBanner />
         <BillingConfirmHandler organizationId={session.organizationId} userEmail={userEmail} />
       </Suspense>
+
+      <div className="mb-6">
+        <BillingRenewalControl
+          subscription={
+            subscription
+              ? {
+                  plan: subscription.plan,
+                  status: subscription.status,
+                  stripeSubId: subscription.stripeSubId,
+                  currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() ?? null,
+                  cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+                }
+              : null
+          }
+          subscriptionAccessActive={hasActiveSubscription}
+          userRole={session.role}
+        />
+      </div>
 
       <div id="plans">
         <BillingPlans

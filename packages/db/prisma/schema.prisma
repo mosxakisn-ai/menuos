@@ -201,6 +201,7 @@ model Subscription {
   stripeSubId      String?
   trialEndsAt      DateTime?
   currentPeriodEnd DateTime?
+  cancelAtPeriodEnd Boolean @default(false)
   trialMidEmailSentAt     DateTime?
   trialEndingEmailSentAt  DateTime?
   trialGraceStartedEmailSentAt DateTime?

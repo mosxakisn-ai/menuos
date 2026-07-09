@@ -2,6 +2,7 @@ import {
   activateSubscriptionFromCheckoutSession,
   isMenuOsStripeMetadata,
   isStripeEnabled,
+  stripeCancelAtPeriodEnd,
   stripeGetSubscription,
   verifyStripeWebhookSignature,
 } from "@/lib/stripe-client";
@@ -159,6 +160,7 @@ export async function POST(req: NextRequest) {
           status: mapStripeSubscriptionStatus(String(subscription.status ?? "canceled")),
           currentPeriodEnd: stripePeriodEnd(subscription),
           planId: resolvedPlanId,
+          cancelAtPeriodEnd: stripeCancelAtPeriodEnd(subscription),
         });
       }
     }
@@ -183,6 +185,7 @@ export async function POST(req: NextRequest) {
           organizationId: metadata.organizationId,
           stripeSubId,
           status: "CANCELED",
+          cancelAtPeriodEnd: false,
         });
       }
     }
