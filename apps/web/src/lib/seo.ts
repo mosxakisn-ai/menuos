@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SEO_PAGES, SEO_SITE, type SeoPageDef } from "@/content/seo-el";
 import { SEO_PAGES_EN, SEO_SITE_EN } from "@/content/seo-en";
-import { getServerLocale } from "@/i18n/server";
+import { getServerLocale, getSeoUrlLocale } from "@/i18n/server";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/types";
 import { applyCatalogMarketingPlaceholdersDeep } from "@/lib/plan-pricing-marketing";
 import { APP_NAME, APP_URL, SITE_DESCRIPTION } from "@/lib/config";
@@ -87,10 +87,13 @@ export function buildPageMetadata(
     keywords?: string[];
     noIndex?: boolean;
     locale?: Locale;
+    /** Locale of the request URL (`?lang=`) — drives self-canonical. Defaults to `locale`. */
+    urlLocale?: Locale;
     hreflangLocales?: readonly Locale[];
   },
 ): Metadata {
   const locale = options.locale ?? DEFAULT_LOCALE;
+  const urlLocale = options.urlLocale ?? locale;
   const description = options.description ?? SITE_DESCRIPTION;
   const path = options.path ?? "/";
   const keywords = mergeKeywords(options.keywords);
@@ -102,10 +105,10 @@ export function buildPageMetadata(
     ? {
         canonical: localeAbsoluteUrl(
           path,
-          hreflangLocales.includes(locale) ? locale : DEFAULT_LOCALE,
+          hreflangLocales.includes(urlLocale) ? urlLocale : DEFAULT_LOCALE,
         ),
       }
-    : buildHreflangAlternates(path, hreflangLocales, locale);
+    : buildHreflangAlternates(path, hreflangLocales, urlLocale);
   const pageUrl =
     typeof alternates.canonical === "string" ? alternates.canonical : absoluteUrl(path);
 
@@ -218,6 +221,7 @@ export function seoPageMetadata(
   },
   locale: Locale = DEFAULT_LOCALE,
   noIndex?: boolean,
+  urlLocale?: Locale,
 ): Metadata {
   return buildPageMetadata({
     title: page.title,
@@ -225,6 +229,7 @@ export function seoPageMetadata(
     path: page.path,
     keywords: page.keywords ? [...page.keywords] : undefined,
     locale,
+    urlLocale: urlLocale ?? locale,
     noIndex,
   });
 }
@@ -250,15 +255,15 @@ async function marketingSeoPageEl(key: MarketingSeoPageKey): Promise<SeoPageDef>
   return applyCatalogMarketingPlaceholdersDeep(SEO_PAGES[key], "el");
 }
 
-/** Locale-aware metadata for marketing pages (cookie or ?lang=en). */
+/** Locale-aware metadata for marketing pages (cookie or ?lang=en). Canonical follows URL only. */
 export async function generateMarketingMetadata(
   key: MarketingSeoPageKey,
   options?: { noIndex?: boolean },
 ): Promise<Metadata> {
-  const locale = await getServerLocale();
+  const [locale, urlLocale] = await Promise.all([getServerLocale(), getSeoUrlLocale()]);
   const page =
     locale === "en"
       ? await applyCatalogMarketingPlaceholdersDeep(marketingSeoPage(key, locale), "en")
       : await marketingSeoPageEl(key);
-  return seoPageMetadata(page, locale, options?.noIndex);
+  return seoPageMetadata(page, locale, options?.noIndex, urlLocale);
 }

@@ -39,4 +39,10 @@ describe("buildHreflangAlternates", () => {
       "x-default": "https://menuos.gr/blog/foo",
     });
   });
+
+  it("keeps Greek canonical when UI locale is en but URL locale is el", () => {
+    // Cookie/Accept-Language must not move canonical off the crawled clean URL.
+    const alt = buildHreflangAlternates("/pricing", ["el", "en"], "el");
+    expect(alt.canonical).toBe("https://menuos.gr/pricing");
+  });
 });

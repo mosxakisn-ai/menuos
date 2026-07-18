@@ -50,7 +50,7 @@ Rank on Google for:
 - `buildPageMetadata()` — title, description, keywords, canonical, hreflang, robots
 - `buildRootMetadata()` — site-wide defaults; **strips alternates** (MatchWork pattern)
 - `buildPrivatePageMetadata()` — `noindex` for dashboard/auth/QR menus
-- `buildHreflangAlternates()` / `localeAbsoluteUrl()` — non-default locale → `?lang=`; **self-referencing canonical** per locale (EN pages index separately)
+- `buildHreflangAlternates()` / `localeAbsoluteUrl()` — non-default locale → `?lang=`; **self-referencing canonical** from URL `?lang=` only (`getSeoUrlLocale`) — cookie/Accept-Language must not move it
 - `SEO_BILINGUAL_LOCALES` — `["el", "en"]` for marketing + landings
 - `absoluteUrl()`, `openGraphImageUrl(locale)`
 - Open Graph + Twitter cards, `google-site-verification` from env

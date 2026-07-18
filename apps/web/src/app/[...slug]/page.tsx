@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SeoLandingPage } from "@/components/seo/seo-landing-page";
-import { getServerLocale } from "@/i18n/server";
+import { getServerLocale, getSeoUrlLocale } from "@/i18n/server";
 import { getTrialDaysFromCatalog } from "@/lib/plan-catalog-service";
 import { buildPageMetadata } from "@/lib/seo";
 import { getSeoLandingCopy } from "@/lib/seo-landing-content";
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const config = resolveSeoLandingFromSlug(slug);
   if (!config) notFound();
 
-  const locale = await getServerLocale();
+  const [locale, urlLocale] = await Promise.all([getServerLocale(), getSeoUrlLocale()]);
   const trialDays = await getTrialDaysFromCatalog();
   const copy = getSeoLandingCopy(config, locale, trialDays);
 
@@ -33,6 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     path: config.path,
     keywords: copy.keywords,
     locale,
+    urlLocale,
   });
 }
 
