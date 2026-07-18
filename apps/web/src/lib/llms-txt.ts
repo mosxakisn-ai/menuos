@@ -5,6 +5,7 @@ import {
   getTrialDaysFromCatalog,
   listPlanCatalogEntriesSafe,
 } from "@/lib/plan-catalog-service";
+import { applyCatalogMarketingPlaceholdersDeep } from "@/lib/plan-pricing-marketing";
 import { getAllSeoLandingPaths } from "@/lib/seo-landing";
 import { trialDayLabels } from "@/lib/trial-marketing";
 
@@ -27,7 +28,7 @@ export async function buildLlmsTxtMarkdown(): Promise<string> {
   const proPrice = pro ? formatPlanPriceDisplay(pro.priceMonthly, pro.priceDisplay) : "€19.99";
   const staticPages = Object.values(SEO_PAGES);
   const landings = getAllSeoLandingPaths();
-  const blogPosts = SEO_BLOG_POSTS;
+  const blogPosts = await applyCatalogMarketingPlaceholdersDeep(SEO_BLOG_POSTS, "el");
 
   const lines = [
     `# ${SEO_SITE.name}`,

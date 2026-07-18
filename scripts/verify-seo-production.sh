@@ -58,6 +58,13 @@ else
   failed=1
 fi
 
+if curl -sS "$BASE/llms.txt" | grep -qE '\{[a-zA-Z]+\}'; then
+  echo "  FAIL llms.txt has unresolved {placeholders}"
+  failed=1
+else
+  echo "  OK llms.txt no raw placeholders"
+fi
+
 if curl -sS "$BASE/llms.txt" | grep -qi 'Facts (for citations)'; then
   echo "  OK llms.txt citation Facts section"
 else
