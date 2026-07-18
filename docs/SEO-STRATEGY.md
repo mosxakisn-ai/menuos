@@ -67,7 +67,7 @@ Rank on Google for:
 | `app/opengraph-image.tsx` | Dynamic OG 1200×630 |
 | `app/manifest.ts` | PWA manifest (`start_url: /`, locale-aware) |
 | `app/icon.tsx` + `app/apple-icon.tsx` | Favicons |
-| `app/llms.txt/route.ts` | AI/crawler discoverability |
+| `app/llms.txt/route.ts` + `/.well-known/llms.txt` | AI/crawler discoverability — shared `lib/llms-txt.ts` with citation Facts |
 | `lib/homepage-seo.ts` | `noindex` for `/?utm_*` etc.; `?lang=` allowed |
 
 ### JSON-LD (`lib/seo-structured-data.ts`)

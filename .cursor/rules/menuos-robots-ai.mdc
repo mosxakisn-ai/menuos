@@ -25,7 +25,8 @@ Domain: `https://menuos.gr`
 
 ## Discovery
 
-- `https://menuos.gr/llms.txt` — public brand, services, products, marketing URLs only
+- `https://menuos.gr/llms.txt` — public brand, services, products, marketing URLs + **Facts (for citations)**
+- `https://menuos.gr/.well-known/llms.txt` — same document (AI agents that look under well-known)
 - `https://menuos.gr/sitemap.xml` + `sitemap-images.xml` — auto-updated with public content
 
-Source of truth: `apps/web/src/app/robots.ts`
+Source of truth: `apps/web/src/lib/llms-txt.ts` · `apps/web/src/app/robots.ts`

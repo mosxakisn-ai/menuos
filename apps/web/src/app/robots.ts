@@ -16,7 +16,7 @@ const DISALLOW = [
   "/dessert/",
 ];
 
-const ALLOW = ["/", "/llms.txt"];
+const ALLOW = ["/", "/llms.txt", "/.well-known/llms.txt"];
 
 /** Explicit welcome for AI crawlers (same public allow + private disallow as *). */
 const AI_CRAWLERS = ["GPTBot", "ChatGPT-User", "ClaudeBot", "Google-Extended"] as const;

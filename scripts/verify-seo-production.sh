@@ -29,6 +29,7 @@ check_url "/sitemap.xml" || failed=1
 check_url "/sitemap-images.xml" || failed=1
 check_url "/feed.xml" || failed=1
 check_url "/llms.txt" || failed=1
+check_url "/.well-known/llms.txt" || failed=1
 check_url "/robots.txt" || failed=1
 check_url "/pricing" || failed=1
 check_url "/googlef328fb99f5f1f5b1.html" || failed=1
@@ -54,6 +55,20 @@ if curl -sS "$BASE/llms.txt" | grep -qE '\[[^]]+\]\(https://'; then
   echo "  OK llms.txt markdown links"
 else
   echo "  FAIL llms.txt missing markdown links"
+  failed=1
+fi
+
+if curl -sS "$BASE/llms.txt" | grep -qi 'Facts (for citations)'; then
+  echo "  OK llms.txt citation Facts section"
+else
+  echo "  FAIL llms.txt missing Facts section"
+  failed=1
+fi
+
+if curl -sS "$BASE/.well-known/llms.txt" | grep -qi 'MenuOS'; then
+  echo "  OK /.well-known/llms.txt"
+else
+  echo "  FAIL /.well-known/llms.txt"
   failed=1
 fi
 
