@@ -1,0 +1,31 @@
+---
+description: MenuOS robots.txt & AI crawler policy — keep public pages open, protect private surfaces
+globs: apps/web/src/app/robots.ts,apps/web/src/app/llms.txt/**,apps/web/src/lib/seo*.ts,docs/SEO-STRATEGY.md
+alwaysApply: false
+---
+
+# MenuOS — Robots & AI crawlers
+
+Domain: `https://menuos.gr`
+
+## Policy
+
+- Public marketing content stays open for Google Search and AI crawlers.
+- Do **not** block GPTBot, ChatGPT-User, ClaudeBot, or Google-Extended.
+- Do **not** disallow landing pages or marketing content.
+- Protect only private / operational surfaces.
+
+## Disallow (private)
+
+`/api/`, `/dashboard/`, `/login`, `/register`, `/m/`, `/s/`, `/supervisor/`, `/bds/`, `/kds/`, `/cold/`, `/dessert/`
+
+## Allow
+
+`/`, `/llms.txt` — plus explicit AI user-agent rules with the same Disallow list.
+
+## Discovery
+
+- `https://menuos.gr/llms.txt` — public brand, services, products, marketing URLs only
+- `https://menuos.gr/sitemap.xml` + `sitemap-images.xml` — auto-updated with public content
+
+Source of truth: `apps/web/src/app/robots.ts`

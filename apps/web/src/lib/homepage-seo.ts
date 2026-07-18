@@ -1,4 +1,4 @@
-/** Query params that should not be indexed (canonical stays `/`). `lang` is allowed for hreflang. */
+/** Query params that should not be indexed (`noindex`). `lang` is allowed (self-canonical + hreflang). */
 export type HomepageSearchParams = Record<string, string | string[] | undefined>;
 
 function firstParam(value: string | string[] | undefined): string | undefined {

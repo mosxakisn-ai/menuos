@@ -42,25 +42,39 @@ function googleSiteVerification(): Metadata["verification"] | undefined {
   return token ? { google: token } : undefined;
 }
 
-/** hreflang alternates — default locale uses clean URL; others use ?lang=. */
+/** Absolute URL for a path in a given locale (non-default → `?lang=`). */
+export function localeAbsoluteUrl(path = "/", locale: Locale = DEFAULT_LOCALE): string {
+  const normalizedPath = path === "" ? "/" : path;
+  const url = new URL(normalizedPath, APP_URL);
+  if (locale !== DEFAULT_LOCALE) {
+    url.searchParams.set("lang", locale);
+  }
+  return url.toString();
+}
+
+/**
+ * hreflang alternates — default locale uses clean URL; others use `?lang=`.
+ * Canonical is **self-referencing** for the current locale (so `?lang=en` can be indexed).
+ */
 export function buildHreflangAlternates(
   path = "/",
   locales: readonly Locale[] = SEO_BILINGUAL_LOCALES,
+  currentLocale: Locale = DEFAULT_LOCALE,
 ): NonNullable<Metadata["alternates"]> {
   const normalizedPath = path === "" ? "/" : path;
   const languages: Record<string, string> = {};
 
   for (const locale of locales) {
-    const url = new URL(normalizedPath, APP_URL);
-    if (locale !== DEFAULT_LOCALE) {
-      url.searchParams.set("lang", locale);
-    }
-    languages[HREFLANG_CODES[locale]] = url.toString();
+    languages[HREFLANG_CODES[locale]] = localeAbsoluteUrl(normalizedPath, locale);
   }
-  languages["x-default"] = absoluteUrl(normalizedPath);
+  languages["x-default"] = localeAbsoluteUrl(normalizedPath, DEFAULT_LOCALE);
+
+  const canonicalLocale = locales.includes(currentLocale)
+    ? currentLocale
+    : (locales[0] ?? DEFAULT_LOCALE);
 
   return {
-    canonical: absoluteUrl(normalizedPath),
+    canonical: localeAbsoluteUrl(normalizedPath, canonicalLocale),
     languages,
   };
 }
@@ -79,25 +93,32 @@ export function buildPageMetadata(
   const locale = options.locale ?? DEFAULT_LOCALE;
   const description = options.description ?? SITE_DESCRIPTION;
   const path = options.path ?? "/";
-  const url = absoluteUrl(path);
   const keywords = mergeKeywords(options.keywords);
   const verification = !options.noIndex ? googleSiteVerification() : undefined;
   const hreflangLocales = options.hreflangLocales ?? SEO_BILINGUAL_LOCALES;
   const isEn = locale === "en";
   const siteName = APP_NAME;
+  const alternates = options.noIndex
+    ? {
+        canonical: localeAbsoluteUrl(
+          path,
+          hreflangLocales.includes(locale) ? locale : DEFAULT_LOCALE,
+        ),
+      }
+    : buildHreflangAlternates(path, hreflangLocales, locale);
+  const pageUrl =
+    typeof alternates.canonical === "string" ? alternates.canonical : absoluteUrl(path);
 
   return {
     title: options.title,
     description,
     keywords,
-    alternates: options.noIndex
-      ? { canonical: url }
-      : buildHreflangAlternates(path, hreflangLocales),
+    alternates,
     ...(verification ? { verification } : {}),
     openGraph: {
       title: options.title,
       description,
-      url,
+      url: pageUrl,
       siteName,
       locale: OG_LOCALE[locale],
       alternateLocale: hreflangLocales.filter((l) => l !== locale).map((l) => OG_LOCALE[l]),

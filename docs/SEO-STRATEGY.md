@@ -50,7 +50,7 @@ Rank on Google for:
 - `buildPageMetadata()` — title, description, keywords, canonical, hreflang, robots
 - `buildRootMetadata()` — site-wide defaults; **strips alternates** (MatchWork pattern)
 - `buildPrivatePageMetadata()` — `noindex` for dashboard/auth/QR menus
-- `buildHreflangAlternates()` — `URL` API; non-default locale → `?lang=el|en`
+- `buildHreflangAlternates()` / `localeAbsoluteUrl()` — non-default locale → `?lang=`; **self-referencing canonical** per locale (EN pages index separately)
 - `SEO_BILINGUAL_LOCALES` — `["el", "en"]` for marketing + landings
 - `absoluteUrl()`, `openGraphImageUrl(locale)`
 - Open Graph + Twitter cards, `google-site-verification` from env
@@ -59,7 +59,7 @@ Rank on Google for:
 
 | File | Purpose |
 |------|---------|
-| `app/robots.ts` | Allow `/`, disallow `/api/`, `/dashboard/`, `/login`, `/m/`; sitemap + image sitemap |
+| `app/robots.ts` | Allow `/` + `/llms.txt`; disallow API/dashboard/auth/staff/QR (`/m/`); explicit Allow for GPTBot, ChatGPT-User, ClaudeBot, Google-Extended (same Disallow); sitemap + image sitemap |
 | `lib/seo-sitemap.ts` | Priority/changefreq tiers by page kind |
 | `app/sitemap.ts` | Single combined sitemap (~140 URLs) |
 | `app/sitemap-images.xml/route.ts` | OG image sitemap |
