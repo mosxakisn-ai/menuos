@@ -119,7 +119,7 @@ Each landing: unique H1/meta, FAQ + JSON-LD, footer hub links only (not main nav
 
 ## Blog (topical authority)
 
-26 articles live — GDPR, HACCP, POS, allergens, seasonal menus, café/bakery, Live 360°, hotels, social media, etc.  
+~33 articles — GDPR, HACCP, POS, allergens, seasonal menus, café/bakery, Live 360°, hotels, social media, buying guide, PDF import, Basic vs Pro, etc.  
 Target: **2–4 new posts/month**, not 100 thin posts at once.
 
 ## hreflang
